@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Morse Transmitter — The Signal Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&family=Spectral:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #14110d;
+    --bg-panel: #1c1712;
+    --paper: #ece1c8;
+    --paper-dim: #d8caa6;
+    --brass: #b8863d;
+    --brass-bright: #e0a940;
+    --brass-dim: #6e4f22;
+    --ink: #221a12;
+    --copper: #8a4a2c;
+    --lamp-off: #3a2c17;
+    --shadow: rgba(0,0,0,.55);
+  }
+
+  *{ box-sizing: border-box; }
+
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse at 20% -10%, #241d14 0%, transparent 55%),
+      radial-gradient(ellipse at 90% 110%, #1a140d 0%, transparent 55%),
+      var(--bg);
+    color: var(--paper);
+    font-family: 'Spectral', serif;
+    line-height: 1.6;
+  }
+
+  ::selection{ background: var(--brass-bright); color: var(--ink); }
+
+  a{ color: var(--brass-bright); }
+
+  .wrap{
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ---------- Nameplate header ---------- */
+  header.nameplate{
+    border-bottom: 2px solid var(--brass-dim);
+    padding: 22px 24px;
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  header.nameplate .brand{
+    font-family: 'Special Elite', cursive;
+    letter-spacing: 2px;
+    font-size: 1.05rem;
+    color: var(--brass-bright);
+    text-transform: uppercase;
+  }
+  header.nameplate .brand small{
+    display:block;
+    font-family: 'Courier Prime', monospace;
+    letter-spacing: 3px;
+    font-size: .62rem;
+    color: var(--paper-dim);
+    margin-top: 4px;
+    opacity: .8;
+  }
+  header.nameplate nav a{
+    font-family: 'Courier Prime', monospace;
+    font-size: .78rem;
+    text-decoration: none;
+    color: var(--paper-dim);
+    border-bottom: 1px dotted var(--brass-dim);
+    margin-left: 18px;
+  }
+  header.nameplate nav a:hover{ color: var(--brass-bright); border-color: var(--brass-bright); }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    display:grid;
+    grid-template-columns: 220px 1fr;
+    gap: 40px;
+    align-items:center;
+    padding: 56px 0 48px;
+    border-bottom: 1px solid var(--brass-dim);
+  }
+  @media (max-width: 720px){
+    .hero{ grid-template-columns: 1fr; text-align:center; }
+    .lamp-housing{ margin: 0 auto; }
+  }
+
+  .lamp-housing{
+    width: 190px; height: 190px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #3a2c17, #14100a 70%);
+    border: 6px solid var(--brass-dim);
+    box-shadow: inset 0 0 30px var(--shadow), 0 8px 24px var(--shadow);
+    display:flex; align-items:center; justify-content:center;
+    position: relative;
+  }
+  .lamp-housing::before{
+    content:"";
+    position:absolute; inset: 10px;
+    border-radius:50%;
+    border: 1px solid var(--brass-dim);
+    opacity:.5;
+  }
+  #lamp{
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, var(--lamp-off), #0d0a06 75%);
+    box-shadow: inset 0 0 18px #000;
+    transition: background .04s linear, box-shadow .04s linear;
+  }
+  #lamp.on{
+    background: radial-gradient(circle at 40% 35%, #ffe9b3, var(--brass-bright) 55%, #7a4d16 100%);
+    box-shadow: 0 0 55px 18px rgba(224,169,64,.65), inset 0 0 25px rgba(255,240,200,.8);
+  }
+
+  .hero-copy .eyebrow{
+    font-family: 'Courier Prime', monospace;
+    letter-spacing: 3px;
+    font-size: .72rem;
+    color: var(--brass-bright);
+    text-transform: uppercase;
+  }
+  .hero-copy h1{
+    font-family: 'Special Elite', cursive;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    margin: 10px 0 14px;
+    color: var(--paper);
+    line-height: 1.25;
+  }
+  .hero-copy p{
+    color: var(--paper-dim);
+    max-width: 52ch;
+    margin: 0 auto;
+  }
+  @media (min-width: 721px){ .hero-copy p{ margin: 0; } }
+
+  /* ---------- Section shell ---------- */
+  section.panel{
+    margin-top: 56px;
+  }
+  section.panel .head{
+    display:flex;
+    align-items:baseline;
+    gap: 14px;
+    margin-bottom: 22px;
+    border-bottom: 1px dashed var(--brass-dim);
+    padding-bottom: 10px;
+  }
+  section.panel .head .tag{
+    font-family: 'Courier Prime', monospace;
+    color: var(--ink);
+    background: var(--brass);
+    padding: 3px 9px;
+    font-size: .68rem;
+    letter-spacing: 2px;
+    border-radius: 2px;
+  }
+  section.panel .head h2{
+    font-family: 'Special Elite', cursive;
+    font-size: 1.3rem;
+    margin: 0;
+    color: var(--paper);
+    letter-spacing: .5px;
+  }
+  section.panel > p.lede{
+    color: var(--paper-dim);
+    max-width: 68ch;
+    margin: -8px 0 24px;
+  }
+
+  /* ---------- Transmitter card ---------- */
+  .desk{
+    background: var(--bg-panel);
+    border: 1px solid var(--brass-dim);
+    border-radius: 6px;
+    padding: 28px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.03), 0 12px 30px var(--shadow);
+  }
+
+  .field-row{
+    display:flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  #wordInput{
+    flex: 1 1 260px;
+    background: var(--paper);
+    color: var(--ink);
+    border: none;
+    border-radius: 4px;
+    padding: 14px 16px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 1rem;
+    letter-spacing: 1px;
+  }
+  #wordInput:focus{ outline: 3px solid var(--brass-bright); outline-offset: 1px; }
+
+  .btn{
+    font-family: 'Courier Prime', monospace;
+    letter-spacing: 1px;
+    font-size: .85rem;
+    text-transform: uppercase;
+    background: var(--brass);
+    color: var(--ink);
+    border: none;
+    border-radius: 4px;
+    padding: 14px 22px;
+    cursor: pointer;
+    transition: transform .08s ease, background .15s ease;
+  }
+  .btn:hover{ background: var(--brass-bright); }
+  .btn:active{ transform: translateY(1px); }
+  .btn:focus-visible{ outline: 3px solid var(--paper); outline-offset: 2px; }
+  .btn.secondary{
+    background: transparent;
+    color: var(--paper-dim);
+    border: 1px solid var(--brass-dim);
+  }
+  .btn.secondary:hover{ color: var(--paper); border-color: var(--brass-bright); }
+  .btn:disabled{ opacity: .4; cursor: not-allowed; }
+
+  .speed-row{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    margin-top: 18px;
+    font-family: 'Courier Prime', monospace;
+    font-size: .78rem;
+    color: var(--paper-dim);
+  }
+  .speed-row input[type=range]{ accent-color: var(--brass-bright); flex:1; max-width: 220px; }
+
+  .tape{
+    margin-top: 22px;
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 4px;
+    padding: 18px 20px;
+    min-height: 60px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 1.1rem;
+    letter-spacing: 3px;
+    word-break: break-all;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,.2);
+  }
+  .tape .placeholder{ color: #8c7c58; letter-spacing: normal; font-size: .95rem; }
+  .tape .sym{ opacity: .25; transition: opacity .05s linear; }
+  .tape .sym.hit{ opacity: 1; color: var(--copper); }
+
+  /* ---------- Signals section ---------- */
+  .signal-console{
+    display:grid;
+    grid-template-columns: 1.1fr .9fr;
+    gap: 24px;
+  }
+  @media (max-width: 780px){ .signal-console{ grid-template-columns: 1fr; } }
+
+  .console-controls{
+    display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom: 16px;
+  }
+  .counter{
+    font-family: 'Courier Prime', monospace;
+    color: var(--paper-dim);
+    font-size: .8rem;
+  }
+
+  .current-signal{
+    background: var(--bg-panel);
+    border: 1px solid var(--brass-dim);
+    border-radius: 6px;
+    padding: 22px 24px;
+  }
+  .current-signal .cat{
+    font-family: 'Courier Prime', monospace;
+    font-size: .65rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--brass-bright);
+  }
+  .current-signal h3{
+    font-family: 'Special Elite', cursive;
+    font-size: 1.5rem;
+    margin: 8px 0 4px;
+    color: var(--paper);
+  }
+  .current-signal .code{
+    font-family: 'Courier Prime', monospace;
+    font-size: 1.3rem;
+    letter-spacing: 4px;
+    color: var(--copper);
+    background: var(--paper);
+    display:inline-block;
+    padding: 6px 14px;
+    border-radius: 3px;
+    margin: 8px 0 14px;
+  }
+  .current-signal .explain{ color: var(--paper-dim); margin: 0; }
+
+  .ticker-tape{
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 6px;
+    padding: 14px;
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: 'Courier Prime', monospace;
+    font-size: .82rem;
+  }
+  .ticker-tape .entry{
+    padding: 7px 8px;
+    border-bottom: 1px dashed #c9bb96;
+    display:flex;
+    justify-content: space-between;
+    gap: 10px;
+    opacity: .45;
+  }
+  .ticker-tape .entry.done{ opacity: .85; }
+  .ticker-tape .entry.active{
+    opacity: 1;
+    background: rgba(184,134,61,.18);
+    font-weight: 700;
+  }
+  .ticker-tape .entry .code{ color: var(--copper); }
+
+  /* ---------- Footer ---------- */
+  footer{
+    margin-top: 70px;
+    padding-top: 24px;
+    border-top: 2px solid var(--brass-dim);
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-family: 'Courier Prime', monospace;
+    font-size: .78rem;
+    color: var(--paper-dim);
+  }
+  footer a{ text-decoration: none; border-bottom: 1px dotted var(--brass-bright); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nameplate">
+  <div class="brand">◉ Morse Transmitter
+    <small>THE SIGNAL DESK — EST. 1844</small>
+  </div>
+  <nav>
+    <a href="#transmit">Transmit</a>
+    <a href="#signals">Operator Signals</a>
+  </nav>
+</header>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="lamp-housing"><div id="lamp"></div></div>
+    <div class="hero-copy">
+      <div class="eyebrow">Type it. Hear it. Send it.</div>
+      <h1>Every word has a rhythm of dots and dashes.</h1>
+      <p>Type any word below and the desk keys it out in real Morse code — audible tone and lamp flash together, timed the way an operator's hand would send it. Then work through the standard signals real telegraph and radio operators still use today, one press at a time.</p>
+    </div>
+  </section>
+
+  <!-- ===================== TRANSMIT A WORD ===================== -->
+  <section class="panel" id="transmit">
+    <div class="head">
+      <span class="tag">01</span>
+      <h2>Transmit a Word</h2>
+    </div>
+    <p class="lede">Enter any word or short phrase. The desk converts it to International Morse Code, then keys it out as sound and light at the speed you set.</p>
+
+    <div class="desk">
+      <div class="field-row">
+        <input id="wordInput" type="text" maxlength="60" placeholder="e.g. HELLO WORLD" autocomplete="off" aria-label="Word to transmit">
+        <button class="btn" id="sendWordBtn">▸ Transmit</button>
+        <button class="btn secondary" id="replayWordBtn" disabled>↻ Replay</button>
+      </div>
+
+      <div class="speed-row">
+        <label for="wpm">Speed</label>
+        <input type="range" id="wpm" min="5" max="30" value="18">
+        <span id="wpmLabel">18 WPM</span>
+      </div>
+
+      <div class="tape" id="morseOutput" aria-live="polite">
+        <span class="placeholder">Morse output will appear here…</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== OPERATOR SIGNALS ===================== -->
+  <section class="panel" id="signals">
+    <div class="head">
+      <span class="tag">02</span>
+      <h2>Operator Signals, in Order</h2>
+    </div>
+    <p class="lede">Press <strong>Send Next Signal</strong> to step through the standard vocabulary of the air — distress calls, Q-codes, prosigns, and shorthand — from the most urgent to the most casual. Each press sends the next one on the tape, plays its Morse, and explains what it means.</p>
+
+    <div class="console-controls">
+      <button class="btn" id="nextSignalBtn">▸ Send Next Signal</button>
+      <button class="btn secondary" id="resetSignalBtn">↺ Reset</button>
+      <span class="counter" id="signalCounter">Signal 0 of 19 — press to begin</span>
+    </div>
+
+    <div class="signal-console">
+      <div class="current-signal" id="currentSignal">
+        <div class="cat">Standing by</div>
+        <h3>—</h3>
+        <div class="code">···</div>
+        <p class="explain">Press "Send Next Signal" to key the first message on the list.</p>
+      </div>
+
+      <div class="ticker-tape" id="tickerTape"></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Built as a working desk, not a museum piece — try both sections above.</span>
+    <a href="https://easylandx.github.io" target="_blank" rel="noopener">easylandx.github.io ↗</a>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- Audio + lamp engine ---------------- */
+  let audioCtx = null;
+  function getCtx(){
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  const lamp = document.getElementById('lamp');
+  let playToken = 0; // increments to cancel in-flight lamp timers from a previous playback
+
+  // Build a schedule of {start, dur} tone windows (seconds, relative) from a morse string.
+  // morse string uses '.', '-', ' ' (element/letter gap) and '/' (word gap)
+  function buildSchedule(morse, wpm){
+    const unit = 1.2 / wpm; // seconds, standard PARIS timing
+    let t = 0;
+    const tones = [];
+    for(const ch of morse){
+      if(ch === '.'){ tones.push({start:t, dur:unit}); t += unit; t += unit; } // dot + intra-char gap
+      else if(ch === '-'){ tones.push({start:t, dur:unit*3}); t += unit*3; t += unit; }
+      else if(ch === ' '){ t += unit*2; } // total inter-letter gap = 3 units (1 already added)
+      else if(ch === '/'){ t += unit*6; } // total inter-word gap = 7 units
+    }
+    return { tones, total: t, unit };
+  }
+
+  function playSchedule(schedule, onDone){
+    const ctx = getCtx();
+    if(ctx.state === 'suspended') ctx.resume();
+    const myToken = ++playToken;
+    const now = ctx.currentTime + 0.05;
+
+    schedule.tones.forEach(({start, dur}) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 600;
+      gain.gain.setValueAtTime(0, now + start);
+      gain.gain.linearRampToValueAtTime(0.28, now + start + 0.005);
+      gain.gain.setValueAtTime(0.28, now + start + dur - 0.005);
+      gain.gain.linearRampToValueAtTime(0, now + start + dur);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now + start);
+      osc.stop(now + start + dur + 0.01);
+
+      setTimeout(() => { if(playToken === myToken) lamp.classList.add('on'); }, (start) * 1000);
+      setTimeout(() => { if(playToken === myToken) lamp.classList.remove('on'); }, (start + dur) * 1000);
+    });
+
+    setTimeout(() => {
+      if(playToken === myToken && onDone) onDone();
+    }, (schedule.total + 0.1) * 1000);
+  }
+
+  /* ---------------- Morse alphabet ---------------- */
+  const MORSE = {
+    A:'.-', B:'-...', C:'-.-.', D:'-..', E:'.', F:'..-.', G:'--.', H:'....',
+    I:'..', J:'.---', K:'-.-', L:'.-..', M:'--', N:'-.', O:'---', P:'.--.',
+    Q:'--.-', R:'.-.', S:'...', T:'-', U:'..-', V:'...-', W:'.--', X:'-..-',
+    Y:'-.--', Z:'--..',
+    '0':'-----','1':'.----','2':'..---','3':'...--','4':'....-',
+    '5':'.....','6':'-....','7':'--...','8':'---..','9':'----.',
+    '.':'.-.-.-', ',':'--..--', '?':'..--..', "'":'.----.', '!':'-.-.--',
+    '/':'-..-.', '(':'-.--.', ')':'-.--.-', '&':'.-...', ':':'---...',
+    ';':'-.-.-.', '=':'-...-', '+':'.-.-.', '-':'-....-', '_':'..--.-',
+    '"':'.-..-.', '$':'...-..-', '@':'.--.-.'
+  };
+
+  function textToMorse(text){
+    return text.toUpperCase().split(' ').map(word =>
+      word.split('').map(c => MORSE[c] || '').filter(Boolean).join(' ')
+    ).join(' / ');
+  }
+
+  function renderTapeStatic(morse){
+    const out = document.getElementById('morseOutput');
+    out.innerHTML = '';
+    let idx = 0;
+    for(const ch of morse){
+      const span = document.createElement('span');
+      span.className = 'sym';
+      span.dataset.i = idx++;
+      span.textContent = ch === ' ' ? '\u2002' : (ch === '/' ? '\u2003/\u2003' : ch);
+      out.appendChild(span);
+    }
+    return out;
+  }
+
+  function animateTapeAndPlay(morse, wpm, onDone){
+    const out = renderTapeStatic(morse);
+    const schedule = buildSchedule(morse, wpm);
+    const unit = schedule.unit;
+    let t = 0, i = 0;
+    for(const ch of morse){
+      const span = out.querySelector(`[data-i="${i}"]`);
+      const start = t;
+      if(ch === '.'){ setTimeout(()=>span && span.classList.add('hit'), start*1000); t += unit*2; }
+      else if(ch === '-'){ setTimeout(()=>span && span.classList.add('hit'), start*1000); t += unit*4; }
+      else if(ch === ' '){ t += unit*2; }
+      else if(ch === '/'){ t += unit*6; }
+      i++;
+    }
+    playSchedule(schedule, onDone);
+  }
+
+  /* ---------------- Section 1: word transmitter ---------------- */
+  const wordInput = document.getElementById('wordInput');
+  const sendWordBtn = document.getElementById('sendWordBtn');
+  const replayWordBtn = document.getElementById('replayWordBtn');
+  const wpmSlider = document.getElementById('wpm');
+  const wpmLabel = document.getElementById('wpmLabel');
+  let lastMorse = null;
+
+  wpmSlider.addEventListener('input', () => {
+    wpmLabel.textContent = wpmSlider.value + ' WPM';
+  });
+
+  function transmitWord(){
+    const text = wordInput.value.trim();
+    if(!text) return;
+    const morse = textToMorse(text);
+    lastMorse = morse;
+    sendWordBtn.disabled = true;
+    replayWordBtn.disabled = true;
+    const wpm = parseInt(wpmSlider.value, 10);
+    animateTapeAndPlay(morse, wpm, () => {
+      sendWordBtn.disabled = false;
+      replayWordBtn.disabled = false;
+    });
+  }
+
+  sendWordBtn.addEventListener('click', transmitWord);
+  wordInput.addEventListener('keydown', e => { if(e.key === 'Enter') transmitWord(); });
+  replayWordBtn.addEventListener('click', () => {
+    if(!lastMorse) return;
+    sendWordBtn.disabled = true;
+    replayWordBtn.disabled = true;
+    const wpm = parseInt(wpmSlider.value, 10);
+    animateTapeAndPlay(lastMorse, wpm, () => {
+      sendWordBtn.disabled = false;
+      replayWordBtn.disabled = false;
+    });
+  });
+
+  /* ---------------- Section 2: operator signals, sequential ---------------- */
+  const SIGNALS = [
+    { cat:'Emergency & Distress', label:'SOS', morse:'... --- ...',
+      explain:'The universal distress call. On the air it is not sent as three separate letters with gaps between them — it is keyed as one unbroken string of nine elements, ...---..., so it is unmistakable even through noise.' },
+    { cat:'Emergency & Distress', label:'CQ', morse:'-.-. --.-',
+      explain:'"Calling any station." An open call to whoever is listening, used to start a conversation with an unspecified operator rather than a specific one.' },
+
+    { cat:'Q-Code', label:'QTH', morse:'--.- - ....',
+      explain:'Asked as a question, "QTH?" means "What is your location?" Sent as a statement, it means "My location is ______."' },
+    { cat:'Q-Code', label:'QSL', morse:'--.- ... .-..',
+      explain:'As a question, "Can you acknowledge receipt?" As a statement, "I acknowledge receipt" — the message got through.' },
+    { cat:'Q-Code', label:'QRL', morse:'--.- .-. .-..',
+      explain:'As a question, "Are you busy?" As a statement, "I am busy, please do not disturb."' },
+    { cat:'Q-Code', label:'QRS', morse:'--.- .-. ...',
+      explain:'As a question, "Can you send slower?" As a statement, an instruction: "Send more slowly."' },
+    { cat:'Q-Code', label:'QSY', morse:'--.- ... -.--',
+      explain:'As a question, "Should I change frequency?" As a statement, an instruction to change to another frequency.' },
+    { cat:'Q-Code', label:'QRT', morse:'--.- .-. -',
+      explain:'As a question, "Should I stop transmitting?" As a statement, "I am closing my station" — going off the air.' },
+
+    { cat:'Prosign', label:'K', morse:'-.-',
+      explain:'"Over." An invitation for any station to transmit — the floor is open to whoever wants to reply.' },
+    { cat:'Prosign', label:'KN', morse:'-.- -.',
+      explain:'"Over, to you only." Unlike plain K, this invites just the specific station being spoken with to reply, closing the channel to anyone else.' },
+    { cat:'Prosign', label:'AS', morse:'.- ...',
+      explain:'"Stand by" or "wait." Used to pause a conversation briefly without ending it.' },
+    { cat:'Prosign', label:'AR', morse:'.- .-.',
+      explain:'"End of message." Marks the close of a message, though the contact itself may continue.' },
+    { cat:'Prosign', label:'SK', morse:'... -.-',
+      explain:'"End of contact." Sent when the conversation itself is finished and the operator is signing off completely.' },
+    { cat:'Prosign', label:'HH', morse:'........',
+      explain:'The error signal — eight dots run together. It tells the receiving operator: "I made a mistake, let me re-send the last word."' },
+
+    { cat:'Abbreviation', label:'TKS', morse:'- -.- ...',
+      explain:'Shorthand for "thanks," used to keep the exchange quick. Some operators send the near-identical TNX instead — both mean the same thing.' },
+    { cat:'Abbreviation', label:'CUL', morse:'-.-. ..- .-..',
+      explain:'Shorthand for "see you later" — a casual sign-off between exchanges.' },
+    { cat:'Abbreviation', label:'RPT', morse:'.-. .--. -',
+      explain:'Shorthand for "repeat" or "report," asking for something to be sent again or for a status update.' },
+    { cat:'Abbreviation', label:'73', morse:'--... ...--',
+      explain:'"Best regards." One of the oldest and most common sign-offs in radio and telegraph tradition.' },
+    { cat:'Abbreviation', label:'88', morse:'---.. ---..',
+      explain:'"Love and kisses." A warmer, more personal sign-off than 73, traditionally used between close friends or family.' }
+  ];
+
+  const nextSignalBtn = document.getElementById('nextSignalBtn');
+  const resetSignalBtn = document.getElementById('resetSignalBtn');
+  const signalCounter = document.getElementById('signalCounter');
+  const currentSignal = document.getElementById('currentSignal');
+  const tickerTape = document.getElementById('tickerTape');
+
+  let signalIndex = -1; // -1 = not started
+
+  function renderTicker(){
+    tickerTape.innerHTML = '';
+    SIGNALS.forEach((s, i) => {
+      const row = document.createElement('div');
+      row.className = 'entry' + (i < signalIndex ? ' done' : '') + (i === signalIndex ? ' active' : '');
+      row.innerHTML = `<span>${s.cat} — ${s.label}</span><span class="code">${s.morse}</span>`;
+      tickerTape.appendChild(row);
+    });
+    if(signalIndex >= 0){
+      const activeRow = tickerTape.querySelector('.entry.active');
+      if(activeRow) activeRow.scrollIntoView({ block:'nearest' });
+    }
+  }
+
+  function showSignal(i){
+    const s = SIGNALS[i];
+    currentSignal.innerHTML = `
+      <div class="cat">${s.cat}</div>
+      <h3>${s.label}</h3>
+      <div class="code">${s.morse}</div>
+      <p class="explain">${s.explain}</p>
+    `;
+    signalCounter.textContent = `Signal ${i+1} of ${SIGNALS.length}`;
+    renderTicker();
+  }
+
+  nextSignalBtn.addEventListener('click', () => {
+    if(signalIndex >= SIGNALS.length - 1) return; // already at the end
+    signalIndex++;
+    showSignal(signalIndex);
+    nextSignalBtn.disabled = true;
+    const schedule = buildSchedule(SIGNALS[signalIndex].morse, 18);
+    playSchedule(schedule, () => {
+      nextSignalBtn.disabled = false;
+      if(signalIndex >= SIGNALS.length - 1){
+        nextSignalBtn.textContent = '— End of List —';
+        nextSignalBtn.disabled = true;
+      }
+    });
+  });
+
+  resetSignalBtn.addEventListener('click', () => {
+    signalIndex = -1;
+    nextSignalBtn.textContent = '▸ Send Next Signal';
+    nextSignalBtn.disabled = false;
+    signalCounter.textContent = `Signal 0 of ${SIGNALS.length} — press to begin`;
+    currentSignal.innerHTML = `
+      <div class="cat">Standing by</div>
+      <h3>—</h3>
+      <div class="code">···</div>
+      <p class="explain">Press "Send Next Signal" to key the first message on the list.</p>
+    `;
+    renderTicker();
+  });
+
+  renderTicker();
+})();
+</script>
+
+</body>
+</html>
