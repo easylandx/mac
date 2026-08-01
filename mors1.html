@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Morse Code Transmitter | EasyLandX</title>
+
+<style>
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:#0d1117;
+    color:white;
+    margin:0;
+    padding:30px;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+}
+
+h1{
+    text-align:center;
+}
+
+textarea{
+    width:100%;
+    height:120px;
+    font-size:18px;
+    padding:10px;
+    border-radius:8px;
+}
+
+button{
+    margin:8px;
+    padding:12px 22px;
+    font-size:16px;
+    cursor:pointer;
+    border:none;
+    border-radius:8px;
+    background:#238636;
+    color:white;
+}
+
+button:hover{
+    background:#2ea043;
+}
+
+#morse{
+    font-size:28px;
+    margin-top:20px;
+    letter-spacing:4px;
+    word-wrap:break-word;
+    color:#58a6ff;
+}
+
+#explanation{
+    margin-top:20px;
+    background:#161b22;
+    padding:20px;
+    border-radius:10px;
+}
+
+footer{
+    margin-top:40px;
+    text-align:center;
+}
+
+a{
+    color:#58a6ff;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>📡 Morse Code Transmitter</h1>
+
+<p>
+Type any message, convert it to Morse code, and hear it transmitted.
+</p>
+
+<textarea id="text">SOS</textarea>
+
+<br>
+
+<button onclick="playCustom()">Transmit Text</button>
+<button onclick="nextSignal()">Next Standard Signal</button>
+
+<h2>Morse</h2>
+
+<div id="morse"></div>
+
+<div id="explanation"></div>
+
+<footer>
+
+Made with ❤️ by
+<a href="https://easylandx.github.io" target="_blank">
+EasyLandX
+</a>
+
+</footer>
+
+</div>
+
+<script>
+
+const MORSE = {
+
+"A":".-",
+"B":"-...",
+"C":"-.-.",
+"D":"-..",
+"E":".",
+"F":"..-.",
+"G":"--.",
+"H":"....",
+"I":"..",
+"J":".---",
+"K":"-.-",
+"L":".-..",
+"M":"--",
+"N":"-.",
+"O":"---",
+"P":".--.",
+"Q":"--.-",
+"R":".-.",
+"S":"...",
+"T":"-",
+"U":"..-",
+"V":"...-",
+"W":".--",
+"X":"-..-",
+"Y":"-.--",
+"Z":"--..",
+
+"0":"-----",
+"1":".----",
+"2":"..---",
+"3":"...--",
+"4":"....-",
+"5":".....",
+"6":"-....",
+"7":"--...",
+"8":"---..",
+"9":"----.",
+
+".":".-.-.-",
+",":"--..--",
+"?":"..--..",
+"/":"-..-.",
+"-":"-....-",
+"(":"-.--.",
+")":"-.--.-",
+":":"---...",
+";":"-.-.-.",
+"'":".----.",
+'"':".-..-.",
+"!":"-.-.--",
+"&":".-...",
+"=":"-...-",
+"+":".-.-.",
+"_":"..--.-",
+"$":"...-..-",
+"@":".--.-.",
+" ":"/"
+};
+
+const signals=[
+
+{
+text:"SOS",
+explanation:"International distress signal requesting immediate emergency assistance."
+},
+
+{
+text:"CQ",
+explanation:"General call to any station."
+},
+
+{
+text:"QTH",
+explanation:"What is your location? / My location is..."
+},
+
+{
+text:"QSL",
+explanation:"Message received and acknowledged."
+},
+
+{
+text:"QRL",
+explanation:"Are you busy? / I am busy."
+},
+
+{
+text:"QRS",
+explanation:"Please send more slowly."
+},
+
+{
+text:"QSY",
+explanation:"Change to another frequency."
+},
+
+{
+text:"QRT",
+explanation:"I am closing my station."
+},
+
+{
+text:"K",
+explanation:"Over. Anyone may reply."
+},
+
+{
+text:"KN",
+explanation:"Over to you only."
+},
+
+{
+text:"AS",
+explanation:"Stand by."
+},
+
+{
+text:"AR",
+explanation:"End of message."
+},
+
+{
+text:"SK",
+explanation:"End of contact."
+},
+
+{
+text:"HH",
+explanation:"Transmission error. Repeating previous word."
+},
+
+{
+text:"TKS",
+explanation:"Thanks."
+},
+
+{
+text:"TNX",
+explanation:"Thanks."
+},
+
+{
+text:"CUL",
+explanation:"See you later."
+},
+
+{
+text:"RPT",
+explanation:"Repeat or report."
+},
+
+{
+text:"73",
+explanation:"Best regards."
+},
+
+{
+text:"88",
+explanation:"Love and kisses."
+}
+
+];
+
+let current=-1;
+
+const ctx=new(window.AudioContext||window.webkitAudioContext)();
+
+function beep(duration){
+
+return new Promise(resolve=>{
+
+const osc=ctx.createOscillator();
+const gain=ctx.createGain();
+
+osc.frequency.value=650;
+
+osc.connect(gain);
+gain.connect(ctx.destination);
+
+gain.gain.value=.2;
+
+osc.start();
+
+setTimeout(()=>{
+osc.stop();
+resolve();
+},duration);
+
+});
+
+}
+
+function sleep(ms){
+return new Promise(r=>setTimeout(r,ms));
+}
+
+async function playMorse(code){
+
+document.getElementById("morse").textContent=code;
+
+const unit=120;
+
+for(let ch of code){
+
+if(ch==="."){
+
+await beep(unit);
+await sleep(unit);
+
+}
+
+else if(ch==="-" ){
+
+await beep(unit*3);
+await sleep(unit);
+
+}
+
+else if(ch===" "){
+
+await sleep(unit*3);
+
+}
+
+else if(ch==="/"){
+
+await sleep(unit*7);
+
+}
+
+}
+
+}
+
+function textToMorse(text){
+
+return text.toUpperCase().split("").map(c=>MORSE[c]||"").join(" ");
+
+}
+
+async function playCustom(){
+
+const text=document.getElementById("text").value;
+
+const morse=textToMorse(text);
+
+document.getElementById("morse").textContent=morse;
+
+document.getElementById("explanation").innerHTML=
+"<h3>"+text+"</h3>";
+
+await playMorse(morse);
+
+}
+
+async function nextSignal(){
+
+current++;
+
+if(current>=signals.length)
+current=0;
+
+const s=signals[current];
+
+document.getElementById("text").value=s.text;
+
+document.getElementById("explanation").innerHTML=
+"<h2>"+s.text+"</h2><p>"+s.explanation+"</p>";
+
+const morse=textToMorse(s.text);
+
+await playMorse(morse);
+
+}
+
+</script>
+
+</body>
+</html>
