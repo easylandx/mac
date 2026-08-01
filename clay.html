@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Clay Tablet — Cuneiform Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Cuneiform&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #16130f;
+    --bg-2: #0f0d0a;
+    --clay: #bd8757;
+    --clay-light: #d3a374;
+    --clay-dark: #8c5a34;
+    --clay-shadow: #4a2f1c;
+    --ink: #33200f;
+    --bone: #ece1cd;
+    --bone-dim: #a99a80;
+    --lapis: #3d6ea1;
+    --lapis-bright: #6fa3d6;
+    --ochre: #c68b3a;
+    --radius-tablet: 42% 40% 44% 38% / 12% 14% 13% 15%;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: radial-gradient(ellipse at 50% -10%, #241d15 0%, var(--bg) 45%, var(--bg-2) 100%);
+    color: var(--bone);
+    font-family: 'Inter', sans-serif;
+    min-height: 100%;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 64px 20px 40px;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    margin-bottom: 14px;
+  }
+
+  h1 {
+    font-family: 'Spectral', serif;
+    font-weight: 600;
+    font-size: clamp(2.4rem, 6vw, 3.6rem);
+    margin: 0 0 14px;
+    color: var(--bone);
+    letter-spacing: 0.01em;
+  }
+
+  .subhead {
+    max-width: 560px;
+    text-align: center;
+    color: var(--bone-dim);
+    font-size: 16px;
+    line-height: 1.55;
+    margin-bottom: 42px;
+  }
+
+  .panel {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 46px;
+  }
+
+  .row {
+    display: flex;
+    gap: 10px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    background: #1d1812;
+    border: 1px solid #3a2f22;
+    color: var(--bone);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    padding: 13px 16px;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  input[type="text"]::placeholder { color: #6b5d49; }
+  input[type="text"]:focus {
+    border-color: var(--lapis-bright);
+  }
+
+  button {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    padding: 13px 20px;
+    transition: transform 0.12s ease, filter 0.15s ease;
+    white-space: nowrap;
+  }
+  button:active { transform: translateY(1px) scale(0.98); }
+  button:focus-visible { outline: 2px solid var(--lapis-bright); outline-offset: 2px; }
+
+  .btn-primary {
+    background: linear-gradient(180deg, var(--ochre), #a86e2a);
+    color: #1c1208;
+    font-weight: 600;
+  }
+  .btn-primary:hover { filter: brightness(1.08); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--lapis-bright);
+    border: 1px solid var(--lapis);
+  }
+  .btn-secondary:hover { background: rgba(111,163,214,0.08); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--bone-dim);
+    border: 1px solid #3a2f22;
+    font-size: 11px;
+    padding: 9px 14px;
+  }
+  .btn-ghost:hover { color: var(--bone); border-color: #5a4a34; }
+
+  .ledger-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-top: 1px solid #2a2219;
+    padding-top: 14px;
+    flex-wrap: wrap;
+  }
+
+  .ledger-info {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--bone-dim);
+    line-height: 1.5;
+  }
+  .ledger-info b { color: var(--ochre); }
+
+  /* --- the tablet itself --- */
+  .stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 30px;
+  }
+
+  .tablet-wrap {
+    position: relative;
+    filter: drop-shadow(0 30px 40px rgba(0,0,0,0.55));
+  }
+
+  .tablet {
+    position: relative;
+    width: min(640px, 86vw);
+    min-height: 300px;
+    padding: 46px 42px 40px;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 46px),
+      radial-gradient(120% 140% at 30% 20%, var(--clay-light) 0%, var(--clay) 55%, var(--clay-dark) 100%);
+    border-radius: var(--radius-tablet);
+    box-shadow:
+      inset 0 2px 6px rgba(255,235,210,0.35),
+      inset 0 -18px 30px rgba(40,20,8,0.45),
+      inset 12px 0 24px rgba(40,20,8,0.18),
+      inset -12px 0 24px rgba(40,20,8,0.18);
+    transform: rotate(-1.1deg);
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 5px 3px;
+    overflow: hidden;
+  }
+
+  .tablet::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.5;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0.3, 0 0 0 0 0.2, 0 0 0 0 0.12, 0 0 0 0.35 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    pointer-events: none;
+  }
+
+  .tablet::after {
+    content: "";
+    position: absolute;
+    top: 18px; left: 24px; right: 24px;
+    height: 1px;
+    background: rgba(40,20,8,0.28);
+    box-shadow: 0 24px 0 -0.5px rgba(40,20,8,0.16);
+    pointer-events: none;
+  }
+
+  .placeholder-glyph {
+    font-family: 'JetBrains Mono', monospace;
+    color: rgba(40,20,8,0.4);
+    font-size: 14px;
+    letter-spacing: 0.05em;
+  }
+
+  .sign {
+    position: relative;
+    font-family: 'Noto Sans Cuneiform', serif;
+    font-size: 30px;
+    line-height: 1;
+    color: var(--ink);
+    text-shadow:
+      1px 1px 0 rgba(255,240,220,0.4),
+      -1px -1px 1.5px rgba(0,0,0,0.55);
+    opacity: 0;
+    transform: scale(2.2) translateY(-10px);
+    animation: stamp 0.36s ease-out forwards;
+  }
+
+  .gap { width: 14px; flex-shrink: 0; }
+
+  @keyframes stamp {
+    0%   { opacity: 0; transform: scale(2.2) translateY(-14px) rotate(6deg); }
+    55%  { opacity: 1; transform: scale(0.82) translateY(1px) rotate(-2deg); }
+    100% { opacity: 1; transform: scale(1) translateY(0) rotate(0deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sign { animation: none; opacity: 1; transform: none; }
+  }
+
+  .transliteration {
+    max-width: 640px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--bone-dim);
+    min-height: 18px;
+    padding: 0 16px;
+  }
+  .transliteration span { color: var(--ochre); }
+
+  .caption-note {
+    max-width: 480px;
+    text-align: center;
+    font-size: 11.5px;
+    color: #6b5d49;
+    line-height: 1.5;
+    margin-top: -6px;
+  }
+
+  footer {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid var(--lapis);
+    color: var(--lapis-bright);
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 13px 22px;
+    border-radius: 8px;
+    transition: background 0.15s ease, transform 0.12s ease;
+  }
+  .link-btn:hover { background: rgba(111,163,214,0.1); transform: translateY(-1px); }
+
+  @media (max-width: 520px) {
+    .row { flex-direction: column; }
+    .tablet { padding: 34px 24px 30px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="eyebrow">SUMER · c. 3200 BCE — YOUR DESK, TODAY</div>
+  <h1>The Clay Tablet</h1>
+  <p class="subhead">
+    Most cuneiform wasn't poetry — it was paperwork. Type anything below and
+    watch it get pressed into wet clay, sign by sign, the way a scribe once
+    logged bricks, complaints, and gossip.
+  </p>
+
+  <div class="panel">
+    <div class="row">
+      <input id="messageInput" type="text" maxlength="140" placeholder="200 bricks carried by Unnubum…">
+      <button class="btn-primary" onclick="inscribeInput()">Press Into Clay</button>
+    </div>
+
+    <div class="ledger-row">
+      <div class="ledger-info">
+        <b>Ledger entries</b> — real tablet genres, replayed in order<br>
+        <span id="entryLabel">Entry 1 of 5 — Receipts &amp; Business Invoices</span>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-ghost" onclick="clearTablet()">Clear Tablet</button>
+        <button class="btn-secondary" onclick="nextLedgerEntry()">Stamp Next Entry →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="tablet-wrap">
+      <div class="tablet" id="tablet">
+        <span class="placeholder-glyph">— unmarked clay, awaiting the stylus —</span>
+      </div>
+    </div>
+    <div class="transliteration" id="translit"></div>
+    <div class="caption-note">
+      Each letter is stamped as a real Unicode cuneiform sign (Noto Sans Cuneiform) —
+      a playful substitution cipher, not a scholarly transliteration.
+    </div>
+  </div>
+
+  <footer>
+    <a class="link-btn" href="https://easylandx.github.com" target="_blank" rel="noopener">
+      Visit easylandx →
+    </a>
+  </footer>
+
+<script>
+  const tablet = document.getElementById('tablet');
+  const translit = document.getElementById('translit');
+  const entryLabel = document.getElementById('entryLabel');
+  const input = document.getElementById('messageInput');
+
+  const ledgerEntries = [
+    { tag: "Ledger", title: "Receipts & Business Invoices",
+      text: "200 bricks carried by Unnubum. 200 carried by Usatum. 13 men carried bricks." },
+    { tag: "Letter", title: "Angry Business Letter",
+      text: "Ea-nasir, your copper ingots were substandard and you insulted my messenger." },
+    { tag: "Contract", title: "Legal Contract & Bureaucracy",
+      text: "This field is sold. This slave is purchased. Let no man dispute it hereafter." },
+    { tag: "Homework", title: "Scribe School Homework",
+      text: "The teacher writes one line. The student copies it, and copies it again." },
+    { tag: "Gossip", title: "Neighborhood Gossip",
+      text: "Did you see the new addition on their house? Who do they think they are?" }
+  ];
+
+  let entryIndex = -1; // will become 0 on first click, so label above shows "Entry 1"
+
+  function charToCuneiform(ch) {
+    const lower = ch.toLowerCase();
+    if (lower === ' ') return null;
+    let code;
+    if (/[a-z]/.test(lower)) {
+      code = 0x12000 + (lower.charCodeAt(0) - 97) * 7;
+    } else if (/[0-9]/.test(lower)) {
+      code = 0x12400 + parseInt(lower, 10) * 3;
+    } else {
+      code = 0x12000 + (ch.charCodeAt(0) % 80) * 7;
+    }
+    return String.fromCodePoint(code);
+  }
+
+  function stampText(text) {
+    tablet.innerHTML = '';
+    translit.innerHTML = '';
+    if (!text || !text.trim()) {
+      const p = document.createElement('span');
+      p.className = 'placeholder-glyph';
+      p.textContent = '— unmarked clay, awaiting the stylus —';
+      tablet.appendChild(p);
+      return;
+    }
+
+    const chars = text.split('').slice(0, 140);
+    let delay = 0;
+    chars.forEach((ch) => {
+      if (ch === ' ') {
+        const gap = document.createElement('span');
+        gap.className = 'gap';
+        tablet.appendChild(gap);
+      } else {
+        const sign = document.createElement('span');
+        sign.className = 'sign';
+        sign.textContent = charToCuneiform(ch);
+        sign.style.animationDelay = (delay * 0.035) + 's';
+        tablet.appendChild(sign);
+        delay++;
+      }
+    });
+
+    translit.innerHTML = 'reads as: <span>"' + text + '"</span>';
+  }
+
+  function inscribeInput() {
+    const val = input.value.trim();
+    stampText(val);
+  }
+
+  function clearTablet() {
+    input.value = '';
+    stampText('');
+  }
+
+  function nextLedgerEntry() {
+    entryIndex = (entryIndex + 1) % ledgerEntries.length;
+    const entry = ledgerEntries[entryIndex];
+    entryLabel.textContent = 'Entry ' + (entryIndex + 1) + ' of ' + ledgerEntries.length + ' — ' + entry.title;
+    input.value = entry.text;
+    stampText(entry.text);
+  }
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') inscribeInput();
+  });
+</script>
+
+</body>
+</html>
