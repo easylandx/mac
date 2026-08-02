@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KJFK ATIS — NYC Radios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#050807;
+    --bg-panel:#0a1210;
+    --bg-panel-2:#0d1a17;
+    --hairline:#173029;
+    --green:#3ee88a;
+    --green-dim:#1c5c42;
+    --green-bright:#8bffc4;
+    --amber:#ffb238;
+    --amber-dim:#7a5a1e;
+    --text:#cfe8de;
+    --text-dim:#6f9488;
+    --text-faint:#3f5b52;
+    --red:#ff5d5d;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(62,232,138,0.06), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  ::selection{ background:var(--green-dim); color:var(--green-bright); }
+
+  a{ color:inherit; }
+
+  /* scanline / crt vignette overlay */
+  .crt-overlay{
+    pointer-events:none;
+    position:fixed; inset:0; z-index:50;
+    background:
+      repeating-linear-gradient(to bottom, rgba(0,0,0,0.08) 0px, rgba(0,0,0,0.08) 1px, transparent 1px, transparent 3px),
+      radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+    mix-blend-mode:multiply;
+    opacity:0.55;
+  }
+
+  header{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    padding:22px 28px 14px;
+    border-bottom:1px solid var(--hairline);
+    flex-wrap:wrap; gap:12px;
+  }
+  .brand{ display:flex; flex-direction:column; gap:4px; }
+  .brand .eyebrow{
+    font-family:'Space Mono', monospace;
+    font-size:11px; letter-spacing:0.35em; text-transform:uppercase;
+    color:var(--green); opacity:0.85;
+  }
+  .brand h1{
+    margin:0; font-family:'IBM Plex Sans Condensed', sans-serif;
+    font-weight:600; font-size:clamp(28px,4vw,44px);
+    letter-spacing:-0.01em; color:#eafff2;
+  }
+  .brand h1 span{ color:var(--green); }
+
+  .clockbox{
+    font-family:'Space Mono', monospace; text-align:right; font-size:12px;
+    color:var(--text-dim); line-height:1.6;
+  }
+  .clockbox .zulu{ font-size:20px; color:var(--green-bright); letter-spacing:0.05em; }
+  .clockbox .zulu span{ font-size:11px; color:var(--text-dim); margin-left:4px; }
+
+  main{
+    display:grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap:0;
+    border-bottom:1px solid var(--hairline);
+  }
+  @media (max-width: 900px){
+    main{ grid-template-columns: 1fr; }
+  }
+
+  /* ---------- RADAR SCOPE ---------- */
+  .scope-wrap{
+    position:relative;
+    border-right:1px solid var(--hairline);
+    background:
+      radial-gradient(circle at 50% 50%, rgba(62,232,138,0.05), transparent 65%),
+      #061009;
+    min-height:520px;
+  }
+  .scope-label{
+    position:absolute; top:16px; left:20px; z-index:5;
+    font-family:'Space Mono', monospace; font-size:11px; letter-spacing:0.2em;
+    color:var(--text-dim); text-transform:uppercase;
+  }
+  .scope-label b{ color:var(--green); }
+  .scope-legend{
+    position:absolute; bottom:14px; left:20px; z-index:5;
+    font-family:'Space Mono', monospace; font-size:10px; color:var(--text-faint);
+    letter-spacing:0.05em; line-height:1.7;
+  }
+  .scope-legend .dot{ display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:6px; }
+  canvas{ display:block; width:100%; height:100%; }
+
+  /* ---------- SIDE PANEL ---------- */
+  .side{
+    display:flex; flex-direction:column;
+  }
+  .panel{
+    padding:22px 26px;
+    border-bottom:1px solid var(--hairline);
+  }
+  .panel-title{
+    font-family:'Space Mono', monospace; font-size:11px; letter-spacing:0.25em;
+    text-transform:uppercase; color:var(--text-dim); margin-bottom:14px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .live-dot{
+    width:7px; height:7px; border-radius:50%; background:var(--red);
+    box-shadow:0 0 8px var(--red);
+    animation:pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.25;} }
+
+  /* ATIS readout strip */
+  .atis-card{
+    background:var(--bg-panel);
+    border:1px solid var(--hairline);
+    border-radius:4px;
+    padding:18px 20px;
+    font-family:'Space Mono', monospace;
+  }
+  .atis-top{
+    display:flex; justify-content:space-between; align-items:baseline;
+    border-bottom:1px dashed var(--hairline); padding-bottom:10px; margin-bottom:12px;
+  }
+  .atis-info-letter{
+    font-size:34px; color:var(--amber); font-weight:700; line-height:1;
+  }
+  .atis-info-letter small{ font-size:11px; color:var(--text-dim); display:block; font-family:'IBM Plex Sans'; margin-top:4px; font-weight:400; }
+  .atis-freq{ text-align:right; font-size:13px; color:var(--text); }
+  .atis-freq small{ display:block; color:var(--text-dim); font-size:10px; }
+  .atis-line{ font-size:13px; line-height:1.9; color:var(--text); min-height:19px; }
+  .atis-line .k{ color:var(--green); margin-right:8px; }
+  .cursor{ display:inline-block; width:7px; height:14px; background:var(--green-bright); vertical-align:middle; animation:blink 1s step-end infinite; margin-left:2px;}
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  /* audio */
+  .audio-frame-wrap{
+    border:1px solid var(--hairline);
+    border-radius:4px;
+    overflow:hidden;
+    background:#000;
+    height:90px;
+    position:relative;
+  }
+  .audio-frame-wrap iframe{
+    width:100%; height:100%; border:0; filter:invert(0.9) hue-rotate(140deg) contrast(1.05);
+  }
+  .tune-btn{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; margin-top:12px; padding:14px 18px;
+    background:var(--green); color:#04150c; border:none; border-radius:3px;
+    font-family:'Space Mono', monospace; font-weight:700; font-size:13px; letter-spacing:0.12em;
+    text-transform:uppercase; cursor:pointer; text-decoration:none;
+    transition:transform .15s ease, box-shadow .15s ease;
+    box-shadow:0 0 0 rgba(62,232,138,0);
+  }
+  .tune-btn:hover{ transform:translateY(-1px); box-shadow:0 6px 22px rgba(62,232,138,0.25); background:var(--green-bright); }
+  .tune-note{ font-size:11px; color:var(--text-faint); margin-top:9px; line-height:1.6; }
+
+  /* strip data grid */
+  .datagrid{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px 16px;
+    margin-top:14px;
+  }
+  .datacell{
+    background:var(--bg-panel-2); border:1px solid var(--hairline); border-radius:3px;
+    padding:9px 11px;
+  }
+  .datacell .lbl{ font-family:'Space Mono',monospace; font-size:9.5px; letter-spacing:0.14em; color:var(--text-faint); text-transform:uppercase; }
+  .datacell .val{ font-family:'Space Mono',monospace; font-size:15px; color:var(--green-bright); margin-top:3px; }
+
+  /* traffic list */
+  .traffic-panel{ flex:1; }
+  .traffic-list{ display:flex; flex-direction:column; gap:0; font-family:'Space Mono', monospace; font-size:12px; }
+  .traffic-row{
+    display:grid; grid-template-columns: 74px 1fr 60px 56px; gap:10px;
+    padding:9px 4px; border-bottom:1px solid var(--hairline); align-items:center;
+    color:var(--text-dim);
+  }
+  .traffic-row .cs{ color:var(--green-bright); font-weight:700; }
+  .traffic-row .arr{ color:var(--amber); }
+  .traffic-row .dep{ color:#5fb8ff; }
+  .traffic-head{
+    display:grid; grid-template-columns: 74px 1fr 60px 56px; gap:10px;
+    padding:0 4px 8px; font-size:10px; letter-spacing:0.1em; color:var(--text-faint); text-transform:uppercase;
+    border-bottom:1px solid var(--hairline);
+    font-family:'Space Mono', monospace;
+  }
+
+  /* footer CTA */
+  footer{
+    display:flex; align-items:center; justify-content:space-between; gap:20px;
+    padding:24px 28px; flex-wrap:wrap;
+  }
+  .footer-copy{ font-size:12.5px; color:var(--text-dim); max-width:520px; line-height:1.6; }
+  .footer-copy b{ color:var(--text); }
+  .easyland-btn{
+    display:inline-flex; align-items:center; gap:12px;
+    padding:16px 26px;
+    background:linear-gradient(135deg, var(--amber), #ff8a3d);
+    color:#1a0f00; text-decoration:none;
+    border-radius:4px; font-family:'IBM Plex Sans Condensed', sans-serif;
+    font-weight:600; font-size:16px; letter-spacing:0.02em;
+    box-shadow:0 8px 26px rgba(255,178,56,0.18);
+    transition:transform .15s ease, box-shadow .15s ease;
+    white-space:nowrap;
+  }
+  .easyland-btn:hover{ transform:translateY(-2px); box-shadow:0 12px 32px rgba(255,178,56,0.3); }
+  .easyland-btn svg{ width:18px; height:18px; }
+
+  .scanline-sweep{
+    position:absolute; inset:0; pointer-events:none;
+  }
+</style>
+</head>
+<body>
+
+<div class="crt-overlay"></div>
+
+<header>
+  <div class="brand">
+    <span class="eyebrow">NYC Radios · Approach &amp; Tower Network</span>
+    <h1>KJFK <span>ATIS</span> Simulator</h1>
+  </div>
+  <div class="clockbox">
+    <div class="zulu" id="zuluClock">--:--:--<span>Z</span></div>
+    <div>John F. Kennedy Intl · KJFK / JFK</div>
+  </div>
+</header>
+
+<main>
+  <!-- RADAR SCOPE -->
+  <div class="scope-wrap">
+    <div class="scope-label">SCOPE <b>N90 · TRACON</b> — RANGE 20NM — KJFK CTR</div>
+    <canvas id="scope"></canvas>
+    <div class="scope-legend">
+      <div><span class="dot" style="background:var(--amber)"></span>ARRIVAL</div>
+      <div><span class="dot" style="background:#5fb8ff"></span>DEPARTURE</div>
+      <div><span class="dot" style="background:var(--green-dim)"></span>RANGE RING (5NM)</div>
+    </div>
+  </div>
+
+  <!-- SIDE PANELS -->
+  <div class="side">
+
+    <!-- AUDIO -->
+    <div class="panel">
+      <div class="panel-title"><span class="live-dot"></span>Live Feed — KJFK ATIS</div>
+      <div class="audio-frame-wrap" id="audioFrameWrap">
+        <iframe id="atisFrame"
+          src="https://www.liveatc.net/hlisten.php?mount=kjfk_atis&icao=kjfk"
+          allow="autoplay"
+          title="KJFK ATIS live audio player"></iframe>
+      </div>
+      <button class="tune-btn" id="tuneBtn">▶ Tune In — KJFK ATIS Live</button>
+      <div class="tune-note">Streaming from LiveATC.net. Browsers require one tap to start audio on an embedded third-party player — tap above and it plays instantly in a live window.</div>
+    </div>
+
+    <!-- ATIS READOUT -->
+    <div class="panel">
+      <div class="panel-title">Simulated Information Readout</div>
+      <div class="atis-card">
+        <div class="atis-top">
+          <div class="atis-info-letter" id="infoLetter">X<small>INFORMATION</small></div>
+          <div class="atis-freq">128.725 <small>ATIS MHz</small></div>
+        </div>
+        <div class="atis-line"><span class="k">TIME</span><span id="atisTime">1850Z</span></div>
+        <div class="atis-line"><span class="k">WIND</span><span id="atisWind">220 AT 14</span></div>
+        <div class="atis-line"><span class="k">VIS</span><span id="atisVis">10SM</span></div>
+        <div class="atis-line"><span class="k">SKY</span><span id="atisSky">FEW045 SCT250</span></div>
+        <div class="atis-line"><span class="k">TEMP/DEW</span><span id="atisTemp">24/17</span></div>
+        <div class="atis-line"><span class="k">ALTIM</span><span id="atisAlt">29.92</span></div>
+        <div class="atis-line"><span class="k">RWY</span><span id="atisRwy">APCH 22L · DEP 22R</span><span class="cursor"></span></div>
+        <div class="datagrid">
+          <div class="datacell"><div class="lbl">Arr Rate</div><div class="val" id="arrRate">40/hr</div></div>
+          <div class="datacell"><div class="lbl">ILS</div><div class="val" id="ilsStatus">IN USE</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRAFFIC -->
+    <div class="panel traffic-panel">
+      <div class="panel-title">Traffic In Scope</div>
+      <div class="traffic-head">
+        <div>Call</div><div>Route</div><div>ALT</div><div>GS</div>
+      </div>
+      <div class="traffic-list" id="trafficList"></div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="footer-copy">
+    <b>NYC Radios</b> is a fan-made ATC visualization tool. Live audio courtesy of LiveATC.net. Radar traffic shown is a stylized simulation for illustrative purposes, not live ADS-B data.
+  </div>
+  <a class="easyland-btn" href="https://easylandx.com" target="_blank" rel="noopener noreferrer">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 16.5v-2l-8.5-5V4.5c0-1-.75-1.75-1.5-1.75s-1.5.75-1.5 1.75v5l-8.5 5v2l8.5-2.5V17l-2.5 1.5V20l3.5-1 3.5 1v-1.5L13.5 17v-3l8.5 2.5z"/></svg>
+    Open EasyLandX
+  </a>
+</footer>
+
+<script>
+/* ---------------- CLOCK ---------------- */
+function tickClock(){
+  const d = new Date();
+  const hh = String(d.getUTCHours()).padStart(2,'0');
+  const mm = String(d.getUTCMinutes()).padStart(2,'0');
+  const ss = String(d.getUTCSeconds()).padStart(2,'0');
+  document.getElementById('zuluClock').innerHTML = `${hh}:${mm}:${ss}<span>Z</span>`;
+  document.getElementById('atisTime').textContent = `${hh}${mm}Z`;
+}
+setInterval(tickClock, 1000); tickClock();
+
+/* ---------------- TUNE BUTTON ---------------- */
+document.getElementById('tuneBtn').addEventListener('click', () => {
+  window.open('https://www.liveatc.net/hlisten.php?mount=kjfk_atis&icao=kjfk', 'kjfkAtis', 'width=420,height=200');
+  // nudge the embedded frame too, in case same-tab playback is allowed
+  const f = document.getElementById('atisFrame');
+  f.src = f.src;
+});
+
+/* ---------------- SIMULATED ATIS TEXT ---------------- */
+const letters = "ALPHA BRAVO CHARLIE DELTA ECHO FOXTROT GOLF HOTEL INDIA JULIET KILO LIMA MIKE NOVEMBER OSCAR PAPA QUEBEC ROMEO SIERRA TANGO UNIFORM VICTOR WHISKEY XRAY YANKEE ZULU".split(" ");
+const runwayPairs = [["22L","22R"],["13L","13R"],["31L","31R"],["4L","4R"]];
+function randomBetween(a,b){ return Math.round(a + Math.random()*(b-a)); }
+function refreshAtis(){
+  const li = Math.floor(Math.random()*letters.length);
+  document.getElementById('infoLetter').innerHTML = letters[li][0] + '<small>' + letters[li] + '</small>';
+  const wind = `${randomBetween(180,270)} AT ${randomBetween(6,22)}${Math.random()>0.8?'G'+randomBetween(24,32):''}`;
+  document.getElementById('atisWind').textContent = wind;
+  document.getElementById('atisVis').textContent = Math.random()>0.85 ? (randomBetween(3,9)+'SM') : '10SM';
+  const skyOpts = ["FEW045 SCT250","SCT025 BKN060","CLR BLW 120","FEW015 SCT040 BKN100","OVC080"];
+  document.getElementById('atisSky').textContent = skyOpts[randomBetween(0,skyOpts.length-1)];
+  document.getElementById('atisTemp').textContent = `${randomBetween(14,29)}/${randomBetween(8,20)}`;
+  document.getElementById('atisAlt').textContent = (29.70 + Math.random()*0.6).toFixed(2);
+  const rp = runwayPairs[randomBetween(0,runwayPairs.length-1)];
+  document.getElementById('atisRwy').textContent = `APCH ${rp[0]} · DEP ${rp[1]}`;
+  document.getElementById('arrRate').textContent = randomBetween(28,44)+'/hr';
+  document.getElementById('ilsStatus').textContent = Math.random()>0.3 ? 'IN USE' : 'VISUAL APCH';
+}
+refreshAtis();
+setInterval(refreshAtis, 25000);
+
+/* ---------------- RADAR SCOPE ---------------- */
+const canvas = document.getElementById('scope');
+const ctx = canvas.getContext('2d');
+let W, H, CX, CY, SCALE;
+
+function resize(){
+  const wrap = canvas.parentElement;
+  W = canvas.width = wrap.clientWidth * devicePixelRatio;
+  H = canvas.height = wrap.clientHeight * devicePixelRatio;
+  canvas.style.width = wrap.clientWidth+'px';
+  canvas.style.height = wrap.clientHeight+'px';
+  CX = W/2; CY = H/2;
+  SCALE = Math.min(W,H) * 0.40; // px per "20nm" radius
+}
+window.addEventListener('resize', resize);
+resize();
+
+// KJFK runway headings (degrees, true) roughly: 04/22, 13/31, 04L/22R etc.
+const runways = [
+  {hdg: 40,  len: 0.30, id:"04L/22R"},
+  {hdg: 40,  len: 0.30, offset: 0.05, id:"04R/22L"},
+  {hdg: 130, len: 0.24, id:"13L/31R"},
+  {hdg: 130, len: 0.24, offset: -0.05, id:"13R/31L"},
+];
+
+function polarToXY(bearingDeg, distNm, rangeNm){
+  const rad = (bearingDeg - 90) * Math.PI/180; // 0=N up
+  const r = (distNm/rangeNm) * SCALE;
+  return { x: CX + Math.cos(rad)*r, y: CY + Math.sin(rad)*r };
+}
+
+const RANGE_NM = 20;
+const airlines = ["JBU","DAL","AAL","UAL","BAW","VIR","AFR","DLH","ANA","KAL","QTR","AAY","FDX","UPS","ASA","SWA"];
+function randCallsign(){
+  const al = airlines[Math.floor(Math.random()*airlines.length)];
+  return al + randomBetween(100,3999);
+}
+
+class Plane{
+  constructor(){ this.reset(true); }
+  reset(initial){
+    this.type = Math.random() > 0.5 ? 'arr' : 'dep';
+    this.callsign = randCallsign();
+    this.alt = this.type==='arr' ? randomBetween(2,11)*1000 : randomBetween(1,9)*1000;
+    this.gs = this.type==='arr' ? randomBetween(150,220) : randomBetween(180,280);
+    // spawn on a ring at random bearing
+    this.bearing = Math.random()*360;
+    this.trackHdg = this.type==='arr' ? (this.bearing+180)%360 + randomBetween(-15,15) : this.bearing + randomBetween(-10,10);
+    this.dist = initial ? Math.random()*RANGE_NM : RANGE_NM + Math.random()*2;
+    this.speedNmPerSec = (this.gs/3600) * 6; // sped up for visual effect
+    this.trail = [];
+  }
+  step(dt){
+    if(this.type==='arr'){
+      this.dist -= this.speedNmPerSec*dt;
+      this.alt = Math.max(300, this.alt - dt*220);
+    } else {
+      this.dist += this.speedNmPerSec*dt;
+      this.alt += dt*260;
+    }
+    const p = polarToXY(this.bearing, this.dist, RANGE_NM);
+    this.x = p.x; this.y = p.y;
+    this.trail.push({x:this.x, y:this.y});
+    if(this.trail.length > 14) this.trail.shift();
+    if(this.dist < 0.4 || this.dist > RANGE_NM+3){ this.reset(false); this.trail = []; }
+  }
+}
+
+const planes = Array.from({length: 16}, () => new Plane());
+
+function drawRing(rNm){
+  const r = (rNm/RANGE_NM)*SCALE;
+  ctx.beginPath();
+  ctx.arc(CX, CY, r, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(62,232,138,0.14)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.font = `${11*devicePixelRatio}px 'Space Mono', monospace`;
+  ctx.fillStyle = 'rgba(111,148,136,0.55)';
+  ctx.fillText(rNm+'nm', CX + r*Math.sin(0.7) , CY - r*Math.cos(0.7));
+}
+
+function drawCrosshair(){
+  ctx.strokeStyle = 'rgba(62,232,138,0.10)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(CX, 0); ctx.lineTo(CX, H); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, CY); ctx.lineTo(W, CY); ctx.stroke();
+}
+
+function drawRunways(){
+  ctx.save();
+  runways.forEach(rw => {
+    const lenPx = rw.len * SCALE;
+    const rad = (rw.hdg - 90) * Math.PI/180;
+    const perpRad = rad + Math.PI/2;
+    const offset = (rw.offset||0) * SCALE;
+    const ox = CX + Math.cos(perpRad)*offset;
+    const oy = CY + Math.sin(perpRad)*offset;
+    const x1 = ox - Math.cos(rad)*lenPx/2;
+    const y1 = oy - Math.sin(rad)*lenPx/2;
+    const x2 = ox + Math.cos(rad)*lenPx/2;
+    const y2 = oy + Math.sin(rad)*lenPx/2;
+    ctx.beginPath();
+    ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+    ctx.strokeStyle = 'rgba(139,255,196,0.55)';
+    ctx.lineWidth = 3*devicePixelRatio;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  });
+  ctx.beginPath();
+  ctx.arc(CX, CY, 4*devicePixelRatio, 0, Math.PI*2);
+  ctx.fillStyle = '#eafff2';
+  ctx.fill();
+  ctx.font = `${12*devicePixelRatio}px 'Space Mono', monospace`;
+  ctx.fillStyle = '#eafff2';
+  ctx.fillText('KJFK', CX+8*devicePixelRatio, CY-8*devicePixelRatio);
+  ctx.restore();
+}
+
+let sweepAngle = 0;
+function drawSweep(){
+  const r = SCALE;
+  const grad = ctx.createConicGradient ? ctx.createConicGradient(sweepAngle*Math.PI/180, CX, CY) : null;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(CX,CY);
+  const a1 = sweepAngle*Math.PI/180;
+  const a2 = a1 + 0.5;
+  ctx.arc(CX, CY, r, a1, a2);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(62,232,138,0.10)';
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawPlane(p){
+  // trail
+  for(let i=0;i<p.trail.length;i++){
+    const t = p.trail[i];
+    const alpha = (i/p.trail.length) * 0.5;
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, 1.4*devicePixelRatio, 0, Math.PI*2);
+    ctx.fillStyle = p.type==='arr' ? `rgba(255,178,56,${alpha})` : `rgba(95,184,255,${alpha})`;
+    ctx.fill();
+  }
+  const color = p.type==='arr' ? '#ffb238' : '#5fb8ff';
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate((p.trackHdg)*Math.PI/180);
+  ctx.beginPath();
+  ctx.moveTo(0,-6*devicePixelRatio);
+  ctx.lineTo(4*devicePixelRatio, 6*devicePixelRatio);
+  ctx.lineTo(0,3*devicePixelRatio);
+  ctx.lineTo(-4*devicePixelRatio,6*devicePixelRatio);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 6*devicePixelRatio;
+  ctx.fill();
+  ctx.restore();
+
+  ctx.font = `${10*devicePixelRatio}px 'Space Mono', monospace`;
+  ctx.fillStyle = color;
+  ctx.shadowBlur = 0;
+  ctx.fillText(p.callsign, p.x+7*devicePixelRatio, p.y-4*devicePixelRatio);
+  ctx.fillStyle = 'rgba(207,232,222,0.75)';
+  ctx.fillText(`${Math.round(p.alt/100)} · ${p.gs}kt`, p.x+7*devicePixelRatio, p.y+8*devicePixelRatio);
+}
+
+function updateTrafficList(){
+  const list = document.getElementById('trafficList');
+  const sorted = [...planes].sort((a,b)=>a.dist-b.dist).slice(0,10);
+  list.innerHTML = sorted.map(p => `
+    <div class="traffic-row">
+      <div class="cs">${p.callsign}</div>
+      <div class="${p.type}">${p.type==='arr' ? 'ARR → KJFK' : 'DEP KJFK →'}</div>
+      <div>${(p.alt/100).toFixed(0)}</div>
+      <div>${p.gs}</div>
+    </div>`).join('');
+}
+
+let lastTime = performance.now();
+let listTimer = 0;
+function frame(now){
+  const dt = Math.min(0.05,(now-lastTime)/1000);
+  lastTime = now;
+  ctx.clearRect(0,0,W,H);
+  drawRing(5); drawRing(10); drawRing(15); drawRing(20);
+  drawCrosshair();
+  drawSweep();
+  sweepAngle = (sweepAngle + dt*40) % 360;
+  drawRunways();
+  planes.forEach(p => { p.step(dt); drawPlane(p); });
+
+  listTimer += dt;
+  if(listTimer > 1){ updateTrafficList(); listTimer = 0; }
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
