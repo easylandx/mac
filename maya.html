@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maya Glyph Simulator — Carve the Codex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --stone-dark:#1b140f;
+    --stone-mid:#2a2019;
+    --stucco:#e9dcc3;
+    --maya-blue:#3ea6a0;
+    --maya-blue-deep:#1f6b6a;
+    --cinnabar:#b8462f;
+    --jade:#3e8f6b;
+    --gold:#c9a24b;
+    --obsidian:#0f0b08;
+    --ink:#efe6d3;
+    --ink-dim:#b8a98a;
+  }
+
+  *{box-sizing:border-box;}
+
+  html{scroll-behavior:smooth;}
+
+  body{
+    margin:0;
+    min-height:340vh;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(62,166,160,0.08), transparent 55%),
+      radial-gradient(ellipse at 80% 30%, rgba(184,70,47,0.07), transparent 50%),
+      linear-gradient(180deg, var(--obsidian) 0%, var(--stone-dark) 6%, var(--stone-dark) 100%);
+    color:var(--ink);
+    font-family:'Space Mono', monospace;
+    position:relative;
+  }
+
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
+    mix-blend-mode:overlay;
+    z-index:0;
+  }
+
+  header{
+    position:relative;
+    z-index:2;
+    padding:64px 24px 32px;
+    text-align:center;
+    border-bottom:1px solid rgba(201,162,75,0.25);
+  }
+
+  .eyebrow{
+    font-size:11px;
+    letter-spacing:0.35em;
+    text-transform:uppercase;
+    color:var(--maya-blue);
+    margin-bottom:18px;
+  }
+
+  h1{
+    font-family:'Cinzel', serif;
+    font-weight:900;
+    font-size:clamp(32px, 6vw, 62px);
+    margin:0 0 14px;
+    letter-spacing:0.04em;
+    color:var(--stucco);
+    text-shadow:0 2px 0 rgba(0,0,0,0.6), 0 0 40px rgba(62,166,160,0.15);
+  }
+
+  .subtitle{
+    max-width:680px;
+    margin:0 auto 6px;
+    color:var(--ink-dim);
+    font-size:14px;
+    line-height:1.7;
+  }
+
+  .legend{
+    display:flex;
+    justify-content:center;
+    gap:28px;
+    flex-wrap:wrap;
+    margin-top:22px;
+    font-size:12px;
+  }
+  .legend span{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    color:var(--ink-dim);
+  }
+  .swatch{
+    width:12px;height:12px;border-radius:3px;display:inline-block;
+    box-shadow:0 0 0 1px rgba(255,255,255,0.15) inset;
+  }
+  .sw-logo{background:var(--cinnabar);}
+  .sw-syl{background:var(--maya-blue);}
+
+  .controls{
+    position:sticky;
+    top:0;
+    z-index:5;
+    display:flex;
+    justify-content:center;
+    gap:14px;
+    flex-wrap:wrap;
+    padding:18px 20px;
+    background:linear-gradient(180deg, rgba(15,11,8,0.96), rgba(15,11,8,0.85) 70%, transparent);
+    backdrop-filter:blur(6px);
+  }
+
+  button.ctrl{
+    font-family:'Cinzel', serif;
+    font-weight:700;
+    letter-spacing:0.06em;
+    font-size:13px;
+    text-transform:uppercase;
+    padding:14px 22px;
+    border-radius:6px;
+    border:1px solid rgba(201,162,75,0.4);
+    background:linear-gradient(180deg, #2a2019, #1b140f);
+    color:var(--stucco);
+    cursor:pointer;
+    transition:transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    box-shadow:0 3px 0 rgba(0,0,0,0.5), 0 0 0 rgba(0,0,0,0);
+  }
+  button.ctrl:hover{
+    transform:translateY(-2px);
+    border-color:var(--gold);
+    box-shadow:0 5px 0 rgba(0,0,0,0.5);
+  }
+  button.ctrl:active{
+    transform:translateY(1px);
+    box-shadow:0 1px 0 rgba(0,0,0,0.5);
+  }
+
+  #generateBtn{border-color:var(--cinnabar); color:#f3d9c9;}
+  #aiBtn{border-color:var(--maya-blue); color:#cdeeeb;}
+  #aiBtn.active{
+    background:linear-gradient(180deg, var(--maya-blue-deep), #123f3e);
+    color:#eafffb;
+    animation:pulse 1.4s ease-in-out infinite;
+  }
+  #resetBtn{border-color:var(--jade); color:#d8f2e4;}
+
+  @keyframes pulse{
+    0%,100%{box-shadow:0 3px 0 rgba(0,0,0,0.5), 0 0 0 rgba(62,166,160,0.5);}
+    50%{box-shadow:0 3px 0 rgba(0,0,0,0.5), 0 0 18px 3px rgba(62,166,160,0.45);}
+  }
+
+  main{
+    position:relative;
+    z-index:2;
+    max-width:980px;
+    margin:0 auto;
+    padding:46px 24px 60px;
+  }
+
+  #stela{
+    position:relative;
+    min-height:2400px;
+    display:flex;
+    flex-wrap:wrap;
+    align-content:flex-start;
+    justify-content:center;
+    gap:22px;
+    padding:36px 26px;
+    border-radius:14px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.02), transparent 40%),
+      var(--stone-mid);
+    box-shadow:
+      inset 0 0 0 1px rgba(201,162,75,0.18),
+      inset 0 40px 60px -40px rgba(0,0,0,0.7),
+      0 30px 60px rgba(0,0,0,0.45);
+  }
+
+  #stela.empty::after{
+    content:"The stone is bare. Strike a glyph, or summon the AI scribe.";
+    position:absolute;
+    top:40px;
+    left:50%;
+    transform:translateX(-50%);
+    color:var(--ink-dim);
+    font-style:italic;
+    font-size:13px;
+    white-space:nowrap;
+  }
+
+  .block{
+    width:118px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    animation:carve 0.5s cubic-bezier(.2,.9,.25,1) both;
+  }
+
+  @keyframes carve{
+    from{opacity:0; transform:translateY(-10px) scale(0.85);}
+    to{opacity:1; transform:translateY(0) scale(1);}
+  }
+
+  .tablet{
+    width:112px;
+    height:112px;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.18),
+      inset 0 -6px 10px rgba(0,0,0,0.45),
+      0 4px 10px rgba(0,0,0,0.4);
+  }
+
+  .cap{
+    font-family:'Space Mono', monospace;
+    font-size:10px;
+    text-align:center;
+    line-height:1.4;
+    color:var(--ink-dim);
+  }
+  .cap b{
+    color:var(--stucco);
+    font-size:11px;
+    letter-spacing:0.02em;
+    display:block;
+  }
+
+  footer{
+    position:relative;
+    z-index:2;
+    text-align:center;
+    padding:50px 24px 90px;
+    border-top:1px solid rgba(201,162,75,0.2);
+  }
+
+  .emoji-row{
+    font-size:44px;
+    display:flex;
+    justify-content:center;
+    gap:22px;
+    margin-bottom:8px;
+    filter:drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+  }
+  .emoji-cap{
+    color:var(--ink-dim);
+    font-size:11px;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    margin-bottom:34px;
+  }
+
+  a.easyland{
+    display:inline-block;
+    font-family:'Cinzel', serif;
+    font-weight:700;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    font-size:13px;
+    padding:16px 30px;
+    border-radius:6px;
+    text-decoration:none;
+    color:var(--obsidian);
+    background:linear-gradient(180deg, var(--gold), #a9812f);
+    box-shadow:0 4px 0 #6f5620, 0 10px 24px rgba(201,162,75,0.25);
+    transition:transform 0.15s ease;
+  }
+  a.easyland:hover{transform:translateY(-2px);}
+  a.easyland:active{transform:translateY(1px);}
+
+  @media (max-width:520px){
+    .block{width:96px;}
+    .tablet{width:92px;height:92px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">an interactive epigraphy toy</div>
+  <h1>Maya Glyph Simulator</h1>
+  <p class="subtitle">
+    Classic Maya writing mixed two kinds of signs freely: <b>logograms</b>, whole
+    pictures for whole words, and <b>syllabograms</b>, phonetic signs spelling
+    out consonant-vowel sounds. A scribe could carve a word as one logogram,
+    spell it out entirely in syllables, or blend both in the same glyph block —
+    and this stone does the same, one strike at a time.
+  </p>
+  <div class="legend">
+    <span><i class="swatch sw-logo"></i> logogram</span>
+    <span><i class="swatch sw-syl"></i> syllabogram</span>
+  </div>
+</header>
+
+<div class="controls">
+  <button class="ctrl" id="generateBtn">✒️ Carve a Glyph</button>
+  <button class="ctrl" id="aiBtn">🔮 AI Scribe: Off</button>
+  <button class="ctrl" id="resetBtn">🧹 Reset Stone</button>
+</div>
+
+<main>
+  <div id="stela" class="empty"></div>
+</main>
+
+<footer>
+  <div class="emoji-row">
+    <span title="Balam — the jaguar">🐆</span>
+    <span title="The carved sun stone">🪨☀️</span>
+  </div>
+  <div class="emoji-cap">balam, guardian of the underworld sun</div>
+  <a class="easyland" href="https://easyland.github.io" target="_blank" rel="noopener">🌎 Visit EasyLandX</a>
+</footer>
+
+<script>
+(function(){
+  const stela = document.getElementById('stela');
+  const generateBtn = document.getElementById('generateBtn');
+  const aiBtn = document.getElementById('aiBtn');
+  const resetBtn = document.getElementById('resetBtn');
+
+  // ---- vocabulary: logograms (whole-word picture signs) ----
+  const LOGOGRAMS = [
+    {word:'BALAM', gloss:'jaguar', color:'#b8462f', icon:jaguarIcon},
+    {word:"K'IN",  gloss:'sun / day', color:'#c9a24b', icon:sunIcon},
+    {word:"HA'",   gloss:'water', color:'#3ea6a0', icon:waterIcon},
+    {word:'IXIM',  gloss:'maize', color:'#c9b23a', icon:maizeIcon},
+    {word:"IK'",   gloss:'wind / breath', color:'#8fb8d8', icon:windIcon},
+    {word:"EK'",   gloss:'star', color:'#3e8f6b', icon:starIcon},
+    {word:'KIMI',  gloss:'death', color:'#5b5750', icon:deathIcon},
+    {word:'KAN',   gloss:'serpent / sky', color:'#3e8f6b', icon:serpentIcon},
+    {word:'AJAW',  gloss:'lord / ruler', color:'#c9a24b', icon:ajawIcon},
+    {word:'WITZ',  gloss:'mountain', color:'#8a7256', icon:mountainIcon}
+  ];
+
+  // ---- syllabograms (phonetic CV signs) ----
+  const SYLLABLES = ['ba','la','ma','ki','chi',"tz'i",'wi','yo','na','ka','mu','tu','pa','xa','wa'];
+
+  function jaguarIcon(c){return `<circle cx="28" cy="28" r="18" fill="${c}" opacity="0.9"/>
+    <circle cx="21" cy="22" r="2.4" fill="#1b140f"/><circle cx="35" cy="22" r="2.4" fill="#1b140f"/>
+    <path d="M18 34 q10 8 20 0" stroke="#1b140f" stroke-width="2" fill="none"/>
+    <circle cx="24" cy="30" r="1.6" fill="#1b140f"/><circle cx="32" cy="30" r="1.6" fill="#1b140f"/>
+    <circle cx="28" cy="16" r="1.6" fill="#1b140f"/>`;}
+  function sunIcon(c){return `<circle cx="28" cy="28" r="12" fill="${c}"/>
+    ${Array.from({length:8}).map((_,i)=>{const a=i*Math.PI/4;const x1=28+Math.cos(a)*15,y1=28+Math.sin(a)*15,x2=28+Math.cos(a)*22,y2=28+Math.sin(a)*22;
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`;}).join('')}
+    <circle cx="28" cy="28" r="5" fill="#1b140f"/>`;}
+  function waterIcon(c){return `<path d="M28 12 C36 24 40 30 32 36 C26 40 20 36 20 30 C20 26 24 18 28 12Z" fill="${c}"/>
+    <circle cx="16" cy="40" r="3" fill="${c}" opacity="0.7"/><circle cx="40" cy="42" r="4" fill="${c}" opacity="0.7"/>`;}
+  function maizeIcon(c){return `<ellipse cx="28" cy="28" rx="9" ry="18" fill="${c}"/>
+    ${Array.from({length:5}).map((_,i)=>`<circle cx="${23+ (i%2)*10}" cy="${16+i*7}" r="2" fill="#1b140f" opacity="0.55"/>`).join('')}
+    <path d="M28 10 q-6 -6 -12 -4" stroke="#3e8f6b" stroke-width="3" fill="none"/>`;}
+  function windIcon(c){return `<path d="M14 24 q14 -10 28 -2" stroke="${c}" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M14 32 q18 -8 24 2" stroke="${c}" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.7"/>
+    <path d="M18 40 q10 -4 16 2" stroke="${c}" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.5"/>`;}
+  function starIcon(c){const pts=[];for(let i=0;i<10;i++){const r=i%2===0?16:7;const a=-Math.PI/2+i*Math.PI/5;pts.push((28+Math.cos(a)*r)+','+(28+Math.sin(a)*r));}
+    return `<polygon points="${pts.join(' ')}" fill="${c}"/>`;}
+  function deathIcon(c){return `<circle cx="28" cy="24" r="13" fill="${c}"/>
+    <circle cx="23" cy="22" r="3" fill="#1b140f"/><circle cx="33" cy="22" r="3" fill="#1b140f"/>
+    <path d="M20 30 q8 6 16 0" stroke="#1b140f" stroke-width="2.5" fill="none"/>
+    <path d="M22 12 l3 5 M28 10 l0 6 M34 12 l-3 5" stroke="${c}" stroke-width="2" fill="none"/>`;}
+  function serpentIcon(c){return `<path d="M12 40 Q20 16 28 30 T44 14" stroke="${c}" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <circle cx="44" cy="14" r="3.5" fill="${c}"/><circle cx="45.5" cy="12.5" r="0.9" fill="#1b140f"/>`;}
+  function ajawIcon(c){return `<circle cx="28" cy="26" r="14" fill="${c}"/>
+    <path d="M16 16 L28 8 L40 16" stroke="#c9a24b" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="23" cy="26" r="2.2" fill="#1b140f"/><circle cx="33" cy="26" r="2.2" fill="#1b140f"/>
+    <path d="M22 33 q6 4 12 0" stroke="#1b140f" stroke-width="2" fill="none"/>`;}
+  function mountainIcon(c){return `<path d="M8 42 L22 16 L30 30 L36 20 L48 42 Z" fill="${c}"/>
+    <path d="M22 16 L26 24 L18 24 Z" fill="#efe6d3" opacity="0.5"/>`;}
+
+  // small abstract marks for syllabograms
+  function syllableMark(seed){
+    const marks = [
+      `<circle cx="28" cy="28" r="9" fill="none" stroke="var(--maya-blue)" stroke-width="2.5"/>`,
+      `<path d="M18 20 Q28 12 38 20 Q28 28 18 20Z" fill="var(--maya-blue)" opacity="0.85"/>`,
+      `<rect x="17" y="17" width="22" height="22" rx="6" fill="none" stroke="var(--maya-blue)" stroke-width="2.5"/>`,
+      `<path d="M16 30 q12 -18 24 0" stroke="var(--maya-blue)" stroke-width="3" fill="none" stroke-linecap="round"/>`,
+      `<circle cx="22" cy="24" r="3" fill="var(--maya-blue)"/><circle cx="34" cy="24" r="3" fill="var(--maya-blue)"/><circle cx="28" cy="34" r="3" fill="var(--maya-blue)"/>`,
+      `<path d="M14 28 L28 14 L42 28 L28 42 Z" fill="none" stroke="var(--maya-blue)" stroke-width="2.5"/>`
+    ];
+    return marks[seed % marks.length];
+  }
+
+  function rand(n){return Math.floor(Math.random()*n);}
+  function pick(arr){return arr[rand(arr.length)];}
+
+  function tabletBg(baseColor){
+    return `linear-gradient(160deg, rgba(255,255,255,0.05), rgba(0,0,0,0.25)), radial-gradient(circle at 30% 25%, ${baseColor}33, #241b14 70%)`;
+  }
+
+  function buildGlyph(){
+    const mode = pick(['logogram','syllabic','combined']);
+    const logo = pick(LOGOGRAMS);
+    let svgInner = '';
+    let capMain = '';
+    let capSub = '';
+
+    if(mode === 'logogram'){
+      svgInner = logo.icon(logo.color);
+      capMain = logo.word;
+      capSub = logo.gloss + ' · logogram';
+    } else if(mode === 'syllabic'){
+      const count = 2 + rand(2);
+      const syls = Array.from({length:count}).map(()=>pick(SYLLABLES));
+      svgInner = syllableMark(rand(6));
+      capMain = syls.join('-');
+      capSub = 'spelled phonetically';
+    } else {
+      const syls = Array.from({length:1+rand(2)}).map(()=>pick(SYLLABLES));
+      svgInner = logo.icon(logo.color) + `<g transform="translate(38,38) scale(0.42)">${syllableMark(rand(6))}</g>`;
+      capMain = logo.word + '-' + syls.join('-');
+      capSub = logo.gloss + ' + complement';
+    }
+
+    const wrap = document.createElement('div');
+    wrap.className = 'block';
+    wrap.innerHTML = `
+      <div class="tablet" style="background:${tabletBg(logo.color)}">
+        <svg width="56" height="56" viewBox="0 0 56 56">${svgInner}</svg>
+      </div>
+      <div class="cap"><b>${capMain}</b>${capSub}</div>
+    `;
+    return wrap;
+  }
+
+  function addGlyph(){
+    stela.classList.remove('empty');
+    stela.appendChild(buildGlyph());
+    if(stela.children.length % 10 === 0){
+      window.scrollTo({top: document.body.scrollHeight, behavior:'smooth'});
+    }
+  }
+
+  generateBtn.addEventListener('click', addGlyph);
+
+  let aiTimer = null;
+  aiBtn.addEventListener('click', () => {
+    if(aiTimer){
+      clearInterval(aiTimer);
+      aiTimer = null;
+      aiBtn.textContent = '🔮 AI Scribe: Off';
+      aiBtn.classList.remove('active');
+    } else {
+      aiBtn.textContent = '⏹ AI Scribe: On';
+      aiBtn.classList.add('active');
+      addGlyph();
+      aiTimer = setInterval(addGlyph, 550);
+    }
+  });
+
+  resetBtn.addEventListener('click', () => {
+    stela.innerHTML = '';
+    stela.classList.add('empty');
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+})();
+</script>
+
+</body>
+</html>

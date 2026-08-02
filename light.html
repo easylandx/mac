@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚓️ Fenwick Point — Lighthouse Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-deep: #081426;
+    --navy: #0f2340;
+    --navy-mid: #16324f;
+    --sea-deep: #0a2f36;
+    --sea-mid: #124a4f;
+    --foam: #dff1f2;
+    --beam: #ffd97a;
+    --beam-hot: #fff2c8;
+    --rust: #c1440e;
+    --rust-dim: #8c3009;
+    --ink: #cfe1e8;
+    --ink-dim: #8fa6ae;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;background:var(--navy-deep);overflow-x:hidden;}
+  body{
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    position:relative;
+  }
+
+  /* ---------- Header / log strip ---------- */
+  header{
+    width:100%;
+    max-width:960px;
+    padding:28px 24px 10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    z-index:5;
+  }
+  .wordmark{
+    font-family:'Playfair Display', serif;
+    font-style:italic;
+    font-weight:700;
+    font-size:clamp(28px, 4vw, 42px);
+    color:var(--foam);
+    letter-spacing:0.5px;
+    line-height:1;
+  }
+  .wordmark small{
+    display:block;
+    font-family:'Space Mono', monospace;
+    font-style:normal;
+    font-weight:400;
+    font-size:11px;
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    margin-top:6px;
+  }
+  .coords{
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+    color:var(--ink-dim);
+    text-align:right;
+    line-height:1.6;
+  }
+  .coords .status{color:var(--beam);}
+
+  /* ---------- Scene ---------- */
+  .scene-wrap{
+    width:100%;
+    max-width:960px;
+    padding:8px 24px 0;
+    z-index:2;
+  }
+  .scene{
+    position:relative;
+    width:100%;
+    height:clamp(560px, 88vh, 820px);
+    border-radius:6px;
+    overflow:hidden;
+    background:
+      radial-gradient(ellipse at 30% 15%, rgba(255,255,255,0.05), transparent 40%),
+      linear-gradient(to bottom, var(--navy-deep) 0%, var(--navy) 45%, var(--navy-mid) 62%, var(--sea-deep) 63%, var(--sea-mid) 100%);
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255,255,255,0.04);
+  }
+
+  /* stars */
+  .stars{position:absolute; inset:0 0 40% 0; }
+  .star{
+    position:absolute;
+    width:2px; height:2px;
+    background:var(--foam);
+    border-radius:50%;
+    opacity:0.7;
+    animation:twinkle 4s ease-in-out infinite;
+  }
+  @keyframes twinkle{
+    0%,100%{opacity:0.2;}
+    50%{opacity:0.9;}
+  }
+
+  .moon{
+    position:absolute;
+    top:8%; right:12%;
+    width:46px; height:46px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, #fdf6e3, #e9dcae 70%);
+    box-shadow:0 0 40px 10px rgba(233,220,174,0.25);
+  }
+
+  /* beacon light — anchored to the lamp room, rotates and blinks */
+  .beam-pivot{
+    position:absolute;
+    left:50%;
+    top:46%;
+    width:1px; height:1px;
+  }
+  .beam{
+    position:absolute;
+    left:0; top:0;
+    width:1400px; height:220px;
+    transform-origin:0px 4px;
+    background:conic-gradient(from -12deg at 0px 4px,
+      rgba(255,217,122,0) 0deg,
+      rgba(255,217,122,0.20) 8deg,
+      rgba(255,242,200,0.55) 12deg,
+      rgba(255,217,122,0.20) 16deg,
+      rgba(255,217,122,0) 24deg);
+    animation:beamRotate 8s linear infinite, beaconFlash 8s ease-in-out infinite;
+    mix-blend-mode:screen;
+  }
+  .lamp-glow{
+    position:absolute;
+    left:50%; top:46%;
+    width:14px; height:14px;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    background:var(--beam-hot);
+    box-shadow:0 0 12px 6px rgba(255,242,200,0.9), 0 0 30px 16px rgba(255,217,122,0.5);
+    animation:beaconFlash 8s ease-in-out infinite;
+    z-index:2;
+  }
+  @keyframes beamRotate{
+    from{ transform:rotate(0deg); }
+    to{ transform:rotate(360deg); }
+  }
+  @keyframes beaconFlash{
+    0%, 82%, 100%{ opacity:0.14; }
+    86%{ opacity:1; }
+    93%{ opacity:1; }
+    97%{ opacity:0.14; }
+  }
+
+  /* rocks + lighthouse silhouette */
+  .headland{
+    position:absolute;
+    left:0; bottom:36%;
+    width:46%; height:30%;
+    background:var(--navy-deep);
+    clip-path:polygon(0 100%, 0 55%, 18% 30%, 34% 42%, 52% 20%, 68% 38%, 100% 26%, 100% 100%);
+    z-index:3;
+  }
+
+  .lighthouse{
+    position:absolute;
+    left:19%;
+    bottom:36%;
+    width:92px;
+    z-index:4;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .lamp-room{
+    width:34px; height:28px;
+    background:var(--navy-mid);
+    border:2px solid var(--rust-dim);
+    border-bottom:none;
+    border-radius:5px 5px 0 0;
+    position:relative;
+  }
+  .lamp-room::before,
+  .lamp-room::after{
+    content:'';
+    position:absolute;
+    top:3px; bottom:3px;
+    width:1px;
+    background:rgba(0,0,0,0.25);
+  }
+  .lamp-room::before{ left:11px; }
+  .lamp-room::after{ left:22px; }
+  .roof{
+    width:0; height:0;
+    border-left:23px solid transparent;
+    border-right:23px solid transparent;
+    border-bottom:20px solid var(--rust);
+    margin-bottom:-1px;
+    position:relative;
+  }
+  .roof::after{
+    content:'';
+    position:absolute;
+    left:-2px; top:19px;
+    width:4px; height:12px;
+    background:var(--rust-dim);
+  }
+  .gallery{
+    width:46px; height:8px;
+    background:var(--rust-dim);
+    border-radius:2px;
+    position:relative;
+    box-shadow:0 1px 0 rgba(0,0,0,0.3);
+  }
+  .gallery::before{
+    content:'';
+    position:absolute;
+    left:2px; right:2px; top:-5px;
+    height:5px;
+    background-image:repeating-linear-gradient(to right, var(--rust-dim) 0 2px, transparent 2px 7px);
+  }
+  .tower{
+    position:relative;
+    width:58px; height:200px;
+    background:repeating-linear-gradient(
+      to bottom,
+      var(--foam) 0px, var(--foam) 24px,
+      var(--rust) 24px, var(--rust) 48px
+    );
+    border-radius:3px 3px 0 0;
+    box-shadow:inset -8px 0 14px rgba(0,0,0,0.35);
+  }
+  .tower .window{
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    width:11px; height:14px;
+    background:var(--navy-deep);
+    border:1px solid var(--rust-dim);
+    border-radius:2px 2px 0 0;
+    box-shadow:inset 0 0 4px rgba(255,217,122,0.15);
+  }
+  .tower .window.w1{ top:18px; }
+  .tower .window.w2{ top:84px; }
+  .tower .window.w3{ top:150px; }
+  .base{
+    position:relative;
+    width:78px; height:26px;
+    background:var(--navy-mid);
+    border-radius:2px;
+    box-shadow:0 3px 6px rgba(0,0,0,0.35);
+  }
+  .base .door{
+    position:absolute;
+    left:50%;
+    bottom:0;
+    transform:translateX(-50%);
+    width:18px; height:22px;
+    background:var(--rust-dim);
+    border-radius:6px 6px 0 0;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,0.25);
+  }
+
+  /* sea + waves */
+  .sea{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    height:37%;
+    z-index:3;
+  }
+  .wave{
+    position:absolute;
+    left:-10%;
+    width:120%;
+    height:100%;
+    background-repeat:repeat-x;
+    background-size:220px 100%;
+    opacity:0.9;
+  }
+  .wave.w1{
+    bottom:0;
+    background-image: radial-gradient(ellipse at center, var(--sea-mid) 60%, transparent 62%);
+    background-size:120px 30px;
+    background-position:bottom;
+    animation:drift 7s linear infinite;
+    opacity:0.5;
+  }
+  .wave.foam-line{
+    bottom:58%;
+    height:6px;
+    background:linear-gradient(to right, transparent, rgba(223,241,242,0.55), transparent);
+    background-size:300px 6px;
+    animation:drift 6s linear infinite;
+  }
+  .wave.foam-line2{
+    bottom:30%;
+    height:4px;
+    background:linear-gradient(to right, transparent, rgba(223,241,242,0.35), transparent);
+    background-size:260px 4px;
+    animation:drift 9s linear infinite reverse;
+  }
+  @keyframes drift{
+    from{background-position-x:0;}
+    to{background-position-x:220px;}
+  }
+
+  /* sailing boat, drifts across the sea and back */
+  .boat{
+    position:absolute;
+    left:-16%;
+    bottom:22%;
+    width:60px;
+    height:56px;
+    z-index:4;
+    animation:sailAcross 34s linear infinite, bob 2.6s ease-in-out infinite;
+  }
+  .boat .hull{
+    position:absolute;
+    left:6px; bottom:14px;
+    width:48px; height:13px;
+    background:linear-gradient(to bottom, var(--navy-mid), var(--navy-deep));
+    clip-path:polygon(10% 0, 90% 0, 100% 100%, 0% 100%);
+    box-shadow:inset 0 -3px 5px rgba(0,0,0,0.4);
+  }
+  .boat .mast{
+    position:absolute;
+    left:29px; bottom:14px;
+    width:2px; height:36px;
+    background:var(--rust-dim);
+  }
+  .boat .sail{
+    position:absolute;
+    left:31px; bottom:24px;
+    width:0; height:0;
+    border-left:22px solid var(--foam);
+    border-bottom:26px solid transparent;
+    opacity:0.92;
+    filter:drop-shadow(0 0 3px rgba(0,0,0,0.2));
+  }
+  .boat .sail-jib{
+    left:9px;
+    border-left:none;
+    border-right:14px solid var(--foam);
+    border-bottom:20px solid transparent;
+    bottom:16px;
+    opacity:0.8;
+  }
+  .boat .wake{
+    position:absolute;
+    left:-6px; bottom:11px;
+    width:64px; height:6px;
+    background:radial-gradient(ellipse at center, rgba(223,241,242,0.5), transparent 70%);
+    animation:wakeFade 2.6s ease-in-out infinite;
+  }
+  @keyframes sailAcross{
+    0%{ left:-16%; }
+    100%{ left:112%; }
+  }
+  @keyframes bob{
+    0%,100%{ transform:translateY(0) rotate(-2deg); }
+    50%{ transform:translateY(-5px) rotate(2deg); }
+  }
+  @keyframes wakeFade{
+    0%,100%{ opacity:0.35; transform:scaleX(1); }
+    50%{ opacity:0.6; transform:scaleX(1.15); }
+  }
+
+  .beam-on-water{
+    position:absolute;
+    left:0; right:0; bottom:0; height:100%;
+    background:linear-gradient(to bottom, transparent, rgba(255,217,122,0.06));
+    mix-blend-mode:screen;
+    pointer-events:none;
+  }
+
+  .vignette{
+    position:absolute; inset:0;
+    box-shadow:inset 0 0 90px 20px rgba(0,0,0,0.55);
+    pointer-events:none;
+    z-index:6;
+  }
+
+  /* ---------- Controls ---------- */
+  .console{
+    width:100%;
+    max-width:960px;
+    padding:26px 24px 60px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:18px;
+    z-index:5;
+  }
+
+  .sound-row{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+    color:var(--ink-dim);
+  }
+
+  .sound-btn{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.14);
+    color:var(--foam);
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    font-weight:500;
+    padding:11px 18px;
+    border-radius:30px;
+    cursor:pointer;
+    transition:border-color 0.2s ease, background 0.2s ease;
+  }
+  .sound-btn:hover{ border-color:rgba(255,217,122,0.5); background:rgba(255,217,122,0.06); }
+  .sound-btn:focus-visible{ outline:2px solid var(--beam); outline-offset:2px; }
+
+  .bars{ display:flex; align-items:center; gap:2px; height:14px; }
+  .bars span{
+    display:block;
+    width:2px;
+    background:var(--beam);
+    border-radius:1px;
+    animation:bar 1.1s ease-in-out infinite;
+    opacity:0.35;
+  }
+  .sound-btn.playing .bars span{ opacity:1; }
+  .bars span:nth-child(1){height:40%; animation-delay:0s;}
+  .bars span:nth-child(2){height:100%; animation-delay:0.15s;}
+  .bars span:nth-child(3){height:65%; animation-delay:0.3s;}
+  .bars span:nth-child(4){height:85%; animation-delay:0.45s;}
+  .sound-btn:not(.playing) .bars span{ animation-play-state:paused; height:20% !important; }
+  @keyframes bar{
+    0%,100%{transform:scaleY(0.4);}
+    50%{transform:scaleY(1);}
+  }
+
+  .volume{
+    -webkit-appearance:none;
+    width:100px;
+    height:2px;
+    background:rgba(255,255,255,0.2);
+    border-radius:2px;
+    outline:none;
+  }
+  .volume::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:11px; height:11px;
+    border-radius:50%;
+    background:var(--beam);
+    cursor:pointer;
+  }
+  .volume::-moz-range-thumb{
+    width:11px; height:11px;
+    border-radius:50%;
+    background:var(--beam);
+    border:none;
+    cursor:pointer;
+  }
+
+  .divider{
+    width:1px;
+    height:60px;
+    background:linear-gradient(to bottom, transparent, rgba(255,255,255,0.15), transparent);
+  }
+
+  .cta-easylandx{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    letter-spacing:0.3px;
+    color:var(--navy-deep);
+    background:linear-gradient(to bottom, var(--beam-hot), var(--beam));
+    border:none;
+    padding:15px 38px;
+    border-radius:30px;
+    cursor:pointer;
+    box-shadow:0 8px 24px -8px rgba(255,217,122,0.55);
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .cta-easylandx:hover{
+    transform:translateY(-2px);
+    box-shadow:0 12px 28px -8px rgba(255,217,122,0.7);
+  }
+  .cta-easylandx:active{ transform:translateY(0); }
+  .cta-easylandx:focus-visible{ outline:2px solid var(--foam); outline-offset:3px; }
+
+  .cta-caption{
+    font-family:'Space Mono', monospace;
+    font-size:11px;
+    color:var(--ink-dim);
+    text-align:center;
+    max-width:320px;
+    line-height:1.6;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .beam, .lamp-glow, .wave, .star, .bars span, .boat, .boat .wake{ animation:none !important; }
+    .beam, .lamp-glow{ opacity:1; }
+  }
+
+  @media (max-width:600px){
+    header{flex-direction:column; align-items:flex-start; gap:10px;}
+    .coords{text-align:left;}
+    .sound-row{flex-direction:column; gap:12px;}
+    .divider{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark">Fenwick Point
+    <small>Lighthouse Simulator</small>
+  </div>
+  <div class="coords">
+    50°06′44″N · 5°42′24″W<br>
+    Character: Fl (1) 8s<br>
+    Status: <span class="status" id="statusText">Standing watch</span>
+  </div>
+</header>
+
+<div class="scene-wrap">
+  <div class="scene" id="scene">
+    <div class="stars" id="stars"></div>
+    <div class="moon"></div>
+
+    <div class="headland"></div>
+
+    <div class="lighthouse">
+      <div class="lamp-room">
+        <div class="roof"></div>
+        <div class="lamp-glow" id="lampGlow"></div>
+        <div class="beam-pivot">
+          <div class="beam" id="beam"></div>
+        </div>
+      </div>
+      <div class="gallery"></div>
+      <div class="tower">
+        <div class="window w1"></div>
+        <div class="window w2"></div>
+        <div class="window w3"></div>
+      </div>
+      <div class="base">
+        <div class="door"></div>
+      </div>
+    </div>
+
+    <div class="sea">
+      <div class="wave foam-line"></div>
+      <div class="wave foam-line2"></div>
+      <div class="wave w1"></div>
+
+      <div class="boat" id="boat">
+        <div class="wake"></div>
+        <div class="hull"></div>
+        <div class="mast"></div>
+        <div class="sail"></div>
+        <div class="sail sail-jib"></div>
+      </div>
+    </div>
+
+    <div class="beam-on-water"></div>
+    <div class="vignette"></div>
+  </div>
+</div>
+
+<div class="console">
+  <div class="sound-row">
+    <button class="sound-btn" id="soundBtn" aria-pressed="false">
+      <span class="bars"><span></span><span></span><span></span><span></span></span>
+      <span id="soundLabel">Play sea &amp; wind</span>
+    </button>
+    <input type="range" class="volume" id="volume" min="0" max="1" step="0.01" value="0.6" aria-label="Sea sound volume">
+    <div class="divider"></div>
+  </div>
+
+  <button class="cta-easylandx" id="easylandx">EasyLandX →</button>
+  <div class="cta-caption">Bring your own vessel safely to harbour — hand this beam off to EasyLandX.</div>
+</div>
+
+<script>
+  // ---- scatter stars ----
+  const starsContainer = document.getElementById('stars');
+  for (let i = 0; i < 70; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 90 + '%';
+    s.style.animationDelay = (Math.random() * 4).toFixed(2) + 's';
+    s.style.width = s.style.height = (Math.random() < 0.15 ? 3 : 2) + 'px';
+    starsContainer.appendChild(s);
+  }
+
+  // ---- synthesized sea sound (Web Audio API, no external files needed) ----
+  let audioCtx = null;
+  let masterGain = null;
+  let nodes = [];
+  let playing = false;
+
+  function buildSeaSound() {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = parseFloat(document.getElementById('volume').value);
+    masterGain.connect(audioCtx.destination);
+
+    // Brown-ish noise buffer, looped, for the base "shhh" of surf
+    const bufferSize = audioCtx.sampleRate * 4;
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    let lastOut = 0;
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      lastOut = (lastOut + 0.02 * white) / 1.02;
+      data[i] = lastOut * 4.5;
+    }
+    const noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+    noiseSource.loop = true;
+
+    const noiseFilter = audioCtx.createBiquadFilter();
+    noiseFilter.type = 'lowpass';
+    noiseFilter.frequency.value = 900;
+
+    const noiseGain = audioCtx.createGain();
+    noiseGain.gain.value = 0.55;
+
+    noiseSource.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(masterGain);
+
+    // slow LFO on noise gain to simulate swelling waves rolling in
+    const waveLFO = audioCtx.createOscillator();
+    waveLFO.frequency.value = 0.09;
+    const waveLFOGain = audioCtx.createGain();
+    waveLFOGain.gain.value = 0.28;
+    waveLFO.connect(waveLFOGain);
+    waveLFOGain.connect(noiseGain.gain);
+
+    // secondary faster LFO layered in for texture
+    const waveLFO2 = audioCtx.createOscillator();
+    waveLFO2.frequency.value = 0.23;
+    const waveLFO2Gain = audioCtx.createGain();
+    waveLFO2Gain.gain.value = 0.12;
+    waveLFO2.connect(waveLFO2Gain);
+    waveLFO2Gain.connect(noiseGain.gain);
+
+    // faint low wind tone
+    const windOsc = audioCtx.createOscillator();
+    windOsc.type = 'sine';
+    windOsc.frequency.value = 70;
+    const windGain = audioCtx.createGain();
+    windGain.gain.value = 0.05;
+    windOsc.connect(windGain);
+    windGain.connect(masterGain);
+
+    // occasional higher-frequency hiss burst for crashing foam
+    const hissFilter = audioCtx.createBiquadFilter();
+    hissFilter.type = 'highpass';
+    hissFilter.frequency.value = 2200;
+    const hissGain = audioCtx.createGain();
+    hissGain.gain.value = 0.06;
+    noiseSource.connect(hissFilter);
+    hissFilter.connect(hissGain);
+    hissGain.connect(masterGain);
+
+    noiseSource.start();
+    waveLFO.start();
+    waveLFO2.start();
+    windOsc.start();
+
+    nodes = [noiseSource, waveLFO, waveLFO2, windOsc];
+  }
+
+  const soundBtn = document.getElementById('soundBtn');
+  const soundLabel = document.getElementById('soundLabel');
+  const volumeSlider = document.getElementById('volume');
+  const statusText = document.getElementById('statusText');
+
+  soundBtn.addEventListener('click', async () => {
+    if (!playing) {
+      if (!audioCtx) buildSeaSound();
+      if (audioCtx.state === 'suspended') await audioCtx.resume();
+      playing = true;
+      soundBtn.classList.add('playing');
+      soundBtn.setAttribute('aria-pressed', 'true');
+      soundLabel.textContent = 'Pause sea & wind';
+      statusText.textContent = 'Sounding the surf';
+    } else {
+      if (audioCtx) await audioCtx.suspend();
+      playing = false;
+      soundBtn.classList.remove('playing');
+      soundBtn.setAttribute('aria-pressed', 'false');
+      soundLabel.textContent = 'Play sea & wind';
+      statusText.textContent = 'Standing watch';
+    }
+  });
+
+  volumeSlider.addEventListener('input', (e) => {
+    if (masterGain) masterGain.gain.value = parseFloat(e.target.value);
+  });
+
+  // ---- EasyLandX CTA ----
+  document.getElementById('easylandx').addEventListener('click', () => {
+    window.open('https://easylandx.com', '_blank', 'noopener');
+  });
+</script>
+
+</body>
+</html>

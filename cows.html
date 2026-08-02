@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunny Meadow Pasture - Interactive Herd & Weather</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: #1a1a1a; /* Dark background to frame the iPhone container on wider screens */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            font-family: system-ui, -apple-system, sans-serif;
+            user-select: none;
+            overflow-y: auto; /* Enable page scrolling */
+        }
+
+        /* iPhone Viewport Container */
+        .viewport {
+            position: relative;
+            width: 100%;
+            max-width: 393px; /* Standard iPhone screen width */
+            min-height: 852px; /* Standard iPhone screen height */
+            background: #fff;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden; /* Prevent horizontal spill */
+        }
+
+        /* Sky Styling with Rain Transition */
+        .sky {
+            position: relative;
+            height: 380px;
+            background: linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%);
+            overflow: hidden;
+            transition: background 1.5s ease;
+            flex-shrink: 0;
+        }
+
+        .sky.rainy {
+            background: linear-gradient(to bottom, #2c3e50 0%, #4ca1af 100%);
+        }
+
+        /* Sun Styling */
+        .sun {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #fff700 30%, #ffae00 80%);
+            border-radius: 50%;
+            box-shadow: 0 0 30px #ffae00, 0 0 60px #ffe600;
+            animation: pulse-sun 4s infinite alternate ease-in-out;
+            transition: opacity 1.5s ease;
+        }
+
+        .sky.rainy .sun {
+            opacity: 0.2;
+        }
+
+        @keyframes pulse-sun {
+            0% { transform: scale(1); box-shadow: 0 0 30px #ffae00, 0 0 60px #ffe600; }
+            100% { transform: scale(1.08); box-shadow: 0 0 45px #ffae00, 0 0 80px #ffe600; }
+        }
+
+        /* Cloud Animations */
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 100px;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            transition: background 1.5s ease;
+        }
+
+        .sky.rainy .cloud {
+            background: rgba(120, 130, 140, 0.95);
+        }
+
+        .cloud::before, .cloud::after {
+            content: '';
+            position: absolute;
+            background: inherit;
+            border-radius: 50%;
+        }
+
+        .cloud-1 {
+            width: 140px;
+            height: 40px;
+            top: 30px;
+            left: -160px;
+            animation: move-cloud 25s linear infinite;
+        }
+        .cloud-1::before { width: 50px; height: 50px; top: -25px; left: 20px; }
+        .cloud-1::after { width: 70px; height: 70px; top: -35px; right: 20px; }
+
+        .cloud-2 {
+            width: 180px;
+            height: 50px;
+            top: 90px;
+            left: -200px;
+            animation: move-cloud 35s linear infinite;
+            animation-delay: 8s;
+            opacity: 0.85;
+        }
+        .cloud-2::before { width: 70px; height: 70px; top: -30px; left: 25px; }
+        .cloud-2::after { width: 90px; height: 90px; top: -45px; right: 25px; }
+
+        @keyframes move-cloud {
+            0% { left: -200px; }
+            100% { left: 420px; }
+        }
+
+        /* Rain Layer */
+        .rain-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1s ease;
+            z-index: 10;
+        }
+
+        .rain-container.active {
+            opacity: 1;
+        }
+
+        .drop {
+            position: absolute;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.75));
+            width: 2px;
+            height: 30px;
+            opacity: 0.7;
+            animation: fall 0.6s linear infinite;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-50px); }
+            100% { transform: translateY(1200px); }
+        }
+
+        /* Grass Field (Expanded height for scrolling) */
+        .field {
+            position: relative;
+            height: 900px;
+            background: linear-gradient(to bottom, #56ab2f 0%, #a8e063 100%);
+            border-top: 6px solid #439222;
+            transition: filter 1.5s ease;
+            overflow: hidden;
+        }
+
+        .sky.rainy + .field {
+            filter: brightness(0.75);
+        }
+
+        /* Decorative Flowers */
+        .flower {
+            position: absolute;
+            font-size: 1.5rem;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+            transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+
+        .flower:hover {
+            transform: scale(1.3) rotate(12deg);
+        }
+
+        /* Animals Base Styling */
+        .animal {
+            position: absolute;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+            cursor: pointer;
+            transition: filter 0.2s ease;
+        }
+
+        .animal:hover {
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4)) scale(1.1);
+        }
+
+        /* Cow Variants */
+        .cow { font-size: 2.8rem; }
+        .cow-small { font-size: 1.8rem; }
+        .cow-large { font-size: 3.5rem; }
+
+        /* Other Animals */
+        .sheep { font-size: 2.4rem; }
+        .sheep-small { font-size: 1.6rem; }
+        .dog { font-size: 2.2rem; }
+        .lizard { font-size: 1.8rem; }
+
+        /* Movement Animations adjusted for mobile bounds */
+        .walk-left-to-right {
+            animation: move-right 16s ease-in-out infinite alternate;
+        }
+
+        @keyframes move-right {
+            0% { left: 2%; transform: scaleX(-1); }
+            45% { left: 40%; transform: scaleX(-1); }
+            50% { transform: scaleX(1); }
+            95% { left: 80%; transform: scaleX(1); }
+            100% { transform: scaleX(-1); }
+        }
+
+        .walk-right-to-left {
+            animation: move-left 14s ease-in-out infinite alternate;
+        }
+
+        @keyframes move-left {
+            0% { left: 80%; transform: scaleX(1); }
+            45% { left: 35%; transform: scaleX(1); }
+            50% { transform: scaleX(-1); }
+            95% { left: 5%; transform: scaleX(-1); }
+            100% { transform: scaleX(1); }
+        }
+
+        .walk-fast {
+            animation: move-fast 8s linear infinite alternate;
+        }
+
+        @keyframes move-fast {
+            0% { left: 5%; transform: scaleX(-1); }
+            100% { left: 78%; transform: scaleX(-1); }
+        }
+
+        .graze {
+            animation: subtle-bob 3s ease-in-out infinite alternate;
+        }
+
+        .bounce {
+            animation: happy-bounce 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes subtle-bob {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-5px) rotate(2deg); }
+        }
+
+        @keyframes happy-bounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-12px); }
+        }
+
+        /* Single Poop Emoji */
+        .poop {
+            position: absolute;
+            font-size: 1.4rem;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .poop:hover {
+            transform: scale(1.3);
+        }
+
+        /* Controls Box */
+        .controls {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #2e7d32;
+            color: #1b5e20;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #ffffff;
+            transform: translateY(-2px);
+        }
+
+        .btn-rain {
+            border-color: #1565c0;
+            color: #0d47a1;
+        }
+
+        /* EasyPageX Button */
+        .easypagex-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(37, 117, 252, 0.3);
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .easypagex-link:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="viewport">
+        <!-- Sky Container -->
+        <div id="sky" class="sky">
+            <div class="sun"></div>
+            <div class="cloud cloud-1"></div>
+            <div class="cloud cloud-2"></div>
+
+            <!-- Rain animation overlay -->
+            <div id="rainContainer" class="rain-container"></div>
+
+            <!-- UI Controls -->
+            <div class="controls">
+                <button id="soundToggle" class="btn">
+                    <span id="soundIcon">💨</span>
+                    <span id="soundText">Wind: Off</span>
+                </button>
+
+                <button id="rainToggle" class="btn btn-rain">
+                    <span id="rainIcon">🌧️</span>
+                    <span id="rainText">Rain: Off</span>
+                </button>
+
+                <a href="https://easypagex.com" target="_blank" rel="noopener noreferrer" class="easypagex-link">
+                    🚀 EasyPageX
+                </a>
+            </div>
+        </div>
+
+        <!-- Green Meadow Field (Scrollable area) -->
+        <div class="field">
+            <!-- COWS -->
+            <div class="animal cow graze" style="top: 5%; left: 8%;" title="Grazing cow">🐄</div>
+            <div class="animal cow cow-small graze" style="top: 8%; left: 60%;" title="Calf">🐄</div>
+            <div class="animal cow walk-left-to-right" style="top: 15%;" title="Walking forward right">🐄</div>
+            <div class="animal cow cow-small walk-left-to-right" style="top: 22%;" title="Calf following">🐄</div>
+            <div class="animal cow cow-large graze" style="top: 32%; left: 40%;" title="Big cow">🐄</div>
+            <div class="animal cow walk-right-to-left cow-large" style="top: 45%;" title="Walking forward left">🐄</div>
+            <div class="animal cow graze" style="top: 60%; left: 70%;" title="Corner cow">🐄</div>
+            <div class="animal cow walk-fast cow-small" style="top: 78%;" title="Fast calf">🐄</div>
+
+            <!-- SHEEP -->
+            <div class="animal sheep graze" style="top: 6%; left: 75%;" title="Fluffy sheep">🐑</div>
+            <div class="animal sheep sheep-small bounce" style="top: 18%; left: 20%;" title="Little lamb">🐑</div>
+            <div class="animal sheep walk-right-to-left" style="top: 38%;" title="Wandering sheep">🐑</div>
+            <div class="animal sheep graze" style="top: 68%; left: 15%;" title="Grazing sheep">🐑</div>
+
+            <!-- MOVING DOGS -->
+            <div class="animal dog walk-left-to-right" style="top: 28%;" title="Herding Dog 1">🐕</div>
+            <div class="animal dog walk-fast" style="top: 55%;" title="Fast Herding Dog 2">🐕</div>
+
+            <!-- LIZARD -->
+            <div class="animal lizard graze" style="top: 85%; left: 45%;" title="Sunny Lizard">🦎</div>
+
+            <!-- FLOWERS DISTRIBUTED DOWN THE FIELD -->
+            <div class="flower" style="top: 4%; left: 25%;">🌸</div>
+            <div class="flower" style="top: 10%; left: 42%;">🌼</div>
+            <div class="flower" style="top: 18%; left: 80%;">🌺</div>
+            <div class="flower" style="top: 25%; left: 15%;">🌻</div>
+            <div class="flower" style="top: 35%; left: 75%;">🌷</div>
+            <div class="flower" style="top: 42%; left: 22%;">🌸</div>
+            <div class="flower" style="top: 50%; left: 82%;">🌼</div>
+            <div class="flower" style="top: 58%; left: 12%;">🌺</div>
+            <div class="flower" style="top: 65%; left: 60%;">🌻</div>
+            <div class="flower" style="top: 72%; left: 28%;">🌷</div>
+            <div class="flower" style="top: 80%; left: 75%;">🌸</div>
+            <div class="flower" style="top: 88%; left: 20%;">🌼</div>
+
+            <!-- EXACTLY ONE POOP EMOJI -->
+            <div class="poop" style="top: 74%; left: 52%;" title="Sole cow deposit">💩</div>
+        </div>
+    </div>
+
+    <!-- Interactive Sound & Rain System -->
+    <script>
+        // DOM Elements
+        const soundBtn = document.getElementById('soundToggle');
+        const soundIcon = document.getElementById('soundIcon');
+        const soundText = document.getElementById('soundText');
+
+        const rainBtn = document.getElementById('rainToggle');
+        const rainIcon = document.getElementById('rainIcon');
+        const rainText = document.getElementById('rainText');
+
+        const sky = document.getElementById('sky');
+        const rainContainer = document.getElementById('rainContainer');
+
+        // Audio State variables
+        let audioCtx = null;
+        let isSoundPlaying = false;
+        let isRaining = false;
+        let windGain = null;
+        let windFilter = null;
+
+        // Generate dynamic rain drops
+        function createRainDrops() {
+            rainContainer.innerHTML = '';
+            const dropCount = 60;
+            for (let i = 0; i < dropCount; i++) {
+                const drop = document.createElement('div');
+                drop.className = 'drop';
+                drop.style.left = `${Math.random() * 100}%`;
+                drop.style.animationDelay = `${Math.random() * 0.8}s`;
+                drop.style.animationDuration = `${0.4 + Math.random() * 0.3}s`;
+                rainContainer.appendChild(drop);
+            }
+        }
+        createRainDrops();
+
+        // Web Audio Synthesizer for Natural Wind Sounds
+        function initWindAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+            const bufferSize = audioCtx.sampleRate * 3;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+
+            // Pink/Brownish noise synthesis for deep wind sound
+            let lastOut = 0.0;
+            for (let i = 0; i < bufferSize; i++) {
+                const white = Math.random() * 2 - 1;
+                output[i] = (lastOut + (0.02 * white)) / 1.02;
+                lastOut = output[i];
+                output[i] *= 3.5;
+            }
+
+            const noiseSource = audioCtx.createBufferSource();
+            noiseSource.buffer = noiseBuffer;
+            noiseSource.loop = true;
+
+            // Filter simulating howling wind dynamics
+            windFilter = audioCtx.createBiquadFilter();
+            windFilter.type = 'lowpass';
+            windFilter.frequency.setValueAtTime(250, audioCtx.currentTime);
+
+            windGain = audioCtx.createGain();
+            windGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+
+            noiseSource.connect(windFilter);
+            windFilter.connect(windGain);
+            windGain.connect(audioCtx.destination);
+
+            noiseSource.start();
+
+            // Modulate wind pitch and gain randomly over time
+            setInterval(() => {
+                if (audioCtx && audioCtx.state === 'running' && isSoundPlaying) {
+                    const targetFreq = 180 + Math.random() * 300;
+                    const targetGain = 0.1 + Math.random() * 0.15;
+                    windFilter.frequency.exponentialRampToValueAtTime(targetFreq, audioCtx.currentTime + 3);
+                    windGain.gain.linearRampToValueAtTime(targetGain, audioCtx.currentTime + 3);
+                }
+            }, 3500);
+        }
+
+        // Sound Button Event
+        soundBtn.addEventListener('click', () => {
+            if (!isSoundPlaying) {
+                if (!audioCtx) {
+                    initWindAudio();
+                } else if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                isSoundPlaying = true;
+                soundIcon.textContent = '🔊';
+                soundText.textContent = 'Wind: On';
+            } else {
+                if (audioCtx) {
+                    audioCtx.suspend();
+                }
+                isSoundPlaying = false;
+                soundIcon.textContent = '💨';
+                soundText.textContent = 'Wind: Off';
+            }
+        });
+
+        // Rain Button Event
+        rainBtn.addEventListener('click', () => {
+            isRaining = !isRaining;
+            if (isRaining) {
+                sky.classList.add('rainy');
+                rainContainer.classList.add('active');
+                rainIcon.textContent = '☀️';
+                rainText.textContent = 'Rain: On';
+
+                if (windFilter && audioCtx) {
+                    windFilter.frequency.setValueAtTime(500, audioCtx.currentTime);
+                }
+            } else {
+                sky.classList.remove('rainy');
+                rainContainer.classList.remove('active');
+                rainIcon.textContent = '🌧️';
+                rainText.textContent = 'Rain: Off';
+
+                if (windFilter && audioCtx) {
+                    windFilter.frequency.setValueAtTime(250, audioCtx.currentTime);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

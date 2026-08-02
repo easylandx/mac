@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>☔️ Barometer — a storm, scrolled</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@600;800&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#141a24;
+    --dusk:#2b3650;
+    --slate:#5c7089;
+    --mist:#cfd9e3;
+    --flash:#fef6e4;
+    --ember:#f2a154;
+    --paper:#f3ede0;
+    --sky-a: var(--ember);
+    --sky-b: #7fb3d5;
+    --sky-c: var(--mist);
+    --gauge: 0deg;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{
+    height:100%;
+    background:var(--ink);
+    overscroll-behavior:none;
+  }
+  body{
+    font-family:'Fraunces', serif;
+    color:var(--paper);
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--ember); color:var(--ink); }
+
+  /* ---------- fixed atmosphere layer ---------- */
+  #sky{
+    position:fixed; inset:0;
+    background: linear-gradient(180deg, var(--sky-a) 0%, var(--sky-b) 45%, var(--sky-c) 100%);
+    transition: background 0.4s linear;
+    z-index:0;
+  }
+  #stars{ position:fixed; inset:0; z-index:0; opacity:0; transition:opacity .6s linear; }
+
+  .sun{
+    position:fixed;
+    top:14vh; left:50%;
+    width:min(34vw,150px); height:min(34vw,150px);
+    border-radius:50%;
+    background: radial-gradient(circle at 38% 32%, #fff7df, var(--ember) 60%, #d9812f 100%);
+    box-shadow: 0 0 90px 30px rgba(242,161,84,0.55);
+    transform: translate(-50%, calc(var(--sun-y, 0) * 1px)) scale(var(--sun-scale,1));
+    opacity: var(--sun-op, 1);
+    z-index:1;
+    transition: opacity .5s linear;
+    pointer-events:none;
+  }
+
+  .clouds{ position:fixed; inset:0; z-index:2; pointer-events:none; overflow:hidden; }
+  .cloud{
+    position:absolute;
+    border-radius:100px;
+    background: radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.9), rgba(207,217,227,0.6));
+    filter: blur(2px);
+    opacity: var(--cloud-op, 0);
+    transition: opacity .6s linear;
+  }
+  .cloud::before, .cloud::after{
+    content:"";
+    position:absolute;
+    border-radius:100px;
+    background:inherit;
+  }
+  .c1{ width:220px; height:70px; top:10%; }
+  .c1::before{ width:130px; height:100px; top:-50px; left:20px; }
+  .c1::after{ width:110px; height:80px; top:-30px; left:110px; }
+  .c2{ width:280px; height:80px; top:18%; }
+  .c2::before{ width:150px; height:110px; top:-55px; left:40px; }
+  .c2::after{ width:120px; height:90px; top:-35px; left:150px; }
+  .c3{ width:180px; height:60px; top:26%; }
+  .c3::before{ width:100px; height:80px; top:-40px; left:20px; }
+  .c3::after{ width:90px; height:60px; top:-25px; left:90px; }
+  .c4{ width:320px; height:90px; top:8%; }
+  .c4::before{ width:170px; height:120px; top:-60px; left:50px; }
+  .c4::after{ width:140px; height:100px; top:-40px; left:170px; }
+
+  #flash{
+    position:fixed; inset:0; z-index:5;
+    background: var(--flash);
+    opacity:0;
+    pointer-events:none;
+    mix-blend-mode: screen;
+  }
+
+  #rainCanvas{ position:fixed; inset:0; z-index:4; pointer-events:none; }
+
+  /* ---------- barometer, the signature instrument ---------- */
+  #gauge{
+    position:fixed;
+    right:16px; top:50%;
+    transform:translateY(-50%);
+    width:64px;
+    z-index:20;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    font-family:'Space Mono', monospace;
+  }
+  #gauge .dial{
+    width:56px; height:56px; border-radius:50%;
+    border:1.5px solid rgba(243,237,224,0.35);
+    position:relative;
+    background:rgba(20,26,36,0.35);
+    backdrop-filter: blur(6px);
+  }
+  #gauge .needle{
+    position:absolute; left:50%; top:50%;
+    width:2px; height:22px;
+    background: var(--ember);
+    transform-origin: bottom center;
+    transform: translate(-50%,-100%) rotate(var(--gauge));
+    transition: transform .25s ease-out;
+  }
+  #gauge .dial::after{
+    content:""; position:absolute; left:50%; top:50%;
+    width:6px; height:6px; margin:-3px;
+    border-radius:50%; background:var(--ember);
+  }
+  #gauge .readout{
+    font-size:10px; letter-spacing:0.08em;
+    color:rgba(243,237,224,0.75);
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    height:120px;
+  }
+
+  /* ---------- nav dots ---------- */
+  #nav{
+    position:fixed; left:16px; top:50%; transform:translateY(-50%);
+    z-index:20; display:flex; flex-direction:column; gap:14px;
+  }
+  #nav button{
+    width:8px; height:8px; border-radius:50%;
+    border:1px solid rgba(243,237,224,0.6);
+    background:transparent;
+    cursor:pointer; padding:0;
+    transition: background .3s, transform .3s;
+  }
+  #nav button.active{ background:var(--ember); border-color:var(--ember); transform:scale(1.3); }
+
+  /* ---------- sound toggle ---------- */
+  #soundBtn{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
+    z-index:20;
+    font-family:'Space Mono', monospace;
+    font-size:11px; letter-spacing:0.12em; text-transform:uppercase;
+    color:var(--paper);
+    background: rgba(20,26,36,0.45);
+    border:1px solid rgba(243,237,224,0.4);
+    backdrop-filter: blur(6px);
+    padding:10px 18px; border-radius:30px;
+    cursor:pointer;
+    display:flex; align-items:center; gap:8px;
+  }
+  #soundBtn .dot{ width:6px; height:6px; border-radius:50%; background:#8a97a8; }
+  #soundBtn.on .dot{ background:#7bd88f; box-shadow:0 0 6px #7bd88f; }
+
+  /* ---------- scroll container ---------- */
+  main{
+    position:relative; z-index:10;
+    scroll-snap-type: y mandatory;
+    overflow-y:scroll;
+    height:100vh; height:100dvh;
+  }
+  section{
+    scroll-snap-align:start;
+    height:100vh; height:100dvh;
+    display:flex; flex-direction:column;
+    justify-content:flex-end;
+    padding: 8vh 28px 14vh;
+    position:relative;
+  }
+  .eyebrow{
+    font-family:'Space Mono', monospace;
+    font-size:12px; letter-spacing:0.18em; text-transform:uppercase;
+    color: var(--ember);
+    margin-bottom:14px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{
+    content:""; display:inline-block; width:22px; height:1px; background:var(--ember);
+  }
+  h1{
+    font-family:'Archivo Expanded', sans-serif;
+    font-weight:800;
+    font-size:clamp(34px, 10vw, 54px);
+    line-height:0.98;
+    letter-spacing:-0.01em;
+    max-width:11ch;
+    color:var(--paper);
+    text-shadow: 0 2px 24px rgba(0,0,0,0.25);
+  }
+  p.lede{
+    margin-top:16px;
+    font-size:17px;
+    line-height:1.55;
+    max-width:34ch;
+    color: rgba(243,237,224,0.88);
+    font-weight:400;
+  }
+  .reading{
+    margin-top:22px;
+    font-family:'Space Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.08em;
+    color: rgba(243,237,224,0.6);
+    display:flex; gap:18px;
+  }
+  .reading span b{ color:var(--paper); font-weight:700; }
+
+  #s7{ justify-content:center; align-items:flex-start; }
+  #s7 h1{ max-width:9ch; }
+  .cta{
+    margin-top:26px;
+    display:inline-flex; align-items:center; gap:10px;
+    font-family:'Space Mono', monospace;
+    font-size:13px; letter-spacing:0.1em; text-transform:uppercase;
+    color: var(--ink);
+    background: var(--paper);
+    padding:16px 26px;
+    border-radius:2px;
+    text-decoration:none;
+    border:1px solid var(--paper);
+    transition: background .25s, color .25s;
+  }
+  .cta:hover{ background:transparent; color:var(--paper); }
+  .cta svg{ width:14px; height:14px; }
+
+  footer.credit{
+    margin-top:30px;
+    font-family:'Space Mono', monospace;
+    font-size:10.5px; letter-spacing:0.06em;
+    color: rgba(243,237,224,0.45);
+  }
+
+  @media (min-width: 640px){
+    main{ max-width:430px; margin:0 auto; border-left:1px solid rgba(243,237,224,0.08); border-right:1px solid rgba(243,237,224,0.08); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="sky"></div>
+<div class="sun" id="sun"></div>
+<div class="clouds">
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+  <div class="cloud c3"></div>
+  <div class="cloud c4"></div>
+</div>
+<canvas id="rainCanvas"></canvas>
+<div id="flash"></div>
+
+<div id="gauge" aria-hidden="true">
+  <div class="readout">BAROMETER</div>
+  <div class="dial"><div class="needle" id="needle"></div></div>
+</div>
+
+<div id="nav">
+  <button data-i="0" class="active" aria-label="Clear sky"></button>
+  <button data-i="1" aria-label="Gathering"></button>
+  <button data-i="2" aria-label="First drops"></button>
+  <button data-i="3" aria-label="Rainfall"></button>
+  <button data-i="4" aria-label="Storm"></button>
+  <button data-i="5" aria-label="Breaking"></button>
+  <button data-i="6" aria-label="After the rain"></button>
+</div>
+
+<button id="soundBtn"><span class="dot"></span><span id="soundLabel">Sound off</span></button>
+
+<main id="scroller">
+
+  <section id="s1">
+    <div class="eyebrow">01 — Sky</div>
+    <h1>Before the first cloud</h1>
+    <p class="lede">Clear air, high pressure, nothing on the way in. The sun sits where it always sits. Scroll to watch the pressure fall.</p>
+    <div class="reading"><span>PRESSURE <b>1023 hPa</b></span><span>WIND <b>3 kt</b></span></div>
+  </section>
+
+  <section id="s2">
+    <div class="eyebrow">02 — Gathering</div>
+    <h1>The pressure drops</h1>
+    <p class="lede">Cloud builds low and grey along the horizon. The light goes flat. The air holds still right before it doesn't.</p>
+    <div class="reading"><span>PRESSURE <b>1009 hPa</b></span><span>WIND <b>9 kt</b></span></div>
+  </section>
+
+  <section id="s3">
+    <div class="eyebrow">03 — First Drops</div>
+    <h1>It starts to fall</h1>
+    <p class="lede">A few drops, wide apart, dark spots on dry pavement. Tap the sound button to hear it land.</p>
+    <div class="reading"><span>PRESSURE <b>1002 hPa</b></span><span>RAIN <b>2 mm/h</b></span></div>
+  </section>
+
+  <section id="s4">
+    <div class="eyebrow">04 — Rainfall</div>
+    <h1>Steady now</h1>
+    <p class="lede">Straight down, no wind behind it yet, a even patter that fills in every gap of quiet.</p>
+    <div class="reading"><span>PRESSURE <b>994 hPa</b></span><span>RAIN <b>14 mm/h</b></span></div>
+  </section>
+
+  <section id="s5">
+    <div class="eyebrow">05 — Storm</div>
+    <h1>Thunder finds its distance</h1>
+    <p class="lede">Wind picks the rain up sideways. Count the seconds between flash and sound — that's how far off it still is.</p>
+    <div class="reading"><span>PRESSURE <b>982 hPa</b></span><span>RAIN <b>36 mm/h</b></span></div>
+  </section>
+
+  <section id="s6">
+    <div class="eyebrow">06 — Breaking</div>
+    <h1>The front moves through</h1>
+    <p class="lede">Thunder drifts off, the rain thins to a drizzle, and a strip of brighter sky opens along the edge of things.</p>
+    <div class="reading"><span>PRESSURE <b>995 hPa</b></span><span>RAIN <b>3 mm/h</b></span></div>
+  </section>
+
+  <section id="s7">
+    <div class="eyebrow">07 — After the Rain</div>
+    <h1>Sun, no rain, birdsong</h1>
+    <p class="lede">The last drops finish off the leaves. No rain now — just light, warm pavement, and birds picking the quiet back up.</p>
+    <a class="cta" href="https://easylandx.com" target="_blank" rel="noopener">
+      Visit EasyLandX
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H8M17 7V16"/></svg>
+    </a>
+    <footer class="credit">A scroll-linked storm, built in one page.</footer>
+  </section>
+
+</main>
+
+<script>
+(function(){
+  "use strict";
+
+  var main = document.getElementById('scroller');
+  var sections = Array.prototype.slice.call(document.querySelectorAll('main section'));
+  var navBtns = Array.prototype.slice.call(document.querySelectorAll('#nav button'));
+  var root = document.documentElement;
+  var sunEl = document.getElementById('sun');
+  var flashEl = document.getElementById('flash');
+  var needle = document.getElementById('needle');
+
+  navBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      sections[+btn.dataset.i].scrollIntoView({behavior:'smooth'});
+    });
+  });
+
+  // ---------------- scroll-linked atmosphere ----------------
+  var skyStops = [
+    // [top color, mid color, bottom color]
+    ['#f2a154', '#7fb3d5', '#cfd9e3'],   // 1 clear
+    ['#8398b0', '#5c7089', '#4a5772'],   // 2 gathering
+    ['#57667f', '#465570', '#374362'],   // 3 first drops
+    ['#3c4a63', '#37455d', '#2b3650'],   // 4 rainfall
+    ['#1c2431', '#20293a', '#141a24'],   // 5 storm
+    ['#5c7089', '#7fa0bd', '#c7d5de'],   // 6 breaking
+    ['#f0b878', '#7ea8c9', '#e7ecef']    // 7 after the rain
+  ];
+
+  function lerp(a,b,t){ return a+(b-a)*t; }
+  function hexToRgb(h){
+    h = h.replace('#','');
+    return [parseInt(h.substring(0,2),16), parseInt(h.substring(2,4),16), parseInt(h.substring(4,6),16)];
+  }
+  function rgbToCss(c){ return 'rgb('+c[0]+','+c[1]+','+c[2]+')'; }
+  function mixHex(h1,h2,t){
+    var a=hexToRgb(h1), b=hexToRgb(h2);
+    return rgbToCss([lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)]);
+  }
+
+  var progress = 0; // 0..6 (continuous section index across 7 screens)
+  var storminess = 0; // 0..1 for rain/wind/audio intensity
+
+  function updateAtmosphere(){
+    var i = Math.floor(progress);
+    var t = progress - i;
+    var i2 = Math.min(i+1, skyStops.length-1);
+    var top = mixHex(skyStops[i][0], skyStops[i2][0], t);
+    var mid = mixHex(skyStops[i][1], skyStops[i2][1], t);
+    var bot = mixHex(skyStops[i][2], skyStops[i2][2], t);
+    document.getElementById('sky').style.background =
+      'linear-gradient(180deg,' + top + ' 0%,' + mid + ' 45%,' + bot + ' 100%)';
+
+    // sun: bright at 0, gone through gathering/rain/storm, back from breaking into after-rain
+    var sunOp;
+    if (progress <= 1.6) sunOp = lerp(1, 0, progress/1.6);
+    else if (progress >= 5.0) sunOp = lerp(0, 1, (progress-5.0)/1.4);
+    else sunOp = 0;
+    sunOp = Math.max(0, Math.min(1, sunOp));
+    sunEl.style.setProperty('--sun-op', sunOp);
+    sunEl.style.setProperty('--sun-y', lerp(0, -40, progress/6));
+
+    // clouds: build up through sections 1-3, hold through the storm, thin out from breaking to clear
+    var cloudOp;
+    if (progress <= 3.5) cloudOp = lerp(0, 0.95, Math.min(1, progress/2.2));
+    else cloudOp = lerp(0.95, 0.0, (progress-3.5)/2.2);
+    cloudOp = Math.max(0, Math.min(0.95, cloudOp));
+    document.querySelectorAll('.cloud').forEach(function(c, idx){
+      c.style.setProperty('--cloud-op', cloudOp);
+    });
+
+    // storminess drives rain density + audio: rises through drops/rainfall/storm, falls through breaking, gone by the last screen
+    if (progress < 1.6) storminess = 0;
+    else if (progress < 4.2) storminess = (progress-1.6)/2.6;
+    else if (progress < 4.6) storminess = 1;
+    else if (progress < 6) storminess = Math.max(0, 1 - (progress-4.6)/1.4);
+    else storminess = 0;
+    storminess = Math.max(0, Math.min(1, storminess));
+
+    // barometer needle: -70deg (high) through 70deg (low pressure / storm peak) back toward -60deg as it clears
+    var deg;
+    if (progress <= 4.6) deg = lerp(-70, 70, Math.min(1, progress/4.6));
+    else deg = lerp(70, -60, Math.min(1, (progress-4.6)/1.4));
+    root.style.setProperty('--gauge', deg + 'deg');
+
+    updateAudioLevels();
+  }
+
+  function computeProgress(){
+    var scrollTop = main.scrollTop;
+    var h = main.clientHeight;
+    progress = Math.max(0, Math.min(sections.length-1, scrollTop / h));
+    var active = Math.round(progress);
+    navBtns.forEach(function(b,i){ b.classList.toggle('active', i===active); });
+    updateAtmosphere();
+  }
+
+  main.addEventListener('scroll', function(){
+    requestAnimationFrame(computeProgress);
+  }, {passive:true});
+
+  window.addEventListener('resize', computeProgress);
+  computeProgress();
+
+  // ---------------- rain + lightning canvas ----------------
+  var canvas = document.getElementById('rainCanvas');
+  var ctx = canvas.getContext('2d');
+  var W, H, drops = [];
+  var MAX_DROPS = 260;
+
+  function resize(){
+    W = canvas.width = window.innerWidth * devicePixelRatio;
+    H = canvas.height = window.innerHeight * devicePixelRatio;
+    canvas.style.width = window.innerWidth+'px';
+    canvas.style.height = window.innerHeight+'px';
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function makeDrop(){
+    return {
+      x: Math.random()*W,
+      y: Math.random()*H,
+      len: (10 + Math.random()*18) * devicePixelRatio,
+      speed: (6 + Math.random()*6) * devicePixelRatio,
+      drift: 0
+    };
+  }
+  for (var k=0;k<MAX_DROPS;k++) drops.push(makeDrop());
+
+  var lastFlash = 0;
+  function maybeLightning(now){
+    if (progress > 5) return; // storm has passed by the breaking/clear screens
+    if (storminess < 0.55) return;
+    if (now - lastFlash < 2600) return;
+    var chance = (storminess-0.55) * 0.02;
+    if (Math.random() < chance){
+      lastFlash = now;
+      strikeLightning();
+    }
+  }
+
+  var lastBird = 0;
+  function maybeBirds(now){
+    if (progress < 5.4) return; // only once the storm has cleared
+    if (storminess > 0.1) return;
+    if (now - lastBird < 900) return;
+    if (Math.random() < 0.045){
+      lastBird = now;
+      playBirds();
+    }
+  }
+
+  function strikeLightning(){
+    flashEl.style.transition = 'none';
+    flashEl.style.opacity = 0.85;
+    requestAnimationFrame(function(){
+      flashEl.style.transition = 'opacity 0.9s ease-out';
+      flashEl.style.opacity = 0;
+    });
+    setTimeout(function(){
+      flashEl.style.transition = 'none';
+      flashEl.style.opacity = 0.4;
+      requestAnimationFrame(function(){
+        flashEl.style.transition = 'opacity 0.5s ease-out';
+        flashEl.style.opacity = 0;
+      });
+    }, 160);
+    playThunder();
+  }
+
+  function drawRain(){
+    ctx.clearRect(0,0,W,H);
+    var active = Math.round(MAX_DROPS * Math.max(0.0, storminess));
+    var windSkew = storminess * 5 * devicePixelRatio;
+    ctx.strokeStyle = 'rgba(220,232,240,' + (0.35 + storminess*0.35) + ')';
+    ctx.lineWidth = 1.4 * devicePixelRatio;
+    for (var i=0;i<active;i++){
+      var d = drops[i];
+      ctx.beginPath();
+      ctx.moveTo(d.x, d.y);
+      ctx.lineTo(d.x - windSkew, d.y + d.len);
+      ctx.stroke();
+      d.y += d.speed * (0.6 + storminess);
+      d.x -= windSkew * 0.4;
+      if (d.y > H){ d.y = -d.len; d.x = Math.random()*W; }
+      if (d.x < -20){ d.x = W+20; }
+    }
+    var nowT = performance.now();
+    maybeLightning(nowT);
+    maybeBirds(nowT);
+    requestAnimationFrame(drawRain);
+  }
+  requestAnimationFrame(drawRain);
+
+  // ---------------- synthesized audio ----------------
+  var actx = null;
+  var rainGain, windGain, rainSrc, windSrc;
+  var soundOn = false;
+  var soundBtn = document.getElementById('soundBtn');
+  var soundLabel = document.getElementById('soundLabel');
+
+  function makeNoiseBuffer(ctxA, seconds){
+    var bufferSize = ctxA.sampleRate * seconds;
+    var buffer = ctxA.createBuffer(1, bufferSize, ctxA.sampleRate);
+    var data = buffer.getChannelData(0);
+    for (var i=0;i<bufferSize;i++) data[i] = Math.random()*2-1;
+    return buffer;
+  }
+
+  function initAudio(){
+    if (actx) return;
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // rain layer: white noise -> bandpass (patter) -> gain
+    var rainBuf = makeNoiseBuffer(actx, 2);
+    rainSrc = actx.createBufferSource();
+    rainSrc.buffer = rainBuf; rainSrc.loop = true;
+    var rainFilter = actx.createBiquadFilter();
+    rainFilter.type = 'highpass'; rainFilter.frequency.value = 900;
+    var rainFilter2 = actx.createBiquadFilter();
+    rainFilter2.type = 'lowpass'; rainFilter2.frequency.value = 6000;
+    rainGain = actx.createGain(); rainGain.gain.value = 0;
+    rainSrc.connect(rainFilter).connect(rainFilter2).connect(rainGain).connect(actx.destination);
+    rainSrc.start();
+
+    // wind/storm layer: noise -> lowpass, slow LFO on frequency
+    var windBuf = makeNoiseBuffer(actx, 3);
+    windSrc = actx.createBufferSource();
+    windSrc.buffer = windBuf; windSrc.loop = true;
+    var windFilter = actx.createBiquadFilter();
+    windFilter.type = 'lowpass'; windFilter.frequency.value = 500;
+    var lfo = actx.createOscillator();
+    lfo.frequency.value = 0.15;
+    var lfoGain = actx.createGain(); lfoGain.gain.value = 220;
+    lfo.connect(lfoGain).connect(windFilter.frequency);
+    lfo.start();
+    windGain = actx.createGain(); windGain.gain.value = 0;
+    windSrc.connect(windFilter).connect(windGain).connect(actx.destination);
+    windSrc.start();
+  }
+
+  function playThunder(){
+    if (!soundOn || !actx) return;
+    var now = actx.currentTime;
+
+    // low rumble
+    var rumbleBuf = makeNoiseBuffer(actx, 2.5);
+    var rumble = actx.createBufferSource();
+    rumble.buffer = rumbleBuf;
+    var rumbleFilter = actx.createBiquadFilter();
+    rumbleFilter.type = 'lowpass'; rumbleFilter.frequency.value = 180;
+    var rumbleGain = actx.createGain();
+    rumbleGain.gain.setValueAtTime(0, now);
+    rumbleGain.gain.linearRampToValueAtTime(0.9, now + 0.08);
+    rumbleGain.gain.exponentialRampToValueAtTime(0.001, now + 2.4);
+    rumble.connect(rumbleFilter).connect(rumbleGain).connect(actx.destination);
+    rumble.start(now); rumble.stop(now+2.5);
+
+    // crack: short bright burst
+    var crackBuf = makeNoiseBuffer(actx, 0.4);
+    var crack = actx.createBufferSource();
+    crack.buffer = crackBuf;
+    var crackFilter = actx.createBiquadFilter();
+    crackFilter.type = 'highpass'; crackFilter.frequency.value = 1200;
+    var crackGain = actx.createGain();
+    crackGain.gain.setValueAtTime(0.7, now);
+    crackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    crack.connect(crackFilter).connect(crackGain).connect(actx.destination);
+    crack.start(now); crack.stop(now+0.4);
+  }
+
+  function chirpOnce(startTime, baseFreq){
+    var osc = actx.createOscillator();
+    osc.type = 'sine';
+    var filt = actx.createBiquadFilter();
+    filt.type = 'bandpass'; filt.frequency.value = baseFreq; filt.Q.value = 6;
+    var g = actx.createGain();
+    g.gain.setValueAtTime(0.0001, startTime);
+    g.gain.exponentialRampToValueAtTime(0.14, startTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.13);
+
+    osc.frequency.setValueAtTime(baseFreq * 0.75, startTime);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.25, startTime + 0.05);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.9, startTime + 0.13);
+
+    osc.connect(filt).connect(g).connect(actx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + 0.15);
+  }
+
+  function playBirds(){
+    if (!soundOn || !actx) return;
+    var now = actx.currentTime;
+    var species = 2200 + Math.random()*1400; // pick a rough pitch per call
+    var notes = 2 + Math.floor(Math.random()*3);
+    var t = now;
+    for (var n=0; n<notes; n++){
+      chirpOnce(t, species * (0.94 + Math.random()*0.12));
+      t += 0.09 + Math.random()*0.12;
+    }
+  }
+
+  function updateAudioLevels(){
+    if (!soundOn || !actx) return;
+    var now = actx.currentTime;
+    rainGain.gain.linearRampToValueAtTime(Math.min(0.22, storminess*0.24), now + 0.3);
+    windGain.gain.linearRampToValueAtTime(Math.min(0.16, Math.max(0,storminess-0.4)*0.3), now + 0.3);
+  }
+
+  soundBtn.addEventListener('click', function(){
+    initAudio();
+    if (actx.state === 'suspended') actx.resume();
+    soundOn = !soundOn;
+    soundBtn.classList.toggle('on', soundOn);
+    soundLabel.textContent = soundOn ? 'Sound on' : 'Sound off';
+    if (!soundOn){
+      var now = actx.currentTime;
+      rainGain.gain.linearRampToValueAtTime(0, now+0.2);
+      windGain.gain.linearRampToValueAtTime(0, now+0.2);
+    } else {
+      updateAudioLevels();
+    }
+  });
+
+})();
+</script>
+</body>
+</html>

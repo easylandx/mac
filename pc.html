@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>⌨️ IBM PC 5150 Simulator</title>
+<style>
+  :root{
+    --amber:#ffb000;
+    --green:#33ff66;
+    --white:#e8e8e8;
+    --phosphor: var(--green);
+    --bg-black:#050805;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    background:radial-gradient(ellipse at center, #2b2b2b 0%, #111 60%, #000 100%);
+    font-family:'Courier New',Consolas,monospace;
+    display:flex;flex-direction:column;align-items:center;
+    color:#ddd;
+    min-height:100vh;
+  }
+  .page-title{
+    color:#999;
+    font-size:13px;
+    letter-spacing:3px;
+    margin:18px 0 6px 0;
+    text-transform:uppercase;
+  }
+  .machine{
+    width:min(920px,94vw);
+    background:linear-gradient(180deg,#e4dcc8,#c9c1ac);
+    border-radius:14px;
+    padding:22px 22px 30px 22px;
+    box-shadow:0 20px 50px rgba(0,0,0,.6), inset 0 -4px 10px rgba(0,0,0,.15);
+    border:1px solid #9d967f;
+  }
+  .brandbar{
+    display:flex;justify-content:space-between;align-items:center;
+    color:#5b5646;font-size:12px;font-weight:bold;letter-spacing:1px;
+    padding:0 4px 10px 4px;
+  }
+  .brandbar .logo{font-size:15px;letter-spacing:2px;}
+  .monitor-shell{
+    background:linear-gradient(180deg,#dcd4bf,#b9b19b);
+    border-radius:10px;
+    padding:26px 26px 40px 26px;
+    box-shadow:inset 0 2px 6px rgba(255,255,255,.5), inset 0 -6px 14px rgba(0,0,0,.25);
+    position:relative;
+  }
+  .crt{
+    position:relative;
+    background:#000;
+    border-radius:8px;
+    padding:20px;
+    box-shadow:0 0 0 6px #1a1a1a, 0 0 40px rgba(0,0,0,.7) inset, 0 10px 20px rgba(0,0,0,.5);
+    overflow:hidden;
+  }
+  #screen{
+    position:relative;
+    width:100%;
+    height:56vh;
+    min-height:380px;
+    max-height:560px;
+    background:#020402;
+    overflow-y:auto;
+    overflow-x:hidden;
+    padding:14px 16px;
+    font-size:15px;
+    line-height:1.35;
+    white-space:pre-wrap;
+    word-break:break-word;
+    color:var(--phosphor);
+    text-shadow:0 0 2px currentColor, 0 0 6px currentColor;
+    border-radius:2px;
+  }
+  #screen::-webkit-scrollbar{width:0;height:0;}
+  #gfx{
+    display:none;
+    width:100%;
+    height:56vh;
+    min-height:380px;
+    max-height:560px;
+    background:#000;
+    image-rendering:pixelated;
+    image-rendering:crisp-edges;
+  }
+  .scanlines{
+    pointer-events:none;
+    position:absolute;inset:0;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 1px,
+      rgba(0,0,0,.18) 2px,
+      rgba(0,0,0,.18) 3px
+    );
+    mix-blend-mode:multiply;
+    border-radius:8px;
+  }
+  .flicker{
+    pointer-events:none;
+    position:absolute;inset:0;
+    background:rgba(255,255,255,.02);
+    animation:flick 6s infinite;
+    border-radius:8px;
+  }
+  @keyframes flick{
+    0%,100%{opacity:0;}
+    92%{opacity:0;}
+    93%{opacity:.06;}
+    94%{opacity:0;}
+    97%{opacity:.03;}
+    98%{opacity:0;}
+  }
+  .vignette{
+    pointer-events:none;
+    position:absolute;inset:0;
+    box-shadow:inset 0 0 120px rgba(0,0,0,.75);
+    border-radius:8px;
+  }
+  .controls-row{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-top:14px;
+    padding:0 6px;
+  }
+  .knobs{display:flex;gap:10px;align-items:center;}
+  .knob-label{font-size:10px;color:#5b5646;letter-spacing:1px;}
+  .btn{
+    font-family:inherit;
+    font-size:11px;
+    letter-spacing:1px;
+    background:linear-gradient(180deg,#efe9d8,#c7bfa8);
+    border:1px solid #8a8471;
+    border-radius:5px;
+    padding:6px 10px;
+    cursor:pointer;
+    color:#3f3b2f;
+    box-shadow:0 2px 0 rgba(0,0,0,.15);
+  }
+  .btn:active{ transform:translateY(1px); box-shadow:none; }
+  .btn.on{ background:linear-gradient(180deg,#8fe08f,#4caf50); color:#0a2b0a; }
+  .power-light{
+    width:9px;height:9px;border-radius:50%;
+    background:#333;
+    box-shadow:0 0 0 2px #444 inset;
+    display:inline-block;margin-right:6px;
+  }
+  .power-light.on{
+    background:#ff5b3d;
+    box-shadow:0 0 8px 2px #ff5b3d;
+  }
+  .base{
+    width:min(560px,70vw);
+    height:14px;
+    margin:-4px auto 0 auto;
+    background:linear-gradient(180deg,#c9c1ac,#a89f88);
+    border-radius:0 0 10px 10px;
+  }
+  .keyboard{
+    width:min(920px,94vw);
+    margin-top:16px;
+    background:linear-gradient(180deg,#e4dcc8,#c9c1ac);
+    border-radius:10px;
+    padding:14px 18px;
+    box-shadow:0 12px 26px rgba(0,0,0,.5);
+    display:flex;
+    gap:8px;
+  }
+  #cmdline{
+    flex:1;
+    background:#111;
+    color:var(--phosphor);
+    border:1px solid #555;
+    border-radius:4px;
+    font-family:inherit;
+    font-size:15px;
+    padding:10px 12px;
+    outline:none;
+    text-shadow:0 0 2px currentColor;
+  }
+  .send{
+    background:linear-gradient(180deg,#efe9d8,#c7bfa8);
+    border:1px solid #8a8471;
+    border-radius:5px;
+    padding:0 18px;
+    font-family:inherit;
+    font-weight:bold;
+    color:#3f3b2f;
+    cursor:pointer;
+  }
+  footer{
+    margin:26px 0 40px 0;
+    text-align:center;
+    color:#999;
+    font-size:13px;
+  }
+  footer a{
+    color:#ffb000;
+    text-decoration:none;
+    font-weight:bold;
+    letter-spacing:1px;
+    border:1px solid #ffb000;
+    padding:8px 16px;
+    border-radius:6px;
+    transition:all .15s;
+    display:inline-block;
+    margin-top:8px;
+  }
+  footer a:hover{
+    background:#ffb000;
+    color:#111;
+  }
+  .hint{
+    color:#888;font-size:11px;margin-top:16px;text-align:center;max-width:600px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-title">— Retro Computing Recreation —</div>
+
+<div class="machine">
+  <div class="brandbar">
+    <span class="logo">IBM</span>
+    <span>Personal Computer &nbsp;·&nbsp; Model 5150 &nbsp;·&nbsp; Browser Simulator</span>
+  </div>
+
+  <div class="monitor-shell">
+    <div class="crt">
+      <div id="screen" tabindex="0"></div>
+      <canvas id="gfx" width="320" height="200"></canvas>
+      <div class="scanlines"></div>
+      <div class="flicker"></div>
+      <div class="vignette"></div>
+    </div>
+  </div>
+  <div class="base"></div>
+
+  <div class="controls-row">
+    <div class="knobs">
+      <span class="power-light on" id="powerLight"></span>
+      <span class="knob-label">POWER</span>
+    </div>
+    <div class="knobs">
+      <button class="btn on" id="colorGreen">GREEN</button>
+      <button class="btn" id="colorAmber">AMBER</button>
+      <button class="btn" id="colorWhite">WHITE</button>
+      <button class="btn" id="soundToggle">🔊 SOUND: ON</button>
+      <button class="btn" id="resetBtn">RESET</button>
+    </div>
+  </div>
+</div>
+
+<div class="keyboard">
+  <input id="cmdline" type="text" autocomplete="off" spellcheck="false" placeholder="Type a command and press ENTER... (try HELP)">
+  <button class="send" id="sendBtn">ENTER ⏎</button>
+</div>
+
+<div class="hint">Click the screen or the input box, then type. Try: HELP · DIR · BASIC · GAMES · CGA · PLAY</div>
+
+<footer>
+  Simulator built for fun &amp; nostalgia. Not affiliated with IBM.
+  <br>
+  <a href="https://easylandx.com" target="_blank" rel="noopener">🔗 Visit EasyLandX</a>
+</footer>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   AUDIO — PC SPEAKER EMULATION
+============================================================ */
+let audioCtx = null;
+let soundOn = true;
+function ensureAudio(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  }
+  if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+function beep(freq, durationMs, type){
+  if(!soundOn) return Promise.resolve();
+  ensureAudio();
+  if(!audioCtx) return Promise.resolve();
+  return new Promise(resolve=>{
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type || 'square';
+    osc.frequency.value = Math.max(37, Math.min(20000, freq||440));
+    gain.gain.value = 0.08;
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + durationMs/1000);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + durationMs/1000 + 0.02);
+    setTimeout(resolve, durationMs);
+  });
+}
+async function playTune(notes){
+  for(const [f,d] of notes){
+    if(f>0) await beep(f,d);
+    else await new Promise(r=>setTimeout(r,d));
+  }
+}
+const NOTE = {C4:262,D4:294,E4:330,F4:349,G4:392,A4:440,B4:494,C5:523,D5:587,E5:659,F5:698,G5:784,A5:880,R:0};
+const TUNES = {
+  BEEP: [[880,120]],
+  STARTUP: [[NOTE.C4,90],[NOTE.E4,90],[NOTE.G4,90],[NOTE.C5,180]],
+  YANKEE: [[NOTE.C4,180],[NOTE.C4,180],[NOTE.D4,180],[NOTE.E4,180],[NOTE.C4,180],[NOTE.E4,180],[NOTE.D4,360],
+            [NOTE.C4,180],[NOTE.C4,180],[NOTE.D4,180],[NOTE.E4,180],[NOTE.C4,360]],
+  ODE: [[NOTE.E4,220],[NOTE.E4,220],[NOTE.F4,220],[NOTE.G4,220],[NOTE.G4,220],[NOTE.F4,220],[NOTE.E4,220],[NOTE.D4,220],
+        [NOTE.C4,220],[NOTE.C4,220],[NOTE.D4,220],[NOTE.E4,220],[NOTE.E4,330],[NOTE.D4,110],[NOTE.D4,440]],
+  ALARM: [[1200,100],[NOTE.R,60],[1200,100],[NOTE.R,60],[1200,100]]
+};
+
+/* ============================================================
+   SCREEN (TEXT MODE)
+============================================================ */
+const screenEl = document.getElementById('screen');
+const gfxEl = document.getElementById('gfx');
+const ctx = gfxEl.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+function print(text){
+  screenEl.textContent += text;
+  screenEl.scrollTop = screenEl.scrollHeight;
+}
+function println(text){ print((text===undefined?'':text) + '\n'); }
+function cls(){ screenEl.textContent=''; }
+
+function showText(){ gfxEl.style.display='none'; screenEl.style.display='block'; }
+function showGfx(){ screenEl.style.display='none'; gfxEl.style.display='block'; }
+
+/* CGA 4-color palette (palette 1, high intensity) */
+const CGA = { 0:'#000000', 1:'#55FFFF', 2:'#FF55FF', 3:'#FFFFFF', BG:'#000000' };
+function gfxClear(color){
+  ctx.fillStyle = color || CGA.BG;
+  ctx.fillRect(0,0,320,200);
+}
+function gfxPixel(x,y,c){
+  ctx.fillStyle = CGA[c] || c || CGA[3];
+  ctx.fillRect(Math.round(x), 200-Math.round(y), 1, 1);
+}
+function gfxLine(x1,y1,x2,y2,c){
+  ctx.strokeStyle = CGA[c] || c || CGA[3];
+  ctx.beginPath();
+  ctx.moveTo(x1,200-y1);
+  ctx.lineTo(x2,200-y2);
+  ctx.stroke();
+}
+function gfxCircle(x,y,r,c){
+  ctx.strokeStyle = CGA[c] || c || CGA[3];
+  ctx.beginPath();
+  ctx.arc(x,200-y,r,0,Math.PI*2);
+  ctx.stroke();
+}
+function gfxRect(x1,y1,x2,y2,c,fill){
+  ctx.fillStyle = CGA[c] || c || CGA[3];
+  ctx.strokeStyle = ctx.fillStyle;
+  if(fill) ctx.fillRect(x1,200-y2,x2-x1,y2-y1);
+  else ctx.strokeRect(x1,200-y2,x2-x1,y2-y1);
+}
+
+/* ============================================================
+   PHOSPHOR COLOR SWITCHING
+============================================================ */
+function setPhosphor(color){
+  document.documentElement.style.setProperty('--phosphor', color);
+}
+document.getElementById('colorGreen').onclick = function(){ setPhosphor('#33ff66'); toggleBtn(this); };
+document.getElementById('colorAmber').onclick = function(){ setPhosphor('#ffb000'); toggleBtn(this); };
+document.getElementById('colorWhite').onclick = function(){ setPhosphor('#e8e8e8'); toggleBtn(this); };
+function toggleBtn(btn){
+  document.querySelectorAll('#colorGreen,#colorAmber,#colorWhite').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+document.getElementById('soundToggle').onclick = function(){
+  soundOn = !soundOn;
+  this.textContent = soundOn ? '🔊 SOUND: ON' : '🔇 SOUND: OFF';
+  this.classList.toggle('on', soundOn);
+};
+document.getElementById('resetBtn').onclick = function(){ boot(true); };
+
+/* ============================================================
+   FILE SYSTEM (fake) — BASIC program library
+============================================================ */
+const LIBRARY = {
+"HELLO.BAS": [
+ "10 REM HELLO WORLD DEMO",
+ "20 CLS",
+ "30 PRINT \"HELLO FROM THE IBM PC 5150!\"",
+ "40 FOR I = 1 TO 5",
+ "50 PRINT \"COUNTING: \"; I",
+ "60 SOUND 440+I*40, 4",
+ "70 NEXT I",
+ "80 PRINT \"DONE.\"",
+ "90 END"
+].join("\n"),
+
+"GUESS.BAS": [
+ "10 REM NUMBER GUESSING GAME",
+ "20 CLS",
+ "30 RANDOMIZE",
+ "40 LET N = INT(RND*100)+1",
+ "50 LET T = 0",
+ "60 PRINT \"I AM THINKING OF A NUMBER 1-100.\"",
+ "70 INPUT \"YOUR GUESS\"; G",
+ "80 LET T = T + 1",
+ "90 IF G = N THEN GOTO 150",
+ "100 IF G < N THEN PRINT \"TOO LOW!\"",
+ "110 IF G > N THEN PRINT \"TOO HIGH!\"",
+ "120 SOUND 220, 3",
+ "130 GOTO 70",
+ "150 PRINT \"YOU GOT IT IN \"; T; \" TRIES!\"",
+ "160 SOUND 880, 6",
+ "170 SOUND 1046, 8",
+ "180 END"
+].join("\n"),
+
+"STARS.BAS": [
+ "10 REM STARFIELD GRAPHICS DEMO",
+ "20 SCREEN 1",
+ "30 CLS",
+ "40 FOR I = 1 TO 150",
+ "50 LET X = INT(RND*320)",
+ "60 LET Y = INT(RND*200)",
+ "70 PSET (X,Y), 3",
+ "80 NEXT I",
+ "90 PRINT \"STARFIELD COMPLETE\"",
+ "100 END"
+].join("\n"),
+
+"BALL.BAS": [
+ "10 REM BOUNCING BALL WITH SOUND",
+ "20 SCREEN 1",
+ "30 CLS",
+ "40 LET X = 20",
+ "50 LET Y = 100",
+ "60 LET DX = 3",
+ "70 LET DY = 2",
+ "80 FOR T = 1 TO 200",
+ "90 CLS",
+ "100 CIRCLE (X,Y), 8, 1",
+ "110 LET X = X + DX",
+ "120 LET Y = Y + DY",
+ "130 IF X < 8 THEN LET DX = -DX",
+ "140 IF X > 312 THEN LET DX = -DX",
+ "150 IF Y < 8 THEN LET DY = -DY",
+ "160 IF Y > 192 THEN LET DY = -DY",
+ "170 IF X < 8 THEN SOUND 300,2",
+ "180 IF Y < 8 THEN SOUND 500,2",
+ "190 NEXT T",
+ "200 END"
+].join("\n"),
+
+"BOXES.BAS": [
+ "10 REM RANDOM CGA BOXES",
+ "20 SCREEN 1",
+ "30 CLS",
+ "40 FOR I = 1 TO 40",
+ "50 LET X1 = INT(RND*280)",
+ "60 LET Y1 = INT(RND*160)",
+ "70 LET X2 = X1 + INT(RND*40)+5",
+ "80 LET Y2 = Y1 + INT(RND*40)+5",
+ "90 LET C = INT(RND*3)+1",
+ "100 LINE (X1,Y1)-(X2,Y2), C",
+ "110 NEXT I",
+ "120 END"
+].join("\n"),
+
+"MORTGAGE.BAS": [
+ "10 REM SIMPLE LOAN PAYMENT CALCULATOR",
+ "20 CLS",
+ "30 INPUT \"LOAN AMOUNT\"; P",
+ "40 INPUT \"ANNUAL RATE PERCENT\"; R",
+ "50 INPUT \"YEARS\"; Y",
+ "60 LET I = R/100/12",
+ "70 LET N = Y*12",
+ "80 LET M = P*I / (1-(1+I)^(-N))",
+ "90 PRINT \"MONTHLY PAYMENT: $\"; M",
+ "100 END"
+].join("\n")
+};
+
+/* ============================================================
+   MINI BASIC INTERPRETER
+============================================================ */
+class Basic{
+  constructor(){
+    this.reset();
+  }
+  reset(){
+    this.lines = {};       // lineNumber -> raw text
+    this.order = [];       // sorted line numbers
+    this.vars = {};
+    this.forStack = [];
+    this.gosubStack = [];
+    this.pc = 0;            // index into this.order
+    this.running = false;
+    this.waitingInput = null; // {varName, resume}
+    this.dataQueue = [];
+  }
+  load(text){
+    this.lines = {};
+    text.split(/\r?\n/).forEach(raw=>{
+      raw = raw.trim();
+      if(!raw) return;
+      const m = raw.match(/^(\d+)\s?(.*)$/);
+      if(m){
+        this.lines[parseInt(m[1],10)] = m[2];
+      }
+    });
+    this.order = Object.keys(this.lines).map(Number).sort((a,b)=>a-b);
+  }
+  list(){
+    this.order.forEach(n=>println(n + " " + this.lines[n]));
+  }
+  addLine(num, text){
+    if(text===undefined || text===''){
+      delete this.lines[num];
+    } else {
+      this.lines[num] = text;
+    }
+    this.order = Object.keys(this.lines).map(Number).sort((a,b)=>a-b);
+  }
+
+  run(){
+    if(this.order.length===0){ println("?NOTHING TO RUN"); return; }
+    this.vars = {};
+    this.forStack = [];
+    this.gosubStack = [];
+    this.pc = 0;
+    this.running = true;
+    this.step();
+  }
+
+  findLineIndex(num){
+    const idx = this.order.indexOf(num);
+    if(idx===-1) throw new Error("UNDEFINED LINE " + num);
+    return idx;
+  }
+
+  // executes statements, auto-continuing via setTimeout to keep UI responsive
+  step(){
+    if(!this.running) return;
+    let guard = 0;
+    while(this.running && guard < 400){
+      guard++;
+      if(this.pc >= this.order.length){ this.running=false; return; }
+      const lineNum = this.order[this.pc];
+      const text = this.lines[lineNum];
+      let advance = true;
+      try{
+        advance = this.execLine(text, lineNum);
+      }catch(e){
+        println("?ERROR AT LINE " + lineNum + ": " + e.message);
+        this.running = false;
+        return;
+      }
+      if(this.waitingInput){ return; } // pause; resumed externally
+      if(advance) this.pc++;
+      if(!this.running) return;
+    }
+    if(this.running) setTimeout(()=>this.step(), 0);
+  }
+
+  // returns true if pc should auto-advance, false if GOTO/GOSUB/RETURN already set pc
+  execLine(text, lineNum){
+    const stmts = splitStatements(text);
+    for(let s of stmts){
+      const jumped = this.execStatement(s.trim(), lineNum);
+      if(jumped === true) return false; // pc already changed
+      if(this.waitingInput) return false;
+      if(!this.running) return false;
+    }
+    return true;
+  }
+
+  execStatement(stmt, lineNum){
+    if(stmt==='') return false;
+    const upper = stmt.toUpperCase();
+
+    if(upper.startsWith('REM')) return false;
+
+    if(upper==='CLS'){ cls(); showText(); return false; }
+
+    if(upper==='END' || upper==='STOP'){ this.running=false; return false; }
+
+    if(upper==='RETURN'){
+      if(this.gosubStack.length===0) throw new Error("RETURN WITHOUT GOSUB");
+      this.pc = this.gosubStack.pop();
+      return true;
+    }
+
+    if(upper==='NEW'){ this.reset(); return false; }
+
+    let m;
+
+    if(m = stmt.match(/^GOTO\s+(\d+)$/i)){
+      this.pc = this.findLineIndex(parseInt(m[1],10));
+      return true;
+    }
+    if(m = stmt.match(/^GOSUB\s+(\d+)$/i)){
+      this.gosubStack.push(this.pc+1);
+      this.pc = this.findLineIndex(parseInt(m[1],10));
+      return true;
+    }
+    if(m = stmt.match(/^RANDOMIZE$/i)){ return false; }
+
+    if(m = stmt.match(/^SCREEN\s+(\d+)$/i)){
+      if(parseInt(m[1],10)===1){ showGfx(); gfxClear(); } else { showText(); }
+      return false;
+    }
+
+    if(m = stmt.match(/^COLOR\s+(.+)$/i)){
+      // COLOR fg[,bg] -- text color; we approximate by ignoring, phosphor is fixed
+      return false;
+    }
+
+    if(m = stmt.match(/^SOUND\s+(.+),\s*(.+)$/i)){
+      const freq = this.evalExpr(m[1]);
+      const durTicks = this.evalExpr(m[2]); // in 1/18 sec ticks (approx GWBASIC)
+      const ms = Math.max(20, durTicks * 55);
+      beep(freq, ms);
+      return false;
+    }
+
+    if(m = stmt.match(/^PSET\s*\(([^)]+)\)\s*,?\s*(\d+)?$/i)){
+      const parts = m[1].split(',');
+      const x = this.evalExpr(parts[0]);
+      const y = this.evalExpr(parts[1]);
+      gfxPixel(x,y, m[2]?parseInt(m[2],10):3);
+      return false;
+    }
+
+    if(m = stmt.match(/^LINE\s*\(([^)]+)\)\s*-\s*\(([^)]+)\)\s*,?\s*(\d+)?/i)){
+      const p1 = m[1].split(','), p2 = m[2].split(',');
+      gfxLine(this.evalExpr(p1[0]), this.evalExpr(p1[1]), this.evalExpr(p2[0]), this.evalExpr(p2[1]), m[3]?parseInt(m[3],10):3);
+      return false;
+    }
+
+    if(m = stmt.match(/^CIRCLE\s*\(([^)]+)\)\s*,\s*([^,]+)\s*,?\s*(\d+)?/i)){
+      const p = m[1].split(',');
+      gfxCircle(this.evalExpr(p[0]), this.evalExpr(p[1]), this.evalExpr(m[2]), m[3]?parseInt(m[3],10):3);
+      return false;
+    }
+
+    if(m = stmt.match(/^FOR\s+(\w+)\s*=\s*(.+)\s+TO\s+(.+?)(?:\s+STEP\s+(.+))?$/i)){
+      const varName = m[1].toUpperCase();
+      const start = this.evalExpr(m[2]);
+      const limit = this.evalExpr(m[3]);
+      const step = m[4]? this.evalExpr(m[4]) : 1;
+      this.vars[varName] = start;
+      this.forStack.push({varName, limit, step, pc: this.pc});
+      return false;
+    }
+
+    if(m = stmt.match(/^NEXT\s*(\w+)?$/i)){
+      if(this.forStack.length===0) throw new Error("NEXT WITHOUT FOR");
+      const frame = this.forStack[this.forStack.length-1];
+      this.vars[frame.varName] += frame.step;
+      const done = frame.step>=0 ? this.vars[frame.varName] > frame.limit : this.vars[frame.varName] < frame.limit;
+      if(done){
+        this.forStack.pop();
+        return false;
+      } else {
+        this.pc = frame.pc+1;
+        return true;
+      }
+    }
+
+    if(m = stmt.match(/^IF\s+(.+?)\s+THEN\s+(.+)$/i)){
+      const cond = this.evalExpr(m[1]);
+      if(cond){
+        const rest = m[2].trim();
+        if(/^\d+$/.test(rest)){
+          this.pc = this.findLineIndex(parseInt(rest,10));
+          return true;
+        } else {
+          return this.execStatement(rest, lineNum);
+        }
+      }
+      return false;
+    }
+
+    if(m = stmt.match(/^INPUT\s+(?:"([^"]*)"\s*;\s*)?(\w+\$?)$/i)){
+      const prompt = m[1]!==undefined ? m[1] : '?';
+      const varName = m[2].toUpperCase();
+      print(prompt + (prompt.endsWith(' ')?'':' '));
+      this.waitingInput = { varName };
+      return false;
+    }
+
+    if(m = stmt.match(/^PRINT\s*(.*)$/i)){
+      const argsStr = m[1];
+      if(argsStr===undefined || argsStr===''){ println(''); return false; }
+      const parts = splitPrintArgs(argsStr);
+      let out = '';
+      let trailingNoNewline = false;
+      parts.forEach((p,i)=>{
+        p = p.trim();
+        if(p===';' || p===','){ return; }
+      });
+      // simpler: re-split honoring ; and , as separators, semicolon = no space, comma = tab
+      const tokens = tokenizePrintExpr(argsStr);
+      tokens.forEach(tok=>{
+        if(tok.type==='sep'){
+          if(tok.value===',') out += '\t';
+          if(tok.value===';') trailingNoNewline = true; else trailingNoNewline=false;
+        } else {
+          out += this.evalPrintable(tok.value);
+          trailingNoNewline = false;
+        }
+      });
+      println(out);
+      return false;
+    }
+
+    if(m = stmt.match(/^LET\s+(.+)$/i)){
+      stmt = m[1];
+    }
+    if(m = stmt.match(/^(\w+\$?)\s*=\s*(.+)$/)){
+      const varName = m[1].toUpperCase();
+      this.vars[varName] = this.evalExpr(m[2]);
+      return false;
+    }
+
+    throw new Error("SYNTAX ERROR: " + stmt);
+  }
+
+  evalPrintable(expr){
+    expr = expr.trim();
+    if(expr==='') return '';
+    const val = this.evalExpr(expr);
+    return typeof val==='number' ? formatNum(val) : String(val);
+  }
+
+  evalExpr(expr){
+    const p = new ExprParser(expr, this.vars);
+    return p.parseExpression();
+  }
+
+  resumeInput(rawValue){
+    if(!this.waitingInput) return;
+    const varName = this.waitingInput.varName;
+    let val;
+    if(varName.endsWith('$')){
+      val = rawValue;
+    } else {
+      val = parseFloat(rawValue);
+      if(isNaN(val)) val = 0;
+    }
+    this.vars[varName] = val;
+    this.waitingInput = null;
+    this.pc++;
+    this.step();
+  }
+}
+
+function formatNum(n){
+  if(Number.isInteger(n)) return String(n);
+  return String(Math.round(n*10000)/10000);
+}
+
+function splitStatements(text){
+  // split on ':' but not inside quotes
+  const out = [];
+  let cur='', inStr=false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(c === '"') inStr = !inStr;
+    if(c === ':' && !inStr){ out.push({text:cur}); cur=''; continue; }
+    cur += c;
+  }
+  out.push({text:cur});
+  return out;
+}
+
+function splitPrintArgs(s){ return [s]; } // legacy no-op
+
+function tokenizePrintExpr(s){
+  const out = [];
+  let cur='', inStr=false;
+  for(let i=0;i<s.length;i++){
+    const c = s[i];
+    if(c === '"') inStr = !inStr;
+    if((c===';' || c===',') && !inStr){
+      if(cur.trim()!=='') out.push({type:'expr', value:cur});
+      out.push({type:'sep', value:c});
+      cur='';
+      continue;
+    }
+    cur += c;
+  }
+  if(cur.trim()!=='') out.push({type:'expr', value:cur});
+  return out;
+}
+
+/* Simple recursive-descent expression parser supporting
+   + - * / ^ MOD, comparisons = <> < > <= >=, AND OR NOT,
+   string literals, numeric literals, variables, RND INT ABS SIN COS SQR LEN */
+class ExprParser{
+  constructor(text, vars){
+    this.text = text;
+    this.pos = 0;
+    this.vars = vars;
+  }
+  peekChar(){ return this.text[this.pos]; }
+  skipWs(){ while(this.pos<this.text.length && /\s/.test(this.text[this.pos])) this.pos++; }
+
+  parseExpression(){ return this.parseOr(); }
+
+  parseOr(){
+    let left = this.parseAnd();
+    while(true){
+      this.skipWs();
+      if(this.matchWord('OR')){ const right=this.parseAnd(); left = (truthy(left)||truthy(right))?1:0; }
+      else break;
+    }
+    return left;
+  }
+  parseAnd(){
+    let left = this.parseNot();
+    while(true){
+      this.skipWs();
+      if(this.matchWord('AND')){ const right=this.parseNot(); left = (truthy(left)&&truthy(right))?1:0; }
+      else break;
+    }
+    return left;
+  }
+  parseNot(){
+    this.skipWs();
+    if(this.matchWord('NOT')){ return truthy(this.parseNot())?0:1; }
+    return this.parseComparison();
+  }
+  parseComparison(){
+    let left = this.parseAdd();
+    this.skipWs();
+    const ops = ['<=','>=','<>','=','<','>'];
+    for(const op of ops){
+      if(this.text.substr(this.pos, op.length) === op){
+        this.pos += op.length;
+        const right = this.parseAdd();
+        switch(op){
+          case '=': return (left===right)?1:0;
+          case '<>': return (left!==right)?1:0;
+          case '<': return (left<right)?1:0;
+          case '>': return (left>right)?1:0;
+          case '<=': return (left<=right)?1:0;
+          case '>=': return (left>=right)?1:0;
+        }
+      }
+    }
+    return left;
+  }
+  parseAdd(){
+    let left = this.parseMul();
+    while(true){
+      this.skipWs();
+      const c = this.peekChar();
+      if(c==='+'){ this.pos++; const r=this.parseMul(); left = (typeof left==='string'||typeof r==='string') ? String(left)+String(r) : left+r; }
+      else if(c==='-'){ this.pos++; const r=this.parseMul(); left = left - r; }
+      else break;
+    }
+    return left;
+  }
+  parseMul(){
+    let left = this.parsePow();
+    while(true){
+      this.skipWs();
+      const c=this.peekChar();
+      if(c==='*'){ this.pos++; left = left * this.parsePow(); }
+      else if(c==='/'){ this.pos++; left = left / this.parsePow(); }
+      else if(this.matchWord('MOD')){ left = left % this.parsePow(); }
+      else break;
+    }
+    return left;
+  }
+  parsePow(){
+    let left = this.parseUnary();
+    this.skipWs();
+    if(this.peekChar()==='^'){ this.pos++; const r=this.parsePow(); return Math.pow(left,r); }
+    return left;
+  }
+  parseUnary(){
+    this.skipWs();
+    if(this.peekChar()==='-'){ this.pos++; return -this.parseUnary(); }
+    if(this.peekChar()==='+'){ this.pos++; return this.parseUnary(); }
+    return this.parseAtom();
+  }
+  matchWord(word){
+    this.skipWs();
+    const seg = this.text.substr(this.pos, word.length);
+    const after = this.text[this.pos+word.length];
+    if(seg.toUpperCase()===word && !(after && /\w/.test(after))){
+      this.pos += word.length;
+      return true;
+    }
+    return false;
+  }
+  parseAtom(){
+    this.skipWs();
+    const c = this.peekChar();
+    if(c==='('){
+      this.pos++;
+      const v = this.parseExpression();
+      this.skipWs();
+      if(this.peekChar()===')') this.pos++;
+      return v;
+    }
+    if(c==='"'){
+      this.pos++;
+      let s='';
+      while(this.pos<this.text.length && this.text[this.pos]!=='"'){ s+=this.text[this.pos]; this.pos++; }
+      this.pos++;
+      return s;
+    }
+    // number
+    const numMatch = /^-?\d+(\.\d+)?/.exec(this.text.slice(this.pos));
+    if(numMatch && (c!=='-' || true)){
+      const nm = /^\d+(\.\d+)?/.exec(this.text.slice(this.pos));
+      if(nm){ this.pos += nm[0].length; return parseFloat(nm[0]); }
+    }
+    // function or variable
+    const wordMatch = /^[A-Za-z][A-Za-z0-9]*\$?/.exec(this.text.slice(this.pos));
+    if(wordMatch){
+      const word = wordMatch[0];
+      this.pos += word.length;
+      const upper = word.toUpperCase();
+      this.skipWs();
+      if(this.peekChar()==='('){
+        this.pos++;
+        const args = [];
+        this.skipWs();
+        if(this.peekChar()!==')'){
+          args.push(this.parseExpression());
+          this.skipWs();
+          while(this.peekChar()===','){ this.pos++; args.push(this.parseExpression()); this.skipWs(); }
+        }
+        if(this.peekChar()===')') this.pos++;
+        return callFunction(upper, args);
+      }
+      if(upper==='RND') return Math.random();
+      if(this.vars.hasOwnProperty(upper)) return this.vars[upper];
+      return upper.endsWith('$') ? '' : 0;
+    }
+    return 0;
+  }
+}
+function truthy(v){ return v!==0 && v!==''; }
+function callFunction(name, args){
+  switch(name){
+    case 'INT': return Math.floor(args[0]);
+    case 'ABS': return Math.abs(args[0]);
+    case 'SIN': return Math.sin(args[0]);
+    case 'COS': return Math.cos(args[0]);
+    case 'SQR': return Math.sqrt(args[0]);
+    case 'RND': return Math.random();
+    case 'LEN': return String(args[0]).length;
+    case 'CHR$': return String.fromCharCode(args[0]);
+    case 'STR$': return String(args[0]);
+    case 'VAL': return parseFloat(args[0])||0;
+    default: return 0;
+  }
+}
+
+const basic = new Basic();
+let mode = 'dos'; // 'dos' | 'basic' | 'basic-input' | 'game-snake' | 'game-lander'
+
+/* ============================================================
+   GAMES
+============================================================ */
+
+// --- SNAKE (NIBBLES clone) ---
+let snakeState = null;
+function startSnake(){
+  showGfx(); gfxClear();
+  snakeState = {
+    body:[[8,10],[7,10],[6,10]],
+    dir:[1,0],
+    food:[15,10],
+    alive:true,
+    score:0,
+    tickMs:130
+  };
+  println('');
+  drawSnake();
+  snakeState.timer = setInterval(snakeTick, snakeState.tickMs);
+}
+function placeFood(){
+  snakeState.food = [Math.floor(Math.random()*32)+1, Math.floor(Math.random()*20)+1];
+}
+function drawSnake(){
+  gfxClear();
+  const s = snakeState;
+  s.body.forEach((seg,i)=>{
+    ctx.fillStyle = i===0 ? CGA[3] : CGA[1];
+    ctx.fillRect(seg[0]*10, 200-seg[1]*10-10, 9, 9);
+  });
+  ctx.fillStyle = CGA[2];
+  ctx.fillRect(s.food[0]*10, 200-s.food[1]*10-10, 9, 9);
+}
+function snakeTick(){
+  const s = snakeState;
+  if(!s.alive) return;
+  const head = s.body[0];
+  const nh = [head[0]+s.dir[0], head[1]+s.dir[1]];
+  if(nh[0]<0||nh[0]>=32||nh[1]<0||nh[1]>=20 || s.body.some(seg=>seg[0]===nh[0]&&seg[1]===nh[1])){
+    s.alive=false;
+    clearInterval(s.timer);
+    beep(120,300);
+    println('*** GAME OVER *** SCORE: ' + s.score);
+    println('Type EXIT to return to DOS, or SNAKE to play again.');
+    mode='dos';
+    return;
+  }
+  s.body.unshift(nh);
+  if(nh[0]===s.food[0] && nh[1]===s.food[1]){
+    s.score += 10;
+    beep(660,60);
+    placeFood();
+  } else {
+    s.body.pop();
+  }
+  drawSnake();
+}
+function snakeInput(key){
+  const s = snakeState;
+  if(!s || !s.alive) return;
+  if(key==='ArrowUp' && s.dir[1]!==-1) s.dir=[0,1];
+  else if(key==='ArrowDown' && s.dir[1]!==1) s.dir=[0,-1];
+  else if(key==='ArrowLeft' && s.dir[0]!==1) s.dir=[-1,0];
+  else if(key==='ArrowRight' && s.dir[0]!==-1) s.dir=[1,0];
+}
+
+// --- LUNAR LANDER (text-based) ---
+let landerState = null;
+function startLander(){
+  showText();
+  landerState = { alt:500, vel:0, fuel:100, running:true };
+  println('');
+  println('=== LUNAR LANDER ===');
+  println('Land safely! Velocity must be < 5 at touchdown.');
+  println('Commands: BURN <0-100>  or just press ENTER to free-fall one turn.');
+  landerReport();
+}
+function landerReport(){
+  const s = landerState;
+  println('ALT: ' + s.alt.toFixed(1) + 'm   VEL: ' + s.vel.toFixed(1) + 'm/s   FUEL: ' + s.fuel.toFixed(0) + '%');
+}
+function landerTurn(burnPct){
+  const s = landerState;
+  if(!s.running) return;
+  burnPct = Math.max(0, Math.min(100, burnPct||0));
+  const fuelUse = Math.min(s.fuel, burnPct*0.3);
+  s.fuel -= fuelUse;
+  const thrust = (fuelUse/0.3)*0.08;
+  s.vel += 1.6; // gravity
+  s.vel -= thrust*4;
+  s.alt -= s.vel*0.5;
+  beep(200+burnPct*4, 80);
+  if(s.alt <= 0){
+    s.alt = 0;
+    s.running = false;
+    if(Math.abs(s.vel) < 5){
+      println('*** TOUCHDOWN! SAFE LANDING! ***');
+      playTune(TUNES.ODE);
+    } else {
+      println('*** CRASH! IMPACT VELOCITY: ' + s.vel.toFixed(1) + ' m/s ***');
+      playTune(TUNES.ALARM);
+    }
+    println('Type EXIT to return to DOS.');
+    mode='dos';
+    return;
+  }
+  landerReport();
+}
+
+/* ============================================================
+   CGA GRAPHICS DEMO (standalone, non-BASIC)
+============================================================ */
+function runCgaDemo(){
+  showGfx();
+  gfxClear();
+  let n=0;
+  const iv = setInterval(()=>{
+    n++;
+    const cx=160, cy=100;
+    const r = 10 + (n%18)*5;
+    const colors=[1,2,3];
+    gfxCircle(cx,cy,r, colors[n%3]);
+    if(n % 6 === 0) beep(300+ (n%6)*80, 40);
+    if(n>=40){
+      clearInterval(iv);
+      // starfield
+      for(let i=0;i<200;i++){
+        gfxPixel(Math.random()*320, Math.random()*200, [1,2,3][Math.floor(Math.random()*3)]);
+      }
+      println('CGA GRAPHICS + SOUND DEMO COMPLETE. Type CLS or DIR to continue.');
+      mode='dos';
+    }
+  }, 45);
+}
+
+/* ============================================================
+   DOS-LIKE COMMAND SHELL
+============================================================ */
+const COMMANDS_HELP = [
+"AVAILABLE COMMANDS:",
+"  HELP            Show this help screen",
+"  DIR             List BASIC program files",
+"  TYPE <file>     Show contents of a BASIC file",
+"  CLS             Clear the screen",
+"  VER             Show DOS version",
+"  DATE / TIME     Show current date/time",
+"  BEEP            Single speaker beep",
+"  PLAY <tune>     Play a tune (YANKEE, ODE, STARTUP, ALARM)",
+"  CGA             Run CGA graphics + sound demo",
+"  GAMES           List available games",
+"  SNAKE           Play NIBBLES (arrow keys)",
+"  LANDER          Play Lunar Lander (text)",
+"  BASIC           Enter GW-BASIC interpreter",
+"  EXIT            Leave current program / game",
+"  CLS             Clear screen",
+""
+].join("\n");
+
+function dosCommand(raw){
+  const line = raw.trim();
+  if(line==='') { println(''); return; }
+  const parts = line.split(/\s+/);
+  const cmd = parts[0].toUpperCase();
+  const rest = line.slice(parts[0].length).trim();
+
+  switch(cmd){
+    case 'HELP':
+    case '?':
+      println(COMMANDS_HELP);
+      break;
+    case 'CLS':
+      cls();
+      break;
+    case 'DIR':
+      println(' Volume in drive C is PCDOS');
+      println(' Directory of C:\\');
+      println('');
+      Object.keys(LIBRARY).forEach(f=>{
+        const size = LIBRARY[f].length;
+        println(' ' + f.padEnd(14) + String(size).padStart(6) + ' bytes');
+      });
+      println('');
+      println('        ' + Object.keys(LIBRARY).length + ' File(s)');
+      break;
+    case 'TYPE':
+      if(!rest){ println('Syntax: TYPE <filename>'); break; }
+      {
+        const fname = rest.toUpperCase();
+        if(LIBRARY[fname]){ println(LIBRARY[fname]); }
+        else println('File not found - ' + rest);
+      }
+      break;
+    case 'VER':
+      println('IBM Personal Computer BASIC / PC-DOS Simulator  v1.0');
+      break;
+    case 'DATE':
+      println('Current date is ' + new Date().toDateString());
+      break;
+    case 'TIME':
+      println('Current time is ' + new Date().toLocaleTimeString());
+      break;
+    case 'BEEP':
+      beep(NOTE.C5, 150);
+      break;
+    case 'PLAY':
+      {
+        const t = rest.toUpperCase();
+        if(TUNES[t]){ println('Playing ' + t + '...'); playTune(TUNES[t]); }
+        else { println('Known tunes: ' + Object.keys(TUNES).join(', ')); }
+      }
+      break;
+    case 'CGA':
+      println('Running CGA graphics + sound demo...');
+      mode='cga-demo';
+      runCgaDemo();
+      break;
+    case 'GAMES':
+      println('GAMES AVAILABLE:');
+      println('  SNAKE   - classic snake / nibbles (arrow keys)');
+      println('  LANDER  - text-based lunar lander');
+      break;
+    case 'SNAKE':
+      println('Starting SNAKE... use ARROW KEYS. EXIT to quit.');
+      mode='game-snake';
+      startSnake();
+      break;
+    case 'LANDER':
+      mode='game-lander';
+      startLander();
+      break;
+    case 'BASIC':
+      println('IBM Personal Computer BASIC Version 1.10 Simulator');
+      println('OK - type LOAD "FILENAME.BAS" then RUN, or write your own lines.');
+      println('Try: LOAD "HELLO.BAS"  then  RUN');
+      println('Type EXIT to return to DOS.');
+      mode='basic';
+      break;
+    default:
+      println("Bad command or file name - '" + cmd + "'");
+  }
+}
+
+/* ============================================================
+   BASIC DIRECT MODE
+============================================================ */
+function basicCommand(raw){
+  const line = raw;
+  const trimmed = line.trim();
+  if(trimmed==='') return;
+
+  if(/^\d+\s*$/.test(trimmed)){
+    basic.addLine(parseInt(trimmed,10), '');
+    return;
+  }
+  const lineDefMatch = trimmed.match(/^(\d+)\s?(.*)$/);
+  if(lineDefMatch){
+    basic.addLine(parseInt(lineDefMatch[1],10), lineDefMatch[2]);
+    return;
+  }
+
+  const upper = trimmed.toUpperCase();
+
+  if(upper === 'EXIT'){ mode='dos'; println('Back to DOS.'); return; }
+  if(upper === 'LIST'){ basic.list(); return; }
+  if(upper === 'NEW'){ basic.reset(); println('OK'); return; }
+  if(upper === 'RUN'){ println(''); basic.run(); return; }
+  if(upper === 'CLS'){ cls(); return; }
+
+  let m;
+  if(m = trimmed.match(/^LOAD\s+"?([^"]+)"?$/i)){
+    const fname = m[1].toUpperCase();
+    if(LIBRARY[fname]){
+      basic.load(LIBRARY[fname]);
+      println('LOADED ' + fname);
+    } else {
+      println('FILE NOT FOUND: ' + fname + '  (try DIR at DOS prompt to see files)');
+    }
+    return;
+  }
+
+  // otherwise treat as an immediate-mode statement (PRINT, LET, etc)
+  try{
+    basic.pc = 0;
+    basic.order = []; // ensure no runaway
+    const dummyRunning = basic.running;
+    basic.running = true;
+    basic.execStatement(trimmed, 0);
+    basic.running = dummyRunning;
+  }catch(e){
+    println('?SYNTAX ERROR: ' + e.message);
+  }
+}
+
+/* ============================================================
+   INPUT HANDLING
+============================================================ */
+const cmdline = document.getElementById('cmdline');
+const sendBtn = document.getElementById('sendBtn');
+
+function handleEnter(){
+  const val = cmdline.value;
+  cmdline.value = '';
+
+  if(mode === 'basic-input-wait'){
+    // not used directly; handled via basic.waitingInput flag below
+  }
+
+  if(basic.waitingInput){
+    print(val + '\n');
+    basic.resumeInput(val);
+    return;
+  }
+
+  const promptFor = (m)=> m==='basic' ? 'OK> ' : (m.startsWith('game')||m==='cga-demo' ? '' : 'C:\\> ');
+  print(promptFor(mode) + val + '\n');
+
+  if(mode === 'dos'){
+    dosCommand(val);
+  } else if(mode === 'basic'){
+    basicCommand(val);
+  } else if(mode === 'game-lander'){
+    const uv = val.trim().toUpperCase();
+    if(uv === 'EXIT'){ landerState = landerState||{running:false}; landerState.running=false; mode='dos'; println('Back to DOS.'); }
+    else {
+      const bm = uv.match(/^BURN\s+(\d+)/);
+      if(bm) landerTurn(parseInt(bm[1],10));
+      else landerTurn(0);
+    }
+  } else if(mode === 'game-snake'){
+    if(val.trim().toUpperCase()==='EXIT'){
+      if(snakeState) clearInterval(snakeState.timer);
+      showText();
+      mode='dos';
+      println('Back to DOS.');
+    }
+  } else if(mode === 'cga-demo'){
+    if(val.trim().toUpperCase()==='EXIT'){ showText(); mode='dos'; println('Back to DOS.'); }
+  }
+
+  // print next prompt (unless we're paused waiting for BASIC INPUT, which prints its own prompt)
+  if(!basic.waitingInput){
+    if(mode==='dos') print('C:\\> ');
+    else if(mode==='basic') print('OK> ');
+    else if(mode==='game-lander') print('LANDER> ');
+  }
+}
+
+sendBtn.addEventListener('click', ()=>{ ensureAudio(); handleEnter(); cmdline.focus(); });
+cmdline.addEventListener('keydown', (e)=>{
+  ensureAudio();
+  if(mode==='game-snake' && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){
+    e.preventDefault();
+    snakeInput(e.key);
+    return;
+  }
+  if(e.key === 'Enter'){ e.preventDefault(); handleEnter(); }
+});
+document.addEventListener('keydown', (e)=>{
+  if(mode==='game-snake' && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key) && document.activeElement!==cmdline){
+    e.preventDefault();
+    snakeInput(e.key);
+  }
+});
+screenEl.addEventListener('click', ()=>{ cmdline.focus(); ensureAudio(); });
+gfxEl.addEventListener('click', ()=>{ cmdline.focus(); ensureAudio(); });
+
+/* ============================================================
+   BOOT SEQUENCE
+============================================================ */
+function boot(isReset){
+  cls();
+  showText();
+  mode='dos';
+  const lines = [
+    'IBM Personal Computer BIOS',
+    'Copyright IBM Corporation 1981, 1982, 1983',
+    '',
+    '640K SYSTEM RAM OK',
+    '',
+    'Detecting drives...',
+    ' Floppy Drive A: 5.25" 360K   OK',
+    ' Floppy Drive B: 5.25" 360K   OK',
+    '',
+    'PC-DOS 1.10 (Simulator Edition)',
+    '(C)Copyright IBM Corp 1981',
+    '',
+    'Type HELP for a list of commands.',
+    ''
+  ];
+  let i=0;
+  function typeLine(){
+    if(i<lines.length){
+      println(lines[i]);
+      i++;
+      setTimeout(typeLine, i<=4 ? 160 : 70);
+    } else {
+      print('C:\\> ');
+      cmdline.focus();
+    }
+  }
+  typeLine();
+  playTune(TUNES.STARTUP);
+}
+
+boot(false);
+
+})();
+</script>
+</body>
+</html>
