@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>City Simulator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #1a1a1a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    /* Scrollable Container */
+    #viewport {
+      width: 100vw;
+      height: 100vh;
+      overflow: auto;
+      position: relative;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    }
+
+    #viewport::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    #viewport::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+    }
+
+    /* World Canvas (Large Scrollable Area) */
+    #city-world {
+      width: 3200px;
+      height: 1800px;
+      position: relative;
+      background: linear-gradient(to bottom, #70c4ff 0%, #bdecff 35%, #e0f4ff 50%, #e2e8f0 100%);
+      overflow: hidden;
+    }
+
+    /* SVG Layer for Static Background */
+    .bg-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* Foreground Interactive Layer */
+    #entity-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+    }
+
+    /* Moving Entities */
+    .entity {
+      position: absolute;
+      font-size: 32px;
+      cursor: pointer;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease-out;
+      filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.15));
+      z-index: 12;
+      will-change: transform, left, top;
+    }
+
+    .entity:hover {
+      transform: scale(1.25);
+      z-index: 100 !important;
+    }
+
+    .entity.fast-dash {
+      transition: left 1.5s cubic-bezier(0.25, 1, 0.5, 1), top 1.5s cubic-bezier(0.25, 1, 0.5, 1), transform 0.2s ease;
+    }
+
+    /* Layering Adjustments */
+    .layer-sky { z-index: 5; }
+    .layer-skyline { z-index: 6; }
+    .layer-back-road { z-index: 8; }
+    .layer-river { z-index: 9; }
+    .layer-bridge { z-index: 11; }
+    .layer-sidewalk { z-index: 12; }
+    .layer-front-road { z-index: 14; }
+    .layer-foreground { z-index: 15; }
+
+    /* Animated CSS Elements */
+    .cloud {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 100px;
+      filter: blur(2px);
+      pointer-events: none;
+      animation: floatCloud linear infinite;
+    }
+
+    .cloud::before, .cloud::after {
+      content: '';
+      position: absolute;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 50%;
+    }
+
+    @keyframes floatCloud {
+      from { transform: translateX(-300px); }
+      to { transform: translateX(3300px); }
+    }
+
+    /* Smoke Animation */
+    .smoke-puff {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: rgba(200, 200, 200, 0.5);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: riseSmoke 4s infinite ease-out;
+    }
+
+    @keyframes riseSmoke {
+      0% { transform: translate(0, 0) scale(0.8); opacity: 0.6; }
+      100% { transform: translate(20px, -80px) scale(3); opacity: 0; }
+    }
+
+    /* Traffic Light Blinking */
+    .light-red { animation: cycleRed 6s infinite; }
+    .light-yellow { animation: cycleYellow 6s infinite; }
+    .light-green { animation: cycleGreen 6s infinite; }
+
+    @keyframes cycleRed {
+      0%, 40%, 100% { fill: #ff3b30; opacity: 1; }
+      45%, 95% { fill: #550000; opacity: 0.3; }
+    }
+    @keyframes cycleYellow {
+      0%, 38%, 52%, 100% { fill: #554400; opacity: 0.3; }
+      40%, 50% { fill: #ffcc00; opacity: 1; }
+    }
+    @keyframes cycleGreen {
+      0%, 48% { fill: #004400; opacity: 0.3; }
+      52%, 95% { fill: #34c759; opacity: 1; }
+      100% { fill: #004400; opacity: 0.3; }
+    }
+
+    /* Distance Runner on Horizon */
+    .horizon-runner {
+      position: absolute;
+      top: 512px;
+      left: -50px;
+      font-size: 16px;
+      pointer-events: none;
+      z-index: 7;
+      animation: runHorizon 45s linear infinite;
+    }
+
+    @keyframes runHorizon {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(3300px); }
+    }
+
+    /* Floating Fixed UI Controls */
+    #ui-layer {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .ui-btn {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(0,0,0,0.1);
+      backdrop-filter: blur(8px);
+      padding: 10px 16px;
+      border-radius: 30px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      color: #333;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .ui-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+      background: #ffffff;
+    }
+
+    .ui-btn:active {
+      transform: translateY(0);
+    }
+
+    .audio-toggle {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 18px;
+    }
+
+    /* Audio visualizer effect when playing */
+    .audio-playing {
+      border: 2px solid #34c759;
+    }
+  </style>
+</head>
+<body>
+
+<div id="viewport">
+  <div id="city-world">
+    <!-- SVG City Skyline and Environment Background -->
+    <svg class="bg-layer" viewBox="0 0 3200 1800" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Gradients -->
+        <linearGradient id="sunGlow" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#fff7d9" />
+          <stop offset="100%" stop-color="#ffd24c" stop-opacity="0" />
+        </linearGradient>
+        
+        <linearGradient id="riverGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2b82c5" />
+          <stop offset="50%" stop-color="#3290d8" />
+          <stop offset="100%" stop-color="#216ba7" />
+        </linearGradient>
+
+        <linearGradient id="glassBuilding" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#4a90e2" />
+          <stop offset="50%" stop-color="#50e3c2" />
+          <stop offset="100%" stop-color="#005bea" />
+        </linearGradient>
+
+        <linearGradient id="steelBuilding" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#8a9ba8" />
+          <stop offset="100%" stop-color="#486581" />
+        </linearGradient>
+
+        <linearGradient id="brickBuilding" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#de6b48" />
+          <stop offset="100%" stop-color="#a83b1e" />
+        </linearGradient>
+
+        <!-- Water Flow Pattern -->
+        <pattern id="waterWave" width="100" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 0 10 Q 25 5, 50 10 T 100 10" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2">
+            <animateTransform attributeName="transform" type="translate" from="0,0" to="-100,0" dur="4s" repeatCount="indefinite" />
+          </path>
+        </pattern>
+      </defs>
+
+      <!-- Sun -->
+      <circle cx="2400" cy="180" r="140" fill="url(#sunGlow)" opacity="0.6" />
+      <circle cx="2400" cy="180" r="70" fill="#fff5cc" />
+
+      <!-- Far Distant Skyline (Silhouette) -->
+      <path d="M0,530 L0,420 L80,420 L80,450 L160,450 L160,380 L240,380 L240,530 
+               L350,530 L350,340 L440,340 L440,530 
+               L600,530 L600,390 L680,390 L680,530 
+               L800,530 L800,300 L900,260 L1000,300 L1000,530 
+               L1150,530 L1150,410 L1250,410 L1250,530 
+               L1400,530 L1400,360 L1500,360 L1500,530 
+               L1650,530 L1650,280 L1780,280 L1780,530 
+               L1950,530 L1950,390 L2050,390 L2050,530 
+               L2200,530 L2200,330 L2320,330 L2320,530 
+               L2500,530 L2500,420 L2600,420 L2600,530 
+               L2800,530 L2800,350 L2920,350 L2920,530 
+               L3050,530 L3050,400 L3200,400 L3200,530 Z" fill="#9fb3c8" opacity="0.5"/>
+
+      <!-- Mid-ground City Architecture -->
+      <!-- High Rise Modern Towers -->
+      <rect x="120" y="280" width="140" height="250" fill="url(#glassBuilding)" rx="4"/>
+      <g fill="#ffffff" opacity="0.4">
+        <rect x="135" y="300" width="25" height="210"/>
+        <rect x="177" y="300" width="25" height="210"/>
+        <rect x="219" y="300" width="25" height="210"/>
+      </g>
+
+      <!-- Brick Apartments -->
+      <rect x="300" y="330" width="180" height="200" fill="url(#brickBuilding)"/>
+      <!-- Windows Grid -->
+      <g fill="#ffe0b2" opacity="0.8">
+        <rect x="320" y="350" width="20" height="25"/><rect x="360" y="350" width="20" height="25"/><rect x="400" y="350" width="20" height="25"/><rect x="440" y="350" width="20" height="25"/>
+        <rect x="320" y="390" width="20" height="25"/><rect x="360" y="390" width="20" height="25"/><rect x="400" y="390" width="20" height="25"/><rect x="440" y="390" width="20" height="25"/>
+        <rect x="320" y="430" width="20" height="25"/><rect x="360" y="430" width="20" height="25"/><rect x="400" y="430" width="20" height="25"/><rect x="440" y="430" width="20" height="25"/>
+      </g>
+
+      <!-- Industrial Factory with Smokestacks -->
+      <rect x="520" y="380" width="240" height="150" fill="#627d98"/>
+      <polygon points="520,380 560,340 600,380 640,340 680,380 720,340 760,380" fill="#486581"/>
+      <rect x="540" y="260" width="25" height="120" fill="#334e68"/>
+      <rect x="580" y="240" width="25" height="140" fill="#334e68"/>
+
+      <!-- Financial Center Glass Skyscraper -->
+      <rect x="820" y="180" width="160" height="350" fill="url(#steelBuilding)"/>
+      <polygon points="820,180 900,100 980,180" fill="#627d98"/>
+      <line x1="900" y1="100" x2="900" y2="40" stroke="#d9e2ec" stroke-width="4"/>
+
+      <!-- Shops & Commercial Low Rises -->
+      <rect x="1040" y="400" width="220" height="130" fill="#e12d39"/>
+      <rect x="1060" y="420" width="180" height="50" fill="#ffffff" opacity="0.9"/>
+      <text x="1150" y="455" font-family="sans-serif" font-weight="bold" font-size="22" fill="#e12d39" text-anchor="middle">MALL</text>
+
+      <!-- Right Side Buildings (Repeated Variety) -->
+      <rect x="1350" y="250" width="150" height="280" fill="url(#glassBuilding)"/>
+      <rect x="1540" y="320" width="200" height="210" fill="url(#brickBuilding)"/>
+      <rect x="1780" y="200" width="170" height="330" fill="url(#steelBuilding)"/>
+      
+      <!-- Construction Site Crane -->
+      <rect x="2000" y="360" width="180" height="170" fill="#f0b429" opacity="0.2"/>
+      <line x1="2050" y1="530" x2="2050" y2="220" stroke="#f0b429" stroke-width="8"/>
+      <line x1="1980" y1="240" x2="2140" y2="240" stroke="#f0b429" stroke-width="6"/>
+      <line x1="2050" y1="220" x2="2140" y2="240" stroke="#f0b429" stroke-width="3"/>
+
+      <!-- More Right Skyline -->
+      <rect x="2220" y="300" width="160" height="230" fill="#486581"/>
+      <rect x="2420" y="220" width="190" height="310" fill="url(#glassBuilding)"/>
+      <rect x="2650" y="350" width="220" height="180" fill="url(#brickBuilding)"/>
+      <rect x="2900" y="260" width="180" height="270" fill="url(#steelBuilding)"/>
+
+      <!-- Distant Horizon Line / Ground Baseline -->
+      <rect x="0" y="530" width="3200" height="20" fill="#bcccdc"/>
+
+      <!-- BACK ROAD (Elevated Highway / Secondary Road) -->
+      <rect x="0" y="550" width="3200" height="120" fill="#486581"/>
+      <line x1="0" y1="610" x2="3200" y2="610" stroke="#f0b429" stroke-width="4" stroke-dasharray="30 20"/>
+
+      <!-- MIDGROUND PARK & GREENERY BUFFER -->
+      <rect x="0" y="670" width="3200" height="180" fill="#52b788"/>
+      
+      <!-- Park Details (Paths, Trees, Lake) -->
+      <!-- Winding Path -->
+      <path d="M0,760 Q 400,700 800,760 T 1600,760 T 2400,760 T 3200,760" fill="none" stroke="#d8f3dc" stroke-width="24"/>
+      
+      <!-- Park Trees (Vector Crisp Canopy) -->
+      <g fill="#2d6a4f">
+        <!-- Group 1 -->
+        <circle cx="150" cy="710" r="35"/><circle cx="320" cy="730" r="45"/><circle cx="500" cy="700" r="30"/>
+        <!-- Group 2 -->
+        <circle cx="1000" cy="720" r="40"/><circle cx="1200" cy="700" r="35"/><circle cx="1350" cy="740" r="45"/>
+        <!-- Group 3 -->
+        <circle cx="1800" cy="710" r="50"/><circle cx="2100" cy="730" r="35"/>
+        <!-- Group 4 -->
+        <circle cx="2600" cy="700" r="40"/><circle cx="2850" cy="720" r="45"/><circle cx="3050" cy="690" r="35"/>
+      </g>
+      <!-- Tree Trunks -->
+      <g stroke="#081c15" stroke-width="6">
+        <line x1="150" y1="710" x2="150" y2="760"/>
+        <line x1="320" y1="730" x2="320" y2="780"/>
+        <line x1="1000" y1="720" x2="1000" y2="770"/>
+        <line x1="1800" y1="710" x2="1800" y2="775"/>
+        <line x1="2850" y1="720" x2="2850" y2="780"/>
+      </g>
+
+      <!-- RIVER / CANAL (Running horizontally across the city) -->
+      <rect x="0" y="850" width="3200" height="220" fill="url(#riverGrad)"/>
+      <rect x="0" y="850" width="3200" height="220" fill="url(#waterWave)"/>
+      <!-- River Embankments -->
+      <rect x="0" y="845" width="3200" height="10" fill="#9aa5b1"/>
+      <rect x="0" y="1065" width="3200" height="10" fill="#9aa5b1"/>
+
+      <!-- BRIDGES crossing the river -->
+      <!-- Bridge 1 (Left) -->
+      <g>
+        <rect x="600" y="835" width="180" height="250" fill="#627d98"/>
+        <rect x="620" y="835" width="140" height="250" fill="#334e68"/>
+        <!-- Bridge Support Pillars -->
+        <rect x="630" y="880" width="20" height="160" fill="#243b53"/>
+        <rect x="730" y="880" width="20" height="160" fill="#243b53"/>
+        <line x1="620" y1="960" x2="760" y2="960" stroke="#f0b429" stroke-width="4" stroke-dasharray="15 10"/>
+      </g>
+
+      <!-- Bridge 2 (Center-Right Suspension Bridge) -->
+      <g>
+        <rect x="2100" y="835" width="260" height="250" fill="#486581"/>
+        <rect x="2120" y="835" width="220" height="250" fill="#243b53"/>
+        <!-- Suspension Towers -->
+        <rect x="2100" y="780" width="25" height="320" fill="#102a43"/>
+        <rect x="2335" y="780" width="25" height="320" fill="#102a43"/>
+        <!-- Cables -->
+        <path d="M 2112,780 Q 2222,960 2347,780" fill="none" stroke="#f0b429" stroke-width="4"/>
+        <line x1="2162" y1="885" x2="2162" y2="960" stroke="#bcccdc" stroke-width="2"/>
+        <line x1="2222" y1="925" x2="2222" y2="960" stroke="#bcccdc" stroke-width="2"/>
+        <line x1="2282" y1="885" x2="2282" y2="960" stroke="#bcccdc" stroke-width="2"/>
+        <line x1="2120" y1="960" x2="2340" y2="960" stroke="#f0b429" stroke-width="4" stroke-dasharray="20 15"/>
+      </g>
+
+      <!-- MAIN BUFFER / SIDEWALK UPPER -->
+      <rect x="0" y="1075" width="3200" height="95" fill="#cbd5e1"/>
+      <!-- Sidewalk Paving Lines -->
+      <line x1="0" y1="1170" x2="3200" y2="1170" stroke="#94a3b8" stroke-width="4"/>
+
+      <!-- MAIN FOREGROUND CITY AVENUE (Multi-lane Road) -->
+      <rect x="0" y="1170" width="3200" height="360" fill="#334155"/>
+      <!-- Road Markings -->
+      <line x1="0" y1="1290" x2="3200" y2="1290" stroke="#ffffff" stroke-width="5" stroke-dasharray="40 30"/>
+      <line x1="0" y1="1350" x2="3200" y2="1350" stroke="#f59e0b" stroke-width="6"/>
+      <line x1="0" y1="1358" x2="3200" y2="1358" stroke="#f59e0b" stroke-width="6"/>
+      <line x1="0" y1="1420" x2="3200" y2="1420" stroke="#ffffff" stroke-width="5" stroke-dasharray="40 30"/>
+
+      <!-- Crosswalks -->
+      <g fill="#ffffff" opacity="0.85">
+        <!-- Crosswalk 1 -->
+        <rect x="500" y="1170" width="15" height="360"/><rect x="530" y="1170" width="15" height="360"/>
+        <rect x="560" y="1170" width="15" height="360"/><rect x="590" y="1170" width="15" height="360"/>
+        <!-- Crosswalk 2 -->
+        <rect x="1700" y="1170" width="15" height="360"/><rect x="1730" y="1170" width="15" height="360"/>
+        <rect x="1760" y="1170" width="15" height="360"/><rect x="1790" y="1170" width="15" height="360"/>
+        <!-- Crosswalk 3 -->
+        <rect x="2700" y="1170" width="15" height="360"/><rect x="2730" y="1170" width="15" height="360"/>
+        <rect x="2760" y="1170" width="15" height="360"/><rect x="2790" y="1170" width="15" height="360"/>
+      </g>
+
+      <!-- Traffic Light Posts -->
+      <g>
+        <!-- Light 1 -->
+        <rect x="480" y="1100" width="8" height="80" fill="#1e293b"/>
+        <rect x="474" y="1100" width="20" height="45" rx="4" fill="#0f172a"/>
+        <circle cx="484" cy="1109" r="5" class="light-red"/>
+        <circle cx="484" cy="1122" r="5" class="light-yellow"/>
+        <circle cx="484" cy="1135" r="5" class="light-green"/>
+
+        <!-- Light 2 -->
+        <rect x="1680" y="1100" width="8" height="80" fill="#1e293b"/>
+        <rect x="1674" y="1100" width="20" height="45" rx="4" fill="#0f172a"/>
+        <circle cx="1684" cy="1109" r="5" class="light-red"/>
+        <circle cx="1684" cy="1122" r="5" class="light-yellow"/>
+        <circle cx="1684" cy="1135" r="5" class="light-green"/>
+
+        <!-- Light 3 -->
+        <rect x="2680" y="1100" width="8" height="80" fill="#1e293b"/>
+        <rect x="2674" y="1100" width="20" height="45" rx="4" fill="#0f172a"/>
+        <circle cx="2684" cy="1109" r="5" class="light-red"/>
+        <circle cx="2684" cy="1122" r="5" class="light-yellow"/>
+        <circle cx="2684" cy="1135" r="5" class="light-green"/>
+      </g>
+
+      <!-- FOREGROUND SIDEWALK & BOTTOM PLAZA -->
+      <rect x="0" y="1530" width="3200" height="270" fill="#e2e8f0"/>
+      <line x1="0" y1="1530" x2="3200" y2="1530" stroke="#cbd5e1" stroke-width="6"/>
+
+      <!-- Plaza Benches & Bus Stops -->
+      <!-- Bus Stop 1 -->
+      <rect x="400" y="1540" width="120" height="8" fill="#475569"/>
+      <rect x="405" y="1540" width="110" height="40" fill="#38bdf8" opacity="0.4"/>
+      <!-- Bench 1 -->
+      <rect x="900" y="1560" width="70" height="12" rx="3" fill="#b45309"/>
+      <rect x="1400" y="1560" width="70" height="12" rx="3" fill="#b45309"/>
+      <rect x="2200" y="1560" width="70" height="12" rx="3" fill="#b45309"/>
+    </svg>
+
+    <!-- Animated Smoke/Steam from Factory Chimneys -->
+    <div class="smoke-puff" style="left: 546px; top: 250px; animation-delay: 0s;"></div>
+    <div class="smoke-puff" style="left: 546px; top: 250px; animation-delay: 1.3s;"></div>
+    <div class="smoke-puff" style="left: 586px; top: 230px; animation-delay: 0.7s;"></div>
+    <div class="smoke-puff" style="left: 586px; top: 230px; animation-delay: 2.2s;"></div>
+
+    <!-- Distant Horizon Runner -->
+    <div class="horizon-runner">🐕</div>
+
+    <!-- Entity Interactive Layer -->
+    <div id="entity-layer"></div>
+  </div>
+</div>
+
+<!-- Floating Controls (No text on main scene, clean minimal UI) -->
+<div id="ui-layer">
+  <button class="ui-btn audio-toggle" id="audioBtn" title="Toggle Sound">🔇</button>
+  <a href="https://github.com" target="_blank" rel="noopener" class="ui-btn" id="easyPageBtn">EasyPageX</a>
+</div>
+
+<script>
+  /**
+   * CITY SIMULATOR - Pure Interactive JS Engine
+   */
+
+  // --- AUDIO SYNTHESIS ENGINE (Web Audio API - Pure & Standalone) ---
+  class CityAudioEngine {
+    constructor() {
+      this.ctx = null;
+      this.isMuted = true;
+      this.initialized = false;
+      this.gainNode = null;
+    }
+
+    init() {
+      if (this.initialized) return;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+
+      this.ctx = new AudioCtx();
+      this.gainNode = this.ctx.createGain();
+      this.gainNode.gain.setValueAtTime(0.15, this.ctx.currentTime); // Gentle ambient volume
+      this.gainNode.connect(this.ctx.destination);
+
+      this.createWindAmbient();
+      this.createTrafficAmbient();
+      this.scheduleRandomCityNoises();
+
+      this.initialized = true;
+      this.isMuted = false;
+    }
+
+    toggle() {
+      if (!this.initialized) {
+        this.init();
+        return true;
+      }
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume();
+      }
+      this.isMuted = !this.isMuted;
+      this.gainNode.gain.linearRampToValueAtTime(
+        this.isMuted ? 0 : 0.15, 
+        this.ctx.currentTime + 0.3
+      );
+      return !this.isMuted;
+    }
+
+    // Continuous Soft Wind Noise
+    createWindAmbient() {
+      const bufferSize = this.ctx.sampleRate * 2;
+      const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+
+      const whiteNoise = this.ctx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      whiteNoise.loop = true;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 300;
+
+      whiteNoise.connect(filter);
+      filter.connect(this.gainNode);
+      whiteNoise.start();
+    }
+
+    // Low Frequency Traffic Rumble
+    createTrafficAmbient() {
+      const bufferSize = this.ctx.sampleRate * 2;
+      const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+
+      const trafficNoise = this.ctx.createBufferSource();
+      trafficNoise.buffer = noiseBuffer;
+      trafficNoise.loop = true;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 120;
+      filter.Q.value = 3;
+
+      trafficNoise.connect(filter);
+      filter.connect(this.gainNode);
+      trafficNoise.start();
+    }
+
+    // Occasional City Sounds (Horns, Birds, Construction)
+    scheduleRandomCityNoises() {
+      const playNextSound = () => {
+        if (!this.isMuted && this.ctx) {
+          const rand = Math.random();
+          if (rand < 0.4) this.playCarHorn();
+          else if (rand < 0.7) this.playBirdChirp();
+          else this.playConstructionSound();
+        }
+        setTimeout(playNextSound, 4000 + Math.random() * 8000);
+      };
+      playNextSound();
+    }
+
+    playCarHorn() {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(150 + Math.random() * 80, this.ctx.currentTime);
+      
+      gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
+
+      osc.connect(gain);
+      gain.connect(this.gainNode);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.4);
+    }
+
+    playBirdChirp() {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      
+      const now = this.ctx.currentTime;
+      osc.frequency.setValueAtTime(2000, now);
+      osc.frequency.exponentialRampToValueAtTime(3000, now + 0.1);
+      
+      gain.gain.setValueAtTime(0.03, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+      osc.connect(gain);
+      gain.connect(this.gainNode);
+      osc.start();
+      osc.stop(now + 0.15);
+    }
+
+    playConstructionSound() {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(80, this.ctx.currentTime);
+
+      gain.gain.setValueAtTime(0.03, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.2);
+
+      osc.connect(gain);
+      gain.connect(this.gainNode);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.2);
+    }
+
+    // Interaction Sound (Boing/Dash effect on click)
+    playDashSound() {
+      if (!this.ctx || this.isMuted) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      
+      const now = this.ctx.currentTime;
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.exponentialRampToValueAtTime(800, now + 0.2);
+
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+      osc.connect(gain);
+      gain.connect(this.gainNode);
+      osc.start();
+      osc.stop(now + 0.25);
+    }
+  }
+
+  const audioSystem = new CityAudioEngine();
+
+  // --- ENTITY CONFIGURATION & SPAWNER ---
+
+  const WORLD_WIDTH = 3200;
+
+  // Types of City Entities and their movement zones / behaviors
+  const ENTITY_TYPES = [
+    // Pedestrians (Sidewalks & Plaza)
+    { emoji: '🚶', category: 'pedestrian', yMin: 1080, yMax: 1140, speedMin: 0.8, speedMax: 1.5, size: 28 },
+    { emoji: '🏃', category: 'pedestrian', yMin: 1080, yMax: 1140, speedMin: 2.0, speedMax: 3.2, size: 28 },
+    { emoji: '👩', category: 'pedestrian', yMin: 1540, yMax: 1720, speedMin: 0.7, speedMax: 1.4, size: 30 },
+    { emoji: '👨', category: 'pedestrian', yMin: 1540, yMax: 1720, speedMin: 0.8, speedMax: 1.3, size: 30 },
+    { emoji: '👮', category: 'pedestrian', yMin: 1080, yMax: 1140, speedMin: 1.0, speedMax: 1.2, size: 30 },
+    { emoji: '👷', category: 'pedestrian', yMin: 1540, yMax: 1700, speedMin: 0.9, speedMax: 1.4, size: 30 },
+    { emoji: '🧍', category: 'pedestrian', yMin: 1540, yMax: 1720, speedMin: 0.5, speedMax: 1.0, size: 30 },
+
+    // Vehicles (Main Road Lanes)
+    { emoji: '🚗', category: 'vehicle', yMin: 1180, yMax: 1240, speedMin: 3.5, speedMax: 6.0, size: 40, dir: 1 },
+    { emoji: '🚕', category: 'vehicle', yMin: 1250, yMax: 1310, speedMin: 4.0, speedMax: 6.5, size: 40, dir: 1 },
+    { emoji: '🚌', category: 'vehicle', yMin: 1370, yMax: 1420, speedMin: 2.8, speedMax: 4.5, size: 48, dir: -1 },
+    { emoji: '🚚', category: 'vehicle', yMin: 1430, yMax: 1490, speedMin: 3.0, speedMax: 5.0, size: 46, dir: -1 },
+    { emoji: '🏎️', category: 'vehicle', yMin: 1250, yMax: 1310, speedMin: 7.0, speedMax: 10.0, size: 38, dir: 1 },
+    
+    // Back Road Vehicles
+    { emoji: '🚗', category: 'vehicle', yMin: 560, yMax: 620, speedMin: 3.0, speedMax: 5.5, size: 28, dir: -1 },
+    { emoji: '🚌', category: 'vehicle', yMin: 620, yMax: 650, speedMin: 2.5, speedMax: 4.0, size: 32, dir: 1 },
+
+    // Small Mobility (Bicycles / Scooters / Vendors)
+    { emoji: '🚲', category: 'bike', yMin: 1140, yMax: 1170, speedMin: 2.2, speedMax: 3.8, size: 28 },
+    { emoji: '🛵', category: 'bike', yMin: 1180, yMax: 1220, speedMin: 3.5, speedMax: 5.0, size: 30 },
+    { emoji: '🛴', category: 'bike', yMin: 1540, yMax: 1600, speedMin: 2.0, speedMax: 3.5, size: 26 },
+
+    // Animals
+    { emoji: '🐕', category: 'animal', yMin: 1560, yMax: 1740, speedMin: 1.2, speedMax: 2.2, size: 26 },
+    { emoji: '🐈', category: 'animal', yMin: 1560, yMax: 1740, speedMin: 0.8, speedMax: 1.5, size: 22 },
+    { emoji: '🐿️', category: 'animal', yMin: 720, yMax: 820, speedMin: 1.0, speedMax: 2.5, size: 20 }, // Park Squirrel
+    { emoji: '🐀', category: 'animal', yMin: 1070, yMax: 1100, speedMin: 1.5, speedMax: 3.0, size: 18 }, // Alley Rat
+
+    // Sky / Air
+    { emoji: '🕊️', category: 'air', yMin: 150, yMax: 480, speedMin: 1.5, speedMax: 3.5, size: 22 },
+    { emoji: '🦅', category: 'air', yMin: 80, yMax: 300, speedMin: 2.0, speedMax: 4.0, size: 28 },
+    { emoji: '🚁', category: 'air', yMin: 60, yMax: 200, speedMin: 3.0, speedMax: 5.5, size: 42 }
+  ];
+
+  class Entity {
+    constructor(config, container) {
+      this.config = config;
+      this.container = container;
+      this.element = document.createElement('div');
+      this.element.className = 'entity';
+      this.element.textContent = config.emoji;
+      
+      // Initial Position & State
+      this.x = Math.random() * WORLD_WIDTH;
+      this.y = config.yMin + Math.random() * (config.yMax - config.yMin);
+      
+      // Movement Direction: 1 = Right, -1 = Left
+      this.dir = config.dir || (Math.random() > 0.5 ? 1 : -1);
+      this.baseSpeed = config.speedMin + Math.random() * (config.speedMax - config.speedMin);
+      this.speed = this.baseSpeed;
+      
+      this.isDashing = false;
+      this.dashTimeout = null;
+
+      // Styling
+      this.element.style.fontSize = `${config.size}px`;
+      this.element.style.top = `${this.y}px`;
+      
+      // Click Interaction
+      this.element.addEventListener('click', (e) => this.onClick(e));
+      this.element.addEventListener('touchstart', (e) => this.onClick(e), { passive: true });
+
+      this.container.appendChild(this.element);
+      this.updateTransform();
+    }
+
+    updateTransform() {
+      // ScaleX flips horizontally depending on direction
+      const scaleX = this.dir === 1 ? 1 : -1;
+      this.element.style.transform = `scaleX(${scaleX})`;
+      this.element.style.left = `${this.x}px`;
+    }
+
+    move() {
+      if (this.isDashing) return; // Managed by CSS transition during dash
+
+      this.x += this.speed * this.dir;
+
+      // Wrap around world edges
+      if (this.dir === 1 && this.x > WORLD_WIDTH + 60) {
+        this.x = -60;
+      } else if (this.dir === -1 && this.x < -60) {
+        this.x = WORLD_WIDTH + 60;
+      }
+
+      this.updateTransform();
+    }
+
+    // Smooth dash across screen on click / tap
+    onClick(e) {
+      if (e) e.stopPropagation();
+
+      // Trigger Audio Effect
+      audioSystem.playDashSound();
+
+      // Reverse direction and boost speed across screen
+      this.dir *= -1;
+      this.isDashing = true;
+
+      // Add fast dash CSS class for smooth animation
+      this.element.classList.add('fast-dash');
+
+      // Calculate dramatic dash target destination
+      const dashDistance = 800 + Math.random() * 600;
+      this.x += dashDistance * this.dir;
+
+      // Clamp target within reasonable bounds
+      if (this.x > WORLD_WIDTH + 100) this.x = WORLD_WIDTH + 100;
+      if (this.x < -100) this.x = -100;
+
+      this.updateTransform();
+
+      // Reset after dash completes
+      clearTimeout(this.dashTimeout);
+      this.dashTimeout = setTimeout(() => {
+        this.element.classList.remove('fast-dash');
+        this.isDashing = false;
+        
+        // Wrap around reset if off screen
+        if (this.x >= WORLD_WIDTH + 100) this.x = -50;
+        if (this.x <= -100) this.x = WORLD_WIDTH + 50;
+      }, 1500);
+    }
+  }
+
+  // --- ENVIRONMENT SETUP & GENERATION ---
+
+  const entityContainer = document.getElementById('entity-layer');
+  const entities = [];
+
+  // Spawn clouds dynamically
+  function createClouds() {
+    const cityWorld = document.getElementById('city-world');
+    for (let i = 0; i < 12; i++) {
+      const cloud = document.createElement('div');
+      cloud.className = 'cloud';
+      const width = 120 + Math.random() * 180;
+      const height = 40 + Math.random() * 30;
+      cloud.style.width = `${width}px`;
+      cloud.style.height = `${height}px`;
+      cloud.style.top = `${30 + Math.random() * 260}px`;
+      cloud.style.left = `${Math.random() * WORLD_WIDTH}px`;
+      cloud.style.animationDuration = `${40 + Math.random() * 60}s`;
+      cloud.style.animationDelay = `-${Math.random() * 50}s`;
+      cityWorld.appendChild(cloud);
+    }
+  }
+
+  // Initialize Population
+  function initSimulator() {
+    createClouds();
+
+    // Spawn multiple instances of each type
+    ENTITY_TYPES.forEach(typeConfig => {
+      // Create 3 to 6 instances per type for a lively city
+      const count = 3 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < count; i++) {
+        entities.push(new Entity(typeConfig, entityContainer));
+      }
+    });
+
+    // Start Animation Loop
+    function render() {
+      for (let i = 0; i < entities.length; i++) {
+        entities[i].move();
+      }
+      requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+  }
+
+  // --- INTERACTION & UI CONTROLS ---
+
+  const viewport = document.getElementById('viewport');
+  const audioBtn = document.getElementById('audioBtn');
+
+  // Center scroll position on start (Focus on main avenue)
+  window.addEventListener('load', () => {
+    initSimulator();
+    
+    // Scroll to center-ish view of the city street
+    viewport.scrollLeft = (WORLD_WIDTH - window.innerWidth) / 2;
+    viewport.scrollTop = 800;
+  });
+
+  // Global Audio Enable on First Interaction
+  function handleFirstUserInteraction() {
+    audioSystem.init();
+    if (!audioSystem.isMuted) {
+      audioBtn.textContent = '🔊';
+      audioBtn.classList.add('audio-playing');
+    }
+    window.removeEventListener('click', handleFirstUserInteraction);
+    window.removeEventListener('keydown', handleFirstUserInteraction);
+    window.removeEventListener('touchstart', handleFirstUserInteraction);
+  }
+
+  window.addEventListener('click', handleFirstUserInteraction);
+  window.addEventListener('keydown', handleFirstUserInteraction);
+  window.addEventListener('touchstart', handleFirstUserInteraction);
+
+  // Manual Audio Toggle Button
+  audioBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isNowPlaying = audioSystem.toggle();
+    audioBtn.textContent = isNowPlaying ? '🔊' : '🔇';
+    if (isNowPlaying) {
+      audioBtn.classList.add('audio-playing');
+    } else {
+      audioBtn.classList.remove('audio-playing');
+    }
+  });
+
+  // Mouse Drag to Pan / Scroll City Canvas
+  let isDragging = false;
+  let startX, startY, scrollLeft, scrollTop;
+
+  viewport.addEventListener('mousedown', (e) => {
+    // Only drag if clicking background (not on interactive entity)
+    if (e.target.classList.contains('entity') || e.target.closest('#ui-layer')) return;
+    
+    isDragging = true;
+    viewport.style.cursor = 'grabbing';
+    startX = e.pageX - viewport.offsetLeft;
+    startY = e.pageY - viewport.offsetTop;
+    scrollLeft = viewport.scrollLeft;
+    scrollTop = viewport.scrollTop;
+  });
+
+  viewport.addEventListener('mouseleave', () => {
+    isDragging = false;
+    viewport.style.cursor = 'default';
+  });
+
+  viewport.addEventListener('mouseup', () => {
+    isDragging = false;
+    viewport.style.cursor = 'default';
+  });
+
+  viewport.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - viewport.offsetLeft;
+    const y = e.pageY - viewport.offsetTop;
+    const walkX = (x - startX) * 1.5; // Scroll speed factor
+    const walkY = (y - startY) * 1.5;
+    viewport.scrollLeft = scrollLeft - walkX;
+    viewport.scrollTop = scrollTop - walkY;
+  });
+
+</script>
+</body>
+</html>
