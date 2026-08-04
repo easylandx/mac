@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infinite Race 🏁</title>
+<style>
+  :root {
+    --bg1: #0f172a;
+    --bg2: #1e293b;
+    --track: #16213a;
+    --accent: #38bdf8;
+    --accent2: #f472b6;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(160deg, var(--bg1), var(--bg2));
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px 60px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
+  }
+
+  .title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(1.6rem, 4vw, 2.6rem);
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: 1px;
+  }
+
+  .info-btn {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1.5px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-family: Georgia, serif;
+    font-style: italic;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .info-btn:hover {
+    background: var(--accent);
+    color: #0f172a;
+  }
+
+  .info-popover {
+    display: none;
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(90vw, 380px);
+    background: #1e293b;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    padding: 18px 20px;
+    text-align: left;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: #cbd5e1;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    z-index: 10;
+  }
+
+  .info-popover.open {
+    display: block;
+  }
+
+  .info-popover p {
+    margin: 0 0 10px;
+  }
+
+  .info-popover p:last-child {
+    margin-bottom: 0;
+    color: #e2e8f0;
+    font-weight: 600;
+  }
+
+  .board {
+    width: 100%;
+    max-width: 1100px;
+    overflow: hidden;
+  }
+
+  .lane {
+    position: relative;
+    height: 100px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+  }
+
+  .racer {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    line-height: 1;
+    transform: translate(-120%, -50%);
+    animation-name: cross;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    will-change: transform;
+  }
+
+  @keyframes cross {
+    0%   { transform: translate(-120%, -50%); }
+    100% { transform: translate(calc(100vw), -50%); }
+  }
+
+  /* stagger each racer's start so they don't all launch at once */
+  .snail   { animation-duration: 34s; animation-delay: -4s;  font-size: 3.2rem; }
+  .turtle  { animation-duration: 26s; animation-delay: -9s;  font-size: 3.4rem; }
+  .rabbit  { animation-duration: 16s; animation-delay: -2s;  font-size: 3.6rem; }
+  .horse   { animation-duration: 11s; animation-delay: -6s;  font-size: 3.8rem; }
+  .cheetah { animation-duration: 7s;  animation-delay: -1s;  font-size: 3.8rem; }
+  .f1      { animation-duration: 4s;  animation-delay: -2.5s; font-size: 3.6rem; }
+  .rocket  { animation-duration: 2.4s; animation-delay: -0.6s; font-size: 3.6rem; }
+
+  /* these emoji face left by default in most fonts, so flip to face the direction of travel (right) */
+  .flip { display: inline-block; transform: scaleX(-1); }
+
+  footer {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .easylandx-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 32px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    color: #0f172a;
+    font-weight: 700;
+    font-size: 1rem;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    box-shadow: 0 10px 30px rgba(56, 189, 248, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .easylandx-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 14px 36px rgba(56, 189, 248, 0.4);
+  }
+
+  .easylandx-btn:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  @media (max-width: 600px) {
+    .lane { height: 76px; }
+  }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="title-row">
+      <h1>Infinite Race</h1>
+      <button class="info-btn" id="infoBtn" aria-label="Info" aria-expanded="false">i</button>
+    </div>
+    <div class="info-popover" id="infoPopover">
+      <p>The hierarchy of speed has no ceiling. Accepting that truth frees you from the exhausting chase for first place and redirects your energy into continuous motion: learning, iterating, and improving.</p>
+      <p>Progress, not position, is the only lasting advantage.</p>
+    </div>
+  </header>
+
+  <div class="board">
+    <div class="lane"><span class="racer snail">🐌</span></div>
+    <div class="lane"><span class="racer turtle"><span class="flip">🐢</span></span></div>
+    <div class="lane"><span class="racer rabbit"><span class="flip">🐇</span></span></div>
+    <div class="lane"><span class="racer horse"><span class="flip">🐎</span></span></div>
+    <div class="lane"><span class="racer cheetah"><span class="flip">🐆</span></span></div>
+    <div class="lane"><span class="racer f1"><span class="flip">🏎️</span></span></div>
+    <div class="lane"><span class="racer rocket">🚀</span></div>
+  </div>
+
+  <footer>
+    <a class="easylandx-btn" href="https://easylandx.github.io" target="_blank" rel="noopener noreferrer">
+      🚀 Visit EasyLandX
+    </a>
+  </footer>
+
+  <script>
+    const infoBtn = document.getElementById('infoBtn');
+    const infoPopover = document.getElementById('infoPopover');
+
+    infoBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = infoPopover.classList.toggle('open');
+      infoBtn.setAttribute('aria-expanded', isOpen);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!infoPopover.contains(e.target) && e.target !== infoBtn) {
+        infoPopover.classList.remove('open');
+        infoBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  </script>
+</body>
+</html>
