@@ -1,0 +1,875 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chatty Fox — talks, dances, and mimics you</title>
+<meta name="description" content="A toy desert fox that listens to your voice through the microphone, records it, and plays it back mimicking you while it dances — plus it can recite a landing-page sales pitch out loud.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-top:#241246;
+    --sky-mid:#5b1f5e;
+    --sky-glow:#ff6a4d;
+    --sand:#f2c56b;
+    --sand-dark:#d99a3f;
+    --fox:#e8a25c;
+    --fox-dark:#b9723a;
+    --fox-light:#f6c98a;
+    --fox-tip:#2a1810;
+    --pot:#c1502e;
+    --pot-dark:#93381f;
+    --pot-rim:#e07a4c;
+    --cream:#fff4e2;
+    --hot-pink:#ff3d81;
+    --ink:#1c1030;
+    --led-off:#5a4a76;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    min-height:100%;
+    background:var(--sky-top);
+  }
+
+  body{
+    font-family:'Fredoka',sans-serif;
+    color:var(--cream);
+    display:flex;
+    justify-content:center;
+    padding:0 0 40px;
+    overflow-x:hidden;
+  }
+
+  .stage{
+    position:relative;
+    width:100%;
+    max-width:420px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:28px 20px 20px;
+    background:
+      radial-gradient(120% 70% at 50% 0%, var(--sky-glow) 0%, transparent 55%),
+      linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 55%, var(--sand-dark) 100%);
+    overflow:hidden;
+  }
+
+  /* sun */
+  .stage::before{
+    content:"";
+    position:absolute;
+    top:64px; left:50%;
+    width:190px; height:190px;
+    transform:translateX(-50%);
+    border-radius:50%;
+    background:radial-gradient(circle at 50% 45%, #ffe08a 0%, var(--sky-glow) 70%, transparent 72%);
+    filter:blur(1px);
+    z-index:0;
+  }
+
+  /* dunes */
+  .stage::after{
+    content:"";
+    position:absolute;
+    left:0; right:0; bottom:0;
+    height:120px;
+    background:
+      radial-gradient(120% 100% at 20% 100%, var(--sand) 0%, transparent 60%),
+      radial-gradient(120% 100% at 80% 100%, var(--sand-dark) 0%, transparent 60%);
+    z-index:0;
+  }
+
+  .eyebrow{
+    position:relative; z-index:2;
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    color:var(--sand);
+    opacity:.85;
+    margin-top:4px;
+  }
+
+  .badge{
+    position:absolute;
+    top:18px; right:8px;
+    width:96px; height:96px;
+    clip-path: polygon(50% 0%, 61% 20%, 82% 12%, 80% 35%, 100% 45%, 84% 60%, 92% 82%, 69% 76%, 60% 98%, 45% 80%, 24% 92%, 22% 68%, 2% 62%, 16% 42%, 6% 20%, 30% 26%);
+    background:var(--hot-pink);
+    transform:rotate(-6deg);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:3;
+    animation: badge-breathe 3.2s ease-in-out infinite;
+  }
+  .badge span{
+    display:block;
+    transform:rotate(6deg);
+    text-align:center;
+    font-family:'Space Mono',monospace;
+    font-weight:700;
+    font-size:11px;
+    line-height:1.25;
+    color:var(--cream);
+    letter-spacing:.02em;
+  }
+
+  h1.title{
+    position:relative; z-index:2;
+    font-size:34px;
+    font-weight:700;
+    margin:6px 0 2px;
+    text-align:center;
+    line-height:1.05;
+  }
+  h1.title em{
+    font-style:normal;
+    color:var(--hot-pink);
+    -webkit-text-stroke:1px var(--cream);
+  }
+
+  .tagline{
+    position:relative; z-index:2;
+    font-size:15px;
+    opacity:.9;
+    margin:0 0 8px;
+    text-align:center;
+    max-width:280px;
+  }
+
+  .cactus-wrap{
+    position:relative;
+    z-index:2;
+    width:min(78vw,260px);
+    margin:6px 0 4px;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+  }
+  .cactus-wrap svg{ display:block; width:100%; height:auto; overflow:visible; }
+  .cactus-wrap.boop{ animation: boop-pop .4s ease; }
+  @keyframes boop-pop{
+    0%{ transform:scale(1); }
+    35%{ transform:scale(1.06) rotate(-2deg); }
+    70%{ transform:scale(.98) rotate(2deg); }
+    100%{ transform:scale(1); }
+  }
+
+  #glowRing{ opacity:0; transition:opacity .4s ease; }
+  .stage.listening #glowRing,
+  .stage.recording #glowRing,
+  .stage.talking #glowRing{
+    opacity:.55;
+    animation: ring-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes ring-pulse{
+    0%,100%{ r:112; opacity:.35; }
+    50%{ r:126; opacity:.6; }
+  }
+
+  #bodyWrap{ animation: idle-sway 4.5s ease-in-out infinite; transform-origin:150px 386px; }
+  .stage.recording #bodyWrap,
+  .stage.talking #bodyWrap{ animation: dance-sway 0.55s ease-in-out infinite; }
+  @keyframes idle-sway{
+    0%,100%{ transform:rotate(-2deg); }
+    50%{ transform:rotate(2deg); }
+  }
+  @keyframes dance-sway{
+    0%,100%{ transform:rotate(-4deg) translateY(0); }
+    50%{ transform:rotate(4deg) translateY(-4px); }
+  }
+
+  #tail{ animation: tail-wag 3.6s ease-in-out infinite; transform-origin:172px 330px; }
+  .stage.recording #tail,
+  .stage.talking #tail{ animation: tail-wag-fast 0.4s ease-in-out infinite; }
+  @keyframes tail-wag{
+    0%,100%{ transform:rotate(-4deg); }
+    50%{ transform:rotate(4deg); }
+  }
+  @keyframes tail-wag-fast{
+    0%,100%{ transform:rotate(-10deg); }
+    50%{ transform:rotate(10deg); }
+  }
+
+  #pupilL, #pupilR{
+    animation: look-around 6s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  @keyframes look-around{
+    0%,100%{ transform:translate(0,0); }
+    25%{ transform:translate(2px,-1px); }
+    50%{ transform:translate(-2px,1px); }
+    75%{ transform:translate(1px,1px); }
+  }
+  .stage.listening #pupilL, .stage.listening #pupilR,
+  .stage.recording #pupilL, .stage.recording #pupilR,
+  .stage.talking #pupilL, .stage.talking #pupilR{
+    animation:none;
+    transform:translate(0,0) scale(1.15);
+  }
+
+  /* control panel */
+  .panel{
+    position:relative; z-index:2;
+    width:100%;
+    max-width:320px;
+    margin-top:10px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:linear-gradient(180deg,#3a2350,#2a173e);
+    border:2px solid #4c2f66;
+    border-radius:22px;
+    padding:14px 16px;
+    box-shadow:0 8px 0 #1a0e2a, 0 10px 18px rgba(0,0,0,.35);
+  }
+  .panel + .panel{ margin-top:12px; }
+
+  .power-btn{
+    flex:0 0 auto;
+    width:64px; height:64px;
+    border-radius:50%;
+    border:none;
+    background:radial-gradient(circle at 35% 30%, #ffe3c2, var(--pot-rim) 55%, var(--pot-dark) 100%);
+    box-shadow:0 5px 0 var(--pot-dark), inset 0 2px 4px rgba(255,255,255,.4);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    padding:0;
+    transition:transform .12s ease;
+  }
+  .power-btn:active{ transform:translateY(3px); box-shadow:0 2px 0 var(--pot-dark); }
+  .power-btn .power-icon{
+    width:22px; height:22px;
+    border-radius:50%;
+    border:4px solid var(--ink);
+    position:relative;
+  }
+  .power-btn .power-icon::before{
+    content:"";
+    position:absolute;
+    top:-6px; left:50%;
+    width:4px; height:12px;
+    background:var(--ink);
+    transform:translateX(-50%);
+  }
+  .power-btn.on{
+    background:radial-gradient(circle at 35% 30%, #d9ffe8, var(--fox-light) 55%, var(--fox-dark) 100%);
+    box-shadow:0 5px 0 var(--fox-dark), inset 0 2px 4px rgba(255,255,255,.4), 0 0 18px 2px rgba(246,201,138,.7);
+  }
+  .power-btn.on .power-icon,
+  .power-btn.on .power-icon::before{ border-color:#3a2308; background:#3a2308; }
+
+  .speak-btn{
+    flex:0 0 auto;
+    width:64px; height:64px;
+    border-radius:50%;
+    border:none;
+    background:radial-gradient(circle at 35% 30%, #ffd3e6, var(--hot-pink) 55%, #a80e4a 100%);
+    box-shadow:0 5px 0 #7a0937, inset 0 2px 4px rgba(255,255,255,.4);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    padding:0;
+    transition:transform .12s ease;
+  }
+  .speak-btn:active{ transform:translateY(3px); box-shadow:0 2px 0 #7a0937; }
+  .speak-btn svg{ width:24px; height:24px; }
+  .speak-btn.on{
+    box-shadow:0 5px 0 #7a0937, inset 0 2px 4px rgba(255,255,255,.4), 0 0 18px 2px rgba(255,61,129,.75);
+  }
+  .speak-btn:disabled{ opacity:.4; cursor:not-allowed; }
+
+  .readout{ flex:1 1 auto; min-width:0; }
+  .readout-label{
+    font-family:'Space Mono',monospace;
+    font-weight:700;
+    font-size:12px;
+    letter-spacing:.14em;
+    color:var(--sand);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:8px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .readout-label .led{
+    width:9px; height:9px;
+    border-radius:50%;
+    background:var(--led-off);
+    flex:0 0 auto;
+  }
+  .stage.listening .led{ background:#ffd23d; box-shadow:0 0 8px #ffd23d; }
+  .stage.recording .led{ background:var(--hot-pink); box-shadow:0 0 8px var(--hot-pink); }
+  .stage.talking .led{ background:var(--fox-light); box-shadow:0 0 8px var(--fox-light); }
+
+  .readout-sub{
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    color:var(--cream);
+    opacity:.75;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .vu-meter{
+    display:flex;
+    align-items:flex-end;
+    gap:4px;
+    height:34px;
+  }
+  .vu-meter .bar{
+    flex:1 1 0;
+    height:8px;
+    min-width:3px;
+    border-radius:2px;
+    background:linear-gradient(180deg, var(--sand), var(--sand-dark));
+    transition:height .06s linear;
+  }
+  .stage.recording .vu-meter .bar{ background:linear-gradient(180deg,#ff8fb8,var(--hot-pink)); }
+  .stage.talking .vu-meter .bar{ background:linear-gradient(180deg,var(--fox-light),var(--fox-dark)); }
+
+  .hint{
+    position:relative; z-index:2;
+    font-family:'Space Mono',monospace;
+    font-size:12px;
+    line-height:1.5;
+    text-align:center;
+    max-width:300px;
+    color:var(--cream);
+    opacity:.8;
+    margin:14px 0 0;
+  }
+
+  footer{
+    position:relative; z-index:2;
+    margin-top:auto;
+    padding-top:22px;
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    opacity:.55;
+    text-align:center;
+  }
+  footer a{ color:var(--sand); }
+
+  @media (prefers-reduced-motion: reduce){
+    .badge, #bodyWrap, #tail, #pupilL, #pupilR, #glowRing{ animation:none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+
+  <div class="badge"><span>TALK<br>&amp;<br>DANCE!</span></div>
+
+  <div class="eyebrow">Desktop toy · desert fox edition</div>
+  <h1 class="title">Chatty <em>Fox</em></h1>
+  <p class="tagline">Listens to what you say and plays it back its own way, dancing to the rhythm of your voice.</p>
+
+  <div class="cactus-wrap" id="cactusWrap" role="button" tabindex="0" aria-label="Tap the fox">
+    <svg viewBox="0 0 300 420" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="150" cy="404" rx="72" ry="11" fill="rgba(0,0,0,.28)"/>
+      <circle id="glowRing" cx="150" cy="258" r="112" fill="none" stroke="var(--hot-pink)" stroke-width="5"/>
+
+      <!-- stump / perch -->
+      <path d="M92,372 L208,372 L192,412 L108,412 Z" fill="var(--pot)"/>
+      <path d="M88,362 L212,362 L208,372 L92,372 Z" fill="var(--pot-rim)"/>
+      <path d="M96,405 L204,405 L200,412 L100,412 Z" fill="var(--pot-dark)"/>
+
+      <g id="bodyWrap">
+        <!-- bushy tail (drawn first so body overlaps the join) -->
+        <path id="tail" d="M182,300 C240,296 268,246 250,196 C282,222 288,292 252,338 C224,372 186,362 178,332 Z"
+              fill="var(--fox)"/>
+        <path d="M250,336 C226,364 194,360 182,336 C198,352 224,352 244,326 Z" fill="var(--cream)"/>
+
+        <!-- arms -->
+        <path id="armLeft" d="M120,250 C86,250 64,228 64,196 C64,166 78,150 98,128"
+              fill="none" stroke="var(--fox)" stroke-width="34" stroke-linecap="round"/>
+        <path id="armRight" d="M180,250 C214,250 236,228 236,196 C236,166 222,150 202,128"
+              fill="none" stroke="var(--fox)" stroke-width="34" stroke-linecap="round"/>
+        <circle cx="98" cy="128" r="13" fill="var(--cream)"/>
+        <circle cx="202" cy="128" r="13" fill="var(--cream)"/>
+
+        <!-- torso -->
+        <rect x="112" y="140" width="76" height="235" rx="38" fill="var(--fox)"/>
+        <path d="M150,180 C176,180 190,205 190,240 L190,340 C190,362 172,375 150,375 C128,375 110,362 110,340 L110,240 C110,205 124,180 150,180 Z" fill="var(--cream)" opacity=".9"/>
+
+        <!-- big fennec ears -->
+        <path d="M126,142 C104,96 96,58 108,30 C130,52 142,90 146,138 Z" fill="var(--fox)"/>
+        <path d="M118,130 C106,98 102,68 110,44 C124,62 132,90 136,128 Z" fill="var(--fox-tip)" opacity=".85"/>
+        <path d="M174,142 C196,96 204,58 192,30 C170,52 158,90 154,138 Z" fill="var(--fox)"/>
+        <path d="M182,130 C194,98 198,68 190,44 C176,62 168,90 164,128 Z" fill="var(--fox-tip)" opacity=".85"/>
+
+        <!-- face -->
+        <circle cx="130" cy="196" r="17" fill="var(--cream)"/>
+        <circle cx="170" cy="196" r="17" fill="var(--cream)"/>
+        <g id="pupilL">
+          <circle cx="132" cy="198" r="11" fill="#ffb548"/>
+          <circle cx="132" cy="198" r="6.5" fill="var(--ink)"/>
+          <circle cx="129.5" cy="195" r="2.2" fill="var(--cream)"/>
+        </g>
+        <g id="pupilR">
+          <circle cx="168" cy="198" r="11" fill="#ffb548"/>
+          <circle cx="168" cy="198" r="6.5" fill="var(--ink)"/>
+          <circle cx="165.5" cy="195" r="2.2" fill="var(--cream)"/>
+        </g>
+        <circle cx="112" cy="214" r="9" fill="var(--hot-pink)" opacity=".35"/>
+        <circle cx="188" cy="214" r="9" fill="var(--hot-pink)" opacity=".35"/>
+
+        <!-- snout / muzzle -->
+        <path d="M150,204 C170,204 182,216 182,230 C182,246 168,254 150,254 C132,254 118,246 118,230 C118,216 130,204 150,204 Z" fill="var(--cream)"/>
+        <path d="M150,206 L142,216 L158,216 Z" fill="var(--fox-tip)"/>
+        <ellipse id="mouthEl" cx="150" cy="222" rx="13" ry="4" fill="#3a1030"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="panel">
+    <button class="power-btn" id="powerBtn" aria-pressed="false" aria-label="Activate microphone">
+      <span class="power-icon"></span>
+    </button>
+    <div class="readout">
+      <div class="readout-label"><span class="led"></span><span id="statusLabel">IDLE</span></div>
+      <div class="vu-meter" id="vuMeter"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <button class="speak-btn" id="speakBtn" aria-pressed="false" aria-label="Make the fox say the sales pitch out loud">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 9v6h4l5 4V5L8 9H4z" fill="var(--cream)"/>
+        <path d="M16.5 8.5c1.6 1.9 1.6 5.1 0 7" stroke="var(--cream)" stroke-width="2" stroke-linecap="round"/>
+        <path d="M19 6c2.8 3 2.8 9 0 12" stroke="var(--cream)" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+      </svg>
+    </button>
+    <div class="readout">
+      <div class="readout-label"><span class="led" id="speakLed"></span><span id="speakStatusLabel">TAP TO HEAR THE PITCH</span></div>
+      <div class="readout-sub" id="speakSubLabel">14 lines · click again to stop</div>
+    </div>
+  </div>
+
+  <p class="hint" id="hintText">Tap the left button to activate the microphone. Use headphones if you can, so it doesn't hear itself.</p>
+
+  <footer>Chatty Fox · <a href="https://easypagex.github.io" target="_blank" rel="noopener">easypagex.github.io</a></footer>
+</div>
+
+<script>
+(function(){
+  const stage = document.getElementById('stage');
+  const powerBtn = document.getElementById('powerBtn');
+  const statusLabel = document.getElementById('statusLabel');
+  const hintText = document.getElementById('hintText');
+  const cactusWrap = document.getElementById('cactusWrap');
+  const armLeft = document.getElementById('armLeft');
+  const armRight = document.getElementById('armRight');
+  const mouthEl = document.getElementById('mouthEl');
+  const vuMeter = document.getElementById('vuMeter');
+  const speakBtn = document.getElementById('speakBtn');
+  const speakStatusLabel = document.getElementById('speakStatusLabel');
+  const speakSubLabel = document.getElementById('speakSubLabel');
+  const speakLed = document.getElementById('speakLed');
+
+  const BAR_COUNT = 9;
+  const bars = [];
+  for(let i=0;i<BAR_COUNT;i++){
+    const b = document.createElement('div');
+    b.className = 'bar';
+    vuMeter.appendChild(b);
+    bars.push(b);
+  }
+
+  const SPEECH_THRESHOLD = 16;
+  const SILENCE_HOLD_MS = 900;
+  const MIN_RECORD_MS = 500;
+  const MAX_RECORD_MS = 6000;
+
+  let audioCtx = null;
+  let micStream = null;
+  let source = null;
+  let analyser = null;
+  let dataArray = null;
+  let mediaRecorder = null;
+  let chunks = [];
+  let active = false;
+  let recording = false;
+  let isPlayingBack = false;
+  let silenceStart = null;
+  let recordStart = 0;
+  let rafId = null;
+
+  function ensureAudioCtx(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if(audioCtx.state === 'suspended'){
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
+  function setStatus(text){
+    statusLabel.textContent = text;
+  }
+
+  function updateVU(data){
+    for(let i=0;i<bars.length;i++){
+      const idx = Math.floor(i * (data.length / bars.length));
+      const v = data[idx] / 255;
+      bars[i].style.height = (8 + v * 32) + 'px';
+    }
+  }
+
+  function decayVU(){
+    for(let i=0;i<bars.length;i++){
+      bars[i].style.height = '8px';
+    }
+  }
+
+  function animateFace(avg, dancing){
+    const openAmt = Math.min(1, avg / 55);
+    mouthEl.setAttribute('ry', (4 + openAmt * 20).toFixed(1));
+    const t = Date.now();
+    const wiggle = dancing
+      ? Math.sin(t / 130) * (14 + openAmt * 18)
+      : Math.sin(t / 500) * 6;
+    armLeft.setAttribute('transform', 'rotate(' + (-wiggle) + ' 120 250)');
+    armRight.setAttribute('transform', 'rotate(' + (wiggle) + ' 180 250)');
+  }
+
+  function relaxFace(){
+    mouthEl.setAttribute('ry', '4');
+    armLeft.removeAttribute('transform');
+    armRight.removeAttribute('transform');
+  }
+
+  function boop(){
+    ensureAudioCtx();
+    const ctx = audioCtx;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(620, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(210, ctx.currentTime + 0.28);
+    g.gain.setValueAtTime(0.16, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + 0.3);
+    cactusWrap.classList.add('boop');
+    setTimeout(() => cactusWrap.classList.remove('boop'), 400);
+    if(!active && !speaking){
+      let start = performance.now();
+      function bounce(now){
+        const el = now - start;
+        if(el > 350) { relaxFace(); return; }
+        animateFace(30 * (1 - el/350), true);
+        requestAnimationFrame(bounce);
+      }
+      requestAnimationFrame(bounce);
+    }
+  }
+  cactusWrap.addEventListener('click', boop);
+  cactusWrap.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); boop(); }
+  });
+
+  async function activate(){
+    ensureAudioCtx();
+    try{
+      micStream = await navigator.mediaDevices.getUserMedia({
+        audio:{ echoCancellation:true, noiseSuppression:true, autoGainControl:true }
+      });
+    }catch(err){
+      hintText.textContent = 'Could not access the microphone. Check your browser permissions for this site and make sure you\'re on an https connection.';
+      return;
+    }
+    source = audioCtx.createMediaStreamSource(micStream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    source.connect(analyser);
+
+    active = true;
+    powerBtn.classList.add('on');
+    powerBtn.setAttribute('aria-pressed','true');
+    stage.classList.add('listening');
+    setStatus('LISTENING');
+    hintText.textContent = 'Talk near the fox and wait for it to mimic you. You can also tap it to say hi.';
+    loop();
+  }
+
+  function deactivate(){
+    active = false;
+    if(mediaRecorder && mediaRecorder.state === 'recording'){
+      mediaRecorder.stop();
+    }
+    if(micStream){
+      micStream.getTracks().forEach(t => t.stop());
+      micStream = null;
+    }
+    if(rafId) cancelAnimationFrame(rafId);
+    isPlayingBack = false;
+    recording = false;
+    powerBtn.classList.remove('on');
+    powerBtn.setAttribute('aria-pressed','false');
+    stage.classList.remove('listening','recording');
+    if(!speaking) stage.classList.remove('talking');
+    setStatus('IDLE');
+    hintText.textContent = 'Tap the left button to activate the microphone.';
+    if(!speaking){ relaxFace(); decayVU(); }
+  }
+
+  powerBtn.addEventListener('click', () => {
+    if(active) deactivate(); else activate();
+  });
+
+  function loop(){
+    if(!active) return;
+    analyser.getByteFrequencyData(dataArray);
+    let sum = 0;
+    for(let i=0;i<dataArray.length;i++) sum += dataArray[i];
+    const avg = sum / dataArray.length;
+
+    if(!isPlayingBack && !speaking){
+      updateVU(dataArray);
+      animateFace(avg, recording);
+
+      if(!recording){
+        if(avg > SPEECH_THRESHOLD){
+          startRecording();
+        }
+      }else{
+        const now = performance.now();
+        if(avg > SPEECH_THRESHOLD){
+          silenceStart = null;
+        }else if(!silenceStart){
+          silenceStart = now;
+        }
+        const elapsed = now - recordStart;
+        const silentFor = silenceStart ? now - silenceStart : 0;
+        if((silentFor > SILENCE_HOLD_MS && elapsed > MIN_RECORD_MS) || elapsed > MAX_RECORD_MS){
+          stopRecording();
+        }
+      }
+    }
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function startRecording(){
+    if(!micStream) return;
+    recording = true;
+    chunks = [];
+    silenceStart = null;
+    recordStart = performance.now();
+    try{
+      mediaRecorder = new MediaRecorder(micStream);
+    }catch(err){
+      recording = false;
+      return;
+    }
+    mediaRecorder.ondataavailable = (e) => { if(e.data && e.data.size > 0) chunks.push(e.data); };
+    mediaRecorder.onstop = handleRecordingStop;
+    mediaRecorder.start();
+    stage.classList.remove('listening');
+    stage.classList.add('recording');
+    setStatus('RECORDING YOUR VOICE');
+  }
+
+  function stopRecording(){
+    if(mediaRecorder && mediaRecorder.state === 'recording'){
+      mediaRecorder.stop();
+    }
+    recording = false;
+    stage.classList.remove('recording');
+  }
+
+  async function handleRecordingStop(){
+    const blob = new Blob(chunks, { type: (chunks[0] && chunks[0].type) || 'audio/webm' });
+    if(!active){ return; }
+    if(blob.size < 800){
+      stage.classList.add('listening');
+      setStatus('LISTENING');
+      relaxFace();
+      return;
+    }
+    try{
+      const arrayBuf = await blob.arrayBuffer();
+      const audioBuf = await audioCtx.decodeAudioData(arrayBuf);
+      playMimic(audioBuf);
+    }catch(err){
+      stage.classList.add('listening');
+      setStatus('LISTENING');
+      relaxFace();
+    }
+  }
+
+  function playMimic(buffer){
+    isPlayingBack = true;
+    stage.classList.remove('listening');
+    stage.classList.add('talking');
+    setStatus('MIMICKING YOU');
+
+    const src = audioCtx.createBufferSource();
+    src.buffer = buffer;
+    src.playbackRate.value = 1.35;
+    if(src.detune) src.detune.value = 260;
+
+    const playAnalyser = audioCtx.createAnalyser();
+    playAnalyser.fftSize = 256;
+    const playData = new Uint8Array(playAnalyser.frequencyBinCount);
+
+    src.connect(playAnalyser);
+    playAnalyser.connect(audioCtx.destination);
+    src.start();
+
+    function playLoop(){
+      if(!isPlayingBack) return;
+      playAnalyser.getByteFrequencyData(playData);
+      let sum = 0;
+      for(let i=0;i<playData.length;i++) sum += playData[i];
+      const avg = sum / playData.length;
+      updateVU(playData);
+      animateFace(avg, true);
+      requestAnimationFrame(playLoop);
+    }
+    playLoop();
+
+    src.onended = () => {
+      isPlayingBack = false;
+      stage.classList.remove('talking');
+      relaxFace();
+      decayVU();
+      if(active){
+        stage.classList.add('listening');
+        setStatus('LISTENING');
+      }else{
+        setStatus('IDLE');
+      }
+    };
+  }
+
+  if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){
+    hintText.textContent = 'Your browser doesn\'t allow microphone access from this page. Try an updated version of Safari or Chrome.';
+    powerBtn.disabled = true;
+  }
+
+  /* ---------- Sales pitch text-to-speech ---------- */
+
+  const PITCH_PHRASES = [
+    'EasyLandX — Landing Pages That Sell.',
+    'Works twenty four seven. Captures leads. Turns followers into customers.',
+    'Five times more conversions.',
+    'Eighty percent of businesses lose leads every day.',
+    'Forty eight percent more leads with visuals.',
+    'Why every serious business needs one.',
+    'Targeted traffic — send ad and social traffic to a page designed to convert.',
+    'Grow your community — link Instagram, X and LinkedIn. Turn visitors into followers.',
+    'More sales — one clear offer plus a strong call to action equals higher conversions.',
+    'Capture leads — collect emails and follow up with every visitor.',
+    'So easy it feels incredible.',
+    'Tell us your vision — product, audience and goals.',
+    'We design it — beautiful and conversion focused.',
+    'Launch and profit — start getting customers immediately.',
+    'Launch my page now!',
+    'Get my landing page!',
+    'Let\'s build something amazing.',
+    'Small business growth.'
+  ];
+
+  let speaking = false;
+  let speakIndex = 0;
+  let speakRafId = null;
+  const speechSupported = !!(window.speechSynthesis && window.SpeechSynthesisUtterance);
+
+  function speakFaceLoop(){
+    if(!speaking) return;
+    const t = Date.now();
+    const avg = 24 + Math.abs(Math.sin(t / 90)) * 40;
+    updateVU(new Uint8Array(bars.length).map((_, i) => {
+      return 60 + Math.abs(Math.sin(t / 110 + i)) * 150;
+    }));
+    animateFace(avg, true);
+    speakRafId = requestAnimationFrame(speakFaceLoop);
+  }
+
+  function updateSpeakSub(){
+    speakSubLabel.textContent = 'Line ' + (speakIndex + 1) + ' of ' + PITCH_PHRASES.length + ' · click again to stop';
+  }
+
+  function speakNext(){
+    if(!speaking || speakIndex >= PITCH_PHRASES.length){
+      stopSpeaking();
+      return;
+    }
+    updateSpeakSub();
+    const utter = new SpeechSynthesisUtterance(PITCH_PHRASES[speakIndex]);
+    utter.rate = 1.02;
+    utter.pitch = 1.05;
+    utter.onend = () => {
+      if(!speaking) return;
+      speakIndex++;
+      speakNext();
+    };
+    utter.onerror = () => {
+      if(!speaking) return;
+      speakIndex++;
+      speakNext();
+    };
+    window.speechSynthesis.speak(utter);
+  }
+
+  function startSpeaking(){
+    if(!speechSupported) return;
+    if(active) deactivate();
+    speaking = true;
+    speakIndex = 0;
+    speakBtn.classList.add('on');
+    speakBtn.setAttribute('aria-pressed','true');
+    speakLed.style.background = 'var(--hot-pink)';
+    speakLed.style.boxShadow = '0 0 8px var(--hot-pink)';
+    speakStatusLabel.textContent = 'RECITING THE PITCH';
+    stage.classList.add('talking');
+    speakFaceLoop();
+    speakNext();
+  }
+
+  function stopSpeaking(){
+    speaking = false;
+    window.speechSynthesis.cancel();
+    if(speakRafId) cancelAnimationFrame(speakRafId);
+    speakBtn.classList.remove('on');
+    speakBtn.setAttribute('aria-pressed','false');
+    speakLed.style.background = '';
+    speakLed.style.boxShadow = '';
+    speakStatusLabel.textContent = 'TAP TO HEAR THE PITCH';
+    speakSubLabel.textContent = PITCH_PHRASES.length + ' lines · click again to stop';
+    stage.classList.remove('talking');
+    relaxFace();
+    decayVU();
+  }
+
+  speakBtn.addEventListener('click', () => {
+    if(speaking) stopSpeaking(); else startSpeaking();
+  });
+
+  if(!speechSupported){
+    speakBtn.disabled = true;
+    speakStatusLabel.textContent = 'VOICE NOT SUPPORTED';
+    speakSubLabel.textContent = 'Try an updated Chrome or Safari.';
+  }
+})();
+</script>
+</body>
+</html>
