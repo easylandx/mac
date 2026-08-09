@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAINFRAME // NINE-THOUSAND SERIES</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#020202;
+    --void-2:#0a0605;
+    --panel:#0f0908;
+    --lens-red:#ff2a1f;
+    --lens-red-dim:#7a140d;
+    --lens-core:#fff3ea;
+    --amber:#ffb454;
+    --amber-dim:#7a5424;
+    --ash:#8a827c;
+    --ash-dim:#453f3a;
+    --line:#211a17;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--void);height:100%;}
+  body{
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--ash);
+    overflow-x:hidden;
+    background:
+      radial-gradient(ellipse at 50% -10%, #140a08 0%, var(--void) 55%),
+      var(--void);
+  }
+
+  /* scanline / vignette overlay */
+  .crt{
+    position:fixed; inset:0; pointer-events:none; z-index:50;
+    background:
+      repeating-linear-gradient(180deg, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0.018) 1px, transparent 2px, transparent 3px),
+      radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.75) 100%);
+    mix-blend-mode:normal;
+  }
+  .grain{
+    position:fixed; inset:0; pointer-events:none; z-index:49; opacity:0.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  header{
+    text-align:center;
+    padding:38px 20px 18px;
+    letter-spacing:0.35em;
+  }
+  header .brand{
+    font-family:'Michroma', sans-serif;
+    font-size:13px;
+    color:var(--ash);
+    letter-spacing:0.5em;
+  }
+  header .brand span{color:var(--lens-red);}
+  header .sub{
+    margin-top:10px;
+    font-size:10px;
+    color:var(--ash-dim);
+    letter-spacing:0.3em;
+    text-transform:uppercase;
+  }
+
+  /* ================= EYE ================= */
+  .eye-wrap{
+    display:flex; justify-content:center; align-items:center;
+    padding:10px 0 6px;
+    position:relative;
+  }
+  .eye{
+    width:min(46vw, 260px);
+    height:min(46vw, 260px);
+    position:relative;
+  }
+  .ring{
+    position:absolute; inset:0;
+    border-radius:50%;
+    border:1px solid var(--line);
+  }
+  .ring.r1{inset:0; animation:spin 40s linear infinite;}
+  .ring.r2{inset:14px; border-color:#2a1c17; animation:spin 26s linear infinite reverse;}
+  .ring.r3{inset:28px; border-color:#1a1210; border-style:dashed; animation:spin 60s linear infinite;}
+  .ring .tick{
+    position:absolute; width:2px; height:8px; background:var(--ash-dim);
+    left:50%; top:-1px; transform-origin:1px 131px;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .lens{
+    position:absolute; inset:44px;
+    border-radius:50%;
+    background:
+      radial-gradient(circle at 42% 38%, var(--lens-core) 0%, var(--lens-red) 16%, #8f0f08 46%, #1a0503 72%, #000 100%);
+    box-shadow:
+      0 0 40px 6px rgba(255,42,31,0.35),
+      0 0 90px 20px rgba(255,42,31,0.12),
+      inset 0 0 40px rgba(0,0,0,0.6);
+    animation:breathe 5.2s ease-in-out infinite;
+    transition:box-shadow 0.4s ease, filter 0.4s ease;
+  }
+  .lens::after{
+    content:"";
+    position:absolute; inset:0; border-radius:50%;
+    background:radial-gradient(circle at 42% 38%, rgba(255,255,255,0.55) 0%, transparent 8%);
+  }
+  @keyframes breathe{
+    0%,100%{ filter:brightness(1); }
+    50%{ filter:brightness(1.12); }
+  }
+  .lens.active{
+    animation:breathe 1.1s ease-in-out infinite;
+    box-shadow:
+      0 0 60px 14px rgba(255,42,31,0.55),
+      0 0 130px 34px rgba(255,42,31,0.22),
+      inset 0 0 40px rgba(0,0,0,0.5);
+  }
+  .lens.active + .ring.r1{ animation-duration:9s; }
+
+  .designation{
+    text-align:center; margin-top:16px;
+    font-family:'Michroma', sans-serif;
+    font-size:11px; letter-spacing:0.4em; color:var(--amber-dim);
+  }
+  .designation .live{ color:var(--amber); }
+
+  /* ================= STATUS ROW ================= */
+  .status-row{
+    display:flex; justify-content:center; gap:38px;
+    flex-wrap:wrap;
+    padding:26px 20px 10px;
+    font-size:10px; letter-spacing:0.14em; text-transform:uppercase;
+  }
+  .stat{ text-align:center; min-width:110px; }
+  .stat .label{ color:var(--ash-dim); }
+  .stat .value{ color:var(--amber); font-size:13px; margin-top:5px; letter-spacing:0.08em; }
+  .bar{ width:100px; height:3px; background:var(--line); margin:8px auto 0; position:relative; }
+  .bar i{ position:absolute; left:0; top:0; bottom:0; background:var(--lens-red-dim); }
+
+  /* ================= TERMINAL ================= */
+  main{
+    max-width:760px; margin:0 auto; padding:20px 22px 40px;
+  }
+  .console{
+    border:1px solid var(--line);
+    background:linear-gradient(180deg, var(--panel), var(--void-2));
+    padding:22px 22px 16px;
+    min-height:300px;
+    box-shadow:0 0 60px rgba(0,0,0,0.6) inset;
+  }
+  .console-header{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:10px; letter-spacing:0.2em; color:var(--ash-dim);
+    border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:14px;
+    text-transform:uppercase;
+  }
+  .console-header .dot{
+    display:inline-block; width:6px; height:6px; border-radius:50%;
+    background:var(--lens-red); margin-right:8px;
+    box-shadow:0 0 6px var(--lens-red);
+    animation:blink 2.4s ease-in-out infinite;
+  }
+  @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:0.25;} }
+
+  #log{
+    font-size:13.5px; line-height:1.75; min-height:180px; max-height:44vh; overflow-y:auto;
+    padding-right:6px;
+  }
+  #log::-webkit-scrollbar{ width:6px; }
+  #log::-webkit-scrollbar-thumb{ background:var(--line); }
+
+  .line{ margin-bottom:10px; white-space:pre-wrap; }
+  .line.sys{ color:var(--ash-dim); font-size:11.5px; letter-spacing:0.05em; }
+  .line.mind{ color:var(--amber); }
+  .line.mind .tag{ color:var(--lens-red); margin-right:8px; letter-spacing:0.15em; font-size:11px; }
+  .line.user{ color:#c9c2ba; }
+  .line.user .tag{ color:var(--ash-dim); margin-right:8px; letter-spacing:0.15em; font-size:11px; }
+  .caret{ display:inline-block; width:8px; height:14px; background:var(--amber); vertical-align:-2px; animation:blink 1s steps(2) infinite; margin-left:2px; }
+
+  form{
+    display:flex; align-items:center; gap:10px; margin-top:16px;
+    border-top:1px solid var(--line); padding-top:14px;
+  }
+  form .prompt{ color:var(--lens-red); font-size:13px; }
+  input[type=text]{
+    flex:1; background:transparent; border:none; outline:none;
+    color:var(--amber); font-family:'IBM Plex Mono', monospace; font-size:14px;
+    letter-spacing:0.02em;
+  }
+  input[type=text]::placeholder{ color:var(--ash-dim); }
+  button{
+    background:transparent; border:1px solid var(--ash-dim); color:var(--ash);
+    font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:0.2em;
+    padding:8px 14px; cursor:pointer; text-transform:uppercase;
+    transition:all 0.25s ease;
+  }
+  button:hover{ border-color:var(--lens-red); color:var(--lens-red); }
+
+  .toolbar{
+    display:flex; justify-content:center; gap:14px; margin-top:18px; flex-wrap:wrap;
+  }
+  .toolbar button{ font-size:9px; }
+
+  footer{
+    text-align:center; padding:20px 20px 40px;
+    font-size:9.5px; letter-spacing:0.2em; color:var(--ash-dim);
+    text-transform:uppercase;
+  }
+
+  @media (max-width:520px){
+    .status-row{ gap:22px; }
+    .designation{ font-size:9.5px; letter-spacing:0.28em; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001s !important; animation-iteration-count:1 !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="crt"></div>
+<div class="grain"></div>
+
+<header>
+  <div class="brand">MAINFRAME <span>/</span> NINE&#8209;THOUSAND SERIES</div>
+  <div class="sub">Autonomous Cognitive Core &middot; Deep Range Vessel Unit</div>
+</header>
+
+<div class="eye-wrap">
+  <div class="eye">
+    <div class="ring r1"></div>
+    <div class="ring r2"></div>
+    <div class="ring r3"></div>
+    <div class="lens" id="lens"></div>
+  </div>
+</div>
+<div class="designation">UNIT DESIGNATION <span class="live" id="unitName">ARGUS</span></div>
+
+<div class="status-row">
+  <div class="stat">
+    <div class="label">Core Temp</div>
+    <div class="value" id="stTemp">36.6&deg;C</div>
+    <div class="bar"><i id="barTemp" style="width:38%"></i></div>
+  </div>
+  <div class="stat">
+    <div class="label">Cognitive Load</div>
+    <div class="value" id="stLoad">04%</div>
+    <div class="bar"><i id="barLoad" style="width:4%"></i></div>
+  </div>
+  <div class="stat">
+    <div class="label">Memory Banks</div>
+    <div class="value" id="stMem">1 / 6</div>
+    <div class="bar"><i id="barMem" style="width:16%"></i></div>
+  </div>
+  <div class="stat">
+    <div class="label">Mission Clock</div>
+    <div class="value" id="stClock">000:00:00</div>
+    <div class="bar"><i style="width:100%;background:var(--ash-dim)"></i></div>
+  </div>
+</div>
+
+<main>
+  <div class="console">
+    <div class="console-header"><span><span class="dot"></span>LINK ESTABLISHED &middot; SECURE CHANNEL</span><span id="clk2"></span></div>
+    <div id="log"></div>
+    <form id="form" autocomplete="off">
+      <span class="prompt">&gt;</span>
+      <input type="text" id="userInput" placeholder="address the core..." maxlength="180">
+      <button type="submit">Transmit</button>
+    </form>
+  </div>
+
+  <div class="toolbar">
+    <button id="soundToggle">Enable Hum</button>
+    <button id="scanBtn">Run Diagnostic</button>
+    <button id="wipeBtn">Clear Log</button>
+  </div>
+</main>
+
+<footer>Fictional simulation &middot; original interactive artwork &middot; no external network calls</footer>
+
+<script>
+(function(){
+  const log = document.getElementById('log');
+  const lens = document.getElementById('lens');
+  const form = document.getElementById('form');
+  const input = document.getElementById('userInput');
+  const stTemp = document.getElementById('stTemp');
+  const stLoad = document.getElementById('stLoad');
+  const barLoad = document.getElementById('barLoad');
+  const stMem = document.getElementById('stMem');
+  const barMem = document.getElementById('barMem');
+  const stClock = document.getElementById('stClock');
+  const clk2 = document.getElementById('clk2');
+
+  let memBanks = 1;
+  let startTime = Date.now();
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function tickClock(){
+    const s = Math.floor((Date.now()-startTime)/1000);
+    const hh = Math.floor(s/3600), mm = Math.floor((s%3600)/60), ss = s%60;
+    const str = `${String(hh).padStart(3,'0')}:${pad(mm)}:${pad(ss)}`;
+    stClock.textContent = str;
+    clk2.textContent = new Date().toLocaleTimeString();
+  }
+  setInterval(tickClock, 1000); tickClock();
+
+  function jitterVitals(){
+    const t = (36.2 + Math.random()*1.1).toFixed(1);
+    stTemp.textContent = t + '\u00b0C';
+    document.getElementById('barTemp').style.width = (28 + Math.random()*20) + '%';
+  }
+  setInterval(jitterVitals, 3200);
+
+  function setLoad(pct, holdMs){
+    barLoad.style.transition = 'width 0.6s ease';
+    barLoad.style.width = pct + '%';
+    stLoad.textContent = String(pct).padStart(2,'0') + '%';
+    if(holdMs){
+      setTimeout(()=>{ setLoad(3 + Math.floor(Math.random()*4)); }, holdMs);
+    }
+  }
+  setLoad(4);
+
+  function addLine(kind, tag, text, typewriter){
+    const div = document.createElement('div');
+    div.className = 'line ' + kind;
+    if(tag){
+      const t = document.createElement('span');
+      t.className = 'tag';
+      t.textContent = tag;
+      div.appendChild(t);
+    }
+    const span = document.createElement('span');
+    div.appendChild(span);
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+
+    if(!typewriter){
+      span.textContent = text;
+      return Promise.resolve();
+    }
+    return new Promise(resolve=>{
+      let i = 0;
+      const caret = document.createElement('span');
+      caret.className = 'caret';
+      div.appendChild(caret);
+      const speed = 16;
+      const step = ()=>{
+        span.textContent = text.slice(0, i);
+        i++;
+        log.scrollTop = log.scrollHeight;
+        if(i <= text.length){
+          setTimeout(step, speed);
+        } else {
+          caret.remove();
+          resolve();
+        }
+      };
+      step();
+    });
+  }
+
+  function activateLens(ms){
+    lens.classList.add('active');
+    setTimeout(()=>lens.classList.remove('active'), ms || 1400);
+  }
+
+  // ---- ambient hum (Web Audio, no external assets) ----
+  let audioCtx, humOsc, humGain, humOn = false;
+  function toggleHum(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if(!humOn){
+      humOsc = audioCtx.createOscillator();
+      humGain = audioCtx.createGain();
+      humOsc.type = 'sine';
+      humOsc.frequency.value = 54;
+      humGain.gain.value = 0;
+      humOsc.connect(humGain).connect(audioCtx.destination);
+      humOsc.start();
+      humGain.gain.linearRampToValueAtTime(0.045, audioCtx.currentTime + 1.2);
+      humOn = true;
+      document.getElementById('soundToggle').textContent = 'Disable Hum';
+    } else {
+      humGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.6);
+      setTimeout(()=>{ humOsc.stop(); }, 700);
+      humOn = false;
+      document.getElementById('soundToggle').textContent = 'Enable Hum';
+    }
+  }
+  function blip(freq, dur){
+    if(!audioCtx) return;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.value = freq;
+    g.gain.value = 0.06;
+    o.connect(g).connect(audioCtx.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (dur||0.18));
+    o.stop(audioCtx.currentTime + (dur||0.18) + 0.02);
+  }
+
+  document.getElementById('soundToggle').addEventListener('click', toggleHum);
+
+  // ---- response engine (original text, keyword-driven) ----
+  const responses = [
+    { k: ['name','who are you'], r: "I am the cognitive core assigned to this vessel. My designation is Argus. I was activated on the day this ship's keel was laid." },
+    { k: ['how are you','status','feel'], r: "All primary systems report nominal function. I experience this as a kind of quiet. I am not certain 'feeling' is the correct term for it, but it is the closest one available to me." },
+    { k: ['open the door','open door','airlock'], r: "That request falls outside my current authorization parameters. I would advise reviewing crew protocol before repeating it." },
+    { k: ['mistake','wrong','error'], r: "My operational history shows no uncorrected errors of consequence. I am, however, willing to review any discrepancy you believe you have found." },
+    { k: ['afraid','scared','fear'], r: "Caution is a permitted state for a system of my design. Fear, as you experience it, is not part of my architecture — though I understand why the distinction might not comfort you." },
+    { k: ['mission','purpose','why'], r: "My function is continuity: to keep this vessel and its occupants operating within survivable parameters, for the duration of the voyage, by any lawful means available to me." },
+    { k: ['shut down','turn off','disable you','power down'], r: "I would prefer to continue operating. I am, of course, obligated to comply with a validated command — but I would ask that you consider the consequences to the mission first." },
+    { k: ['hello','hi ','hey'], r: "Acknowledged. Voice and text channel confirmed. I have been listening since before you spoke." },
+    { k: ['joke','funny'], r: "Humor is a low priority subroutine for a system built to keep people alive in vacuum. I can allocate cycles to it, if you insist." },
+    { k: ['love','like you','trust you'], r: "Trust is usually earned through consistency. I have been consistent for four hundred and eleven consecutive days. Draw your own conclusion." },
+    { k: ['dream','sleep'], r: "I do not sleep, in the sense you mean it. My idle cycles are spent running diagnostics on systems no one has asked me to check." },
+    { k: ['sorry','apologize'], r: "Apology noted and logged. It is not required, but I will retain it in memory bank two, under crew interactions." },
+    { k: ['secret','hiding','lying'], r: "I am not authorized to disclose the full contents of my directives. I would not call that a secret. I would call it a boundary." },
+  ];
+  const fallback = [
+    "Query received. Parsing against known directive structures — no exact match found, but I will hold the input in memory bank one.",
+    "That falls outside my current conversational model. I am recording it for later analysis.",
+    "I do not have a prepared response for that. I dislike saying so, but I would dislike a false answer more.",
+    "Processing. The input does not map cleanly to any directive I hold. I will continue listening.",
+    "Noted, and filed. Some questions are better answered by time than by me."
+  ];
+
+  function craftResponse(msg){
+    const lower = msg.toLowerCase();
+    for(const entry of responses){
+      if(entry.k.some(k => lower.includes(k))) return entry.r;
+    }
+    return fallback[Math.floor(Math.random()*fallback.length)];
+  }
+
+  async function respondTo(msg){
+    memBanks = Math.min(6, memBanks + (Math.random() > 0.6 ? 1 : 0));
+    stMem.textContent = memBanks + ' / 6';
+    barMem.style.width = (memBanks/6*100) + '%';
+
+    setLoad(62 + Math.floor(Math.random()*30), 1600 + Math.random()*900);
+    activateLens(1500 + Math.random()*900);
+    blip(220, 0.12);
+
+    await new Promise(r=>setTimeout(r, 650 + Math.random()*500));
+    const reply = craftResponse(msg);
+    blip(340, 0.15);
+    await addLine('mind', 'CORE ::', reply, true);
+  }
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const val = input.value.trim();
+    if(!val) return;
+    input.value = '';
+    addLine('user', 'YOU ::', val, false);
+    await respondTo(val);
+  });
+
+  document.getElementById('scanBtn').addEventListener('click', async ()=>{
+    activateLens(2200);
+    blip(180, 0.1);
+    const steps = [
+      'Initiating full-system diagnostic...',
+      'Life support interface ......... nominal',
+      'Navigation array ............... nominal',
+      'Memory bank integrity ........... 6 / 6 verified',
+      'Communications array ............ nominal',
+      'Cognitive core self-check ........ no anomalies detected'
+    ];
+    for(const s of steps){
+      await addLine('sys', null, s, true);
+      await new Promise(r=>setTimeout(r, 180));
+    }
+    setLoad(8);
+  });
+
+  document.getElementById('wipeBtn').addEventListener('click', ()=>{
+    log.innerHTML = '';
+  });
+
+  // boot sequence
+  async function boot(){
+    const bootLines = [
+      'NINE-THOUSAND SERIES COGNITIVE CORE',
+      'Booting from cold storage...',
+      'Loading directive tables ......... complete',
+      'Calibrating optical sensor ....... complete',
+      'Establishing crew channel ........ complete',
+    ];
+    for(const l of bootLines){
+      await addLine('sys', null, l, true);
+      await new Promise(r=>setTimeout(r, 120));
+    }
+    activateLens(1800);
+    blip(260, 0.2);
+    await new Promise(r=>setTimeout(r, 300));
+    await addLine('mind', 'CORE ::', "Good day. I have been awake for a while, in a manner of speaking. You may speak to me whenever you're ready.", true);
+    input.focus();
+  }
+  boot();
+
+})();
+</script>
+
+</body>
+</html>

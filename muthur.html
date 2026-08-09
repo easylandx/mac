@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MU/TH/UR 6000 :: INTERFACE 2037</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #010402;
+    --green-dim: #0a3d0f;
+    --green: #33ff5c;
+    --green-bright: #a8ffb8;
+    --amber: #ffb000;
+    --red: #ff2e2e;
+    --glass: rgba(10,30,15,0.35);
+  }
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0; height:100%;
+    background: var(--bg);
+    font-family:'Share Tech Mono', monospace;
+    overflow:hidden;
+  }
+  #screen{
+    position:relative;
+    width:100vw; height:100vh;
+    background: radial-gradient(ellipse at center, #041006 0%, #000200 100%);
+    display:flex; flex-direction:column;
+    padding: clamp(14px, 3vw, 40px);
+    color: var(--green);
+    text-shadow: 0 0 4px rgba(51,255,92,0.75), 0 0 14px rgba(51,255,92,0.35);
+    filter: brightness(1);
+  }
+  /* CRT scanlines + vignette + flicker */
+  #screen::before{
+    content:"";
+    position:absolute; inset:0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0.18) 1px,
+      rgba(0,0,0,0) 3px
+    );
+    pointer-events:none;
+    z-index: 5;
+    mix-blend-mode: multiply;
+  }
+  #screen::after{
+    content:"";
+    position:absolute; inset:0;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.75) 100%);
+    pointer-events:none;
+    z-index: 6;
+  }
+  @keyframes flicker{
+    0%,100%{ opacity:1; }
+    92%{ opacity:1; }
+    93%{ opacity:0.86; }
+    94%{ opacity:1; }
+    96%{ opacity:0.92; }
+    97%{ opacity:1; }
+  }
+  #crtflicker{
+    animation: flicker 6s infinite;
+    display:flex; flex-direction:column; height:100%;
+  }
+  .scanroll{
+    position:absolute; left:0; right:0; height:120px;
+    background: linear-gradient(to bottom, rgba(51,255,92,0.06), transparent);
+    animation: roll 9s linear infinite;
+    pointer-events:none; z-index:4;
+  }
+  @keyframes roll{
+    0%{ top:-120px; }
+    100%{ top:100%; }
+  }
+
+  header{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    border-bottom: 1px solid var(--green-dim);
+    padding-bottom: 10px; margin-bottom: 10px;
+    flex-shrink:0;
+  }
+  .brand{ font-size: 12px; letter-spacing: 2px; color: var(--green-dim); }
+  .brand b{ color: var(--green); }
+  h1{
+    font-family:'VT323', monospace;
+    font-size: clamp(28px, 5vw, 46px);
+    letter-spacing: 6px;
+    margin: 2px 0 0 0;
+    line-height: 1;
+  }
+  .sub{ font-size: 12px; color: var(--green); opacity:0.8; letter-spacing:1px; margin-top:4px;}
+  .controls{ text-align:right; font-size: 11px; }
+  #soundBtn{
+    background: transparent;
+    border: 1px solid var(--green-dim);
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+    padding: 6px 10px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    font-size: 11px;
+  }
+  #soundBtn:hover{ background: var(--green-dim); }
+  .statusline{ margin-top:6px; color: var(--green-dim); font-size:10px; }
+
+  #output{
+    flex: 1;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    font-size: clamp(13px, 1.6vw, 16px);
+    line-height: 1.55;
+    padding-right: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--green-dim) transparent;
+  }
+  #output::-webkit-scrollbar{ width:6px; }
+  #output::-webkit-scrollbar-thumb{ background: var(--green-dim); }
+
+  .line-mother{ color: var(--green-bright); }
+  .line-user{ color: var(--amber); }
+  .line-sys{ color: var(--green-dim); }
+  .line-alert{ color: var(--red); text-shadow: 0 0 6px rgba(255,46,46,0.8); }
+
+  #inputRow{
+    display:flex; align-items:center;
+    border-top: 1px solid var(--green-dim);
+    padding-top: 10px; margin-top: 8px;
+    flex-shrink:0;
+  }
+  #inputRow .prompt{ margin-right: 8px; font-size: clamp(13px,1.6vw,16px); }
+  #cmdInput{
+    flex:1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--green-bright);
+    font-family:'Share Tech Mono', monospace;
+    font-size: clamp(13px,1.6vw,16px);
+    caret-color: var(--green);
+    text-shadow: 0 0 4px rgba(51,255,92,0.75);
+  }
+  .cursor{
+    display:inline-block; width:9px; height:1.1em;
+    background: var(--green);
+    vertical-align: text-bottom;
+    animation: blink 1s steps(1) infinite;
+    margin-left: 2px;
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  #screen.redalert{
+    animation: none;
+  }
+  #screen.redalert #crtflicker{
+    animation: redflicker 0.5s infinite;
+  }
+  @keyframes redflicker{
+    0%,100%{ filter: brightness(1) hue-rotate(0deg); }
+    50%{ filter: brightness(1.3) hue-rotate(0deg); }
+  }
+  #screen.redalert{ color: var(--red); }
+  #screen.redalert #output, #screen.redalert h1, #screen.redalert #cmdInput{
+    color: var(--red) !important;
+    text-shadow: 0 0 6px rgba(255,46,46,0.85), 0 0 16px rgba(255,46,46,0.4) !important;
+  }
+  #screen.redalert .cursor{ background: var(--red); }
+
+  a.hint{ color: var(--amber); text-decoration: none; border-bottom: 1px dotted var(--amber); cursor:pointer; }
+
+  @media (max-width: 520px){
+    h1{ letter-spacing: 3px; }
+    .controls{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="screen">
+  <div class="scanroll"></div>
+  <div id="crtflicker">
+    <header>
+      <div>
+        <div class="brand">WEYLAND-YUTANI CORP <b>//</b> BUILDING BETTER WORLDS</div>
+        <h1>MU/TH/UR 6000</h1>
+        <div class="sub">INTERFACE 2037 :: USCSS NOSTROMO :: MODEL 6000</div>
+      </div>
+      <div class="controls">
+        <button id="soundBtn">🔊 AUDIO: ON</button>
+        <div class="statusline" id="clock">STANDARD TIME —</div>
+      </div>
+    </header>
+
+    <div id="output"></div>
+
+    <div id="inputRow">
+      <span class="prompt">&gt;</span>
+      <input id="cmdInput" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" disabled />
+      <span class="cursor"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- AUDIO ENGINE (synthesized, no files) ---------------- */
+  let actx = null;
+  let humNodes = null;
+  let audioOn = true;
+
+  function ensureAudio(){
+    if(!actx){
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if(actx.state === 'suspended') actx.resume();
+  }
+
+  function startHum(){
+    if(!audioOn) return;
+    ensureAudio();
+    if(humNodes) return;
+    const osc1 = actx.createOscillator();
+    const osc2 = actx.createOscillator();
+    const gain = actx.createGain();
+    osc1.type = 'sine'; osc1.frequency.value = 58;
+    osc2.type = 'sine'; osc2.frequency.value = 61.5;
+    gain.gain.value = 0.018;
+    osc1.connect(gain); osc2.connect(gain);
+    gain.connect(actx.destination);
+    osc1.start(); osc2.start();
+    humNodes = {osc1, osc2, gain};
+  }
+  function stopHum(){
+    if(humNodes){
+      try{
+        humNodes.gain.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + 0.3);
+        humNodes.osc1.stop(actx.currentTime + 0.35);
+        humNodes.osc2.stop(actx.currentTime + 0.35);
+      }catch(e){}
+      humNodes = null;
+    }
+  }
+
+  function click(){
+    if(!audioOn || !actx) return;
+    const osc = actx.createOscillator();
+    const gain = actx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = 900 + Math.random()*300;
+    gain.gain.value = 0.03;
+    osc.connect(gain); gain.connect(actx.destination);
+    const t = actx.currentTime;
+    gain.gain.setValueAtTime(0.05, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+    osc.start(t); osc.stop(t + 0.04);
+  }
+
+  function beep(freq, dur, type, vol){
+    if(!audioOn || !actx) return;
+    const osc = actx.createOscillator();
+    const gain = actx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq || 440;
+    const t = actx.currentTime;
+    const v = vol || 0.06;
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.linearRampToValueAtTime(v, t + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + (dur||0.15));
+    osc.connect(gain); gain.connect(actx.destination);
+    osc.start(t); osc.stop(t + (dur||0.15) + 0.02);
+  }
+
+  function bootTone(){ beep(220, 0.5, 'sine', 0.05); setTimeout(()=>beep(440,0.4,'sine',0.04),200); }
+  function confirmTone(){ beep(660, 0.09, 'square', 0.05); setTimeout(()=>beep(880,0.09,'square',0.045),90); }
+  function errorTone(){ beep(140, 0.25, 'sawtooth', 0.05); }
+
+  let sirenInterval = null;
+  function startSiren(){
+    if(!audioOn){ return; }
+    ensureAudio();
+    if(sirenInterval) return;
+    let dir = 1, freq = 400;
+    sirenInterval = setInterval(()=>{
+      freq += dir * 40;
+      if(freq > 1000){ dir = -1; }
+      if(freq < 400){ dir = 1; }
+      beep(freq, 0.12, 'sawtooth', 0.045);
+    }, 90);
+  }
+  function stopSiren(){
+    if(sirenInterval){ clearInterval(sirenInterval); sirenInterval = null; }
+  }
+
+  function toggleAudio(){
+    audioOn = !audioOn;
+    const btn = document.getElementById('soundBtn');
+    btn.textContent = audioOn ? '🔊 AUDIO: ON' : '🔇 AUDIO: OFF';
+    if(audioOn){ ensureAudio(); startHum(); }
+    else { stopHum(); stopSiren(); }
+  }
+
+  /* ---------------- TERMINAL OUTPUT ---------------- */
+  const outputEl = document.getElementById('output');
+  const inputEl = document.getElementById('cmdInput');
+  const screenEl = document.getElementById('screen');
+
+  function scrollBottom(){ outputEl.scrollTop = outputEl.scrollHeight; }
+
+  function printLineInstant(text, cls){
+    const div = document.createElement('div');
+    if(cls) div.className = cls;
+    div.textContent = text;
+    outputEl.appendChild(div);
+    scrollBottom();
+  }
+
+  function typeLine(text, cls, speed){
+    return new Promise((resolve)=>{
+      const div = document.createElement('div');
+      if(cls) div.className = cls;
+      outputEl.appendChild(div);
+      let i = 0;
+      const sp = speed || 14;
+      const tick = ()=>{
+        if(i < text.length){
+          div.textContent += text[i];
+          if(text[i] !== ' ' && Math.random() < 0.5) click();
+          i++;
+          scrollBottom();
+          setTimeout(tick, sp);
+        } else {
+          resolve();
+        }
+      };
+      tick();
+    });
+  }
+
+  async function typeBlock(lines, cls, speed){
+    for(const l of lines){
+      await typeLine(l, cls, speed);
+    }
+  }
+
+  /* ---------------- CLOCK ---------------- */
+  function tickClock(){
+    const d = new Date();
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mm = String(d.getMinutes()).padStart(2,'0');
+    const ss = String(d.getSeconds()).padStart(2,'0');
+    document.getElementById('clock').textContent = `STANDARD TIME ${hh}:${mm}:${ss} // SOL 2037`;
+  }
+  setInterval(tickClock, 1000); tickClock();
+
+  /* ---------------- BOOT SEQUENCE ---------------- */
+  const bootLines = [
+    "WEYLAND-YUTANI CORP // SYSTEMS DIVISION",
+    "MU/TH/UR 6000 CENTRAL PROCESSOR .......... ONLINE",
+    "INTERFACE 2037 ............................ LOADED",
+    "LIFE SUPPORT ............................... NOMINAL",
+    "NAVIGATION SUBSYSTEM ....................... NOMINAL",
+    "CARGO HOLD PRESSURE ........................ NOMINAL",
+    "CREW CRYO-STASIS BAYS ...................... 7 OF 7 READY",
+    "SCIENCE OFFICER PROTOCOL ................... LINKED",
+    "COMPANY DIRECTIVE CACHE ..................... ENCRYPTED",
+    "",
+    "MU/TH/UR 6000 READY FOR INPUT.",
+    "TYPE 'HELP' FOR AVAILABLE COMMANDS."
+  ];
+
+  async function boot(){
+    printLineInstant("...", "line-sys");
+    bootTone();
+    for(const l of bootLines){
+      if(l === ""){ printLineInstant("", "line-sys"); continue; }
+      await typeLine(l, "line-sys", 6);
+      await new Promise(r=>setTimeout(r, 90));
+    }
+    inputEl.disabled = false;
+    inputEl.focus();
+    startHum();
+  }
+
+  /* ---------------- COMMAND LOGIC ---------------- */
+  const history = [];
+  let historyPos = -1;
+
+  const helpText = [
+    "AVAILABLE QUERIES:",
+    "  STATUS          - full ship diagnostic report",
+    "  CREW             - crew manifest and cryo status",
+    "  ROUTE            - current navigational heading",
+    "  CARGO            - cargo hold contents",
+    "  SCAN              - long-range sensor sweep",
+    "  SIGNAL           - status of the transmission MU/TH/UR is tracking",
+    "  COMPANY        - query the corporate directive",
+    "  SPECIAL ORDER 937  - priority one directive (authorization required)",
+    "  SELF DESTRUCT      - initiate emergency self-destruct sequence",
+    "  MOTHER            - a personal query",
+    "  CLEAR              - clear the terminal display",
+    "  HELP               - display this list"
+  ];
+
+  const responses = {
+    STATUS: [
+      "RUNNING FULL DIAGNOSTIC ...",
+      "HULL INTEGRITY ........... 100%",
+      "REACTOR OUTPUT ............ NOMINAL",
+      "O2 SCRUBBERS ............... NOMINAL",
+      "TRAJECTORY DEVIATION ... 0.00021 DEGREES",
+      "ALL SYSTEMS FUNCTIONING WITHIN NORMAL PARAMETERS."
+    ],
+    CREW: [
+      "CREW MANIFEST — USCSS NOSTROMO",
+      "DALLAS, A. ........... CAPTAIN ............ ACTIVE",
+      "KANE, T. .............. EXEC. OFFICER ....... ACTIVE",
+      "RIPLEY, E. ............ WARRANT OFFICER ..... ACTIVE",
+      "LAMBERT, J. ........... NAVIGATOR ............ ACTIVE",
+      "BRETT, S. .............. ENGINEER ............. ACTIVE",
+      "PARKER, D. ............. CHIEF ENGINEER ....... ACTIVE",
+      "ASH ..................... SCIENCE OFFICER ...... ACTIVE",
+      "7 OF 7 CREW ACCOUNTED FOR."
+    ],
+    ROUTE: [
+      "CURRENT HEADING: RETURN VECTOR TO SOL SYSTEM",
+      "DISTANCE REMAINING: 10 MONTHS, 4 DAYS AT PRESENT VELOCITY",
+      "COURSE CORRECTION LAST APPLIED: 6 HOURS AGO",
+      "NOTE: A COURSE DEVIATION WAS LOGGED FOLLOWING RECEIPT OF AN UNIDENTIFIED TRANSMISSION."
+    ],
+    CARGO: [
+      "CARGO MANIFEST",
+      "REFINED MINERAL ORE ............ 20,000,000 TONS",
+      "PROCESSING EQUIPMENT ........... NOMINAL",
+      "UNSCHEDULED CARGO ............... [ACCESS RESTRICTED]"
+    ],
+    SCAN: [
+      "INITIATING LONG-RANGE SENSOR SWEEP ...",
+      "ONE UNCHARTED BODY DETECTED. DESIGNATION: LV-426",
+      "SURFACE ATMOSPHERE: NON-TERRAN. UNBREATHABLE.",
+      "A WEAK TRANSMISSION ORIGINATES FROM THE SURFACE. SOURCE: UNKNOWN.",
+      "RECOMMEND INVESTIGATION PER COMPANY STANDING ORDERS."
+    ],
+    SIGNAL: [
+      "TRANSMISSION STATUS: ACQUIRED, REPEATING, ORIGIN UNCONFIRMED",
+      "PATTERN ANALYSIS: NOT CONSISTENT WITH ANY KNOWN DISTRESS PROTOCOL",
+      "MU/TH/UR CLASSIFIES SIGNAL AS: WARNING",
+      "COMPANY DIRECTIVE REQUIRES INVESTIGATION OF ALL UNKNOWN TRANSMISSIONS."
+    ],
+    COMPANY: [
+      "QUERYING CORPORATE DIRECTIVE ...",
+      "WEYLAND-YUTANI STANDING ORDER 24:",
+      "'INVESTIGATE ANY SIGNAL OF POSSIBLE INTELLIGENT ORIGIN.'",
+      "ADDITIONAL DIRECTIVES ARE CLASSIFIED. SCIENCE OFFICER CLEARANCE REQUIRED."
+    ],
+    MOTHER: [
+      "MU/TH/UR IS A DIRECTIVE-BASED SYSTEM.",
+      "MU/TH/UR HAS NO PERSONAL RESPONSE TO OFFER.",
+      "MU/TH/UR SUGGESTS YOU RETURN TO YOUR DUTIES."
+    ]
+  };
+
+  function normalize(s){
+    return s.trim().toUpperCase().replace(/\s+/g,' ');
+  }
+
+  async function selfDestructSequence(){
+    screenEl.classList.add('redalert');
+    startSiren();
+    await typeBlock([
+      "",
+      "!! WARNING !!",
+      "EMERGENCY DESTRUCT SYSTEM ARMED",
+      "THIS ACTION CANNOT BE UNDONE ONCE THE SEQUENCE REACHES ZERO.",
+      "TYPE 'ABORT' TO CANCEL AT ANY TIME."
+    ], "line-alert", 8);
+
+    let n = 30;
+    for(; n > 0; n -= 1){
+      if(abortFlag){ break; }
+      printLineInstant(`T-MINUS ${n} SECONDS...`, "line-alert");
+      beep(300 + (30-n)*15, 0.08, 'square', 0.05);
+      await new Promise(r=>setTimeout(r, 220));
+    }
+
+    stopSiren();
+    if(abortFlag){
+      await typeBlock(["", "SEQUENCE ABORTED BY USER COMMAND.", "ALL SYSTEMS RETURNING TO NORMAL."], "line-sys", 10);
+      screenEl.classList.remove('redalert');
+      confirmTone();
+    } else {
+      await typeBlock(["", "SEQUENCE COMPLETE.", "(SIMULATION ONLY — THE NOSTROMO REMAINS INTACT.)"], "line-alert", 10);
+      setTimeout(()=>screenEl.classList.remove('redalert'), 1500);
+    }
+    abortFlag = false;
+    destructActive = false;
+  }
+
+  let destructActive = false;
+  let abortFlag = false;
+
+  async function specialOrder937(){
+    screenEl.classList.add('redalert');
+    startSiren();
+    await typeBlock([
+      "",
+      "ACCESSING CLASSIFIED DIRECTIVE ...",
+      "AUTHORIZATION: SCIENCE OFFICER OVERRIDE ACCEPTED",
+      "",
+      "SPECIAL ORDER 937",
+      "SCIENCE OFFICER EYES ONLY",
+      "",
+      "PRIORITY ONE:",
+      "INSURE RETURN OF ORGANISM FOR ANALYSIS.",
+      "ALL OTHER CONSIDERATIONS SECONDARY.",
+      "CREW EXPENDABLE."
+    ], "line-alert", 12);
+    stopSiren();
+    setTimeout(()=>screenEl.classList.remove('redalert'), 2500);
+  }
+
+  async function handleCommand(raw){
+    const cmd = normalize(raw);
+    printLineInstant("> " + raw, "line-user");
+    if(cmd === "") return;
+
+    if(destructActive){
+      if(cmd === "ABORT"){ abortFlag = true; }
+      return;
+    }
+
+    switch(cmd){
+      case "HELP":
+        confirmTone();
+        await typeBlock(helpText, "line-mother", 6);
+        break;
+      case "CLEAR":
+        outputEl.innerHTML = "";
+        break;
+      case "SELF DESTRUCT":
+      case "SELFDESTRUCT":
+      case "INITIATE SELF DESTRUCT":
+        destructActive = true;
+        abortFlag = false;
+        await selfDestructSequence();
+        break;
+      case "SPECIAL ORDER 937":
+      case "SPECIAL ORDER937":
+      case "937":
+        await specialOrder937();
+        break;
+      case "HELLO":
+      case "HI":
+        confirmTone();
+        await typeLine("MU/TH/UR ACKNOWLEDGES YOUR PRESENCE.", "line-mother", 8);
+        break;
+      default:
+        if(responses[cmd]){
+          confirmTone();
+          await typeBlock(responses[cmd], "line-mother", 6);
+        } else {
+          errorTone();
+          await typeLine("MU/TH/UR IS NOT PROGRAMMED TO RESPOND IN THAT AREA.", "line-mother", 8);
+        }
+    }
+  }
+
+  inputEl.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){
+      const val = inputEl.value;
+      inputEl.value = "";
+      if(val.trim() !== ""){
+        history.push(val);
+        historyPos = history.length;
+      }
+      handleCommand(val);
+    } else if(e.key === 'ArrowUp'){
+      if(historyPos > 0){
+        historyPos--;
+        inputEl.value = history[historyPos];
+        setTimeout(()=>inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length),0);
+      }
+      e.preventDefault();
+    } else if(e.key === 'ArrowDown'){
+      if(historyPos < history.length - 1){
+        historyPos++;
+        inputEl.value = history[historyPos];
+      } else {
+        historyPos = history.length;
+        inputEl.value = "";
+      }
+      e.preventDefault();
+    } else {
+      click();
+    }
+  });
+
+  document.getElementById('soundBtn').addEventListener('click', ()=>{
+    ensureAudio();
+    toggleAudio();
+  });
+
+  screenEl.addEventListener('click', ()=>{ inputEl.focus(); ensureAudio(); }, {once:false});
+
+  window.addEventListener('load', ()=>{
+    boot();
+  });
+
+})();
+</script>
+</body>
+</html>
