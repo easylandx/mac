@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signals — On AI and What We're Becoming</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B1F3B;
+    --paper:#F4EFE4;
+    --gold:#D4AF37;
+    --gold-soft:#E7C766;
+    --teal:#4A7C82;
+    --rose:#C1666B;
+    --line: rgba(244,239,228,0.16);
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  html{ scroll-behavior:smooth; }
+
+  body{
+    background: var(--ink);
+    color: var(--paper);
+    font-family:'IBM Plex Sans', sans-serif;
+    line-height:1.6;
+    overflow-x:hidden;
+  }
+
+  ::selection{ background: var(--gold); color: var(--ink); }
+
+  h1,h2,h3{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    letter-spacing:-0.01em;
+  }
+
+  .eyebrow{
+    font-family:'Space Mono', monospace;
+    font-size:0.72rem;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color: var(--gold-soft);
+  }
+
+  a{ color: var(--gold-soft); }
+
+  /* --- signal line, the signature motif --- */
+  .signal{
+    width:100%;
+    height:40px;
+    display:block;
+  }
+  .signal path{
+    fill:none;
+    stroke: var(--gold);
+    stroke-width:1.4;
+    stroke-dasharray: 900;
+    stroke-dashoffset: 900;
+    animation: draw 2.4s ease-out forwards;
+  }
+  @keyframes draw{ to{ stroke-dashoffset:0; } }
+
+  header{
+    padding: 6vh 8vw 4vh;
+    max-width:1100px;
+    margin:0 auto;
+  }
+
+  nav{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding-bottom:5vh;
+    font-family:'Space Mono', monospace;
+    font-size:0.78rem;
+  }
+  nav .mark{ letter-spacing:0.05em; color: var(--paper); }
+  nav .mark b{ color: var(--gold); }
+  nav ul{ list-style:none; display:flex; gap:28px; }
+  nav a{ text-decoration:none; color: var(--paper); opacity:0.7; transition:opacity .2s; }
+  nav a:hover{ opacity:1; color: var(--gold-soft); }
+
+  .hero h1{
+    font-size: clamp(2.4rem, 6vw, 4.6rem);
+    line-height:1.05;
+    max-width: 14ch;
+  }
+  .hero h1 em{
+    font-style:italic;
+    color: var(--gold-soft);
+  }
+  .hero p{
+    margin-top:2rem;
+    max-width:56ch;
+    font-size:1.15rem;
+    opacity:0.85;
+  }
+
+  section{
+    padding: 8vh 8vw;
+    max-width:1100px;
+    margin:0 auto;
+    border-top: 1px solid var(--line);
+  }
+
+  .section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:2rem;
+    margin-bottom:4rem;
+    flex-wrap:wrap;
+  }
+  .section-head h2{ font-size: clamp(1.8rem, 3.4vw, 2.6rem); }
+  .section-head .count{
+    font-family:'Space Mono', monospace;
+    font-size:0.78rem;
+    opacity:0.55;
+  }
+
+  /* card grid */
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.6rem;
+  }
+  @media (max-width: 860px){ .grid{ grid-template-columns:1fr; } }
+
+  .card{
+    background: rgba(244,239,228,0.04);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1.8rem;
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+    transition: border-color .25s, transform .25s;
+  }
+  .card:hover{
+    border-color: var(--gold);
+    transform: translateY(-3px);
+  }
+  .card .tag{
+    font-family:'Space Mono', monospace;
+    font-size:0.68rem;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color: var(--teal);
+  }
+  .card.rose .tag{ color: var(--rose); }
+  .card.gold .tag{ color: var(--gold-soft); }
+  .card p{ font-size:0.98rem; opacity:0.9; }
+  .card .voice{
+    margin-top:auto;
+    font-family:'Space Mono', monospace;
+    font-size:0.72rem;
+    opacity:0.5;
+  }
+
+  /* perspectives — two column split, opposing voices */
+  .split{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+  @media (max-width: 860px){ .split{ grid-template-columns:1fr; } }
+  .stance{
+    padding: 2rem;
+    border-radius:4px;
+    border:1px solid var(--line);
+  }
+  .stance.hope{ background: rgba(212,175,55,0.07); border-color: rgba(212,175,55,0.35); }
+  .stance.wary{ background: rgba(74,124,130,0.08); border-color: rgba(74,124,130,0.35); }
+  .stance h3{ font-size:1.3rem; margin-bottom:1rem; }
+  .stance ul{ list-style:none; display:flex; flex-direction:column; gap:1rem; }
+  .stance li{ font-size:0.96rem; opacity:0.9; padding-left:1.2rem; position:relative; }
+  .stance li::before{
+    content:"—";
+    position:absolute; left:0; opacity:0.5;
+  }
+
+  /* hopes - horizon list */
+  .horizon{
+    display:flex;
+    flex-direction:column;
+  }
+  .hope-row{
+    display:grid;
+    grid-template-columns: 90px 1fr;
+    gap:1.5rem;
+    padding: 1.6rem 0;
+    border-bottom:1px solid var(--line);
+    align-items:baseline;
+  }
+  .hope-row:last-child{ border-bottom:none; }
+  .hope-row .num{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:1.6rem;
+    color: var(--gold-soft);
+    opacity:0.8;
+  }
+  .hope-row h3{ font-size:1.15rem; margin-bottom:0.4rem; }
+  .hope-row p{ font-size:0.95rem; opacity:0.85; max-width:62ch; }
+
+  /* video section */
+  .watch{
+    text-align:center;
+  }
+  .watch .section-head{ justify-content:center; text-align:center; flex-direction:column; align-items:center; }
+  .video-link{
+    display:inline-block;
+    margin: 0 auto;
+    padding: 1.2rem 2rem;
+    border:1px solid var(--line);
+    border-radius:6px;
+    font-family:'Space Mono', monospace;
+    font-size:0.95rem;
+    text-decoration:none;
+    color: var(--gold-soft);
+    transition: border-color .25s, background .25s;
+  }
+  .video-link:hover{
+    border-color: var(--gold);
+    background: rgba(212,175,55,0.08);
+  }
+  .watch p.caption{
+    margin-top:1.4rem;
+    font-size:0.85rem;
+    opacity:0.6;
+    max-width:60ch;
+    margin-left:auto; margin-right:auto;
+  }
+
+  footer{
+    padding: 6vh 8vw 8vh;
+    max-width:1100px;
+    margin:0 auto;
+    border-top:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:2rem;
+  }
+  footer .signoff{ max-width:44ch; font-size:1rem; opacity:0.85; }
+  footer .meta{
+    font-family:'Space Mono', monospace;
+    font-size:0.72rem;
+    opacity:0.5;
+    text-align:right;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .signal path{ animation:none; stroke-dashoffset:0; }
+    .card{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <div class="mark">SIGNALS <b>·</b> on AI &amp; us</div>
+    <ul>
+      <li><a href="#experiences">Experiences</a></li>
+      <li><a href="#perspectives">Perspectives</a></li>
+      <li><a href="#hopes">Hopes</a></li>
+      <li><a href="#watch">Watch</a></li>
+    </ul>
+  </nav>
+
+  <div class="hero">
+    <p class="eyebrow">Field notes, ongoing</p>
+    <h1>What it's like to live<br>alongside a mind<br><em>we built ourselves.</em></h1>
+    <p>A running record of how artificial intelligence is showing up in daily life — the small moments of help, the open disagreements about where this goes, and the futures worth working toward. Not a verdict. A conversation still being had.</p>
+  </div>
+
+  <svg class="signal" viewBox="0 0 1000 40" preserveAspectRatio="none">
+    <path d="M0,20 C 100,20 120,5 180,20 S 280,35 340,20 S 440,5 500,20 S 600,35 660,20 S 760,5 820,20 S 920,35 1000,20" />
+  </svg>
+</header>
+
+<section id="experiences">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Part one</p>
+      <h2>Experiences</h2>
+    </div>
+    <span class="count">from the everyday</span>
+  </div>
+
+  <div class="grid">
+    <div class="card gold">
+      <span class="tag">Work</span>
+      <p>A first draft that used to take an evening now takes twenty minutes — freeing the hours after for the parts of the job that still feel like craft: judgment, taste, knowing what to leave out.</p>
+      <span class="voice">— a designer, on the shift in her workday</span>
+    </div>
+    <div class="card">
+      <span class="tag">Learning</span>
+      <p>Asking a question at midnight and getting a patient, un-embarrassed answer changed how one student approached the subjects she used to avoid out of fear of looking slow.</p>
+      <span class="voice">— a student, on studying differently</span>
+    </div>
+    <div class="card rose">
+      <span class="tag">Care</span>
+      <p>For someone managing a chronic illness, having something to help translate lab results into plain language before a rushed ten-minute appointment made the difference between confusion and a real conversation with the doctor.</p>
+      <span class="voice">— a patient, on medical literacy</span>
+    </div>
+    <div class="card">
+      <span class="tag">Small business</span>
+      <p>A one-person shop that could never afford a marketing department now drafts its own site, its own copy, its own campaigns — the gap between a big company and a small one, just slightly narrower.</p>
+      <span class="voice">— an independent shop owner</span>
+    </div>
+    <div class="card gold">
+      <span class="tag">Creativity</span>
+      <p>Some describe it as a collaborator that never gets tired of a bad idea — happy to sit through the twentieth variation of a sentence until the right one shows up.</p>
+      <span class="voice">— a writer, on drafting</span>
+    </div>
+    <div class="card rose">
+      <span class="tag">Isolation</span>
+      <p>Others notice the opposite pull: reaching for a chat window before reaching for a person, and wondering, honestly, what that habit is quietly doing to them.</p>
+      <span class="voice">— an honest admission, widely shared</span>
+    </div>
+  </div>
+</section>
+
+<section id="perspectives">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Part two</p>
+      <h2>Perspectives</h2>
+    </div>
+    <span class="count">two ways of holding the same facts</span>
+  </div>
+
+  <div class="split">
+    <div class="stance hope">
+      <h3>The case for optimism</h3>
+      <ul>
+        <li>Tools this capable, spread this widely, could shrink the gap between who gets good advice and who doesn't — legal, medical, financial, educational.</li>
+        <li>Repetitive, joyless work keeps getting automated first, which is the part of "the future of work" worth actually wanting.</li>
+        <li>Scientific fields long slowed by manual literature review and analysis are moving faster, with more hypotheses tested per year, not fewer.</li>
+        <li>A generation is growing up treating a tireless, patient tutor as normal — that expectation alone could reshape education.</li>
+      </ul>
+    </div>
+    <div class="stance wary">
+      <h3>The case for caution</h3>
+      <ul>
+        <li>Convenience has a way of atrophying the muscle it replaces — writing, research, and independent judgment included.</li>
+        <li>Whoever controls the most capable systems accumulates a kind of leverage over information and labor that markets alone may not check.</li>
+        <li>Fluent, confident answers are not the same as correct ones, and fluency is exactly what makes an error easy to miss.</li>
+        <li>Jobs won't disappear all at once, but they can hollow out quietly, long before the statistics catch up.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="hopes">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Part three</p>
+      <h2>Hopes</h2>
+    </div>
+    <span class="count">what would make this worth it</span>
+  </div>
+
+  <div class="horizon">
+    <div class="hope-row">
+      <span class="num">01</span>
+      <div>
+        <h3>Access before spectacle</h3>
+        <p>That the most powerful versions of these tools reach a rural clinic and a small classroom as readily as they reach a well-funded lab.</p>
+      </div>
+    </div>
+    <div class="hope-row">
+      <span class="num">02</span>
+      <div>
+        <h3>Honesty about limits</h3>
+        <p>That confidence in an answer is always paired with honesty about uncertainty — a system that can say "I don't know," and is trusted more, not less, for saying it.</p>
+      </div>
+    </div>
+    <div class="hope-row">
+      <span class="num">03</span>
+      <div>
+        <h3>Time returned, not just output increased</h3>
+        <p>That efficiency gains show up as more time with people, not simply more work fit into the same day.</p>
+      </div>
+    </div>
+    <div class="hope-row">
+      <span class="num">04</span>
+      <div>
+        <h3>Rules that keep pace</h3>
+        <p>That the institutions meant to keep this technology accountable grow half as fast as the technology itself, not a decade behind it.</p>
+      </div>
+    </div>
+    <div class="hope-row">
+      <span class="num">05</span>
+      <div>
+        <h3>A wider table</h3>
+        <p>That the people shaping what these systems become don't just build them — they include the nurses, teachers, and shop owners who actually live with the results.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="watch" class="watch">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Part four</p>
+      <h2>Watch</h2>
+    </div>
+  </div>
+
+  <a class="video-link" href="https://www.youtube.com/watch?v=iF5IWjOWcA4" target="_blank" rel="noopener noreferrer">
+    Watch the video on YouTube →
+  </a>
+  <p class="caption">One perspective on this same set of questions — worth sitting with alongside your own.</p>
+</section>
+
+<footer>
+  <p class="signoff">This page holds no final answer, because there isn't one yet. It's a place to keep both the hope and the caution in view at once, and to keep updating as the technology — and we — keep changing.</p>
+  <p class="meta">Signals<br>Ongoing · updated as it goes</p>
+</footer>
+
+</body>
+</html>
