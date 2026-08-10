@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Total Solar Eclipse · August 12, 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-deep:#0A0E27;
+    --sky-mid:#1B2456;
+    --sky-dusk:#3D3468;
+    --horizon:#B85C6B;
+    --gold:#F0C040;
+    --gold-soft:#F7DA8E;
+    --corona:#FFF6E0;
+    --paper:#F5F1E6;
+    --ink:#0A0E27;
+    --muted:#A9AECF;
+    --line:rgba(240,192,64,0.25);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Space Grotesk',sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    overflow-x:hidden;
+  }
+  h1,h2,h3,.display{font-family:'Fraunces',serif;}
+  a{color:inherit;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  /* NAV */
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 6vw;
+    background:rgba(10,14,39,0.72);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-mark{
+    display:flex;align-items:center;gap:10px;
+    color:var(--gold-soft);
+    font-family:'Fraunces',serif;font-weight:600;font-size:1.05rem;letter-spacing:0.02em;
+  }
+  .nav-mark .dot{
+    width:12px;height:12px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, var(--corona), var(--gold) 60%, #7a5a12 100%);
+    box-shadow:0 0 10px rgba(240,192,64,0.6);
+  }
+  .nav-links{display:flex;gap:28px;font-size:0.82rem;letter-spacing:0.04em;text-transform:uppercase;}
+  .nav-links a{color:var(--muted);text-decoration:none;transition:color .25s ease;}
+  .nav-links a:hover{color:var(--gold-soft);}
+  @media(max-width:720px){.nav-links{display:none;}}
+
+  /* HERO */
+  .hero{
+    position:relative;
+    min-height:100svh;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;
+    padding:120px 6vw 80px;
+    background:
+      radial-gradient(ellipse at 50% 78%, rgba(184,92,107,0.35), transparent 55%),
+      linear-gradient(180deg, var(--sky-deep) 0%, var(--sky-mid) 45%, var(--sky-dusk) 78%, var(--horizon) 100%);
+    overflow:hidden;
+    color:var(--paper);
+  }
+  .stars{position:absolute;inset:0;z-index:0;}
+  .star{
+    position:absolute;background:#fff;border-radius:50%;
+    animation:twinkle 4s ease-in-out infinite;
+  }
+  @keyframes twinkle{0%,100%{opacity:0.15;}50%{opacity:0.9;}}
+
+  .eclipse-rig{
+    position:relative;
+    width:220px;height:220px;
+    margin:0 auto 38px;
+    z-index:2;
+  }
+  .corona-glow{
+    position:absolute;inset:-40px;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,246,224,0.35) 0%, rgba(240,192,64,0.18) 45%, transparent 72%);
+    filter:blur(2px);
+  }
+  .sun-disc{
+    position:absolute;inset:0;
+    border-radius:50%;
+    background:radial-gradient(circle at 38% 32%, var(--corona) 0%, var(--gold) 55%, #B9821A 100%);
+    box-shadow:0 0 60px 10px rgba(240,192,64,0.55);
+  }
+  .moon-disc{
+    position:absolute;inset:0;
+    border-radius:50%;
+    background:#0A0E27;
+    transform:translateX(230px);
+    box-shadow: inset -6px -4px 10px rgba(255,255,255,0.04);
+    animation:transit 9s cubic-bezier(.65,.05,.36,1) infinite;
+  }
+  @keyframes transit{
+    0%{transform:translateX(230px);}
+    38%{transform:translateX(230px);}
+    50%{transform:translateX(2px);}
+    62%{transform:translateX(2px);}
+    100%{transform:translateX(-230px);}
+  }
+
+  .eyebrow{
+    font-size:0.78rem;letter-spacing:0.22em;text-transform:uppercase;
+    color:var(--gold-soft);margin-bottom:18px;z-index:2;position:relative;
+  }
+  .hero h1{
+    font-size:clamp(2.4rem, 6.4vw, 5.2rem);
+    font-weight:600;
+    line-height:1.02;
+    letter-spacing:-0.01em;
+    z-index:2;position:relative;
+    max-width:16ch;
+  }
+  .hero h1 em{font-style:italic;color:var(--gold-soft);font-weight:500;}
+  .hero p.sub{
+    margin-top:20px;font-size:1.05rem;color:var(--muted);max-width:46ch;
+    z-index:2;position:relative;
+  }
+
+  .countdown{
+    display:flex;gap:14px;margin-top:44px;z-index:2;position:relative;flex-wrap:wrap;justify-content:center;
+  }
+  .cd-block{
+    background:rgba(255,255,255,0.05);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px 20px;
+    min-width:84px;
+    backdrop-filter:blur(6px);
+  }
+  .cd-num{font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:700;color:var(--gold-soft);}
+  .cd-label{font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+  .cd-note{margin-top:16px;font-size:0.85rem;color:var(--muted);z-index:2;position:relative;}
+
+  .scroll-cue{
+    margin-top:56px;z-index:2;position:relative;
+    font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+  }
+  .scroll-cue .line{width:1px;height:36px;background:linear-gradient(var(--gold-soft),transparent);animation:pulse 1.8s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:0.3;}50%{opacity:1;}}
+
+  /* GENERAL SECTIONS */
+  section{padding:110px 6vw;position:relative;}
+  .section-head{max-width:640px;margin:0 auto 56px;text-align:center;}
+  .section-head .eyebrow{color:#8A6A17;}
+  .section-head h2{font-size:clamp(1.8rem,3.6vw,2.7rem);font-weight:600;color:var(--ink);}
+  .section-head p{margin-top:14px;color:#5B5A6E;font-size:1rem;line-height:1.6;}
+
+  .reveal{opacity:0;transform:translateY(28px);transition:opacity .8s ease, transform .8s ease;}
+  .reveal.in{opacity:1;transform:translateY(0);}
+
+  /* EXPLAINER */
+  .explainer{background:var(--paper);}
+  .explain-grid{
+    max-width:1000px;margin:0 auto;
+    display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;
+  }
+  @media(max-width:800px){.explain-grid{grid-template-columns:1fr;}}
+  .explain-copy p{color:#4A4960;line-height:1.75;margin-bottom:16px;font-size:1rem;}
+  .explain-copy strong{color:var(--ink);}
+  .fact-strip{display:flex;gap:24px;margin-top:28px;flex-wrap:wrap;}
+  .fact{border-left:2px solid var(--gold);padding-left:14px;}
+  .fact .n{font-family:'Fraunces',serif;font-size:1.7rem;font-weight:600;}
+  .fact .l{font-size:0.75rem;color:#7A7890;text-transform:uppercase;letter-spacing:0.06em;}
+
+  /* PHASE SLIDER (signature interactive) */
+  .instrument{
+    max-width:760px;margin:0 auto;
+    background:linear-gradient(180deg,#12173B,#1B2456);
+    border-radius:20px;
+    padding:48px clamp(20px,5vw,56px) 40px;
+    color:var(--paper);
+    border:1px solid rgba(240,192,64,0.3);
+    box-shadow:0 30px 70px -30px rgba(10,14,39,0.5);
+  }
+  .instrument-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:30px;flex-wrap:wrap;gap:10px;}
+  .instrument-head h3{font-size:1.3rem;color:var(--gold-soft);}
+  .instrument-head span{font-size:0.78rem;color:var(--muted);}
+
+  .stage{
+    position:relative;width:100%;height:180px;
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:28px;
+  }
+  .stage-sun{
+    position:relative;width:130px;height:130px;border-radius:50%;
+    background:radial-gradient(circle at 38% 32%, var(--corona) 0%, var(--gold) 55%, #B9821A 100%);
+    box-shadow:0 0 50px 8px rgba(240,192,64,0.45);
+    overflow:hidden;
+  }
+  .stage-moon{
+    position:absolute;top:0;left:0;width:130px;height:130px;border-radius:50%;
+    background:#12173B;
+    transform:translateX(160px);
+  }
+  .sky-desc{text-align:center;color:var(--muted);font-size:0.92rem;min-height:44px;transition:opacity .3s ease;}
+
+  .slider-row{display:flex;align-items:center;gap:16px;margin-top:8px;}
+  input[type="range"]{
+    -webkit-appearance:none;appearance:none;
+    width:100%;height:4px;border-radius:2px;
+    background:rgba(255,255,255,0.15);
+    outline:none;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:18px;height:18px;border-radius:50%;
+    background:var(--gold-soft);
+    border:3px solid #12173B;
+    cursor:pointer;
+    box-shadow:0 0 0 4px rgba(240,192,64,0.2);
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;
+    background:var(--gold-soft);border:3px solid #12173B;cursor:pointer;
+  }
+  .slider-labels{display:flex;justify-content:space-between;margin-top:10px;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);}
+
+  /* PATH / CITIES */
+  .path{background:var(--sky-deep);color:var(--paper);}
+  .path .section-head .eyebrow{color:var(--gold-soft);}
+  .path .section-head h2{color:var(--paper);}
+  .path .section-head p{color:var(--muted);}
+
+  .city-grid{
+    max-width:1100px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:18px;
+  }
+  .city-card{
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(240,192,64,0.2);
+    border-radius:14px;
+    padding:24px;
+    transition:transform .3s ease, border-color .3s ease;
+  }
+  .city-card:hover{transform:translateY(-4px);border-color:var(--gold);}
+  .city-card .tag{
+    display:inline-block;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;
+    padding:3px 9px;border-radius:20px;margin-bottom:12px;
+  }
+  .city-card.total .tag{background:rgba(240,192,64,0.18);color:var(--gold-soft);border:1px solid rgba(240,192,64,0.4);}
+  .city-card.partial .tag{background:rgba(184,92,107,0.18);color:#E39BA9;border:1px solid rgba(184,92,107,0.4);}
+  .city-card h4{font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:6px;}
+  .city-card .time{font-family:'JetBrains Mono',monospace;font-size:1.5rem;color:var(--gold-soft);margin:8px 0 4px;}
+  .city-card .meta{font-size:0.82rem;color:var(--muted);line-height:1.5;}
+
+  .path-note{max-width:640px;margin:40px auto 0;text-align:center;font-size:0.9rem;color:var(--muted);}
+
+  /* STATS */
+  .stats{background:var(--paper);}
+  .stats-grid{
+    max-width:1000px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
+  }
+  @media(max-width:720px){.stats-grid{grid-template-columns:1fr;}}
+  .stat-card{
+    text-align:center;padding:36px 20px;
+    border-radius:16px;
+    background:#FBF8EF;
+    border:1px solid var(--line);
+  }
+  .stat-card .n{font-family:'Fraunces',serif;font-size:2.6rem;font-weight:600;color:var(--ink);}
+  .stat-card .n span{color:#B9821A;}
+  .stat-card p{color:#6A6880;font-size:0.9rem;margin-top:8px;}
+
+  /* SAFETY */
+  .safety{background:linear-gradient(180deg,#FBF3DC,#F5EAC7);}
+  .safety-box{
+    max-width:780px;margin:0 auto;
+    background:var(--ink);color:var(--paper);
+    border-radius:18px;
+    padding:44px clamp(24px,5vw,56px);
+    display:flex;gap:26px;align-items:flex-start;
+  }
+  .safety-box .icon{
+    flex-shrink:0;width:52px;height:52px;border-radius:50%;
+    background:var(--gold);color:var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;
+  }
+  .safety-box h3{font-size:1.35rem;color:var(--gold-soft);margin-bottom:12px;}
+  .safety-box ul{color:var(--muted);line-height:1.85;font-size:0.95rem;padding-left:18px;}
+  .safety-box li strong{color:var(--paper);}
+
+  /* TIMELINE */
+  .timeline{background:var(--paper);}
+  .tl-list{max-width:680px;margin:0 auto;border-left:2px solid var(--line);}
+  .tl-item{position:relative;padding:0 0 44px 34px;}
+  .tl-item:last-child{padding-bottom:0;}
+  .tl-item::before{
+    content:attr(data-n);
+    position:absolute;left:-22px;top:0;
+    width:42px;height:42px;border-radius:50%;
+    background:var(--paper);border:2px solid var(--gold);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-size:0.8rem;font-weight:700;color:#8A6A17;
+  }
+  .tl-item.active::before{background:var(--gold);color:var(--ink);}
+  .tl-item h4{font-family:'Fraunces',serif;font-size:1.2rem;margin-bottom:4px;}
+  .tl-item p{color:#6A6880;font-size:0.92rem;line-height:1.6;}
+  .tl-item .date{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:#B9821A;letter-spacing:0.04em;}
+
+  /* FOOTER */
+  footer{
+    background:var(--sky-deep);color:var(--muted);
+    padding:70px 6vw 40px;
+    text-align:center;
+  }
+  footer h3{font-family:'Fraunces',serif;color:var(--paper);font-size:1.6rem;margin-bottom:14px;}
+  footer p{max-width:480px;margin:0 auto 28px;font-size:0.95rem;line-height:1.6;}
+  .footer-link{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:13px 28px;border-radius:30px;
+    background:var(--gold);color:var(--ink);
+    font-weight:600;font-size:0.9rem;text-decoration:none;
+    transition:transform .25s ease, box-shadow .25s ease;
+  }
+  .footer-link:hover{transform:translateY(-2px);box-shadow:0 10px 24px -8px rgba(240,192,64,0.5);}
+  .footer-bottom{margin-top:50px;font-size:0.78rem;color:#5C6188;border-top:1px solid rgba(255,255,255,0.08);padding-top:24px;}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-mark"><span class="dot"></span> ECLIPSE 2026</div>
+  <div class="nav-links">
+    <a href="#instrument">Phases</a>
+    <a href="#path">Path of Totality</a>
+    <a href="#safety">Safety</a>
+    <a href="#timeline">What's Next</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="stars" id="stars"></div>
+  <div class="eyebrow">Wednesday · August 12, 2026 · Evening</div>
+
+  <div class="eclipse-rig" aria-hidden="true">
+    <div class="corona-glow"></div>
+    <div class="sun-disc"></div>
+    <div class="moon-disc"></div>
+  </div>
+
+  <h1>The sun sets<br><em>in darkness</em> over Spain</h1>
+  <p class="sub">For the first time in over a century, the Moon's shadow will sweep across the Iberian Peninsula — turning evening into night along a 290&nbsp;km path from Galicia to the Balearics.</p>
+
+  <div class="countdown" id="countdown">
+    <div class="cd-block"><div class="cd-num" id="cd-days">--</div><div class="cd-label">Days</div></div>
+    <div class="cd-block"><div class="cd-num" id="cd-hours">--</div><div class="cd-label">Hours</div></div>
+    <div class="cd-block"><div class="cd-num" id="cd-mins">--</div><div class="cd-label">Minutes</div></div>
+    <div class="cd-block"><div class="cd-num" id="cd-secs">--</div><div class="cd-label">Seconds</div></div>
+  </div>
+  <div class="cd-note">Until totality first touches Galicia — 20:26 local time (18:26 UTC)</div>
+
+  <div class="scroll-cue"><div class="line"></div>Scroll</div>
+</section>
+
+<section class="explainer">
+  <div class="explain-grid">
+    <div class="explain-copy reveal">
+      <div class="eyebrow">What's actually happening</div>
+      <h2 style="font-size:2rem;margin-top:10px;margin-bottom:20px;">A shadow 290 kilometres wide</h2>
+      <p>On <strong>August 12, 2026</strong>, the Moon will pass directly between the Earth and Sun, casting its darkest shadow — the umbra — onto the Atlantic and northern Spain just as the Sun nears the horizon.</p>
+      <p>Because the eclipse occurs only two days after lunar perigee, the Moon appears unusually large — wide enough to block the Sun along an exceptionally broad path, roughly <strong>40% of mainland Spain</strong>.</p>
+      <p>It's mainland Europe's first total solar eclipse since <strong>1999</strong>, and the first visible from the Iberian Peninsula since before living memory.</p>
+      <div class="fact-strip">
+        <div class="fact"><div class="n">1999</div><div class="l">Last seen in Europe</div></div>
+        <div class="fact"><div class="n">76–118s</div><div class="l">Totality duration</div></div>
+        <div class="fact"><div class="n">2028</div><div class="l">Next Iberian eclipse</div></div>
+      </div>
+    </div>
+    <div class="reveal">
+      <svg viewBox="0 0 400 400" width="100%" style="max-width:400px;display:block;margin:0 auto;">
+        <defs>
+          <radialGradient id="sunGrad" cx="38%" cy="32%" r="65%">
+            <stop offset="0%" stop-color="#FFF6E0"/>
+            <stop offset="55%" stop-color="#F0C040"/>
+            <stop offset="100%" stop-color="#B9821A"/>
+          </radialGradient>
+        </defs>
+        <circle cx="200" cy="200" r="120" fill="url(#sunGrad)"/>
+        <g>
+          <path d="M200,200 L200,60" stroke="#B9821A" stroke-width="2" stroke-dasharray="4 8" opacity="0.4"/>
+          <path d="M200,200 L340,200" stroke="#B9821A" stroke-width="2" stroke-dasharray="4 8" opacity="0.4"/>
+          <path d="M200,200 L200,340" stroke="#B9821A" stroke-width="2" stroke-dasharray="4 8" opacity="0.4"/>
+          <path d="M200,200 L60,200" stroke="#B9821A" stroke-width="2" stroke-dasharray="4 8" opacity="0.4"/>
+        </g>
+        <circle cx="270" cy="200" r="118" fill="#0A0E27" opacity="0.96"/>
+        <text x="200" y="392" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12" fill="#8A6A17" letter-spacing="1">MOMENT OF FIRST CONTACT</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<section class="instrument-wrap" style="background:var(--paper);padding-bottom:130px;">
+  <div class="section-head reveal">
+    <div class="eyebrow">Try it yourself</div>
+    <h2 id="instrument">Drag through the eclipse</h2>
+    <p>From the first bite out of the Sun to full totality and back — scrub the timeline to see how each phase looks and feels.</p>
+  </div>
+
+  <div class="instrument reveal">
+    <div class="instrument-head">
+      <h3>Eclipse phase simulator</h3>
+      <span id="phase-time">— : — local time</span>
+    </div>
+    <div class="stage">
+      <div class="stage-sun">
+        <div class="stage-moon" id="stageMoon"></div>
+      </div>
+    </div>
+    <p class="sky-desc" id="phase-desc">Drag the slider to begin the eclipse.</p>
+    <div class="slider-row">
+      <input type="range" id="phaseSlider" min="0" max="100" value="0" step="1">
+    </div>
+    <div class="slider-labels">
+      <span>First Contact</span>
+      <span>Partial</span>
+      <span>Totality</span>
+      <span>Partial</span>
+      <span>Last Contact</span>
+    </div>
+  </div>
+</section>
+
+<section class="path" id="path">
+  <div class="section-head reveal">
+    <div class="eyebrow">The path of totality</div>
+    <h2>Where day turns to night</h2>
+    <p>The umbra crosses Galicia, Asturias, Cantabria, the Basque Country, Aragón, the Valencian Community and the Balearics before the Sun sets. Madrid and Barcelona sit just outside the path.</p>
+  </div>
+
+  <div class="city-grid">
+    <div class="city-card total reveal">
+      <span class="tag">Totality · 76s</span>
+      <h4>A Coruña</h4>
+      <div class="time">20:28</div>
+      <div class="meta">Sun sits just 12° above the horizon — look west over open water.</div>
+    </div>
+    <div class="city-card total reveal">
+      <span class="tag">Totality</span>
+      <h4>Bilbao</h4>
+      <div class="time">~20:29</div>
+      <div class="meta">One of the largest cities inside the path — expect crowds along the coast.</div>
+    </div>
+    <div class="city-card total reveal">
+      <span class="tag">Totality</span>
+      <h4>Zaragoza</h4>
+      <div class="time">~20:30</div>
+      <div class="meta">Near the eclipse's central line, giving close to the maximum duration.</div>
+    </div>
+    <div class="city-card total reveal">
+      <span class="tag">Totality</span>
+      <h4>Valencia</h4>
+      <div class="time">~20:31</div>
+      <div class="meta">Among the last mainland cities to see totality before sunset.</div>
+    </div>
+    <div class="city-card total reveal">
+      <span class="tag">Totality · up to 110s</span>
+      <h4>Palma de Mallorca</h4>
+      <div class="time">20:31</div>
+      <div class="meta">Totality ends just 10 minutes before the Sun disappears below the sea.</div>
+    </div>
+    <div class="city-card partial reveal">
+      <span class="tag">Partial · 99.9%</span>
+      <h4>Madrid &amp; Barcelona</h4>
+      <div class="time">99.9%</div>
+      <div class="meta">Just outside the path — a dramatic near-total partial eclipse, but not full darkness.</div>
+    </div>
+  </div>
+
+  <p class="path-note">All times approximate, local Peninsula time (CEST). The path also crosses Greenland and Iceland earlier the same evening. Because Spain sits near the end of the path, the eclipse happens low on the western horizon — a clear sightline west is essential.</p>
+</section>
+
+<section class="stats">
+  <div class="section-head reveal">
+    <div class="eyebrow">By the numbers</div>
+    <h2>A shadow the whole world will notice</h2>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card reveal">
+      <div class="n"><span>15</span>M</div>
+      <p>People living inside the path of totality — most of them in Spain.</p>
+    </div>
+    <div class="stat-card reveal">
+      <div class="n"><span>~980</span>M</div>
+      <p>People across Europe, North Africa and North America who can see at least a partial eclipse.</p>
+    </div>
+    <div class="stat-card reveal">
+      <div class="n"><span>290</span>km</div>
+      <p>Width of the path of totality — unusually wide, thanks to the Moon's close approach.</p>
+    </div>
+  </div>
+</section>
+
+<section class="safety" id="safety">
+  <div class="section-head reveal">
+    <div class="eyebrow">Before you look up</div>
+    <h2>Watch it safely</h2>
+  </div>
+  <div class="safety-box reveal">
+    <div class="icon">!</div>
+    <div>
+      <h3>Eye protection is non-negotiable</h3>
+      <ul>
+        <li><strong>Use certified eclipse glasses</strong> (ISO 12312-2) for every partial phase — sunglasses are never enough.</li>
+        <li><strong>Only remove them during full totality</strong> — and only if you're inside the path of totality.</li>
+        <li><strong>Outside the path</strong> (Madrid, Barcelona, etc.), the Sun is never fully covered — keep glasses on throughout.</li>
+        <li><strong>Cameras and phones</strong> need a solar filter over the lens, or you risk damaging the sensor.</li>
+        <li><strong>Find open western horizon</strong> — the eclipse happens low in the sky, close to sunset.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="timeline" id="timeline">
+  <div class="section-head reveal">
+    <div class="eyebrow">What comes after</div>
+    <h2>The Iberian eclipse triad</h2>
+    <p>2026 is the first of three consecutive solar eclipses visible from Spain — a run this rare hasn't happened in generations.</p>
+  </div>
+  <div class="tl-list">
+    <div class="tl-item active reveal" data-n="26">
+      <span class="date">AUG 12, 2026</span>
+      <h4>Total Solar Eclipse</h4>
+      <p>Path of totality crosses Galicia, the north, and the Balearics at sunset. Madrid and Barcelona see a 99.9% partial eclipse.</p>
+    </div>
+    <div class="tl-item reveal" data-n="27">
+      <span class="date">AUG 2, 2027</span>
+      <h4>Total Solar Eclipse</h4>
+      <p>Visible again from Spain, plus North Africa and the Middle East — one of the longest totalities of the century.</p>
+    </div>
+    <div class="tl-item reveal" data-n="28">
+      <span class="date">JAN 26, 2028</span>
+      <h4>Annular Solar Eclipse</h4>
+      <p>A "ring of fire" eclipse visible from Spain, Portugal and South America, completing the triad.</p>
+    </div>
+    <div class="tl-item reveal" data-n="53">
+      <span class="date">2053</span>
+      <h4>Next total eclipse from Spain</h4>
+      <p>After 2028, Spain won't see another total solar eclipse for around 25 years.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <h3>Don't miss it</h3>
+  <p>Two days from now, the sky over Spain goes dark in the middle of a summer evening. Get your eclipse glasses ready, find your spot facing west, and look up.</p>
+  <a class="footer-link" href="https://easylandx.github.io" target="_blank" rel="noopener">More pages like this at easylandx.github.io →</a>
+  <div class="footer-bottom">Times are approximate and based on published astronomical data for August 12, 2026. Always verify local timing before eclipse day.</div>
+</footer>
+
+<script>
+  // Starfield
+  const starsEl = document.getElementById('stars');
+  for(let i=0;i<70;i++){
+    const s = document.createElement('div');
+    s.className='star';
+    const size = Math.random()*2+1;
+    s.style.width=size+'px';
+    s.style.height=size+'px';
+    s.style.left=Math.random()*100+'%';
+    s.style.top=Math.random()*70+'%';
+    s.style.animationDelay=(Math.random()*4)+'s';
+    starsEl.appendChild(s);
+  }
+
+  // Countdown to totality first contact in Spain: Aug 12 2026, 18:26 UTC
+  const target = new Date('2026-08-12T18:26:00Z').getTime();
+  function updateCountdown(){
+    const now = Date.now();
+    let diff = target - now;
+    const els = {
+      d: document.getElementById('cd-days'),
+      h: document.getElementById('cd-hours'),
+      m: document.getElementById('cd-mins'),
+      s: document.getElementById('cd-secs')
+    };
+    if(diff <= 0){
+      els.d.textContent='00'; els.h.textContent='00'; els.m.textContent='00'; els.s.textContent='00';
+      document.getElementById('countdown').nextElementSibling.textContent = 'Totality has begun — or already happened. Hope you looked up!';
+      return;
+    }
+    const day = Math.floor(diff/86400000); diff-=day*86400000;
+    const hr = Math.floor(diff/3600000); diff-=hr*3600000;
+    const mn = Math.floor(diff/60000); diff-=mn*60000;
+    const sc = Math.floor(diff/1000);
+    els.d.textContent = String(day).padStart(2,'0');
+    els.h.textContent = String(hr).padStart(2,'0');
+    els.m.textContent = String(mn).padStart(2,'0');
+    els.s.textContent = String(sc).padStart(2,'0');
+  }
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+
+  // Phase slider
+  const slider = document.getElementById('phaseSlider');
+  const moon = document.getElementById('stageMoon');
+  const desc = document.getElementById('phase-desc');
+  const timeEl = document.getElementById('phase-time');
+
+  const phases = [
+    {p:0,   x:150, text:"First contact — the Moon's edge just touches the Sun's disc.", time:'19:31'},
+    {p:20,  x:100, text:"A visible bite has been taken out of the Sun. Daylight looks slightly dim.", time:'19:50'},
+    {p:40,  x:55,  text:"Over half the Sun is covered. Shadows sharpen, temperature starts to drop.", time:'20:10'},
+    {p:48,  x:20,  text:"Almost there — the sky deepens toward twilight blue.", time:'20:24'},
+    {p:50,  x:0,   text:"TOTALITY. The Sun's corona blazes around the black disc of the Moon. Safe to look, unaided.", time:'20:27'},
+    {p:52,  x:-20, text:"Totality ends — the 'diamond ring' flashes as sunlight returns.", time:'20:28'},
+    {p:60,  x:-55, text:"The Moon continues sliding away. Daylight steadily returns.", time:'20:40'},
+    {p:80,  x:-100,text:"Only a thin partial eclipse remains as the Sun nears the horizon.", time:'21:00'},
+    {p:100, x:-150,text:"Last contact — the eclipse ends, right around sunset.", time:'21:22'}
+  ];
+
+  function lerp(a,b,t){return a+(b-a)*t;}
+
+  function renderPhase(v){
+    let lower = phases[0], upper = phases[phases.length-1];
+    for(let i=0;i<phases.length-1;i++){
+      if(v>=phases[i].p && v<=phases[i+1].p){lower=phases[i];upper=phases[i+1];break;}
+    }
+    const range = upper.p - lower.p || 1;
+    const t = (v - lower.p)/range;
+    const x = lerp(lower.x, upper.x, t);
+    moon.style.transform = 'translateX('+x+'px)';
+    const useDesc = t < 0.5 ? lower : upper;
+    desc.textContent = useDesc.text;
+    timeEl.textContent = useDesc.time + ' local time';
+  }
+
+  slider.addEventListener('input', e => renderPhase(Number(e.target.value)));
+  renderPhase(0);
+
+  // Scroll reveal
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); }
+    });
+  }, {threshold:0.15});
+  revealEls.forEach(el=>io.observe(el));
+</script>
+
+</body>
+</html>
