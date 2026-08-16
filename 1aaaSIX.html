@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Six Things Success Demands</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:      #FFFFFF;
+    --ink:     #101010;
+    --gold:    #FFB800;
+    --crimson: #E8342A;
+    --cobalt:  #1246E0;
+    --dim:     #706C63;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    overflow-x:hidden;
+  }
+
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.72rem;
+    font-weight:600;
+    letter-spacing:0.28em;
+    text-transform:uppercase;
+  }
+
+  h1, h2, .stamped{
+    font-family:'Anton', sans-serif;
+    text-transform:uppercase;
+    letter-spacing:0.01em;
+    line-height:0.9;
+    color:var(--ink);
+  }
+
+  mark{
+    background:none;
+    color:inherit;
+    position:relative;
+    white-space:nowrap;
+  }
+  mark::after{
+    content:"";
+    position:absolute;
+    left:-2%;
+    right:-2%;
+    bottom:0.08em;
+    height:0.34em;
+    background:var(--gold);
+    z-index:-1;
+  }
+
+  /* ---------- progress rail ---------- */
+  .rail{
+    position:fixed;
+    left:2.5rem;
+    top:50%;
+    transform:translateY(-50%);
+    z-index:20;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:0;
+  }
+  .rail-tick{
+    width:11px;
+    height:11px;
+    border-radius:50%;
+    border:2px solid #D8D4C8;
+    background:#fff;
+    transition:background .35s ease, border-color .35s ease, transform .35s ease;
+    position:relative;
+    cursor:pointer;
+  }
+  .rail-tick.active{ transform:scale(1.35); }
+  .rail-tick[data-color="gold"].active{ background:var(--gold); border-color:var(--gold); }
+  .rail-tick[data-color="crimson"].active{ background:var(--crimson); border-color:var(--crimson); }
+  .rail-tick[data-color="cobalt"].active{ background:var(--cobalt); border-color:var(--cobalt); }
+  .rail-tick .rail-num{
+    position:absolute;
+    left:22px;
+    top:50%;
+    transform:translateY(-50%);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.65rem;
+    font-weight:600;
+    letter-spacing:0.15em;
+    color:#B8B3A6;
+    white-space:nowrap;
+    opacity:0;
+    transition:opacity .3s ease, color .3s ease;
+  }
+  .rail-tick.active .rail-num{ opacity:1; color:var(--ink); }
+  .rail-line{ width:2px; height:38px; background:#E4E0D4; }
+  @media (max-width: 900px){ .rail{ display:none; } }
+
+  /* ---------- hero ---------- */
+  .hero{
+    min-height:100svh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:flex-start;
+    padding:8vh 8vw;
+    position:relative;
+  }
+  .hero .eyebrow{ margin-bottom:1.6rem; color:var(--crimson); }
+  .hero h1{ font-size:clamp(2.8rem, 9.2vw, 6.6rem); max-width:15ch; }
+  .hero .sub{
+    margin-top:1.7rem;
+    font-size:clamp(1rem, 1.6vw, 1.25rem);
+    color:var(--dim);
+    max-width:38ch;
+    font-weight:400;
+  }
+  .hero .sub strong{ color:var(--ink); font-weight:700; }
+  .scroll-cue{
+    position:absolute;
+    bottom:6vh;
+    left:8vw;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.7rem;
+    font-weight:600;
+    letter-spacing:0.25em;
+    color:var(--dim);
+    display:flex;
+    align-items:center;
+    gap:0.6rem;
+  }
+  .scroll-cue::after{
+    content:"";
+    width:26px;
+    height:2px;
+    background:var(--gold);
+    animation:pulseLine 2.2s ease-in-out infinite;
+  }
+  @keyframes pulseLine{
+    0%,100%{ width:26px; opacity:0.6; }
+    50%{ width:44px; opacity:1; }
+  }
+
+  /* ---------- demand panels ---------- */
+  .demand{
+    min-height:100svh;
+    display:flex;
+    align-items:center;
+    padding:11vh 8vw;
+    position:relative;
+    border-top:6px solid transparent;
+  }
+  .demand[data-color="gold"]{ border-top-color:var(--gold); background:#FFFBF0; }
+  .demand[data-color="crimson"]{ border-top-color:var(--crimson); background:#FFF4F3; }
+  .demand[data-color="cobalt"]{ border-top-color:var(--cobalt); background:#F1F4FF; }
+
+  .demand-inner{
+    display:grid;
+    grid-template-columns:minmax(120px, 0.85fr) 2fr;
+    gap:4vw;
+    align-items:start;
+    max-width:1100px;
+  }
+
+  .demand-num{
+    width:clamp(88px, 9vw, 128px);
+    height:clamp(88px, 9vw, 128px);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    font-size:clamp(1.6rem, 2.6vw, 2.1rem);
+    color:#fff;
+    opacity:0;
+    transform:scale(0.4) rotate(-14deg);
+    transition:opacity .55s cubic-bezier(.2,.8,.2,1), transform .55s cubic-bezier(.2,.8,.2,1);
+  }
+  .demand[data-color="gold"] .demand-num{ background:var(--gold); color:#2A2000; }
+  .demand[data-color="crimson"] .demand-num{ background:var(--crimson); }
+  .demand[data-color="cobalt"] .demand-num{ background:var(--cobalt); }
+
+  .demand-content{
+    opacity:0;
+    transform:translateY(18px);
+    transition:opacity .7s ease .12s, transform .7s ease .12s;
+  }
+  .demand.in-view .demand-num{ opacity:1; transform:scale(1) rotate(0deg); }
+  .demand.in-view .demand-content{ opacity:1; transform:translateY(0); }
+
+  .demand-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.7rem;
+    font-weight:600;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    margin-bottom:0.9rem;
+    display:block;
+  }
+  .demand[data-color="gold"] .demand-tag{ color:#B98600; }
+  .demand[data-color="crimson"] .demand-tag{ color:var(--crimson); }
+  .demand[data-color="cobalt"] .demand-tag{ color:var(--cobalt); }
+
+  .demand h2{ font-size:clamp(2.1rem, 4.6vw, 3.5rem); margin-bottom:1.3rem; }
+  .demand p{
+    font-size:clamp(1.02rem, 1.5vw, 1.2rem);
+    line-height:1.65;
+    color:#3D3A34;
+    max-width:52ch;
+  }
+  .demand p strong{ color:var(--ink); font-weight:700; }
+
+  @media (max-width: 720px){
+    .demand-inner{ grid-template-columns:1fr; gap:1.3rem; }
+    .demand-num{ width:74px; height:74px; font-size:1.4rem; }
+  }
+
+  /* ---------- footer ---------- */
+  .closing{
+    min-height:70svh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:flex-start;
+    padding:10vh 8vw;
+    position:relative;
+    background:var(--ink);
+    color:#fff;
+  }
+  .closing .eyebrow{ color:var(--gold); margin-bottom:1.4rem; }
+  .closing h2{ font-size:clamp(2.1rem, 6vw, 3.7rem); max-width:16ch; color:#fff; margin-bottom:1.2rem; }
+  .closing p{ color:#C9C6BE; max-width:44ch; font-size:1.05rem; line-height:1.6; }
+  .foot-mark{
+    margin-top:4rem;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.68rem;
+    font-weight:600;
+    letter-spacing:0.2em;
+    color:var(--gold);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; animation:none !important; }
+    .demand-num, .demand-content{ opacity:1 !important; transform:none !important; }
+  }
+
+  :focus-visible{ outline:3px solid var(--cobalt); outline-offset:3px; }
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="Section progress">
+  <div class="rail-tick" data-target="0" data-color="gold"><span class="rail-num">CONSISTENCY</span></div>
+  <div class="rail-line"></div>
+  <div class="rail-tick" data-target="1" data-color="crimson"><span class="rail-num">HARD WORK</span></div>
+  <div class="rail-line"></div>
+  <div class="rail-tick" data-target="2" data-color="cobalt"><span class="rail-num">PATIENCE</span></div>
+  <div class="rail-line"></div>
+  <div class="rail-tick" data-target="3" data-color="gold"><span class="rail-num">SACRIFICE</span></div>
+  <div class="rail-line"></div>
+  <div class="rail-tick" data-target="4" data-color="crimson"><span class="rail-num">DISCIPLINE</span></div>
+  <div class="rail-line"></div>
+  <div class="rail-tick" data-target="5" data-color="cobalt"><span class="rail-num">SELF-CONFIDENCE</span></div>
+</nav>
+
+<header class="hero">
+  <span class="eyebrow">Terms — non-negotiable</span>
+  <h1>Six things<br><mark>success</mark> demands</h1>
+  <p class="sub">Not talent. Not luck. <strong>These.</strong> Read them like terms you're agreeing to — because you are.</p>
+  <div class="scroll-cue">SCROLL</div>
+</header>
+
+<section class="demand" id="d0" data-color="gold">
+  <div class="demand-inner">
+    <div class="demand-num">01</div>
+    <div class="demand-content">
+      <span class="demand-tag">Average, repeated, becomes excellence</span>
+      <h2>Consistency</h2>
+      <p>Consistency is what turns <strong>average into excellence</strong>. Not one great day — the same effort, shown up for, again and again. Without it, greater success isn't just harder to reach. It's impossible.</p>
+    </div>
+  </div>
+</section>
+
+<section class="demand" id="d1" data-color="crimson">
+  <div class="demand-inner">
+    <div class="demand-num">02</div>
+    <div class="demand-content">
+      <span class="demand-tag">No shortcut exists</span>
+      <h2>Hard work</h2>
+      <p>Reject the idea of luck. Reject the shortcut you're waiting for. There isn't one — <strong>there never was</strong>. The only route through the work is more work.</p>
+    </div>
+  </div>
+</section>
+
+<section class="demand" id="d2" data-color="cobalt">
+  <div class="demand-inner">
+    <div class="demand-num">03</div>
+    <div class="demand-content">
+      <span class="demand-tag">Slow, then sudden</span>
+      <h2>Patience</h2>
+      <p>Progress is slow at first, then sudden. Most people quit right before the turn. The moment you <strong>lose patience, you lose the battle</strong> — not to a rival, but to yourself.</p>
+    </div>
+  </div>
+</section>
+
+<section class="demand" id="d3" data-color="gold">
+  <div class="demand-inner">
+    <div class="demand-num">04</div>
+    <div class="demand-content">
+      <span class="demand-tag">Pay it now, or pay it later</span>
+      <h2>Sacrifice</h2>
+      <p>Everything you want carries a price. If you won't pay it, the thing you wanted <strong>becomes the sacrifice instead</strong>. One or the other is always given up — you choose which.</p>
+    </div>
+  </div>
+</section>
+
+<section class="demand" id="d4" data-color="crimson">
+  <div class="demand-inner">
+    <div class="demand-num">05</div>
+    <div class="demand-content">
+      <span class="demand-tag">After the motivation fades</span>
+      <h2>Discipline</h2>
+      <p>Motivation gets you started. <strong>Discipline is what shows up after it leaves</strong> — especially on the days you don't feel like it. That day is the only one that actually counts.</p>
+    </div>
+  </div>
+</section>
+
+<section class="demand" id="d5" data-color="cobalt">
+  <div class="demand-inner">
+    <div class="demand-num">06</div>
+    <div class="demand-content">
+      <span class="demand-tag">Their opinion isn't the compass</span>
+      <h2>Self&#8209;confidence</h2>
+      <p>Be okay with being disliked, and let your goals be disliked too. <strong>Other people's opinions were never meant to set your direction</strong> — only yours was.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="closing">
+  <span class="eyebrow">End of terms</span>
+  <h2>Six terms. No exceptions.</h2>
+  <p>None of these are optional, and none of them are talent. They're decisions, repeated until they look like talent to everyone watching from outside.</p>
+  <div class="foot-mark">STAMPED &amp; SIGNED IN ACTION</div>
+</footer>
+
+<script>
+  const demands = document.querySelectorAll('.demand');
+  const ticks = document.querySelectorAll('.rail-tick');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting){
+        entry.target.classList.add('in-view');
+        const idx = Array.from(demands).indexOf(entry.target);
+        ticks.forEach(t => t.classList.remove('active'));
+        if (ticks[idx]) ticks[idx].classList.add('active');
+      }
+    });
+  }, { threshold: 0.45 });
+
+  demands.forEach(d => observer.observe(d));
+
+  ticks.forEach(tick => {
+    tick.addEventListener('click', () => {
+      const idx = tick.getAttribute('data-target');
+      demands[idx].scrollIntoView({ behavior:'smooth', block:'center' });
+    });
+  });
+</script>
+
+</body>
+</html>
