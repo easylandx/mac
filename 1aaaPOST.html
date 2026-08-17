@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sharpie Post-it — tap or wait</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Caveat:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wood-1:#a9713f;
+    --wood-2:#8a5a30;
+    --ink:#1c1a17;
+    --paper-yellow:#fbe27a;
+    --paper-pink:#ffc2d1;
+    --paper-blue:#b9e3ff;
+    --paper-green:#c8f2b8;
+    --tape:#f4efe0;
+    --cream:#f6efe0;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    height:100%;
+    margin:0;
+    font-family:'Inter',sans-serif;
+    background:
+      radial-gradient(ellipse at 20% 15%, rgba(255,255,255,0.08), transparent 40%),
+      radial-gradient(ellipse at 80% 85%, rgba(0,0,0,0.12), transparent 45%),
+      repeating-linear-gradient(90deg, var(--wood-1) 0px, var(--wood-2) 3px, var(--wood-1) 6px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+
+  .desk-vignette{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    background:radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.35) 100%);
+  }
+
+  .scene{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:22px;
+    z-index:1;
+    perspective:1400px;
+    padding:20px;
+  }
+
+  .title{
+    font-family:'Caveat', cursive;
+    font-weight:700;
+    color:var(--cream);
+    font-size:clamp(24px, 4vw, 34px);
+    text-align:center;
+    text-shadow:0 2px 6px rgba(0,0,0,0.4);
+    letter-spacing:0.5px;
+    margin:0;
+  }
+
+  .note-wrap{
+    position:relative;
+    width:min(78vw, 340px);
+    height:min(78vw, 340px);
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    transform-style:preserve-3d;
+    transition:transform 0.36s cubic-bezier(.4,.2,.2,1);
+  }
+
+  .note-wrap:active{ transform:scale(0.97) rotate(var(--tilt)); }
+
+  .note{
+    position:absolute;
+    inset:0;
+    background:var(--paper);
+    box-shadow:
+      0 18px 30px rgba(0,0,0,0.35),
+      0 4px 8px rgba(0,0,0,0.25),
+      inset 0 0 40px rgba(0,0,0,0.03);
+    border-radius:2px 2px 6px 2px;
+    transform:rotate(var(--tilt));
+    transition:background 0.15s ease;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:26px;
+    overflow:hidden;
+  }
+
+  /* subtle paper fiber texture */
+  .note::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.015) 0px, transparent 1px, transparent 3px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,0.015) 0px, transparent 1px, transparent 3px);
+    pointer-events:none;
+  }
+
+  /* peeling corner */
+  .note::after{
+    content:"";
+    position:absolute;
+    right:0;
+    bottom:0;
+    width:34px;
+    height:34px;
+    background:linear-gradient(135deg, transparent 50%, rgba(0,0,0,0.12) 50%);
+    border-radius:0 0 6px 0;
+  }
+
+  .tape{
+    position:absolute;
+    width:70px;
+    height:26px;
+    background:linear-gradient(120deg, rgba(244,239,224,0.85), rgba(244,239,224,0.6));
+    top:-14px;
+    left:50%;
+    transform:translateX(-50%) rotate(-3deg);
+    box-shadow:0 2px 4px rgba(0,0,0,0.25);
+    z-index:3;
+    opacity:0.9;
+  }
+
+  .content-flip{
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transform:rotateY(0deg);
+    transition:transform 0.28s ease, opacity 0.28s ease;
+  }
+
+  .content-flip.flipping{
+    transform:rotateY(90deg);
+    opacity:0;
+  }
+
+  .note-text{
+    font-family:'Permanent Marker', cursive;
+    color:var(--ink);
+    font-size:clamp(19px, 3.6vw, 25px);
+    line-height:1.35;
+    text-align:center;
+    text-shadow:0.3px 0.3px 0px rgba(0,0,0,0.15);
+    transform:rotate(-1.2deg);
+    user-select:none;
+  }
+
+  .note-drawing{
+    width:88%;
+    height:88%;
+  }
+
+  .note-drawing svg{
+    width:100%;
+    height:100%;
+    overflow:visible;
+  }
+
+  .hint{
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    color:rgba(246,239,224,0.75);
+    letter-spacing:0.4px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  .hint .dot{
+    width:5px;height:5px;border-radius:50%;
+    background:rgba(246,239,224,0.6);
+    animation:pulse 1.6s infinite ease-in-out;
+  }
+
+  @keyframes pulse{
+    0%,100%{opacity:0.3;}
+    50%{opacity:1;}
+  }
+
+  .counter{
+    font-variant-numeric:tabular-nums;
+    color:rgba(246,239,224,0.55);
+    font-size:12px;
+  }
+
+  footer{
+    position:fixed;
+    bottom:10px;
+    left:0;
+    right:0;
+    text-align:center;
+    font-family:'Inter',sans-serif;
+    font-size:11px;
+    color:rgba(246,239,224,0.4);
+    letter-spacing:0.3px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .note-wrap, .content-flip{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="desk-vignette"></div>
+
+<div class="scene">
+  <p class="title">tap the note — it never says the same thing twice in a row</p>
+
+  <div class="note-wrap" id="noteWrap" role="button" tabindex="0" aria-label="Sticky note, click for the next note or drawing">
+    <div class="tape"></div>
+    <div class="note" id="note">
+      <div class="content-flip" id="flip">
+        <div id="slot"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hint">
+    <span class="dot"></span>
+    <span>auto-flips every 3s · click to skip ahead</span>
+    <span class="counter" id="counter">1 / 42</span>
+  </div>
+</div>
+
+<footer>Built by EasyLandX · © 2026</footer>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="sharpie" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.6"/>
+    </filter>
+  </defs>
+</svg>
+
+<script>
+  // ---------- 21 handwritten notes ----------
+  const notes = [
+    "Buy more coffee ☕ (again)",
+    "Call mom back!! she means it",
+    "You are doing great today",
+    "WiFi password: purple42",
+    "Meeting moved to 3pm",
+    "Feed the cat — she's judging you",
+    "Water the plants 🌱",
+    "Remember to breathe",
+    "Idea: glow-in-the-dark socks",
+    "Pick up the dry cleaning",
+    "You left the stove on. Probably.",
+    "Read one page today",
+    "Send the invoice to Marco",
+    "Stretch your neck, slouchy",
+    "Dream bigger. Nap first.",
+    "Reply to Tuesday's email",
+    "Buy a birthday card for Sam",
+    "Passwords are NOT '123456'",
+    "Take the trash out tonight",
+    "You survived Monday. Again.",
+    "Sharpen the pencils, and the ideas"
+  ];
+
+  // ---------- 21 sharpie-style doodles (raw SVG markup, viewBox 0 0 200 200) ----------
+  const S = 'stroke="#1c1a17" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"';
+  const drawings = [
+    // 1 star
+    `<path ${S} filter="url(#sharpie)" d="M100 25 L118 78 L175 78 L128 110 L146 165 L100 132 L54 165 L72 110 L25 78 L82 78 Z"/>`,
+    // 2 heart
+    `<path ${S} filter="url(#sharpie)" d="M100 170 C40 125 20 85 45 58 C65 37 90 45 100 68 C110 45 135 37 155 58 C180 85 160 125 100 170 Z"/>`,
+    // 3 cat face
+    `<g ${S} filter="url(#sharpie)">
+       <path d="M55 70 L45 30 L85 55 Z"/>
+       <path d="M145 70 L155 30 L115 55 Z"/>
+       <circle cx="100" cy="110" r="55"/>
+       <circle cx="80" cy="105" r="4"/>
+       <circle cx="120" cy="105" r="4"/>
+       <path d="M92 122 Q100 130 108 122"/>
+       <path d="M100 126 L60 118 M100 126 L60 132 M100 126 L60 146"/>
+       <path d="M100 126 L140 118 M100 126 L140 132 M100 126 L140 146"/>
+     </g>`,
+    // 4 sun
+    `<g ${S} filter="url(#sharpie)">
+       <circle cx="100" cy="100" r="35"/>
+       <path d="M100 30 L100 12 M100 170 L100 188 M30 100 L12 100 M170 100 L188 100
+                M52 52 L38 38 M148 52 L162 38 M52 148 L38 162 M148 148 L162 162"/>
+     </g>`,
+    // 5 moon and stars
+    `<g ${S} filter="url(#sharpie)">
+       <path d="M120 30 C90 35 70 65 70 100 C70 138 100 165 135 160 C110 150 92 128 92 100 C92 72 108 48 120 30 Z"/>
+       <path d="M160 60 L164 70 L174 72 L164 76 L160 86 L157 76 L147 72 L157 70 Z"/>
+       <path d="M50 130 L53 138 L61 140 L53 143 L50 151 L48 143 L40 140 L48 138 Z"/>
+     </g>`,
+    // 6 cloud with rain
+    `<g ${S} filter="url(#sharpie)">
+       <path d="M55 110 C35 110 28 90 45 82 C42 62 68 50 85 62 C95 48 125 48 132 65 C155 62 168 85 150 100 C158 108 152 120 138 120 L60 120 Z"/>
+       <path d="M70 140 L62 158 M100 140 L92 158 M130 140 L122 158"/>
+     </g>`,
+    // 7 umbrella
+    `<g ${S} filter="url(#sharpie)">
+       <path d="M30 100 C30 55 170 55 170 100 Z"/>
+       <path d="M100 100 L100 165 C100 178 118 178 118 165"/>
+       <path d="M100 60 L100 40"/>
+     </g>`,
+    // 8 coffee cup
+    `<g ${S} filter="url(#sharpie)">
+       <path d="M50 80 L60 160 C60 170 140 170 140 160 L150 80 Z"/>
+       <path d="M150 90 C185 90 185 135 150 135"/>
+       <path d="M75 60 C70 45 85 45 82 30 M100 60 C95 45 110 45 107 30 M125 60 C120 45 135 45 132 30"/>
+     </g>`,
+    // 9 lightning bolt
+    `<path ${S} filter="url(#sharpie)" d="M115 20 L55 110 L95 110 L80 180 L155 85 L110 85 Z"/>`,
+    // 10 flower
+    `<g ${S} filter="url(#sharpie)">
+       <circle cx="100" cy="100" r="16"/>
+       <circle cx="100" cy="55" r="22"/>
+       <circle cx="100" cy="145" r="22"/>
+       <circle cx="55" cy="100" r="22"/>
+       <circle cx="145" cy="100" r="22"/>
+       <path d="M100 116 L100 175"/>
+       <path d="M100 150 L80 168 M100 158 L120 174"/>
+     </g>`,
+    // 11 fish
+    `<g ${S} filter="url(#sharpie)">
+       <path d="M30 100 C55 65 140 65 175 100 C140 135 55 135 30 100 Z"/>
+       <path d="M175 100 L195 80 L195 120 Z"/>
+       <circle cx="60" cy="92" r="4"/>
+       <path d="M90 100 C110 95 130 95 150 100"/>
+     </g>`,
+    // 12 house
+    `<g ${S} filter="url(#sharpie)">
+       <path d="M35 105 L100 45 L165 105"/>
+       <path d="M50 100 L50 170 L150 170 L150 100"/>
+       <path d="M85 170 L85 125 L115 125 L115 170"/>
+       <path d="M125 60 L125 40 L145 40 L145 78"/>
+     </g>`,
+    // 13 tree
+    `<g ${S} filter="url(#sharpie)">
+       <path d="M100 190 L100 130"/>
+       <path d="M100 40 C60 45 45 85 65 110 C48 118 55 145 80 140 C90 155 130 155 140 138 C165 142 172 115 155 108 C172 82 155 48 122 48 C118 40 106 38 100 40 Z"/>
+     </g>`,
+    // 14 mountains
+    `<g ${S} filter="url(#sharpie)">
+       <path d="M20 160 L70 70 L100 115 L135 55 L185 160 Z"/>
+       <path d="M125 90 L140 110 L118 110 Z"/>
+     </g>`,
+    // 15 rocket
+    `<g ${S} filter="url(#sharpie)">
+       <path d="M100 25 C130 55 130 110 100 150 C70 110 70 55 100 25 Z"/>
+       <circle cx="100" cy="80" r="12"/>
+       <path d="M78 120 L50 150 L78 145 Z"/>
+       <path d="M122 120 L150 150 L122 145 Z"/>
+       <path d="M90 150 L85 178 M110 150 L115 178 M100 150 L100 182"/>
+     </g>`,
+    // 16 balloon
+    `<g ${S} filter="url(#sharpie)">
+       <ellipse cx="100" cy="80" rx="45" ry="55"/>
+       <path d="M100 135 L92 150 L108 150 Z"/>
+       <path d="M100 150 C80 170 120 185 100 190"/>
+     </g>`,
+    // 17 birthday cake
+    `<g ${S} filter="url(#sharpie)">
+       <path d="M45 175 L45 130 L155 130 L155 175 Z"/>
+       <path d="M45 150 C60 140 70 160 85 150 C100 140 110 160 125 150 C140 140 150 160 155 150"/>
+       <path d="M75 130 L75 105 M100 130 L100 100 M125 130 L125 105"/>
+       <path d="M100 100 C95 90 105 82 100 72 M75 105 C70 95 80 88 75 78 M125 105 C120 95 130 88 125 78"/>
+     </g>`,
+    // 18 music note
+    `<g ${S} filter="url(#sharpie)">
+       <circle cx="65" cy="150" r="20"/>
+       <circle cx="150" cy="135" r="20"/>
+       <path d="M85 150 L85 45 L170 60 L170 135"/>
+       <path d="M85 45 L170 60"/>
+     </g>`,
+    // 19 arrow curve
+    `<g ${S} filter="url(#sharpie)">
+       <path d="M30 130 C60 40 150 40 165 90"/>
+       <path d="M140 75 L165 90 L175 62"/>
+     </g>`,
+    // 20 smiley
+    `<g ${S} filter="url(#sharpie)">
+       <circle cx="100" cy="100" r="65"/>
+       <circle cx="78" cy="88" r="5"/>
+       <circle cx="122" cy="88" r="5"/>
+       <path d="M65 118 C80 145 120 145 135 118"/>
+     </g>`,
+    // 21 paw print
+    `<g ${S} filter="url(#sharpie)">
+       <ellipse cx="100" cy="130" rx="38" ry="32"/>
+       <ellipse cx="55" cy="85" rx="16" ry="20" transform="rotate(-15 55 85)"/>
+       <ellipse cx="90" cy="60" rx="16" ry="20"/>
+       <ellipse cx="130" cy="60" rx="16" ry="20"/>
+       <ellipse cx="150" cy="88" rx="16" ry="20" transform="rotate(15 150 88)"/>
+     </g>`
+  ];
+
+  const papers = ['var(--paper-yellow)','var(--paper-pink)','var(--paper-blue)','var(--paper-green)'];
+
+  // build sequence: note, drawing, note, drawing ... alternating, in order (not random)
+  const sequence = [];
+  for (let i = 0; i < 21; i++){
+    sequence.push({ type: 'note', value: notes[i] });
+    sequence.push({ type: 'drawing', value: drawings[i] });
+  }
+
+  const noteEl = document.getElementById('note');
+  const wrapEl = document.getElementById('noteWrap');
+  const flipEl = document.getElementById('flip');
+  const slotEl = document.getElementById('slot');
+  const counterEl = document.getElementById('counter');
+
+  let idx = 0;
+  let timer = null;
+
+  function randomTilt(){
+    const deg = (Math.random() * 6 - 3).toFixed(2);
+    wrapEl.style.setProperty('--tilt', deg + 'deg');
+  }
+
+  function render(i){
+    const item = sequence[i];
+    noteEl.style.setProperty('--paper', papers[i % papers.length]);
+    if (item.type === 'note'){
+      slotEl.innerHTML = `<div class="note-text">${item.value}</div>`;
+    } else {
+      slotEl.innerHTML = `<div class="note-drawing"><svg viewBox="0 0 200 200">${item.value}</svg></div>`;
+    }
+    counterEl.textContent = (i + 1) + ' / ' + sequence.length;
+  }
+
+  function goNext(){
+    flipEl.classList.add('flipping');
+    randomTilt();
+    setTimeout(() => {
+      idx = (idx + 1) % sequence.length;
+      render(idx);
+      flipEl.classList.remove('flipping');
+    }, 280);
+  }
+
+  function resetTimer(){
+    clearInterval(timer);
+    timer = setInterval(goNext, 3000);
+  }
+
+  wrapEl.addEventListener('click', () => {
+    goNext();
+    resetTimer();
+  });
+  wrapEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' '){
+      e.preventDefault();
+      goNext();
+      resetTimer();
+    }
+  });
+
+  randomTilt();
+  render(idx);
+  resetTimer();
+</script>
+
+</body>
+</html>
