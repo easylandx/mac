@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Landing Page Machine — EasyPageX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Caveat:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy: #0d2540;
+    --navy-deep: #081a2e;
+    --blue-line: #3f7fae;
+    --blue-line-soft: rgba(79,150,207,0.35);
+    --paper: #eaf2f8;
+    --paper-dim: #b9cde0;
+    --brass: #d08a44;
+    --brass-dark: #a86a2e;
+    --red: #e2543a;
+    --green: #6fbf8b;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+
+  body{
+    margin:0;
+    background:var(--navy);
+    background-image:
+      repeating-linear-gradient(0deg, var(--blue-line-soft) 0 1px, transparent 1px 42px),
+      repeating-linear-gradient(90deg, var(--blue-line-soft) 0 1px, transparent 1px 42px);
+    color:var(--paper);
+    font-family:'Inter', sans-serif;
+    overflow-x:hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001s !important; animation-iteration-count:1 !important;}
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    max-width:920px;
+    margin:0 auto;
+    padding:64px 24px 24px;
+    text-align:center;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    font-size:12px;
+    color:var(--brass);
+    border:1px solid var(--brass-dark);
+    display:inline-block;
+    padding:6px 14px;
+    border-radius:2px;
+    margin-bottom:22px;
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:clamp(34px, 6vw, 64px);
+    line-height:1.03;
+    margin:0 0 18px;
+    letter-spacing:-0.01em;
+  }
+  h1 span{color:var(--brass);}
+  .sub{
+    font-size:17px;
+    color:var(--paper-dim);
+    max-width:560px;
+    margin:0 auto;
+    line-height:1.55;
+  }
+
+  /* ---------- Machine section ---------- */
+  .machine-wrap{
+    max-width:1040px;
+    margin:40px auto 0;
+    padding:0 16px;
+  }
+  .machine-frame{
+    position:relative;
+    border:1px solid var(--blue-line);
+    border-radius:6px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+    padding:18px 18px 8px;
+  }
+  .machine-frame::before{
+    content:"FIG. 0 — LATERAL VIEW · SCALE 1:1 · REV. 2026";
+    position:absolute;
+    top:-11px;
+    left:20px;
+    background:var(--navy);
+    padding:0 8px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.12em;
+    color:var(--paper-dim);
+  }
+  svg#machine-svg{
+    display:block;
+    width:100%;
+    height:auto;
+  }
+
+  .label{
+    font-family:'Caveat', cursive;
+    font-size:19px;
+    fill:var(--brass);
+  }
+  .fig-num{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    fill:var(--paper-dim);
+  }
+  .leader{
+    stroke:var(--blue-line);
+    stroke-width:1;
+    stroke-dasharray:3 3;
+    fill:none;
+  }
+
+  /* ---------- machine parts ---------- */
+  .part-line{ stroke:var(--paper-dim); stroke-width:2; fill:none; stroke-linecap:round; }
+  .part-fill{ fill:var(--navy-deep); stroke:var(--paper-dim); stroke-width:2; }
+  .brass-fill{ fill:var(--brass); }
+  .brass-stroke{ stroke:var(--brass); stroke-width:2; fill:none; }
+
+  #idea-bulb{ animation: bulbPulse 2.4s ease-in-out infinite; transform-origin:96px 70px;}
+  @keyframes bulbPulse{
+    0%,100%{ filter:drop-shadow(0 0 0px rgba(208,138,68,0.0)); }
+    50%{ filter:drop-shadow(0 0 8px rgba(208,138,68,0.85)); }
+  }
+
+  #marble{ animation: marbleRun 9s linear infinite; transform-origin:0 0; }
+  @keyframes marbleRun{
+    0%,10%   { transform: translate(0px,0px); opacity:1; }
+    22%      { transform: translate(128px,150px); opacity:1; }
+    23%,100% { transform: translate(128px,150px); opacity:0; }
+  }
+
+  #domino1{ animation: dom1 9s ease-in infinite; transform-origin:230px 258px; }
+  @keyframes dom1{
+    0%,22%{ transform:rotate(0deg); }
+    28%,100%{ transform:rotate(68deg); }
+  }
+  #domino2{ animation: dom2 9s ease-in infinite; transform-origin:266px 258px; }
+  @keyframes dom2{
+    0%,26%{ transform:rotate(0deg); }
+    32%,100%{ transform:rotate(68deg); }
+  }
+  #domino3{ animation: dom3 9s ease-in infinite; transform-origin:302px 258px; }
+  @keyframes dom3{
+    0%,30%{ transform:rotate(0deg); }
+    36%,100%{ transform:rotate(68deg); }
+  }
+
+  #seesaw{ animation: seesaw 9s ease-in-out infinite; transform-origin:400px 262px; }
+  @keyframes seesaw{
+    0%,35%{ transform:rotate(0deg); }
+    42%{ transform:rotate(-16deg); }
+    50%,100%{ transform:rotate(-16deg); }
+  }
+
+  #ball{ animation: ballFly 9s ease-in infinite; transform-origin:0 0; opacity:0;}
+  @keyframes ballFly{
+    0%,40%   { transform: translate(0,0); opacity:0; }
+    41%      { transform: translate(0,0); opacity:1; }
+    50%      { transform: translate(96px,-92px); opacity:1; }
+    52%,100% { transform: translate(96px,-92px); opacity:0; }
+  }
+
+  #cup-assembly{ animation: cupDrop 9s ease-in infinite; transform-origin:0 0; }
+  @keyframes cupDrop{
+    0%,51%{ transform: translateY(0px); }
+    62%,100%{ transform: translateY(46px); }
+  }
+
+  #lever{ animation: leverTip 9s ease-in infinite; transform-origin:648px 158px; }
+  @keyframes leverTip{
+    0%,60%{ transform: rotate(0deg); }
+    68%,100%{ transform: rotate(-13deg); }
+  }
+
+  #press-key{ animation: pressKey 9s ease-in-out infinite; transform-origin:0 0; }
+  @keyframes pressKey{
+    0%,66%{ transform: translateY(0px); }
+    70%{ transform: translateY(10px); }
+    75%,100%{ transform: translateY(0px); }
+  }
+
+  #page-card{ animation: pageOut 9s cubic-bezier(.2,.7,.3,1) infinite; transform-origin:0 0; opacity:0;}
+  @keyframes pageOut{
+    0%,68%   { transform: translateY(0px) rotate(0deg); opacity:0; }
+    72%      { opacity:1; }
+    88%,100% { transform: translateY(-74px) rotate(-3deg); opacity:1; }
+  }
+
+  #flag{ animation: flagUp 9s ease-out infinite; transform-origin:786px 150px; opacity:0; }
+  @keyframes flagUp{
+    0%,80%{ transform:scale(0); opacity:0; }
+    86%{ transform:scale(1.15); opacity:1; }
+    92%,100%{ transform:scale(1); opacity:1; }
+  }
+
+  .confetti{ animation: confettiPop 9s ease-out infinite; opacity:0; transform-origin:0 0;}
+  @keyframes confettiPop{
+    0%,83%{ opacity:0; transform:translate(0,0) scale(0.4) rotate(0deg); }
+    88%{ opacity:1; }
+    98%,100%{ opacity:0; transform:translate(var(--dx),var(--dy)) scale(1) rotate(120deg); }
+  }
+
+  #machine-group{ animation: resetFade 9s linear infinite; }
+  @keyframes resetFade{
+    0%,93%{ opacity:1; }
+    96%{ opacity:0; }
+    100%{ opacity:1; }
+  }
+
+  /* ---------- Process section ---------- */
+  .process{
+    max-width:920px;
+    margin:76px auto 0;
+    padding:0 24px;
+  }
+  .process h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:26px;
+    text-align:center;
+    margin:0 0 8px;
+  }
+  .process p.intro{
+    text-align:center;
+    color:var(--paper-dim);
+    max-width:520px;
+    margin:0 auto 40px;
+    font-size:15px;
+  }
+  .steps{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:16px;
+  }
+  .step{
+    border:1px solid var(--blue-line-soft);
+    border-radius:4px;
+    padding:20px 20px 22px;
+    background:rgba(255,255,255,0.015);
+    position:relative;
+    transition:border-color .2s ease, transform .2s ease;
+  }
+  .step:hover{
+    border-color:var(--brass);
+    transform:translateY(-2px);
+  }
+  .step .fig{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--brass);
+    letter-spacing:0.08em;
+    display:block;
+    margin-bottom:8px;
+  }
+  .step h3{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:17px;
+    margin:0 0 8px;
+  }
+  .step p{
+    font-size:14px;
+    color:var(--paper-dim);
+    line-height:1.5;
+    margin:0;
+  }
+
+  /* ---------- CTA ---------- */
+  .cta{
+    max-width:820px;
+    margin:80px auto 0;
+    padding:40px 24px 0;
+    text-align:center;
+  }
+  .cta h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:24px;
+    margin:0 0 10px;
+  }
+  .cta p{
+    color:var(--paper-dim);
+    font-size:15px;
+    margin:0 0 28px;
+  }
+  .stamps{
+    display:flex;
+    flex-wrap:wrap;
+    gap:16px;
+    justify-content:center;
+    margin-bottom:8px;
+  }
+  .stamp{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    letter-spacing:0.04em;
+    color:var(--paper);
+    text-decoration:none;
+    border:1.5px solid var(--brass);
+    border-radius:50px;
+    padding:13px 26px;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    transition: background .2s ease, color .2s ease, transform .2s ease;
+  }
+  .stamp:hover{
+    background:var(--brass);
+    color:var(--navy-deep);
+    transform:translateY(-2px);
+  }
+  .stamp.secondary{
+    border-color:var(--blue-line);
+  }
+  .stamp.secondary:hover{
+    background:var(--blue-line);
+    color:var(--navy-deep);
+  }
+  .stamp .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--green);
+    box-shadow:0 0 6px var(--green);
+  }
+
+  footer{
+    max-width:820px;
+    margin:64px auto 0;
+    padding:24px 24px 60px;
+    text-align:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--paper-dim);
+    opacity:0.7;
+    line-height:1.8;
+    border-top:1px dashed var(--blue-line-soft);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">EasyPageX Laboratories · Exhibit A</div>
+  <h1>The <span>Landing Page</span><br>Machine</h1>
+  <p class="sub">One marble drop. Seven improbable steps. A landing page ships before your coffee finishes dripping.</p>
+</header>
+
+<div class="machine-wrap">
+  <div class="machine-frame">
+    <svg id="machine-svg" viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg">
+      <g id="machine-group">
+
+        <!-- FIG 1 : idea / bulb + marble ramp -->
+        <g id="idea-bulb">
+          <circle cx="96" cy="70" r="16" class="part-fill"/>
+          <path d="M88 82 L104 82 L102 90 L90 90 Z" class="part-fill"/>
+          <path d="M90 62 Q96 50 102 62" class="part-line"/>
+        </g>
+        <circle id="marble" cx="96" cy="94" r="7" class="brass-fill"/>
+        <line x1="96" y1="94" x2="224" y2="244" class="part-line" stroke-dasharray="1 7"/>
+
+        <!-- FIG 2 : dominoes -->
+        <g id="domino1"><rect x="224" y="212" width="12" height="46" rx="1" class="part-fill"/></g>
+        <g id="domino2"><rect x="260" y="212" width="12" height="46" rx="1" class="part-fill"/></g>
+        <g id="domino3"><rect x="296" y="212" width="12" height="46" rx="1" class="part-fill"/></g>
+        <line x1="210" y1="258" x2="330" y2="258" class="part-line" stroke-width="3"/>
+
+        <!-- FIG 3 : seesaw -->
+        <polygon points="400,258 408,270 392,270" class="brass-fill"/>
+        <g id="seesaw">
+          <rect x="342" y="254" width="116" height="8" rx="3" class="part-fill"/>
+        </g>
+
+        <!-- FIG 4 : ball -->
+        <circle id="ball" cx="452" cy="252" r="8" class="brass-fill"/>
+
+        <!-- FIG 5 : pulley + cup + weight -->
+        <circle cx="548" cy="90" r="10" class="part-fill"/>
+        <line x1="548" y1="80" x2="548" y2="60" class="part-line"/>
+        <line x1="548" y1="60" x2="648" y2="60" class="part-line"/>
+        <g id="cup-assembly">
+          <line x1="548" y1="100" x2="548" y2="150" class="part-line"/>
+          <path d="M534 150 L562 150 L556 172 L540 172 Z" class="part-fill"/>
+        </g>
+        <line x1="648" y1="60" x2="648" y2="146" class="part-line" stroke-dasharray="1 5"/>
+
+        <!-- FIG 6 : lever + press key -->
+        <g id="lever">
+          <rect x="600" y="154" width="96" height="8" rx="3" class="part-fill"/>
+          <circle cx="648" cy="158" r="5" class="brass-fill"/>
+        </g>
+        <g id="press-key">
+          <rect x="636" y="190" width="24" height="14" rx="2" class="brass-fill"/>
+        </g>
+
+        <!-- FIG 7 : printer body + page + flag -->
+        <rect x="600" y="206" width="160" height="86" rx="4" class="part-fill"/>
+        <rect x="668" y="198" width="24" height="10" class="part-fill"/>
+        <line x1="600" y1="236" x2="760" y2="236" class="part-line" stroke-width="1" opacity="0.4"/>
+
+        <g id="page-card">
+          <rect x="650" y="140" width="118" height="80" rx="3" fill="var(--paper)" stroke="var(--brass)" stroke-width="1.5"/>
+          <rect x="662" y="152" width="60" height="7" rx="2" fill="var(--brass)"/>
+          <rect x="662" y="166" width="94" height="4" rx="1" fill="var(--navy)" opacity="0.35"/>
+          <rect x="662" y="175" width="94" height="4" rx="1" fill="var(--navy)" opacity="0.35"/>
+          <rect x="662" y="184" width="70" height="4" rx="1" fill="var(--navy)" opacity="0.35"/>
+          <rect x="662" y="198" width="46" height="12" rx="6" fill="var(--green)"/>
+        </g>
+
+        <g id="flag">
+          <line x1="786" y1="150" x2="786" y2="112" class="part-line"/>
+          <path d="M786 112 L816 120 L786 128 Z" fill="var(--red)"/>
+        </g>
+
+        <g class="confetti" style="--dx:22px; --dy:-40px;"><circle cx="720" cy="120" r="3" fill="var(--red)"/></g>
+        <g class="confetti" style="--dx:-30px; --dy:-24px;"><circle cx="700" cy="130" r="3" fill="var(--green)"/></g>
+        <g class="confetti" style="--dx:14px; --dy:-52px;"><rect x="740" y="110" width="5" height="5" fill="var(--brass)"/></g>
+        <g class="confetti" style="--dx:-16px; --dy:-46px;"><rect x="712" y="106" width="5" height="5" fill="var(--paper)"/></g>
+        <g class="confetti" style="--dx:34px; --dy:-14px;"><circle cx="760" cy="140" r="3" fill="var(--blue-line)"/></g>
+
+        <!-- annotations -->
+        <text x="20" y="46" class="fig-num">FIG.1</text>
+        <text x="20" y="60" class="label">the spark</text>
+        <path class="leader" d="M60 55 Q80 55 90 60"/>
+
+        <text x="200" y="196" class="fig-num">FIG.2</text>
+        <text x="200" y="210" class="label">cascade</text>
+
+        <text x="356" y="300" class="fig-num">FIG.3</text>
+        <text x="356" y="314" class="label">momentum</text>
+
+        <text x="470" y="196" class="fig-num">FIG.4</text>
+        <text x="466" y="210" class="label">balance</text>
+
+        <text x="560" y="46" class="fig-num">FIG.5</text>
+        <text x="560" y="60" class="label">the strike</text>
+
+        <text x="600" y="322" class="fig-num">FIG.6</text>
+        <text x="600" y="336" class="label">delivery</text>
+
+        <text x="786" y="98" class="fig-num">FIG.7</text>
+        <text x="770" y="86" class="label">live!</text>
+
+      </g>
+    </svg>
+  </div>
+</div>
+
+<section class="process">
+  <h2>How the machine actually works</h2>
+  <p class="intro">Every gag maps to a real step in how EasyPageX builds a page — minus the dominoes.</p>
+  <div class="steps">
+    <div class="step">
+      <span class="fig">FIG. 1 — THE SPARK</span>
+      <h3>An idea drops in</h3>
+      <p>Yours: a café, a studio, a drone service, a jewelry shop. That's the only input the machine needs.</p>
+    </div>
+    <div class="step">
+      <span class="fig">FIG. 2 — CASCADE</span>
+      <h3>Copy and layout fall into place</h3>
+      <p>Headline, sections, imagery — one triggers the next, domino by domino, no blank page to stare at.</p>
+    </div>
+    <div class="step">
+      <span class="fig">FIG. 3 — MOMENTUM</span>
+      <h3>The design finds its shape</h3>
+      <p>Scroll reveals, motion, and structure come together in a single, self-contained pass.</p>
+    </div>
+    <div class="step">
+      <span class="fig">FIG. 4 — BALANCE</span>
+      <h3>Every section earns its place</h3>
+      <p>If it doesn't help someone book, buy, or message you — it gets cut before it ships.</p>
+    </div>
+    <div class="step">
+      <span class="fig">FIG. 5 — THE STRIKE</span>
+      <h3>The build key gets pressed</h3>
+      <p>Once. No plugins, no build pipeline, no ten-tab deployment ritual.</p>
+    </div>
+    <div class="step">
+      <span class="fig">FIG. 6 — DELIVERY</span>
+      <h3>One HTML file comes out</h3>
+      <p>Fonts, styles, and interactions inline. Nothing else to install, host, or break.</p>
+    </div>
+    <div class="step">
+      <span class="fig">FIG. 7 — LIVE</span>
+      <h3>Flag up, page live</h3>
+      <p>WhatsApp button included. Confetti optional. Coffee still warm.</p>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <h2>See what actually comes out the other end</h2>
+  <p>No marbles were harmed. Every page below is one real file, same as this one.</p>
+  <div class="stamps">
+    <a class="stamp" href="https://easylandx.github.io" target="_blank" rel="noopener">
+      <span class="dot"></span> View the gallery — easylandx.github.io
+    </a>
+    <a class="stamp secondary" href="https://easypagex.github.io" target="_blank" rel="noopener">
+      Get one built — easypagex.github.io
+    </a>
+  </div>
+</section>
+
+<footer>
+  PATENT NO. 000-EASY-2026 · MADRID, ES<br>
+  This page is a single self-contained HTML file — same as everything the machine makes.
+</footer>
+
+</body>
+</html>
