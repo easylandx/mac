@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Art of Landing Pages — EasyLandX</title>
+<meta name="description" content="Five ancient principles of strategy, applied to the modern landing page. An EasyLandX field manual.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --imperial: #b81f2c;
+    --imperial-deep: #8f1620;
+    --silk: #5e0e18;
+    --silk-deep: #40090f;
+    --gold: #d1a13b;
+    --gold-bright: #f0c869;
+    --gold-dim: #9c7a2e;
+    --ivory: #f7ead2;
+    --ivory-dim: #e3cfa8;
+    --ink: #2a0a0c;
+    --rule: rgba(209,161,59,0.35);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(ellipse 1200px 700px at 15% -10%, var(--imperial-deep) 0%, transparent 55%),
+      radial-gradient(ellipse 1000px 900px at 100% 30%, var(--silk) 0%, transparent 60%),
+      var(--imperial);
+    color:var(--ivory);
+    font-family:'Work Sans', sans-serif;
+    font-weight:400;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .serif{font-family:'Cormorant Garamond', serif;}
+  a{color:inherit;}
+
+  /* seal mark */
+  .seal{
+    width:64px;height:64px;
+    border:1.5px solid var(--gold);
+    outline:1px solid var(--gold);
+    outline-offset:4px;
+    display:flex;align-items:center;justify-content:center;
+    transform:rotate(45deg);
+    flex-shrink:0;
+  }
+  .seal span{
+    transform:rotate(-45deg);
+    font-family:'Cormorant Garamond', serif;
+    font-weight:700;
+    font-size:1.05rem;
+    letter-spacing:0.04em;
+    color:var(--gold-bright);
+  }
+
+  /* nav */
+  nav{
+    position:sticky;top:0;z-index:50;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:1.4rem 6vw;
+    background:linear-gradient(180deg, rgba(143,22,32,0.92), rgba(143,22,32,0.55));
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--rule);
+  }
+  .brand{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:700;
+    font-size:1.35rem;
+    letter-spacing:0.03em;
+    color:var(--ivory);
+  }
+  .brand em{font-style:normal;color:var(--gold-bright);}
+  .nav-cta{
+    font-family:'Work Sans', sans-serif;
+    font-size:0.82rem;
+    font-weight:500;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    text-decoration:none;
+    color:var(--ink);
+    background:linear-gradient(180deg, var(--gold-bright), var(--gold));
+    padding:0.65rem 1.4rem;
+    border-radius:2px;
+    transition:transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .nav-cta:hover{transform:translateY(-2px);box-shadow:0 10px 24px -8px rgba(0,0,0,0.5);}
+
+  /* hero */
+  .hero{
+    position:relative;
+    padding:9vw 6vw 7vw;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    gap:2rem;
+    overflow:hidden;
+  }
+  .hero::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+      repeating-linear-gradient(90deg, var(--rule) 0 1px, transparent 1px 140px);
+    opacity:0.3;
+    pointer-events:none;
+  }
+  .eyebrow{
+    font-size:0.78rem;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:var(--gold-bright);
+    font-weight:500;
+  }
+  h1{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:600;
+    font-size:clamp(2.6rem, 6vw, 5rem);
+    line-height:1.05;
+    max-width:16ch;
+    color:var(--ivory);
+  }
+  h1 em{font-style:italic;color:var(--gold-bright);}
+  .lede{
+    max-width:52ch;
+    font-size:1.15rem;
+    color:var(--ivory-dim);
+    font-weight:300;
+  }
+  .hero-actions{
+    display:flex;
+    gap:1.2rem;
+    align-items:center;
+    flex-wrap:wrap;
+    justify-content:center;
+    margin-top:0.5rem;
+  }
+  .btn-primary{
+    display:inline-flex;
+    align-items:center;
+    gap:0.6rem;
+    text-decoration:none;
+    font-weight:500;
+    font-size:0.95rem;
+    letter-spacing:0.03em;
+    color:var(--ink);
+    background:linear-gradient(180deg, var(--gold-bright), var(--gold));
+    padding:1rem 2.1rem;
+    border-radius:2px;
+    box-shadow:0 14px 30px -12px rgba(0,0,0,0.55);
+    transition:transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .btn-primary:hover{transform:translateY(-3px);box-shadow:0 20px 36px -14px rgba(0,0,0,0.6);}
+  .btn-ghost{
+    text-decoration:none;
+    font-size:0.9rem;
+    color:var(--ivory-dim);
+    border-bottom:1px solid var(--rule);
+    padding-bottom:2px;
+    transition:color 0.2s ease, border-color 0.2s ease;
+  }
+  .btn-ghost:hover{color:var(--gold-bright);border-color:var(--gold-bright);}
+
+  .attrib{
+    margin-top:2.5rem;
+    font-size:0.8rem;
+    color:var(--ivory-dim);
+    opacity:0.75;
+    max-width:40ch;
+  }
+  .attrib a{color:var(--gold-bright);text-decoration:none;border-bottom:1px solid var(--rule);}
+
+  /* section shells */
+  section{
+    padding:6vw 6vw;
+    position:relative;
+  }
+  .section-head{
+    max-width:640px;
+    margin:0 auto 3.5rem;
+    text-align:center;
+  }
+  .kicker{
+    font-size:0.75rem;
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    color:var(--gold-bright);
+    font-weight:500;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.8rem;
+  }
+  .kicker::before,.kicker::after{content:"";width:28px;height:1px;background:var(--rule);}
+  h2{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:600;
+    font-size:clamp(1.9rem, 3.4vw, 2.7rem);
+    margin-top:0.9rem;
+    color:var(--ivory);
+  }
+  .section-sub{
+    margin-top:1rem;
+    color:var(--ivory-dim);
+    font-size:1.02rem;
+    font-weight:300;
+  }
+
+  /* five constants */
+  .constants-band{
+    background:linear-gradient(180deg, transparent, rgba(64,9,15,0.55) 12%, rgba(64,9,15,0.55) 88%, transparent);
+  }
+  .constants-grid{
+    max-width:1100px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:repeat(5, 1fr);
+    gap:0;
+    border-top:1px solid var(--rule);
+    border-left:1px solid var(--rule);
+  }
+  .constant{
+    border-right:1px solid var(--rule);
+    border-bottom:1px solid var(--rule);
+    padding:2.2rem 1.4rem;
+    opacity:0;
+    transform:translateY(16px);
+    transition:opacity 0.7s ease, transform 0.7s ease;
+  }
+  .constant.in-view{opacity:1;transform:translateY(0);}
+  .constant .mark{
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-size:0.95rem;
+    color:var(--gold-dim);
+  }
+  .constant h3{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:600;
+    font-size:1.4rem;
+    margin:0.5rem 0 0.7rem;
+    color:var(--gold-bright);
+  }
+  .constant p{font-size:0.92rem;color:var(--ivory-dim);font-weight:300;}
+
+  /* principles */
+  .principles{max-width:880px;margin:0 auto;}
+  .principle{
+    display:grid;
+    grid-template-columns:110px 1fr;
+    gap:2rem;
+    padding:2.6rem 0;
+    border-bottom:1px solid var(--rule);
+    opacity:0;
+    transform:translateY(18px);
+    transition:opacity 0.7s ease, transform 0.7s ease;
+  }
+  .principle:last-child{border-bottom:none;}
+  .principle.in-view{opacity:1;transform:translateY(0);}
+  .principle .num{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:600;
+    font-style:italic;
+    font-size:3.2rem;
+    color:var(--gold-dim);
+    line-height:1;
+  }
+  .principle h3{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:600;
+    font-size:1.7rem;
+    color:var(--ivory);
+    margin-bottom:0.7rem;
+  }
+  .principle p{color:var(--ivory-dim);font-weight:300;max-width:56ch;}
+  .principle .principle-source{
+    display:block;
+    margin-top:0.9rem;
+    font-size:0.78rem;
+    font-style:italic;
+    color:var(--gold-dim);
+  }
+
+  /* seal divider */
+  .divider{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:1.2rem;
+    padding:1rem 0 4rem;
+  }
+  .divider .line{width:80px;height:1px;background:var(--rule);}
+  .divider .dot{width:6px;height:6px;background:var(--gold);transform:rotate(45deg);}
+
+  /* quote band */
+  .quote-band{
+    text-align:center;
+    padding:7vw 6vw;
+    background:linear-gradient(180deg, var(--silk-deep), var(--silk) 45%, var(--imperial-deep));
+    border-top:1px solid var(--rule);
+    border-bottom:1px solid var(--rule);
+  }
+  blockquote{
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:clamp(1.5rem, 3vw, 2.2rem);
+    max-width:26ch;
+    margin:0 auto;
+    color:var(--gold-bright);
+    line-height:1.35;
+  }
+  blockquote cite{
+    display:block;
+    margin-top:1.3rem;
+    font-style:normal;
+    font-family:'Work Sans', sans-serif;
+    font-size:0.78rem;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--ivory-dim);
+  }
+
+  /* final cta */
+  .final-cta{
+    text-align:center;
+    padding:8vw 6vw 7vw;
+  }
+  .final-cta h2{max-width:16ch;margin-left:auto;margin-right:auto;}
+  .final-cta .lede{margin:1.3rem auto 2.4rem;}
+
+  footer{
+    padding:2.4rem 6vw;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:1rem;
+    border-top:1px solid var(--rule);
+    font-size:0.8rem;
+    color:var(--ivory-dim);
+  }
+  footer a{text-decoration:none;color:var(--gold-bright);}
+
+  @media (max-width: 860px){
+    .constants-grid{grid-template-columns:repeat(2, 1fr);}
+    .principle{grid-template-columns:60px 1fr;gap:1.2rem;}
+    .principle .num{font-size:2.2rem;}
+  }
+  @media (max-width: 520px){
+    .constants-grid{grid-template-columns:1fr;}
+    nav{padding:1.1rem 5vw;}
+    .brand{font-size:1.1rem;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">Easy<em>Land</em>X</div>
+  <a class="nav-cta" href="https://easylandx.github.io/" target="_blank" rel="noopener">Start your page</a>
+</nav>
+
+<header class="hero">
+  <div class="seal" aria-hidden="true"><span>EX</span></div>
+  <p class="eyebrow">A field manual for landing pages</p>
+  <h1>The art of winning a visitor <em>before</em> they think to leave</h1>
+  <p class="lede">Twenty-five centuries ago, a general wrote that the finest campaigns are won before the first move is made. Applied to a landing page, the idea holds perfectly: the page that converts best is the one that never has to fight for the click.</p>
+  <div class="hero-actions">
+    <a class="btn-primary" href="https://easylandx.github.io/" target="_blank" rel="noopener">Build with EasyLandX</a>
+    <a class="btn-ghost" href="#principles">Read the five principles</a>
+  </div>
+  <p class="attrib">Strategy reframed from Sun Tzu's <a href="https://en.wikipedia.org/wiki/The_Art_of_War" target="_blank" rel="noopener">The Art of War</a>, applied to modern landing pages by EasyLandX.</p>
+</header>
+
+<section class="constants-band" id="constants">
+  <div class="section-head">
+    <p class="kicker">Before you build</p>
+    <h2>Five things worth knowing before the page goes live</h2>
+    <p class="section-sub">Every strong campaign starts with an honest assessment. These are the five conditions Sun Tzu weighed before any battle — reframed here as the five conditions worth weighing before any launch.</p>
+  </div>
+  <div class="constants-grid" id="constants-grid">
+    <div class="constant"><span class="mark">The Way</span><h3>Alignment</h3><p>What the page promises and what the product actually delivers are the same thing, in the same words.</p></div>
+    <div class="constant"><span class="mark">Heaven</span><h3>Timing</h3><p>The season, the moment, the reason someone is searching for this exact answer right now.</p></div>
+    <div class="constant"><span class="mark">Earth</span><h3>Terrain</h3><p>The real ground the visitor stands on: the search results, the ads, the three tabs open beside yours.</p></div>
+    <div class="constant"><span class="mark">The Commander</span><h3>Clarity</h3><p>A founder who knows exactly what the page is for writes a page that reads like it knows too.</p></div>
+    <div class="constant"><span class="mark">Method</span><h3>Structure</h3><p>The architecture beneath the words — hierarchy, speed, and a path from headline to action with nothing in the way.</p></div>
+  </div>
+</section>
+
+<section id="principles">
+  <div class="section-head">
+    <p class="kicker">Five principles</p>
+    <h2>What the old strategy actually teaches a modern page</h2>
+    <p class="section-sub">Sun Tzu wrote for generals. The lessons translate almost exactly to the six seconds a visitor gives a landing page before deciding to stay or go.</p>
+  </div>
+  <div class="principles">
+    <div class="principle">
+      <span class="num">I</span>
+      <div>
+        <h3>The art of focus</h3>
+        <p>Sun Tzu's armies won by controlling what the enemy noticed and what they didn't. A landing page wins the same way — one goal, one path, one action, with every distraction quietly removed so attention flows toward the thing that matters.</p>
+        <span class="principle-source">From: all warfare is a matter of shaping perception</span>
+      </div>
+    </div>
+    <div class="principle">
+      <span class="num">II</span>
+      <div>
+        <h3>Speed over prolonged effort</h3>
+        <p>No army benefits from a long campaign, and no visitor benefits from a slow page. Load fast, say the important thing first, and let a visitor arrive at a decision in seconds rather than scroll after scroll after scroll.</p>
+        <span class="principle-source">From: there is no instance of a state benefiting from a long war</span>
+      </div>
+    </div>
+    <div class="principle">
+      <span class="num">III</span>
+      <div>
+        <h3>Winning without a fight</h3>
+        <p>The finest generalship broke resistance before the armies met. The finest landing pages do the same — they earn a "yes" through clarity and trust, not through countdown timers, guilt copy, or pop-ups the visitor has to fight past.</p>
+        <span class="principle-source">From: subduing the enemy without fighting is the height of skill</span>
+      </div>
+    </div>
+    <div class="principle">
+      <span class="num">IV</span>
+      <div>
+        <h3>Know your ground, know your visitor</h3>
+        <p>Know the offer and know the visitor, and a hundred campaigns hold no danger. Analytics, heatmaps, and honest customer conversations are the modern scouts — the information that turns a guess into a page built on solid ground.</p>
+        <span class="principle-source">From: know yourself and know the other, and victory is never in doubt</span>
+      </div>
+    </div>
+    <div class="principle">
+      <span class="num">V</span>
+      <div>
+        <h3>Shaped like water</h3>
+        <p>Water takes the shape of whatever ground it meets. A landing page should do the same — direct for a technical buyer, warm for a personal one, mobile-first where the audience already lives on a phone. One shape, built fresh for every market it meets.</p>
+        <span class="principle-source">From: an army has no fixed shape, as water has no fixed form</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"><span class="line"></span><span class="dot"></span><span class="line"></span></div>
+
+<section class="quote-band">
+  <blockquote>
+    "The supreme excellence is not the loudest page. It is the one that never has to raise its voice at all."
+    <cite>The Art of Landing Pages — EasyLandX</cite>
+  </blockquote>
+</section>
+
+<section class="final-cta">
+  <p class="kicker">The campaign begins</p>
+  <h2>Bring your own five constants. We'll build the page around them.</h2>
+  <p class="lede">Tell EasyLandX what the offer is, who it's for, and what winning looks like. The rest — the structure, the speed, the clarity — is ours to handle.</p>
+  <div class="hero-actions">
+    <a class="btn-primary" href="https://easylandx.github.io/" target="_blank" rel="noopener">Start your landing page</a>
+  </div>
+</section>
+
+<footer>
+  <span>EasyLandX — landing pages built with intent.</span>
+  <a href="https://easylandx.github.io/" target="_blank" rel="noopener">easylandx.github.io</a>
+</footer>
+
+<script>
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in-view'); });
+  }, { threshold: 0.2 });
+  document.querySelectorAll('.constant, .principle').forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>

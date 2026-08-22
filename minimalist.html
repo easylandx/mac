@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EasyLandX — Do More With a Lot Less</title>
+<meta name="description" content="EasyLandX builds lean, affordable, conversion-focused landing pages for small businesses — profitable from page one.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --salmon: #FF8B73;
+    --salmon-deep: #F5765C;
+    --black: #0B0B0B;
+    --white: #FFFDF8;
+    --line: rgba(11,11,11,0.16);
+    --display: 'Archivo', sans-serif;
+    --body: 'Manrope', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  *{ box-sizing: border-box; margin:0; padding:0; }
+  html{ scroll-behavior: smooth; }
+  body{ background: var(--salmon); color: var(--black); font-family: var(--body); line-height: 1.6; overflow-x: hidden; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
+
+  a{ color: inherit; }
+  img, svg{ display:block; max-width: 100%; }
+  .wrap{ max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+  ::selection{ background: var(--black); color: var(--salmon); }
+  :focus-visible{ outline: 3px solid var(--black); outline-offset: 3px; }
+
+  .eyebrow{
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--black); display:flex; align-items:center; gap:10px; margin-bottom: 18px; opacity: 0.72;
+  }
+  .eyebrow::before{ content:"—"; }
+
+  h1,h2,h3{ font-family: var(--display); font-weight: 700; letter-spacing: -0.01em; line-height: 1.06; }
+
+  header{ position: sticky; top:0; z-index:50; background: rgba(255,139,115,0.92); backdrop-filter: blur(8px); border-bottom: 2px solid var(--black); }
+  .nav{ display:flex; align-items:center; justify-content:space-between; padding:18px 0; }
+  .brand{ font-family: var(--display); font-size:19px; font-weight:800; display:flex; align-items:center; gap:9px; text-decoration:none; }
+  .brand .dot{ width:10px; height:10px; background: var(--black); border-radius:50%; }
+  .nav-cta{
+    font-family: var(--mono); font-size:12.5px; letter-spacing:0.03em;
+    color: var(--white); background: var(--black);
+    padding: 11px 20px; text-decoration:none; border-radius: 999px;
+    border: 2px solid var(--black);
+    transition: transform 0.15s ease;
+  }
+  .nav-cta:hover{ transform: translateY(-2px); }
+
+  /* Hero */
+  .hero{ padding: 92px 0 70px; }
+  .hero-grid{ display:grid; grid-template-columns: 1.1fr 0.9fr; gap:56px; align-items:center; }
+  .hero h1{ font-size: clamp(38px, 5.6vw, 64px); color: var(--black); text-transform: uppercase; }
+  .hero h1 em{ font-style:normal; -webkit-text-stroke: 2px var(--black); color: var(--salmon); }
+  .hero p.lede{ font-size: 18px; color: var(--black); opacity: 0.78; max-width: 46ch; margin-top: 22px; }
+  .hero-actions{ display:flex; gap:16px; margin-top:32px; flex-wrap:wrap; }
+  .btn-primary{
+    font-family: var(--mono); font-size:13px; letter-spacing:0.03em;
+    background: var(--black); color: var(--white);
+    padding: 16px 28px; text-decoration:none; border-radius: 999px;
+    border: 2px solid var(--black);
+    display:inline-flex; align-items:center; gap:10px;
+    transition: transform 0.15s ease;
+  }
+  .btn-primary:hover{ transform: translateY(-2px); }
+  .btn-primary::after{ content:"→"; }
+  .btn-secondary{
+    font-family: var(--mono); font-size:13px; letter-spacing:0.03em;
+    color: var(--black); padding: 16px 24px; text-decoration:none;
+    border: 2px solid var(--black); border-radius: 999px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .btn-secondary:hover{ background: var(--black); color: var(--salmon); }
+
+  /* Staircase signature */
+  .stair-frame{
+    position: relative; aspect-ratio: 1/1;
+    border: 2px solid var(--black); border-radius: 16px;
+    background: var(--white);
+    display:flex; align-items:flex-end; justify-content:center;
+    overflow:hidden;
+  }
+  .stair-label{ position:absolute; top:16px; left:16px; font-family: var(--mono); font-size:10.5px; letter-spacing:0.08em; color: var(--black); text-transform: uppercase; opacity:0.6; }
+  .stair-label.br{ top:auto; left:auto; bottom:16px; right:16px; text-align:right; }
+  .stair-label b{ opacity:1; }
+  .stairs{ display:flex; align-items:flex-end; gap: 8px; padding: 0 24px 24px; width:100%; height: 62%; }
+  .step{ background: var(--salmon); border: 2px solid var(--black); border-radius: 4px 4px 0 0; flex:1; position: relative; }
+  .step:nth-child(7){ background: var(--black); }
+
+  /* Ticker */
+  .strip{ border-top: 2px solid var(--black); border-bottom: 2px solid var(--black); background: var(--white); overflow:hidden; white-space:nowrap; }
+  .strip-track{ display:inline-flex; animation: scroll-strip 30s linear infinite; }
+  .strip-track span{ font-family: var(--mono); font-size:12px; letter-spacing:0.04em; text-transform:uppercase; color: var(--black); padding: 13px 32px; border-right: 2px solid var(--line); }
+  .strip-track span b{ background: var(--black); color: var(--salmon); padding: 2px 6px; border-radius: 3px; }
+  @keyframes scroll-strip{ from{ transform: translateX(0);} to{ transform: translateX(-50%);} }
+
+  section{ padding: 88px 0; }
+  .section-head{ max-width: 660px; margin-bottom: 48px; }
+  .section-head h2{ font-size: clamp(28px, 3.6vw, 40px); color: var(--black); text-transform: uppercase; }
+  .section-head p{ color: var(--black); opacity: 0.75; font-size: 16.5px; margin-top: 16px; }
+
+  .reveal{ opacity:0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .reveal.in{ opacity:1; transform: translateY(0); }
+
+  /* Philosophy */
+  .philosophy-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:28px; }
+  .panel{ border: 2px solid var(--black); background: var(--white); padding: 30px 28px; border-radius: 14px; }
+  .panel.solid{ background: var(--black); color: var(--white); }
+  .panel h3{ font-size:21px; margin-bottom:14px; text-transform: uppercase; }
+  .panel h3 .tag{ font-family: var(--mono); font-size:11px; letter-spacing:0.05em; display:block; margin-bottom:8px; text-transform: uppercase; opacity:0.6; }
+  .panel p{ font-size:15px; opacity: 0.82; }
+
+  /* 7-step manifesto list */
+  .manifesto{ display:flex; flex-direction: column; }
+  .m-item{
+    display:grid; grid-template-columns: 130px 1fr;
+    gap: 28px; padding: 32px 0; border-top: 2px solid var(--black);
+    align-items: start;
+  }
+  .manifesto .m-item:last-child{ border-bottom: 2px solid var(--black); }
+  .m-item .numeral{
+    font-family: var(--display); font-size: 56px; font-weight: 800;
+    color: var(--salmon); -webkit-text-stroke: 2px var(--black); line-height: 1;
+  }
+  .m-item h3{ font-size: 21px; text-transform: uppercase; margin-bottom: 10px; }
+  .m-item p{ font-size: 15px; opacity: 0.78; max-width: 62ch; }
+  .m-item.flip{ grid-template-columns: 1fr 130px; }
+  .m-item.flip .numeral{ order: 2; text-align: right; }
+  .m-item.flip .body-col{ order: 1; }
+
+  /* Final CTA — inverted */
+  .final{
+    text-align:center; padding: 100px 0;
+    background: var(--black); color: var(--white);
+    border-top: 2px solid var(--black);
+  }
+  .final h2{ font-size: clamp(30px, 4.6vw, 50px); max-width: 20ch; margin:0 auto; text-transform: uppercase; }
+  .final h2 em{ font-style:normal; color: var(--salmon); }
+  .final p{ opacity: 0.72; margin: 20px auto 34px; max-width: 50ch; font-size:17px; }
+  .final .btn-primary{ background: var(--salmon); color: var(--black); border-color: var(--salmon); }
+
+  footer{ padding: 30px 0; text-align:center; background: var(--black); }
+  footer p{ font-family: var(--mono); font-size:12px; color: var(--white); opacity:0.6; letter-spacing:0.04em; text-transform: uppercase; }
+
+  @media (max-width: 900px){
+    .hero-grid{ grid-template-columns: 1fr; }
+    .stair-frame{ max-width: 340px; margin: 0 auto; }
+    .philosophy-grid{ grid-template-columns: 1fr; }
+    .m-item, .m-item.flip{ grid-template-columns: 70px 1fr; }
+    .m-item.flip .numeral{ order:1; text-align:left; }
+    .m-item.flip .body-col{ order:2; }
+    .m-item .numeral{ font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#top"><span class="dot"></span>EASYLANDX</a>
+    <a class="nav-cta" href="https://easylandx.github.io" target="_blank" rel="noopener">Get Your Page →</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">The Minimalist Build</p>
+        <h1>Do more for your business with a <em>lot less.</em></h1>
+        <p class="lede">EasyLandX builds lean, affordable landing pages that earn their keep from day one. One clear page, built around what your customers actually need to see, priced so it pays for itself fast.</p>
+        <div class="hero-actions">
+          <a class="btn-primary" href="https://easylandx.github.io" target="_blank" rel="noopener">Launch with EasyLandX</a>
+          <a class="btn-secondary" href="#playbook">See the playbook</a>
+        </div>
+      </div>
+      <div class="stair-frame" aria-hidden="true">
+        <span class="stair-label">Growth, Step by Step</span>
+        <span class="stair-label br">Goal: <b>Freedom</b></span>
+        <div class="stairs">
+          <div class="step" style="height:18%;"></div>
+          <div class="step" style="height:30%;"></div>
+          <div class="step" style="height:42%;"></div>
+          <div class="step" style="height:54%;"></div>
+          <div class="step" style="height:66%;"></div>
+          <div class="step" style="height:78%;"></div>
+          <div class="step" style="height:92%;"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="strip" aria-hidden="true">
+    <div class="strip-track">
+      <span>LEAN BY DESIGN</span>
+      <span><b>PROFITABLE</b> FROM PAGE ONE</span>
+      <span>BUILT AROUND YOUR CUSTOMERS</span>
+      <span>PRICED FOR SMALL BUSINESS</span>
+      <span>LEAN BY DESIGN</span>
+      <span><b>PROFITABLE</b> FROM PAGE ONE</span>
+      <span>BUILT AROUND YOUR CUSTOMERS</span>
+      <span>PRICED FOR SMALL BUSINESS</span>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">Great, Not Big</p>
+        <h2>A page built to earn, not to impress</h2>
+        <p>Some businesses spend months and a big budget building something elaborate before a single customer sees it. EasyLandX takes the other path: one focused page, live fast, priced to pay for itself from the very first booking.</p>
+      </div>
+      <div class="philosophy-grid">
+        <div class="panel reveal">
+          <h3><span class="tag">The Slow Way</span>Big build, big budget</h3>
+          <p>Custom platforms, long timelines, and a growing bill before you know if any of it actually brings in customers. Impressive on paper — expensive in practice.</p>
+        </div>
+        <div class="panel solid reveal">
+          <h3><span class="tag">The EasyLandX Way</span>Lean build, fast return</h3>
+          <p>One well-made page, priced so a small business can say yes on day one, and built to start earning its cost back the moment it goes live.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="playbook">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">The 7-Step Playbook</p>
+        <h2>How we build a page that fits your business</h2>
+        <p>Every EasyLandX page follows the same lean sequence — each step keeps the page focused on what actually earns you customers.</p>
+      </div>
+      <div class="manifesto reveal">
+        <div class="m-item">
+          <span class="numeral">01</span>
+          <div class="body-col">
+            <h3>Profitable from page one</h3>
+            <p>Your page is priced to pay for itself quickly, so it's an easy yes rather than a long-term bet on future results.</p>
+          </div>
+        </div>
+        <div class="m-item flip">
+          <span class="numeral">02</span>
+          <div class="body-col">
+            <h3>Start with your real community</h3>
+            <p>We start with the customers you already have and understand — their language, their habits, their reasons for choosing you — rather than guessing at a generic audience.</p>
+          </div>
+        </div>
+        <div class="m-item">
+          <span class="numeral">03</span>
+          <div class="body-col">
+            <h3>Build only what earns its place</h3>
+            <p>One page, doing one job well, beats a sprawling site full of sections nobody reads. We keep it lean by design.</p>
+          </div>
+        </div>
+        <div class="m-item flip">
+          <span class="numeral">04</span>
+          <div class="body-col">
+            <h3>Win your first customers directly</h3>
+            <p>Clear, honest messaging that shows exactly how you help — aimed at real people first, with paid ads coming later once the page is already proven.</p>
+          </div>
+        </div>
+        <div class="m-item">
+          <span class="numeral">05</span>
+          <div class="body-col">
+            <h3>Let your page sound like you</h3>
+            <p>Real photos, real numbers, real voice. People trust a business that shows up as itself — and that trust is what a landing page is built to earn.</p>
+          </div>
+        </div>
+        <div class="m-item flip">
+          <span class="numeral">06</span>
+          <div class="body-col">
+            <h3>Grow the page as you grow</h3>
+            <p>We add sections and features when your business actually needs them — never before, so overhead stays as light as your business does.</p>
+          </div>
+        </div>
+        <div class="m-item">
+          <span class="numeral">07</span>
+          <div class="body-col">
+            <h3>Build the page that fits your life</h3>
+            <p>Your page exists to serve the business you want to run — freeing up your time, not filling it with upkeep.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="final">
+    <div class="wrap">
+      <p class="eyebrow" style="justify-content:center; opacity:0.6;">Build Lean, Launch Fast</p>
+      <h2>A page that pays for itself, built around <em>the business you already have.</em></h2>
+      <p>Affordable, conversion-focused, and made to earn its keep — a landing page built the minimalist way.</p>
+      <a class="btn-primary" href="https://easylandx.github.io" target="_blank" rel="noopener">Launch with EasyLandX</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>EasyLandX — Landing Pages Built to Convert</p>
+  </div>
+</footer>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    var items = document.querySelectorAll('.reveal');
+    if('IntersectionObserver' in window){
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          if(entry.isIntersecting){
+            entry.target.classList.add('in');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+      items.forEach(function(el){ io.observe(el); });
+    } else {
+      items.forEach(function(el){ el.classList.add('in'); });
+    }
+  });
+</script>
+
+</body>
+</html>

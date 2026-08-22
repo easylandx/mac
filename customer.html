@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EasyLandX — Let Your Landing Page Fund the Business</title>
+<meta name="description" content="EasyLandX builds affordable, conversion-focused landing pages that get customers paying before you spend a cent on ads, investors, or overhead.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --indigo: #1B1642;
+    --indigo-deep: #120F2E;
+    --indigo-panel: #262056;
+    --indigo-panel-light: #2E2769;
+    --orange: #FF7A2F;
+    --orange-dim: #7A3A16;
+    --gray: #A7A6BF;
+    --gray-soft: #E8E7F2;
+    --line: rgba(232,231,242,0.12);
+    --display: 'Space Grotesk', sans-serif;
+    --body: 'Inter', sans-serif;
+    --mono: 'Space Mono', monospace;
+  }
+
+  *{ box-sizing: border-box; margin:0; padding:0; }
+  html{ scroll-behavior: smooth; }
+
+  body{
+    background: var(--indigo);
+    color: var(--gray-soft);
+    font-family: var(--body);
+    line-height: 1.65;
+    overflow-x: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
+
+  a{ color: inherit; }
+  img, svg{ display:block; max-width: 100%; }
+  .wrap{ max-width: 1140px; margin: 0 auto; padding: 0 28px; }
+  ::selection{ background: var(--orange); color: var(--indigo-deep); }
+  :focus-visible{ outline: 2px solid var(--orange); outline-offset: 3px; }
+
+  .eyebrow{
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--orange);
+    display:flex; align-items:center; gap:10px;
+    margin-bottom: 18px;
+  }
+  .eyebrow::before{ content:"$"; font-weight:700; }
+
+  h1,h2,h3{ font-family: var(--display); font-weight: 600; letter-spacing: -0.01em; line-height: 1.1; }
+
+  header{
+    position: sticky; top:0; z-index:50;
+    background: rgba(18,15,46,0.86);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav{ display:flex; align-items:center; justify-content:space-between; padding:16px 0; }
+  .brand{ font-family: var(--display); font-size:19px; font-weight:700; display:flex; align-items:center; gap:9px; text-decoration:none; }
+  .brand .dot{ width:9px; height:9px; background: var(--orange); border-radius: 50%; }
+  .nav-cta{
+    font-family: var(--mono); font-size:12.5px; letter-spacing:0.03em;
+    color: var(--indigo-deep); background: var(--orange);
+    padding: 10px 18px; text-decoration:none; border: 1px solid var(--orange);
+    border-radius: 3px;
+    transition: opacity 0.15s ease;
+  }
+  .nav-cta:hover{ opacity: 0.85; }
+
+  /* Hero */
+  .hero{ padding: 96px 0 84px; border-bottom: 1px solid var(--line); }
+  .hero-grid{ display:grid; grid-template-columns: 1.1fr 0.9fr; gap: 60px; align-items:center; }
+  .hero h1{ font-size: clamp(36px, 5.2vw, 58px); color: var(--gray-soft); }
+  .hero h1 em{ font-style: normal; color: var(--orange); }
+  .hero p.lede{ font-size: 18px; color: var(--gray); max-width: 48ch; margin-top: 22px; }
+  .hero-actions{ display:flex; gap:16px; margin-top:34px; flex-wrap:wrap; }
+  .btn-primary{
+    font-family: var(--mono); font-size:13px; letter-spacing:0.03em;
+    background: var(--orange); color: var(--indigo-deep);
+    padding: 15px 26px; text-decoration:none; border-radius: 3px;
+    display:inline-flex; align-items:center; gap:10px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn-primary:hover{ transform: translateY(-2px); box-shadow: 0 10px 26px rgba(255,122,47,0.28); }
+  .btn-primary::after{ content:"→"; }
+  .btn-secondary{
+    font-family: var(--mono); font-size:13px; letter-spacing:0.03em;
+    color: var(--gray); padding: 15px 22px; text-decoration:none;
+    border: 1px solid var(--line); border-radius: 3px;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .btn-secondary:hover{ border-color: var(--gray); color: var(--gray-soft); }
+
+  /* Loop diagram */
+  .loop-frame{
+    position:relative; aspect-ratio: 1/1;
+    border: 1px solid var(--line); border-radius: 6px;
+    background: radial-gradient(circle at center, var(--indigo-panel) 0%, var(--indigo-deep) 78%);
+  }
+  .loop-label{ position:absolute; top:14px; left:14px; font-family: var(--mono); font-size:10.5px; letter-spacing:0.08em; color: var(--gray); text-transform: uppercase; }
+  .loop-label.br{ top:auto; left:auto; bottom:14px; right:14px; text-align:right; }
+  .loop-label b{ color: var(--orange); font-weight:700; }
+
+  /* Ticker */
+  .strip{ border-bottom: 1px solid var(--line); background: var(--indigo-deep); overflow:hidden; white-space:nowrap; }
+  .strip-track{ display:inline-flex; animation: scroll-strip 34s linear infinite; }
+  .strip-track span{ font-family: var(--mono); font-size:12px; letter-spacing:0.04em; text-transform:uppercase; color: var(--gray); padding: 13px 32px; border-right: 1px solid var(--line); }
+  .strip-track span b{ color: var(--orange); }
+  @keyframes scroll-strip{ from{ transform: translateX(0);} to{ transform: translateX(-50%);} }
+
+  section{ padding: 92px 0; border-bottom: 1px solid var(--line); }
+  .section-head{ max-width: 660px; margin-bottom: 52px; }
+  .section-head h2{ font-size: clamp(28px, 3.6vw, 40px); color: var(--gray-soft); }
+  .section-head p{ color: var(--gray); font-size: 16.5px; margin-top: 16px; }
+
+  .reveal{ opacity:0; transform: translateY(22px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .reveal.in{ opacity:1; transform: translateY(0); }
+
+  /* Two column philosophy */
+  .philosophy-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:44px; }
+  .panel{ border: 1px solid var(--line); background: var(--indigo-panel); padding: 30px 28px; border-radius: 6px; }
+  .panel.hi{ border-color: rgba(255,122,47,0.4); }
+  .panel h3{ font-size:21px; margin-bottom:14px; color: var(--gray-soft); }
+  .panel h3 .tag{ font-family: var(--mono); font-size:11px; letter-spacing:0.05em; color: var(--orange); display:block; margin-bottom:8px; text-transform: uppercase; }
+  .panel p{ color: var(--gray); font-size:15px; }
+
+  /* 5 models — node cards */
+  .models{ display:grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow:hidden; }
+  .model{ background: var(--indigo); padding: 28px 20px; transition: background 0.2s ease; }
+  .model:hover{ background: var(--indigo-panel); }
+  .model .num{ font-family: var(--mono); font-size:12px; color: var(--orange); letter-spacing:0.05em; margin-bottom:14px; display:block; }
+  .model h3{ font-size:16.5px; margin-bottom:10px; color: var(--gray-soft); line-height:1.25; }
+  .model p{ color: var(--gray); font-size:13.5px; }
+
+  /* Takeaways list */
+  .takeaways{ border: 1px solid var(--line); background: var(--indigo-deep); border-radius: 6px; }
+  .tk-row{ display:grid; grid-template-columns: 130px 1fr; gap:20px; padding:22px 26px; border-bottom: 1px solid var(--line); align-items:start; }
+  .tk-row:last-child{ border-bottom:none; }
+  .tk-row .status{ font-family: var(--mono); font-size:11px; letter-spacing:0.05em; color: var(--orange); text-transform: uppercase; }
+  .tk-row .body h3{ font-size:17px; margin-bottom:8px; color: var(--gray-soft); }
+  .tk-row .body p{ color: var(--gray); font-size:14.5px; }
+
+  /* Final CTA */
+  .final{ text-align:center; padding: 110px 0; background: linear-gradient(180deg, var(--indigo) 0%, var(--indigo-deep) 100%); border-bottom:none; }
+  .final h2{ font-size: clamp(30px, 4.6vw, 50px); max-width: 18ch; margin:0 auto; color: var(--gray-soft); }
+  .final h2 em{ font-style:normal; color: var(--orange); }
+  .final p{ color: var(--gray); margin: 20px auto 36px; max-width: 50ch; font-size:17px; }
+
+  footer{ padding: 32px 0; text-align:center; }
+  footer p{ font-family: var(--mono); font-size:12px; color: var(--gray); letter-spacing:0.04em; text-transform: uppercase; }
+
+  @media (max-width: 900px){
+    .hero-grid{ grid-template-columns: 1fr; }
+    .loop-frame{ max-width: 340px; margin: 0 auto; }
+    .philosophy-grid{ grid-template-columns: 1fr; }
+    .models{ grid-template-columns: 1fr 1fr; }
+    .tk-row{ grid-template-columns: 100px 1fr; }
+  }
+  @media (max-width: 560px){
+    .models{ grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#top"><span class="dot"></span>EASYLANDX</a>
+    <a class="nav-cta" href="https://easylandx.github.io" target="_blank" rel="noopener">Get Your Page →</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero" style="border-bottom:none; padding-bottom:0;">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">Field Note — Customer Capital</p>
+        <h1>Let your landing page <em>fund the business.</em></h1>
+        <p class="lede">EasyLandX builds landing pages that turn visitors into paying customers before you've spent a cent on ads, investors, or overhead. No pitch decks. No dilution. Just a page that collects real cash, fast.</p>
+        <div class="hero-actions">
+          <a class="btn-primary" href="https://easylandx.github.io" target="_blank" rel="noopener">Launch with EasyLandX</a>
+          <a class="btn-secondary" href="#models">See the 5 models</a>
+        </div>
+      </div>
+      <div class="loop-frame" aria-hidden="true">
+        <span class="loop-label">Cash Flow Loop</span>
+        <span class="loop-label br">Source: <b>Your Customers</b></span>
+        <svg viewBox="0 0 300 300">
+          <defs>
+            <linearGradient id="loopGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#FF7A2F" stop-opacity="0.9"/>
+              <stop offset="100%" stop-color="#FF7A2F" stop-opacity="0.1"/>
+            </linearGradient>
+          </defs>
+          <circle cx="150" cy="150" r="95" fill="none" stroke="#E8E7F2" stroke-opacity="0.14" stroke-dasharray="4 6"/>
+          <path id="loopPath" d="M150,55 A95,95 0 1,1 149.9,55" fill="none" stroke="url(#loopGrad)" stroke-width="2"/>
+          <!-- nodes -->
+          <circle cx="150" cy="55" r="6" fill="#FF7A2F"/>
+          <text x="150" y="38" text-anchor="middle" fill="#E8E7F2" font-family="Space Mono, monospace" font-size="9" letter-spacing="0.5">CUSTOMER</text>
+          <circle cx="245" cy="150" r="6" fill="#A7A6BF"/>
+          <text x="245" y="172" text-anchor="middle" fill="#A7A6BF" font-family="Space Mono, monospace" font-size="9" letter-spacing="0.5">PAGE</text>
+          <circle cx="150" cy="245" r="6" fill="#A7A6BF"/>
+          <text x="150" y="266" text-anchor="middle" fill="#A7A6BF" font-family="Space Mono, monospace" font-size="9" letter-spacing="0.5">BUSINESS</text>
+          <circle cx="55" cy="150" r="6" fill="#A7A6BF"/>
+          <text x="55" y="172" text-anchor="middle" fill="#A7A6BF" font-family="Space Mono, monospace" font-size="9" letter-spacing="0.5">GROWTH</text>
+          <circle r="4.5" fill="#FF7A2F">
+            <animateMotion dur="4.5s" repeatCount="indefinite" path="M150,55 A95,95 0 1,1 149.9,55"/>
+          </circle>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <div class="strip" aria-hidden="true">
+    <div class="strip-track">
+      <span>NO INVESTORS NEEDED</span>
+      <span><b>CUSTOMER</b>-FUNDED GROWTH</span>
+      <span>PAY-IN-ADVANCE PAGES</span>
+      <span>BUILT TO CONVERT</span>
+      <span>PRICED FOR SMALL BUSINESS</span>
+      <span>NO INVESTORS NEEDED</span>
+      <span><b>CUSTOMER</b>-FUNDED GROWTH</span>
+      <span>PAY-IN-ADVANCE PAGES</span>
+      <span>BUILT TO CONVERT</span>
+      <span>PRICED FOR SMALL BUSINESS</span>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">The VC Paradox, Applied Small</p>
+        <h2>You don't need funding. You need a page that gets paid.</h2>
+        <p>Chasing investors — or over-engineering a "platform" before you have a single paying customer — trades real validation for pitching. A landing page skips that entirely: it puts your offer in front of real buyers and lets their money tell you if it works.</p>
+      </div>
+      <div class="philosophy-grid">
+        <div class="panel reveal">
+          <h3><span class="tag">Slow Path</span>Build first, sell later</h3>
+          <p>Months spent on a custom site, a funding round, or a "platform" before a single customer has paid you anything. Feedback arrives late, if ever — and it's expensive to be wrong.</p>
+        </div>
+        <div class="panel hi reveal">
+          <h3><span class="tag">Fast Path</span>Sell first, build from proof</h3>
+          <p>An EasyLandX page goes live in days and starts collecting deposits, bookings, or subscriptions immediately. Every payment is proof the offer works — funded by the people it's actually for.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="models">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">Five Ways a Page Pays for Itself</p>
+        <h2>Every landing page is a funding model in disguise</h2>
+        <p>These five structures work in any fragmented market — and each one maps directly onto how an EasyLandX page can be built to collect cash from day one.</p>
+      </div>
+      <div class="models reveal">
+        <div class="model">
+          <span class="num">01</span>
+          <h3>The Matchmaker Page</h3>
+          <p>Connects buyers and providers directly on the page — a booking form or request flow that earns a fee per match, with zero inventory to hold.</p>
+        </div>
+        <div class="model">
+          <span class="num">02</span>
+          <h3>The Deposit Page</h3>
+          <p>Collects payment or a deposit before any work starts, so the job is funded before you lift a finger — no cash-flow lag, no risk on your side.</p>
+        </div>
+        <div class="model">
+          <span class="num">03</span>
+          <h3>The Subscription Page</h3>
+          <p>Locks in a recurring plan up front — a maintenance contract, a monthly box, a retainer — turning one visit into predictable, repeating revenue.</p>
+        </div>
+        <div class="model">
+          <span class="num">04</span>
+          <h3>The Scarcity Page</h3>
+          <p>A limited slot count or countdown timer creates real urgency, pushing browsers to check out now instead of "maybe later."</p>
+        </div>
+        <div class="model">
+          <span class="num">05</span>
+          <h3>The Service-to-Offer Page</h3>
+          <p>Starts as a simple "book my time" page, then evolves into a packaged offer once real client work has proven exactly what to sell.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">Critical Requirement</p>
+        <h2>None of this works without a real, clear offer</h2>
+        <p>Customer funding only works if the page earns the advance payment. That means the value has to be obvious — not implied — the moment someone lands on it.</p>
+      </div>
+      <div class="takeaways reveal">
+        <div class="tk-row">
+          <span class="status">Why it fails</span>
+          <div class="body">
+            <h3>Funding buffers you from reality</h3>
+            <p>A business that never has to prove its offer to a paying customer can drift for months without knowing if anyone actually wants it. A landing page removes that buffer on day one.</p>
+          </div>
+        </div>
+        <div class="tk-row">
+          <span class="status">Why it works</span>
+          <div class="body">
+            <h3>Clarity earns the advance</h3>
+            <p>To ask someone to pay before delivery, the page has to solve one specific, painful problem so clearly that skipping the wait feels like the obvious choice — that clarity is what EasyLandX pages are built for.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="final" style="border-bottom:none;">
+    <div class="wrap">
+      <p class="eyebrow" style="justify-content:center;">Ready to Collect</p>
+      <h2>Stop pitching investors. Start getting paid by customers <em>who actually want this.</em></h2>
+      <p>No page builder. No template. A landing page built to get you paid before you've spent a cent on anything else.</p>
+      <a class="btn-primary" href="https://easylandx.github.io" target="_blank" rel="noopener">Launch with EasyLandX</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>EasyLandX — Landing Pages Built to Convert</p>
+  </div>
+</footer>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    var items = document.querySelectorAll('.reveal');
+    if('IntersectionObserver' in window){
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          if(entry.isIntersecting){
+            entry.target.classList.add('in');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+      items.forEach(function(el){ io.observe(el); });
+    } else {
+      items.forEach(function(el){ el.classList.add('in'); });
+    }
+  });
+</script>
+
+</body>
+</html>

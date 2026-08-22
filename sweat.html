@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EasyLandX — Landing Pages That Outwork Your Competitor</title>
+<meta name="description" content="EasyLandX builds affordable, conversion-focused landing pages for small businesses. No page builders. No templates. Just pages that win the sale.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy: #0B1729;
+    --navy-deep: #071019;
+    --navy-panel: #122239;
+    --navy-panel-light: #17293f;
+    --red: #E4362F;
+    --red-dim: #7a1f1c;
+    --ivory: #F3EEE2;
+    --ivory-dim: #9FB0C3;
+    --line: rgba(243,238,226,0.12);
+    --display: 'Oswald', sans-serif;
+    --body: 'IBM Plex Sans', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  *{ box-sizing: border-box; margin:0; padding:0; }
+  html{ scroll-behavior: smooth; }
+
+  body{
+    background: var(--navy);
+    color: var(--ivory);
+    font-family: var(--body);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
+
+  a{ color: inherit; }
+  img, svg{ display:block; max-width: 100%; }
+
+  .wrap{ max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+
+  ::selection{ background: var(--red); color: var(--ivory); }
+
+  :focus-visible{
+    outline: 2px solid var(--red);
+    outline-offset: 3px;
+  }
+
+  /* ---------- Eyebrow / mono labels ---------- */
+  .eyebrow{
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .eyebrow::before{
+    content: "";
+    width: 8px; height: 8px;
+    background: var(--red);
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(228,54,47,0.18);
+    flex-shrink: 0;
+  }
+
+  h1, h2, h3{ font-family: var(--display); font-weight: 600; letter-spacing: 0.01em; line-height: 1.08; }
+
+  /* ---------- Top bar ---------- */
+  header{
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(7,16,25,0.86);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav{
+    display:flex; align-items:center; justify-content: space-between;
+    padding: 16px 0;
+  }
+  .brand{
+    font-family: var(--display);
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    display:flex; align-items:center; gap:9px;
+    text-decoration:none;
+  }
+  .brand .dot{ width:9px; height:9px; background: var(--red); }
+  .nav-cta{
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--navy-deep);
+    background: var(--ivory);
+    padding: 10px 18px;
+    text-decoration: none;
+    border: 1px solid var(--ivory);
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .nav-cta:hover{ background: var(--red); border-color: var(--red); color: var(--ivory); }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    position: relative;
+    padding: 96px 0 84px;
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .hero-grid{
+    display:grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 56px;
+    align-items: center;
+  }
+  .hero h1{
+    font-size: clamp(38px, 5.4vw, 62px);
+    color: var(--ivory);
+    text-transform: uppercase;
+  }
+  .hero h1 span{ color: var(--red); }
+  .hero p.lede{
+    font-size: 18px;
+    color: var(--ivory-dim);
+    max-width: 46ch;
+    margin-top: 22px;
+  }
+  .hero-actions{
+    display:flex; gap: 16px; margin-top: 34px; flex-wrap: wrap;
+  }
+  .btn-primary{
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: var(--red);
+    color: var(--ivory);
+    padding: 15px 26px;
+    text-decoration: none;
+    border: 1px solid var(--red);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    display:inline-flex; align-items:center; gap:10px;
+  }
+  .btn-primary:hover{ transform: translateY(-2px); box-shadow: 0 10px 24px rgba(228,54,47,0.28); }
+  .btn-primary::after{ content: "→"; }
+  .btn-secondary{
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ivory-dim);
+    padding: 15px 22px;
+    text-decoration: none;
+    border: 1px solid var(--line);
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .btn-secondary:hover{ border-color: var(--ivory-dim); color: var(--ivory); }
+
+  /* Radar signature */
+  .radar-frame{
+    position: relative;
+    aspect-ratio: 1/1;
+    border: 1px solid var(--line);
+    background: radial-gradient(circle at center, var(--navy-panel) 0%, var(--navy-deep) 78%);
+  }
+  .radar-frame svg{ width:100%; height:100%; }
+  .radar-label{
+    position:absolute; top: 14px; left: 14px;
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em;
+    color: var(--ivory-dim); text-transform: uppercase;
+  }
+  .radar-label.br{ top:auto; left:auto; bottom:14px; right:14px; text-align:right; }
+  .radar-label b{ color: var(--red); font-weight: 500; }
+
+  /* ---------- Ticker strip ---------- */
+  .strip{
+    border-bottom: 1px solid var(--line);
+    background: var(--navy-deep);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .strip-track{
+    display: inline-flex;
+    animation: scroll-strip 32s linear infinite;
+  }
+  .strip-track span{
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ivory-dim);
+    padding: 13px 32px;
+    border-right: 1px solid var(--line);
+  }
+  .strip-track span b{ color: var(--red); font-weight: 500; }
+  @keyframes scroll-strip{ from{ transform: translateX(0); } to{ transform: translateX(-50%); } }
+
+  /* ---------- Section framing ---------- */
+  section{ padding: 92px 0; border-bottom: 1px solid var(--line); }
+  .section-head{ max-width: 640px; margin-bottom: 52px; }
+  .section-head h2{
+    font-size: clamp(28px, 3.6vw, 40px);
+    text-transform: uppercase;
+    color: var(--ivory);
+  }
+  .section-head p{ color: var(--ivory-dim); font-size: 16.5px; margin-top: 16px; }
+
+  .reveal{ opacity: 0; transform: translateY(22px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .reveal.in{ opacity: 1; transform: translateY(0); }
+
+  /* ---------- Philosophy (two column) ---------- */
+  .philosophy-grid{
+    display:grid; grid-template-columns: 1fr 1fr; gap: 44px;
+  }
+  .panel{
+    border: 1px solid var(--line);
+    background: var(--navy-panel);
+    padding: 30px 28px;
+  }
+  .panel.alert{ border-color: rgba(228,54,47,0.4); }
+  .panel h3{
+    font-size: 21px; text-transform: uppercase; margin-bottom: 14px; color: var(--ivory);
+  }
+  .panel h3 .tag{
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    color: var(--red); display:block; margin-bottom: 8px;
+  }
+  .panel p{ color: var(--ivory-dim); font-size: 15px; }
+
+  /* ---------- Rules ---------- */
+  .rules{
+    display:grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+  .rule{
+    background: var(--navy);
+    padding: 32px 26px;
+    transition: background 0.2s ease;
+  }
+  .rule:hover{ background: var(--navy-panel); }
+  .rule .code{
+    font-family: var(--mono); font-size: 12px; color: var(--red);
+    letter-spacing: 0.08em; margin-bottom: 16px; display:block;
+  }
+  .rule h3{ font-size: 19px; text-transform: uppercase; margin-bottom: 12px; }
+  .rule p{ color: var(--ivory-dim); font-size: 14.5px; }
+
+  /* ---------- Checklist / basics ---------- */
+  .basics{
+    border: 1px solid var(--line);
+    background: var(--navy-deep);
+  }
+  .basic-row{
+    display:grid; grid-template-columns: 100px 1fr 1fr;
+    gap: 20px;
+    padding: 20px 26px;
+    border-bottom: 1px solid var(--line);
+    align-items: center;
+  }
+  .basic-row:last-child{ border-bottom: none; }
+  .basic-row .status{
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em;
+    color: var(--red); text-transform: uppercase;
+  }
+  .basic-row .item{ font-family: var(--display); font-size: 16.5px; text-transform: uppercase; color: var(--ivory); }
+  .basic-row .desc{ color: var(--ivory-dim); font-size: 14.5px; }
+  .basic-head{
+    display:grid; grid-template-columns: 100px 1fr 1fr;
+    gap:20px; padding: 14px 26px;
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em;
+    color: var(--ivory-dim); text-transform: uppercase;
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* ---------- Scaling timeline ---------- */
+  .timeline{ position: relative; padding-left: 32px; }
+  .timeline::before{
+    content: ""; position: absolute; left: 6px; top: 6px; bottom: 6px; width: 1px;
+    background: var(--line);
+  }
+  .tl-item{ position: relative; padding-bottom: 40px; }
+  .tl-item:last-child{ padding-bottom: 0; }
+  .tl-item::before{
+    content: ""; position: absolute; left: -32px; top: 4px;
+    width: 11px; height: 11px; border-radius: 50%;
+    background: var(--navy); border: 2px solid var(--red);
+  }
+  .tl-item .code{ font-family: var(--mono); font-size: 11.5px; color: var(--red); letter-spacing: 0.08em; }
+  .tl-item h3{ font-size: 20px; text-transform: uppercase; margin: 8px 0 10px; }
+  .tl-item p{ color: var(--ivory-dim); font-size: 15px; max-width: 62ch; }
+
+  /* ---------- Final CTA ---------- */
+  .final{
+    text-align:center;
+    padding: 110px 0;
+    background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+    border-bottom: none;
+  }
+  .final h2{
+    font-size: clamp(30px, 4.6vw, 50px);
+    text-transform: uppercase;
+    max-width: 16ch; margin: 0 auto;
+  }
+  .final h2 span{ color: var(--red); }
+  .final p{ color: var(--ivory-dim); margin: 20px auto 36px; max-width: 50ch; font-size: 17px; }
+
+  footer{
+    padding: 32px 0;
+    text-align:center;
+  }
+  footer p{
+    font-family: var(--mono); font-size: 12px; color: var(--ivory-dim);
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+
+  @media (max-width: 860px){
+    .hero-grid{ grid-template-columns: 1fr; }
+    .radar-frame{ max-width: 340px; margin: 0 auto; }
+    .philosophy-grid{ grid-template-columns: 1fr; }
+    .rules{ grid-template-columns: 1fr; }
+    .basic-row, .basic-head{ grid-template-columns: 72px 1fr; }
+    .basic-row .desc{ grid-column: 1 / -1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#top"><span class="dot"></span>EASYLANDX</a>
+    <a class="nav-cta" href="https://easylandx.github.io" target="_blank" rel="noopener">Get Your Page →</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero" style="padding-bottom:0; border-bottom:none;">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">Field Report — Local Market</p>
+        <h1>Your competitor still doesn't have a page that <span>converts.</span></h1>
+        <p class="lede">EasyLandX builds fast, affordable, conversion-focused landing pages for small businesses. Not a page builder. Not a template. A page built to win the customer who's comparing you to the guy who never picks up the phone.</p>
+        <div class="hero-actions">
+          <a class="btn-primary" href="https://easylandx.github.io" target="_blank" rel="noopener">Launch with EasyLandX</a>
+          <a class="btn-secondary" href="#basics">See the checklist</a>
+        </div>
+      </div>
+      <div class="radar-frame" aria-hidden="true">
+        <span class="radar-label">SECTOR SCAN</span>
+        <span class="radar-label br">TARGET: <b>LOCAL SERVICE MKT</b></span>
+        <svg viewBox="0 0 300 300">
+          <defs>
+            <radialGradient id="sweep" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#E4362F" stop-opacity="0.55"/>
+              <stop offset="100%" stop-color="#E4362F" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <circle cx="150" cy="150" r="120" fill="none" stroke="#F3EEE2" stroke-opacity="0.14"/>
+          <circle cx="150" cy="150" r="85" fill="none" stroke="#F3EEE2" stroke-opacity="0.14"/>
+          <circle cx="150" cy="150" r="50" fill="none" stroke="#F3EEE2" stroke-opacity="0.14"/>
+          <line x1="150" y1="30" x2="150" y2="270" stroke="#F3EEE2" stroke-opacity="0.1"/>
+          <line x1="30" y1="150" x2="270" y2="150" stroke="#F3EEE2" stroke-opacity="0.1"/>
+          <g transform-origin="150 150">
+            <path d="M150,150 L150,30 A120,120 0 0,1 253.9,90 Z" fill="url(#sweep)"/>
+            <animateTransform attributeName="transform" type="rotate" from="0 150 150" to="360 150 150" dur="6s" repeatCount="indefinite"/>
+          </g>
+          <circle cx="195" cy="100" r="4" fill="#E4362F">
+            <animate attributeName="opacity" values="1;0.2;1" dur="1.8s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="105" cy="195" r="3" fill="#F3EEE2" opacity="0.6"/>
+          <circle cx="150" cy="150" r="3" fill="#F3EEE2"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <div class="strip" aria-hidden="true">
+    <div class="strip-track">
+      <span>NO PAGE BUILDER</span>
+      <span>NO TEMPLATE</span>
+      <span><b>BUILT</b> TO CONVERT</span>
+      <span>LIVE IN DAYS, NOT MONTHS</span>
+      <span>PRICED FOR SMALL BUSINESS</span>
+      <span>NO PAGE BUILDER</span>
+      <span>NO TEMPLATE</span>
+      <span><b>BUILT</b> TO CONVERT</span>
+      <span>LIVE IN DAYS, NOT MONTHS</span>
+      <span>PRICED FOR SMALL BUSINESS</span>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">Market Logic Over Hype</p>
+        <h2>Boring wins. Every time.</h2>
+        <p>Most small businesses lose customers online for the same dull reason: nobody built them a page that does its job. EasyLandX exists because that's a fixable, unglamorous problem — and fixing it uncommonly well beats chasing whatever's trending in web design.</p>
+      </div>
+      <div class="philosophy-grid">
+        <div class="panel reveal">
+          <h3><span class="tag">Status: Ignored</span>The market everyone skips</h3>
+          <p>Lawn care, plumbing, dental clinics, local shops — fragmented, unglamorous, and starving for a page that actually explains what they do and how to book them. No agency wants this work. That's exactly why it's worth doing.</p>
+        </div>
+        <div class="panel alert reveal">
+          <h3><span class="tag">Status: Exposed</span>Your competitor's weak spot</h3>
+          <p>Most local competitors run on a Facebook page, a five-year-old WordPress site, or nothing at all. Slow to load, unclear on price, no clear next step for the visitor. You don't need a groundbreaking site to beat that — you need a page that simply does the job.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="rules">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">Field Rules</p>
+        <h2>Three rules for a landing page that earns its keep</h2>
+        <p>No unnecessary complexity. Every rule below exists to move a visitor toward one decision: contact this business.</p>
+      </div>
+      <div class="rules reveal">
+        <div class="rule">
+          <span class="code">RULE 01</span>
+          <h3>One job per page</h3>
+          <p>A landing page isn't a brand site. It exists to answer one question — "can this business solve my problem?" — and end with one clear action. Everything else is noise.</p>
+        </div>
+        <div class="rule">
+          <span class="code">RULE 02</span>
+          <h3>Local trust, built in</h3>
+          <p>Real photos, a real phone number, a real service area up top. Global competitors can't fake local proximity — your page shouldn't hide it either.</p>
+        </div>
+        <div class="rule">
+          <span class="code">RULE 03</span>
+          <h3>Fast beats fancy</h3>
+          <p>A page that loads in under two seconds on a work truck's phone signal outperforms a beautiful page that doesn't. Speed is a conversion feature, not a technical detail.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="basics">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">Standard Operating Procedure</p>
+        <h2>Excellence in the basics is the edge</h2>
+        <p>You don't need proprietary technology to win a local market. You need to consistently do the basics your competitor skips. Here's what that looks like on the page itself.</p>
+      </div>
+      <div class="basics reveal">
+        <div class="basic-head">
+          <span>Status</span><span>Basic</span><span>Why it converts</span>
+        </div>
+        <div class="basic-row">
+          <span class="status">Fixed</span>
+          <span class="item">Click-to-call</span>
+          <span class="desc">The phone number is a real button, not a line of text — answered within three rings, or the visitor moves on.</span>
+        </div>
+        <div class="basic-row">
+          <span class="status">Fixed</span>
+          <span class="item">Clear pricing</span>
+          <span class="desc">A visible price range or quote form removes the guesswork that sends visitors straight to a competitor.</span>
+        </div>
+        <div class="basic-row">
+          <span class="status">Fixed</span>
+          <span class="item">Instant booking</span>
+          <span class="desc">A simple form or scheduler beats "call us during business hours" every time a visitor is browsing at 9pm.</span>
+        </div>
+        <div class="basic-row">
+          <span class="status">Fixed</span>
+          <span class="item">Proof of work</span>
+          <span class="desc">Real reviews and before/after results, placed where the decision actually happens — not buried on a separate page.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">From Technician to Operator</p>
+        <h2>How a page grows with the business</h2>
+        <p>The same page that gets a business its first ten customers shouldn't stay static. EasyLandX pages are built to scale with you.</p>
+      </div>
+      <div class="timeline reveal">
+        <div class="tl-item">
+          <span class="code">STAGE 01</span>
+          <h3>Crawl — get the basics live</h3>
+          <p>A single, focused page: what you do, who it's for, how to reach you. Live in days, priced so a one-person business can justify it on day one.</p>
+        </div>
+        <div class="tl-item">
+          <span class="code">STAGE 02</span>
+          <h3>Walk — sharpen what converts</h3>
+          <p>Once leads are coming in, we tighten the page around what's actually working — the offer, the proof, the call to action — instead of guessing.</p>
+        </div>
+        <div class="tl-item">
+          <span class="code">STAGE 03</span>
+          <h3>Run — systemize for growth</h3>
+          <p>Booking, quotes, and follow-up run on systems, not memory. The page becomes an asset that keeps working while you run the business, not the other way around.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="final" style="border-bottom:none;">
+    <div class="wrap">
+      <p class="eyebrow" style="justify-content:center;">Mission Brief Complete</p>
+      <h2>Stop losing customers to a competitor with a worse business and a better page. <span>Get yours.</span></h2>
+      <p>No page builder. No template. Just a landing page built to convert — live fast, priced fair.</p>
+      <a class="btn-primary" href="https://easylandx.github.io" target="_blank" rel="noopener">Launch with EasyLandX</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>EasyLandX — Landing Pages Built to Convert</p>
+  </div>
+</footer>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    var items = document.querySelectorAll('.reveal');
+    if('IntersectionObserver' in window){
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          if(entry.isIntersecting){
+            entry.target.classList.add('in');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+      items.forEach(function(el){ io.observe(el); });
+    } else {
+      items.forEach(function(el){ el.classList.add('in'); });
+    }
+  });
+</script>
+
+</body>
+</html>

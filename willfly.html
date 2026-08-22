@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EasyLandX — Validate Before You Build</title>
+<meta name="description" content="EasyLandX tests your landing page for real buying intent before the full build — so you never launch a page nobody wanted.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Work+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue: #0B2E52;
+    --blue-deep: #071D38;
+    --blue-panel: #123B66;
+    --blue-panel-light: #16487C;
+    --green: #3ADD84;
+    --amber: #F5B942;
+    --red: #E4483F;
+    --canvas: #EAF3FB;
+    --canvas-dim: #9DBFDC;
+    --line: rgba(234,243,251,0.14);
+    --display: 'Sora', sans-serif;
+    --body: 'Work Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ scroll-behavior: smooth; }
+  body{ background: var(--blue); color: var(--canvas); font-family: var(--body); line-height: 1.65; overflow-x:hidden; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
+
+  a{ color: inherit; }
+  img, svg{ display:block; max-width:100%; }
+  .wrap{ max-width: 1140px; margin: 0 auto; padding: 0 28px; }
+  ::selection{ background: var(--green); color: var(--blue-deep); }
+  :focus-visible{ outline: 2px solid var(--green); outline-offset: 3px; }
+
+  .eyebrow{
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--green); display:flex; align-items:center; gap:10px; margin-bottom:18px;
+  }
+  .eyebrow::before{ content:"▲"; font-size: 10px; }
+
+  h1,h2,h3{ font-family: var(--display); font-weight: 600; letter-spacing: -0.01em; line-height: 1.12; }
+
+  header{ position: sticky; top:0; z-index:50; background: rgba(7,29,56,0.86); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+  .nav{ display:flex; align-items:center; justify-content:space-between; padding:16px 0; }
+  .brand{ font-family: var(--display); font-size:19px; font-weight:700; display:flex; align-items:center; gap:9px; text-decoration:none; }
+  .brand .dot{ width:9px; height:9px; background: var(--green); border-radius:50%; box-shadow: 0 0 8px var(--green); }
+  .nav-cta{
+    font-family: var(--mono); font-size:12.5px; letter-spacing:0.03em;
+    color: var(--blue-deep); background: var(--green);
+    padding: 10px 18px; text-decoration:none; border-radius: 3px;
+    transition: opacity 0.15s ease;
+  }
+  .nav-cta:hover{ opacity:0.85; }
+
+  /* Hero */
+  .hero{ padding: 96px 0 84px; border-bottom: 1px solid var(--line); }
+  .hero-grid{ display:grid; grid-template-columns: 1.1fr 0.9fr; gap:60px; align-items:center; }
+  .hero h1{ font-size: clamp(36px, 5.2vw, 58px); color: var(--canvas); }
+  .hero h1 em{ font-style:normal; color: var(--green); }
+  .hero p.lede{ font-size:18px; color: var(--canvas-dim); max-width: 48ch; margin-top:22px; }
+  .hero-actions{ display:flex; gap:16px; margin-top:34px; flex-wrap:wrap; }
+  .btn-primary{
+    font-family: var(--mono); font-size:13px; letter-spacing:0.02em;
+    background: var(--green); color: var(--blue-deep);
+    padding: 15px 26px; text-decoration:none; border-radius: 3px;
+    display:inline-flex; align-items:center; gap:10px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn-primary:hover{ transform: translateY(-2px); box-shadow: 0 10px 26px rgba(58,221,132,0.28); }
+  .btn-primary::after{ content:"→"; }
+  .btn-secondary{
+    font-family: var(--mono); font-size:13px; letter-spacing:0.02em;
+    color: var(--canvas-dim); padding: 15px 22px; text-decoration:none;
+    border: 1px solid var(--line); border-radius: 3px;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .btn-secondary:hover{ border-color: var(--canvas-dim); color: var(--canvas); }
+
+  /* Instrument panel */
+  .instrument-frame{
+    position:relative; aspect-ratio: 1/1;
+    border: 1px solid var(--line); border-radius: 8px;
+    background: radial-gradient(circle at center, var(--blue-panel) 0%, var(--blue-deep) 78%);
+  }
+  .instr-label{ position:absolute; top:14px; left:14px; font-family: var(--mono); font-size:10.5px; letter-spacing:0.08em; color: var(--canvas-dim); text-transform: uppercase; }
+  .instr-label.br{ top:auto; left:auto; bottom:14px; right:14px; text-align:right; }
+  .instr-label b{ color: var(--green); font-weight:500; }
+
+  /* Ticker */
+  .strip{ border-bottom: 1px solid var(--line); background: var(--blue-deep); overflow:hidden; white-space:nowrap; }
+  .strip-track{ display:inline-flex; animation: scroll-strip 34s linear infinite; }
+  .strip-track span{ font-family: var(--mono); font-size:12px; letter-spacing:0.04em; text-transform:uppercase; color: var(--canvas-dim); padding:13px 32px; border-right: 1px solid var(--line); }
+  .strip-track span b{ color: var(--green); }
+  @keyframes scroll-strip{ from{ transform: translateX(0);} to{ transform: translateX(-50%);} }
+
+  section{ padding: 92px 0; border-bottom: 1px solid var(--line); }
+  .section-head{ max-width: 660px; margin-bottom: 52px; }
+  .section-head h2{ font-size: clamp(28px, 3.6vw, 40px); color: var(--canvas); }
+  .section-head p{ color: var(--canvas-dim); font-size: 16.5px; margin-top: 16px; }
+
+  .reveal{ opacity:0; transform: translateY(22px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .reveal.in{ opacity:1; transform: translateY(0); }
+
+  /* Airport test panel */
+  .philosophy-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:44px; }
+  .panel{ border: 1px solid var(--line); background: var(--blue-panel); padding: 30px 28px; border-radius: 8px; }
+  .panel.hi{ border-color: rgba(58,221,132,0.4); }
+  .panel h3{ font-size:21px; margin-bottom:14px; color: var(--canvas); }
+  .panel h3 .tag{ font-family: var(--mono); font-size:11px; letter-spacing:0.05em; color: var(--green); display:block; margin-bottom:8px; text-transform: uppercase; }
+  .panel p{ color: var(--canvas-dim); font-size:15px; }
+
+  /* Flight plan checklist - boarding pass style */
+  .checklist{ display:flex; flex-direction: column; gap: 18px; }
+  .stub{
+    display:grid; grid-template-columns: 74px 1fr 130px;
+    border: 1px solid var(--line); border-radius: 8px; overflow:hidden;
+    background: var(--blue-panel);
+  }
+  .stub .seq{
+    background: var(--blue-panel-light);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-family: var(--mono); color: var(--green); font-size: 13px; letter-spacing: 0.04em;
+    border-right: 1px dashed var(--line);
+  }
+  .stub .seq span{ font-size: 22px; font-family: var(--display); color: var(--canvas); font-weight:700; }
+  .stub .content{ padding: 22px 24px; }
+  .stub .content h3{ font-size: 18.5px; margin-bottom: 8px; color: var(--canvas); }
+  .stub .content p{ color: var(--canvas-dim); font-size: 14.5px; }
+  .stub .gate{
+    border-left: 1px dashed var(--line);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform:uppercase; color: var(--canvas-dim);
+    padding: 12px;
+  }
+  .stub .gate b{ color: var(--green); font-size: 12px; }
+
+  /* Go/No-Go lights */
+  .lights{ display:grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow:hidden; }
+  .light-card{ background: var(--blue-deep); padding: 30px 26px; text-align:center; }
+  .light-card .bulb{ width: 22px; height: 22px; border-radius: 50%; margin: 0 auto 18px; }
+  .light-card.go .bulb{ background: var(--green); box-shadow: 0 0 22px var(--green); }
+  .light-card.caution .bulb{ background: var(--amber); box-shadow: 0 0 18px rgba(245,185,66,0.5); }
+  .light-card.stop .bulb{ background: var(--red); box-shadow: 0 0 18px rgba(228,72,63,0.5); }
+  .light-card h3{ font-size: 17px; color: var(--canvas); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.02em; }
+  .light-card p{ color: var(--canvas-dim); font-size: 14px; }
+
+  /* Final */
+  .final{ text-align:center; padding: 110px 0; background: linear-gradient(180deg, var(--blue) 0%, var(--blue-deep) 100%); border-bottom:none; }
+  .final h2{ font-size: clamp(30px, 4.6vw, 50px); max-width: 20ch; margin:0 auto; color: var(--canvas); }
+  .final h2 em{ font-style:normal; color: var(--green); }
+  .final p{ color: var(--canvas-dim); margin: 20px auto 36px; max-width: 50ch; font-size:17px; }
+
+  footer{ padding: 32px 0; text-align:center; }
+  footer p{ font-family: var(--mono); font-size:12px; color: var(--canvas-dim); letter-spacing:0.04em; text-transform: uppercase; }
+
+  @media (max-width: 900px){
+    .hero-grid{ grid-template-columns: 1fr; }
+    .instrument-frame{ max-width: 340px; margin: 0 auto; }
+    .philosophy-grid{ grid-template-columns: 1fr; }
+    .stub{ grid-template-columns: 60px 1fr; }
+    .stub .gate{ display:none; }
+    .lights{ grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#top"><span class="dot"></span>EASYLANDX</a>
+    <a class="nav-cta" href="https://easylandx.github.io" target="_blank" rel="noopener">Get Your Page →</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero" style="border-bottom:none; padding-bottom:0;">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">Preflight — Validation Check</p>
+        <h1>Before we build, we find out if it'll <em>fly.</em></h1>
+        <p class="lede">Most landing pages fail for the same reason most businesses fail: nobody checked if customers actually wanted this before building it. EasyLandX runs every page through a short validation flight before the full build — so you launch pages that were already proven to work.</p>
+        <div class="hero-actions">
+          <a class="btn-primary" href="https://easylandx.github.io" target="_blank" rel="noopener">Launch with EasyLandX</a>
+          <a class="btn-secondary" href="#checklist">See the checklist</a>
+        </div>
+      </div>
+      <div class="instrument-frame" aria-hidden="true">
+        <span class="instr-label">Flight Instrument</span>
+        <span class="instr-label br">Status: <b>Cleared</b></span>
+        <svg viewBox="0 0 300 300">
+          <circle cx="150" cy="150" r="110" fill="none" stroke="#EAF3FB" stroke-opacity="0.12"/>
+          <circle cx="150" cy="150" r="85" fill="none" stroke="#EAF3FB" stroke-opacity="0.1"/>
+          <g stroke="#EAF3FB" stroke-opacity="0.25">
+            <line x1="150" y1="42" x2="150" y2="58"/>
+            <line x1="150" y1="242" x2="150" y2="258"/>
+            <line x1="42" y1="150" x2="58" y2="150"/>
+            <line x1="242" y1="150" x2="258" y2="150"/>
+          </g>
+          <g transform-origin="150 150">
+            <line x1="150" y1="150" x2="150" y2="65" stroke="#3ADD84" stroke-width="3" stroke-linecap="round"/>
+            <animateTransform attributeName="transform" type="rotate" values="0 150 150; 30 150 150; -18 150 150; 12 150 150; 0 150 150" dur="7s" repeatCount="indefinite"/>
+          </g>
+          <circle cx="150" cy="150" r="6" fill="#EAF3FB"/>
+          <!-- go/no-go lights row -->
+          <circle cx="120" cy="230" r="6" fill="#E4483F" opacity="0.35"/>
+          <circle cx="150" cy="230" r="6" fill="#F5B942" opacity="0.35"/>
+          <circle cx="180" cy="230" r="6" fill="#3ADD84">
+            <animate attributeName="opacity" values="1;0.4;1" dur="1.6s" repeatCount="indefinite"/>
+          </circle>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <div class="strip" aria-hidden="true">
+    <div class="strip-track">
+      <span>VALIDATE FIRST</span>
+      <span><b>BUILD</b> WHAT'S PROVEN</span>
+      <span>PRE-SELL BEFORE FULL BUILD</span>
+      <span>NO WASTED BUDGET</span>
+      <span>PRICED FOR SMALL BUSINESS</span>
+      <span>VALIDATE FIRST</span>
+      <span><b>BUILD</b> WHAT'S PROVEN</span>
+      <span>PRE-SELL BEFORE FULL BUILD</span>
+      <span>NO WASTED BUDGET</span>
+      <span>PRICED FOR SMALL BUSINESS</span>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">The Airport Test</p>
+        <h2>Does this page actually serve the business you're trying to build?</h2>
+        <p>Before touching design or copy, we ask a simple question: five years from now, does this page — and the customers it brings in — support the business you actually want to be running? If it doesn't fit that picture, it's not worth building well.</p>
+      </div>
+      <div class="philosophy-grid">
+        <div class="panel reveal">
+          <h3><span class="tag">Skip This</span>Building on assumption</h3>
+          <p>A page built around what you assume customers want, launched without ever checking, is a bet made with real time and real budget — and it's the single biggest reason small-business pages go live and go quiet.</p>
+        </div>
+        <div class="panel hi reveal">
+          <h3><span class="tag">Do This</span>Building on evidence</h3>
+          <p>A page tested against real buying intent before the full build means every dollar spent on design and copy goes toward something already shown to convert — not a guess dressed up nicely.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="checklist">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">The Flight Plan</p>
+        <h2>Five checkpoints before your page goes live</h2>
+        <p>Every EasyLandX build moves through the same sequence — each checkpoint has to clear before we move to the next.</p>
+      </div>
+      <div class="checklist reveal">
+        <div class="stub">
+          <div class="seq">01<span>✓</span></div>
+          <div class="content">
+            <h3>Mission design</h3>
+            <p>We map the page against your five-year picture of the business — the lifestyle, income, and customers you actually want — before designing a single section.</p>
+          </div>
+          <div class="gate">Checkpoint<b>Alignment</b></div>
+        </div>
+        <div class="stub">
+          <div class="seq">02<span>✓</span></div>
+          <div class="content">
+            <h3>Competitor scan</h3>
+            <p>We map the three businesses already winning your customers online, and find the specific gap in their pages — the thing they're not saying — that yours will say instead.</p>
+          </div>
+          <div class="gate">Checkpoint<b>Market</b></div>
+        </div>
+        <div class="stub">
+          <div class="seq">03<span>✓</span></div>
+          <div class="content">
+            <h3>Customer profile</h3>
+            <p>We pull the exact words your customers use for their problem, their goal, and what finally gets them to act — pulled from where they actually talk, not guessed at a desk.</p>
+          </div>
+          <div class="gate">Checkpoint<b>Audience</b></div>
+        </div>
+        <div class="stub">
+          <div class="seq">04<span>✓</span></div>
+          <div class="content">
+            <h3>The test flight</h3>
+            <p>A lean version of the page goes live first, built around a one-sentence pitch, with real bookings or deposits as the only proof that counts — not clicks, not signups.</p>
+          </div>
+          <div class="gate">Checkpoint<b>Proof</b></div>
+        </div>
+        <div class="stub">
+          <div class="seq">05<span>✓</span></div>
+          <div class="content">
+            <h3>The decision</h3>
+            <p>The results decide what happens next — build out in full, adjust the offer and retest, or walk away clean before more time or budget is spent.</p>
+          </div>
+          <div class="gate">Checkpoint<b>Go/No-Go</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">The Instrument Panel</p>
+        <h2>Every test ends with a clear reading</h2>
+        <p>No guessing games. Once real customers respond to the test page, the data points to exactly one of three moves.</p>
+      </div>
+      <div class="lights reveal">
+        <div class="light-card go">
+          <div class="bulb"></div>
+          <h3>Green light</h3>
+          <p>Bookings or pre-orders hit the target. We move straight into the full build.</p>
+        </div>
+        <div class="light-card caution">
+          <div class="bulb"></div>
+          <h3>Caution</h3>
+          <p>Interest is there but mixed. We adjust the offer or audience and test again.</p>
+        </div>
+        <div class="light-card stop">
+          <div class="bulb"></div>
+          <h3>Hold</h3>
+          <p>No real buying intent. We stop here — before a single extra hour or dollar is spent.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="final" style="border-bottom:none;">
+    <div class="wrap">
+      <p class="eyebrow" style="justify-content:center;">Cleared for Takeoff</p>
+      <h2>Stop guessing if your page will work. <em>Test it, then launch it.</em></h2>
+      <p>No page builder. No template. A landing page validated with real customers before you ever commit to the full build.</p>
+      <a class="btn-primary" href="https://easylandx.github.io" target="_blank" rel="noopener">Launch with EasyLandX</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>EasyLandX — Landing Pages Built to Convert</p>
+  </div>
+</footer>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    var items = document.querySelectorAll('.reveal');
+    if('IntersectionObserver' in window){
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          if(entry.isIntersecting){
+            entry.target.classList.add('in');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+      items.forEach(function(el){ io.observe(el); });
+    } else {
+      items.forEach(function(el){ el.classList.add('in'); });
+    }
+  });
+</script>
+
+</body>
+</html>
