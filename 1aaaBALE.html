@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BALENCIAGA — This Is Not a Drill, It's a Trash Bag</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,500;1,9..144,700&family=Space+Grotesk:wght@400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ivory:#FBF3E4;
+    --parchment:#F1E6CE;
+    --parchment-2:#EADFC4;
+    --ink:#241C15;
+    --ink-soft:#4A3F32;
+    --gold:#AD8A2E;
+    --gold-bright:#D8B24A;
+    --shock:#FF2E7E;
+    --acid:#B9D400;
+    --line: rgba(36,28,21,0.16);
+    --shadow: 0 18px 40px rgba(36,28,21,0.14);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse at 15% 0%, rgba(216,178,74,0.16), transparent 45%),
+      radial-gradient(ellipse at 85% 15%, rgba(255,46,126,0.08), transparent 40%),
+      var(--ivory);
+    color:var(--ink);
+    font-family:'Space Grotesk', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; scroll-behavior:auto !important;}
+  }
+  a{color:inherit;}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 28px;}
+  h1,h2,h3{font-family:'Fraunces', serif; margin:0; letter-spacing:-0.01em;}
+  .eyebrow{
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{content:''; width:22px; height:1px; background:var(--gold); display:inline-block;}
+
+  /* ---------- NAV / MARQUEE ---------- */
+  .ticker{
+    background:var(--ink);
+    color:var(--ivory);
+    overflow:hidden;
+    white-space:nowrap;
+    border-bottom:1px solid var(--gold);
+  }
+  .ticker__track{
+    display:inline-block;
+    padding-left:100%;
+    animation:ticker 32s linear infinite;
+    font-family:'Space Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    padding-top:9px; padding-bottom:9px;
+  }
+  .ticker__track span{margin:0 26px; opacity:0.9;}
+  .ticker__track span.hot{color:var(--shock);}
+  @keyframes ticker{ 0%{transform:translateX(0);} 100%{transform:translateX(-100%);} }
+
+  nav{
+    position:sticky; top:0; z-index:40;
+    background:rgba(251,243,228,0.92);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  nav .wrap{display:flex; align-items:center; justify-content:space-between; height:66px;}
+  .wordmark{font-family:'Fraunces', serif; font-weight:700; font-size:20px; letter-spacing:0.02em;}
+  .wordmark em{font-style:italic; color:var(--shock); font-weight:500;}
+  .navlinks{display:flex; gap:28px; font-size:13px; font-family:'Space Mono', monospace; text-transform:uppercase; letter-spacing:0.08em;}
+  .navlinks a{text-decoration:none; border-bottom:1px solid transparent; padding-bottom:3px; transition:border-color .2s;}
+  .navlinks a:hover{border-color:var(--shock);}
+  @media (max-width:720px){.navlinks{display:none;}}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;
+    padding:96px 0 70px;
+    text-align:center;
+    overflow:visible;
+  }
+  .hero .string{
+    width:1px; height:64px; background:var(--ink-soft); margin:0 auto;
+  }
+  .swing-wrap{
+    display:inline-block;
+    transform-origin: top center;
+    animation: swing 5.5s ease-in-out infinite;
+  }
+  @keyframes swing{
+    0%,100%{transform:rotate(-3.2deg);}
+    50%{transform:rotate(3.2deg);}
+  }
+  .tag{
+    margin-top:-2px;
+    display:inline-flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    background:var(--parchment);
+    border:1.5px solid var(--ink);
+    border-radius:10px 34px 10px 34px;
+    padding:26px 40px 22px;
+    box-shadow:var(--shadow);
+    position:relative;
+  }
+  .tag::before{
+    content:'';
+    position:absolute; top:14px; right:20px;
+    width:10px; height:10px; border-radius:50%;
+    border:1.5px solid var(--ink);
+    background:var(--ivory);
+  }
+  .tag .price{
+    font-family:'Space Mono', monospace;
+    font-weight:700;
+    font-size:15px;
+    color:var(--shock);
+    letter-spacing:0.05em;
+  }
+  .tag h1{
+    font-size:clamp(52px, 10vw, 118px);
+    line-height:0.92;
+    font-weight:900;
+  }
+  .tag .sub{
+    font-family:'Space Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  .hero p.deck{
+    max-width:560px;
+    margin:34px auto 0;
+    font-size:19px;
+    line-height:1.55;
+    color:var(--ink-soft);
+    font-weight:400;
+  }
+  .hero p.deck b{color:var(--ink); font-weight:600;}
+  .hero-ctas{margin-top:30px; display:flex; gap:14px; justify-content:center; flex-wrap:wrap;}
+  .btn{
+    font-family:'Space Mono', monospace;
+    font-size:12px; text-transform:uppercase; letter-spacing:0.1em;
+    padding:13px 22px; border-radius:999px; text-decoration:none;
+    border:1.5px solid var(--ink); cursor:pointer;
+    transition:transform .18s ease, background .18s ease, color .18s ease;
+    background:transparent;
+  }
+  .btn:hover{transform:translateY(-2px);}
+  .btn.solid{background:var(--ink); color:var(--ivory);}
+  .btn.solid:hover{background:var(--shock); border-color:var(--shock);}
+  .btn.ghost:hover{background:var(--ink); color:var(--ivory);}
+
+  section{padding:86px 0;}
+  .divider{height:1px; background:var(--line); max-width:1180px; margin:0 auto;}
+
+  /* ---------- SECTION HEADS ---------- */
+  .section-head{max-width:640px; margin-bottom:48px;}
+  .section-head h2{font-size:clamp(32px,4vw,46px); margin-top:14px; font-weight:700;}
+  .section-head p{color:var(--ink-soft); font-size:16px; line-height:1.6; margin-top:14px;}
+
+  /* ---------- TIMELINE (real history) ---------- */
+  .timeline{position:relative; padding-left:2px;}
+  .timeline::before{
+    content:''; position:absolute; left:104px; top:6px; bottom:6px; width:1px;
+    background:repeating-linear-gradient(to bottom, var(--gold) 0 6px, transparent 6px 12px);
+  }
+  @media (max-width:640px){.timeline::before{left:70px;}}
+  .tl-row{
+    display:grid;
+    grid-template-columns:104px 26px 1fr;
+    gap:0 22px;
+    align-items:start;
+    padding:22px 0;
+    border-bottom:1px dashed var(--line);
+  }
+  @media (max-width:640px){.tl-row{grid-template-columns:70px 20px 1fr;}}
+  .tl-row:last-child{border-bottom:none;}
+  .tl-year{
+    font-family:'Space Mono', monospace; font-weight:700; font-size:15px; color:var(--gold);
+    padding-top:2px;
+  }
+  .tl-dot{
+    width:11px; height:11px; border-radius:50%; background:var(--ivory);
+    border:2px solid var(--ink); margin-top:5px; justify-self:center;
+  }
+  .tl-row.spice .tl-dot{background:var(--shock); border-color:var(--shock);}
+  .tl-title{font-family:'Fraunces', serif; font-weight:600; font-size:19px; margin-bottom:6px;}
+  .tl-body{color:var(--ink-soft); font-size:15px; line-height:1.6; max-width:640px;}
+  .tl-tag{
+    display:inline-block; margin-top:10px;
+    font-family:'Space Mono', monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.08em;
+    color:var(--shock); border:1px solid var(--shock); border-radius:999px; padding:3px 10px;
+  }
+
+  /* ---------- ARCHIVE / PRODUCT CARDS ---------- */
+  .archive-grid{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:22px;
+  }
+  @media (max-width:900px){.archive-grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:600px){.archive-grid{grid-template-columns:1fr;}}
+  .card{
+    background:var(--parchment);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:26px;
+    position:relative;
+    overflow:hidden;
+    transition:transform .25s ease, box-shadow .25s ease;
+  }
+  .card:hover{transform:translateY(-6px); box-shadow:var(--shadow);}
+  .card .icon-stage{
+    height:120px; display:flex; align-items:center; justify-content:center; margin-bottom:16px;
+  }
+  .card h3{font-size:20px; font-weight:600; margin-bottom:8px;}
+  .card p{font-size:14.5px; line-height:1.55; color:var(--ink-soft); margin:0 0 16px;}
+  .card .price-row{
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'Space Mono', monospace; font-size:13px;
+    border-top:1px dashed var(--line); padding-top:14px;
+  }
+  .card .price-row .p{color:var(--shock); font-weight:700;}
+  .card .badge{
+    position:absolute; top:16px; right:16px;
+    font-family:'Space Mono', monospace; font-size:10px; text-transform:uppercase;
+    background:var(--ink); color:var(--ivory); padding:3px 9px; border-radius:999px; letter-spacing:.06em;
+  }
+
+  /* tiny css "icons" */
+  .icn{width:88px; height:88px; position:relative;}
+  .icn-bag{
+    width:72px; height:64px; margin:0 auto; background:var(--ink);
+    border-radius:6px 6px 14px 14px; position:relative; opacity:.92;
+    clip-path: polygon(6% 0%, 94% 0%, 100% 100%, 0% 100%);
+  }
+  .icn-bag::before{
+    content:''; position:absolute; top:-16px; left:22px; width:28px; height:20px;
+    border:5px solid var(--ink); border-bottom:none; border-radius:14px 14px 0 0;
+  }
+  .icn-ikea{
+    width:70px; height:60px; margin:0 auto; background:#0a5eb0; border-radius:4px 4px 10px 10px;
+    clip-path: polygon(8% 0%, 92% 0%, 100% 100%, 0% 100%); position:relative;
+  }
+  .icn-ikea::after{content:'99¢?';position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Space Mono',monospace; font-size:11px; font-weight:700;}
+  .icn-sneaker{
+    width:86px; height:34px; margin:26px auto 0; background:var(--ink);
+    border-radius:4px 30px 30px 4px; position:relative;
+  }
+  .icn-sneaker::before{
+    content:''; position:absolute; left:8px; top:-9px; width:60px; height:14px;
+    background:repeating-linear-gradient(100deg, transparent 0 5px, var(--parchment) 5px 6px);
+    opacity:.8;
+  }
+  .icn-sweats{
+    width:74px; height:70px; margin:8px auto 0; background:var(--ink); border-radius:10px 10px 4px 4px;
+    position:relative;
+  }
+  .icn-sweats::after{
+    content:''; position:absolute; left:14px; top:8px; width:46px; height:14px;
+    background:repeating-linear-gradient(45deg, var(--acid) 0 4px, var(--ink) 4px 8px);
+    border-radius:3px;
+  }
+  .icn-croc{
+    width:80px; height:46px; margin:20px auto 0; background:var(--gold-bright);
+    border-radius:40px 40px 14px 14px; position:relative;
+  }
+  .icn-croc::before, .icn-croc::after{
+    content:''; position:absolute; top:14px; width:8px; height:8px; background:var(--ivory);
+    border-radius:50%;
+  }
+  .icn-croc::before{left:18px;} .icn-croc::after{left:36px;}
+  .icn-sleeve{
+    width:14px; height:88px; background:var(--ink); margin:0 auto; border-radius:8px;
+    position:relative;
+  }
+  .icn-sleeve::after{
+    content:'∞'; position:absolute; bottom:-22px; left:50%; transform:translateX(-50%);
+    font-family:'Fraunces',serif; font-style:italic; font-size:22px; color:var(--gold);
+  }
+
+  /* ---------- GENIUS / SILHOUETTES real history ---------- */
+  .silhouettes{
+    background:var(--ink); color:var(--ivory); border-radius:26px; padding:56px 44px;
+  }
+  .silhouettes .section-head p{color:rgba(251,243,228,0.72);}
+  .silhouettes .section-head .eyebrow{color:var(--gold-bright);}
+  .silhouettes .section-head .eyebrow::before{background:var(--gold-bright);}
+  .si-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:18px;}
+  @media (max-width:900px){.si-grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:520px){.si-grid{grid-template-columns:1fr;}}
+  .si-card{
+    background:rgba(251,243,228,0.06); border:1px solid rgba(251,243,228,0.16);
+    border-radius:14px; padding:20px; text-align:left;
+  }
+  .si-card .yr{font-family:'Space Mono',monospace; color:var(--gold-bright); font-size:12px;}
+  .si-card h4{font-family:'Fraunces',serif; font-size:18px; margin:8px 0 6px; font-weight:600;}
+  .si-card p{font-size:13.5px; color:rgba(251,243,228,0.7); line-height:1.5; margin:0;}
+
+  /* ---------- STATS ---------- */
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:20px;}
+  @media (max-width:800px){.stats{grid-template-columns:repeat(2,1fr);}}
+  .stat{
+    text-align:center; padding:30px 14px; border:1px solid var(--line); border-radius:16px;
+    background:linear-gradient(180deg, var(--parchment), var(--parchment-2));
+  }
+  .stat .num{font-family:'Fraunces',serif; font-weight:800; font-size:40px; color:var(--ink);}
+  .stat .lbl{font-family:'Space Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-soft); margin-top:6px;}
+
+  /* ---------- DIRECTORS STRIP ---------- */
+  .directors{
+    display:flex; overflow-x:auto; gap:16px; padding-bottom:10px;
+    scrollbar-width:thin;
+  }
+  .dcard{
+    flex:0 0 220px; background:var(--parchment); border:1px solid var(--line); border-radius:16px; padding:20px;
+  }
+  .dcard .dot{width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--ivory);
+    display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;margin-bottom:12px;}
+  .dcard h4{font-family:'Fraunces',serif; font-size:16px; margin:0 0 4px; font-weight:600;}
+  .dcard .yrs{font-family:'Space Mono',monospace; font-size:11px; color:var(--gold); margin-bottom:8px; display:block;}
+  .dcard p{font-size:13px; color:var(--ink-soft); line-height:1.5; margin:0;}
+
+  /* ---------- GENERATOR (signature interactive) ---------- */
+  .generator{
+    background:var(--parchment);
+    border:1.5px dashed var(--ink);
+    border-radius:24px;
+    padding:52px 40px;
+    text-align:center;
+  }
+  .generator .readout{
+    margin:30px auto 0;
+    max-width:620px;
+    background:var(--ivory);
+    border:1.5px solid var(--ink);
+    border-radius:14px;
+    padding:28px 30px;
+    min-height:118px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  }
+  .generator .readout .item{
+    font-family:'Fraunces',serif; font-weight:700; font-size:24px;
+  }
+  .generator .readout .just{
+    font-size:14px; color:var(--ink-soft); font-style:italic; max-width:480px;
+  }
+  .generator .readout .price{
+    font-family:'Space Mono',monospace; font-weight:700; color:var(--shock); font-size:15px; margin-top:4px;
+  }
+  #genBtn{margin-top:26px;}
+
+  /* ---------- FOOTER / RECEIPT ---------- */
+  footer{
+    background:var(--ink); color:var(--ivory); padding:64px 0 40px; margin-top:20px;
+    border-top:4px solid var(--gold);
+  }
+  .receipt{
+    font-family:'Space Mono', monospace;
+    background:var(--ivory); color:var(--ink);
+    max-width:420px; margin:0 auto 40px; padding:26px 24px;
+    border-radius:4px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.35);
+    font-size:12.5px;
+    position:relative;
+  }
+  .receipt::after{
+    content:'';
+    position:absolute; left:0; right:0; bottom:-9px; height:18px;
+    background:
+      linear-gradient(-45deg, var(--ivory) 8px, transparent 0) 0 0/16px 16px repeat-x,
+      linear-gradient(45deg, var(--ivory) 8px, transparent 0) 0 0/16px 16px repeat-x;
+  }
+  .receipt h5{margin:0 0 10px; text-align:center; font-family:'Fraunces',serif; font-size:16px; letter-spacing:.02em;}
+  .receipt .rline{display:flex; justify-content:space-between; padding:4px 0;}
+  .receipt .rtot{border-top:1px dashed var(--ink); margin-top:8px; padding-top:8px; font-weight:700;}
+  .foot-bottom{
+    text-align:center; font-size:12px; color:rgba(251,243,228,0.55);
+    font-family:'Space Mono', monospace; letter-spacing:.04em;
+  }
+  .foot-bottom a{text-decoration:underline;}
+
+  ::selection{background:var(--shock); color:var(--ivory);}
+</style>
+</head>
+<body>
+
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker__track">
+      <span>EST. 1919 — STILL NOT SORRY</span>
+      <span class="hot">NEW: SWEATPANTS THAT PRETEND TO HAVE OTHER PANTS UNDERNEATH — €1,190</span>
+      <span>NOW ACCEPTING CRYPTOCURRENCY, YOUR DIGNITY, ETC.</span>
+      <span class="hot">RECOMMENDED PAIRING: A THERAPIST</span>
+      <span>282 STORES. ZERO REGRETS.</span>
+      <span class="hot">THE BAG THAT LOOKS LIKE TRASH IS NOT, WE REPEAT, NOT ON SALE</span>
+      <span>SINCE 1919 — SAN SEBASTIÁN → PARIS → EVERYWHERE, INCLUDING YOUR TIMELINE</span>
+    </div>
+  </div>
+
+  <nav>
+    <div class="wrap">
+      <div class="wordmark">BALENCIAGA <em>but unwell about it</em></div>
+      <div class="navlinks">
+        <a href="#history">History</a>
+        <a href="#archive">The Archive</a>
+        <a href="#silhouettes">The Genius Part</a>
+        <a href="#generator">Generator</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero wrap">
+    <div class="string"></div>
+    <div class="swing-wrap">
+      <div class="tag">
+        <span class="price">SWING TAG · DO NOT REMOVE · 100% COTTON PANIC</span>
+        <h1>BALENCIAGA</h1>
+        <span class="sub">A luxury house that turned "wait, what?" into a business model</span>
+      </div>
+    </div>
+    <p class="deck">
+      Founded in 1919 by a tailor so good the Spanish royal family wore his clothes,
+      now the same house that sold you a <b>tote bag shaped exactly like a bin liner</b>
+      and asked <b>€1,790</b> for it. This is the story of Balenciaga —
+      told the way it deserves: slightly unhinged, mostly true, and updated for 2026.
+    </p>
+    <div class="hero-ctas">
+      <a href="#history" class="btn solid">Read the (real) history</a>
+      <a href="#archive" class="btn ghost">Enter the Absurd Archive</a>
+    </div>
+  </header>
+
+  <div class="divider"></div>
+
+  <!-- HISTORY -->
+  <section id="history" class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Chapter One · Mostly Factual</div>
+      <h2>A brief, slightly unhinged history</h2>
+      <p>Real dates. Real people. One (1) tunic dress that quietly rewrote women's fashion. We are not making this part up — the truth was already ridiculous enough.</p>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-row">
+        <div class="tl-year">1917</div>
+        <div class="tl-dot"></div>
+        <div>
+          <div class="tl-title">A boutique opens in San Sebastián</div>
+          <div class="tl-body">Cristóbal Balenciaga opens his first shop in Spain, expanding to Madrid and Barcelona. The Spanish royal family and aristocracy become clients — which is a strong start for a man who will later put shoulders where waists used to be.</div>
+        </div>
+      </div>
+
+      <div class="tl-row spice">
+        <div class="tl-year">1937</div>
+        <div class="tl-dot"></div>
+        <div>
+          <div class="tl-title">Paris, because the Spanish Civil War said so</div>
+          <div class="tl-body">Forced to close his Spanish stores, Balenciaga relocates to Avenue George V in Paris. His first show, heavily influenced by the Spanish Renaissance, is an almost immediate hit. Harper's Bazaar editor Carmel Snow becomes an early champion.</div>
+          <span class="tl-tag">Reinvention, forcibly</span>
+        </div>
+      </div>
+
+      <div class="tl-row">
+        <div class="tl-year">1951–59</div>
+        <div class="tl-dot"></div>
+        <div>
+          <div class="tl-title">He simply invents a new body</div>
+          <div class="tl-body">Broad shoulders, no waist, the tunic dress, the balloon jacket, the baby doll dress, the cocoon coat, the sack dress, the Empire line cut like a kimono. Historians consider it fashion's most important reworking of the female silhouette in the 20th century. No trash bags were involved.</div>
+        </div>
+      </div>
+
+      <div class="tl-row">
+        <div class="tl-year">1957</div>
+        <div class="tl-dot"></div>
+        <div>
+          <div class="tl-title">He shows collections the day before delivery</div>
+          <div class="tl-body">Balenciaga starts revealing his designs to press just one day before pieces ship to stores — instead of the usual four weeks — specifically to stop rivals from copying his work first. The press hates it. He does not care.</div>
+          <span class="tl-tag">Petty, but correct</span>
+        </div>
+      </div>
+
+      <div class="tl-row">
+        <div class="tl-year">1968 / 1972</div>
+        <div class="tl-dot"></div>
+        <div>
+          <div class="tl-title">The house closes. The founder dies.</div>
+          <div class="tl-body">Cristóbal closes his fashion house in 1968 and passes away in 1972. The brand drifts through ownership — his nephews, then the German group Hoechst — waiting for someone to remember how good this was.</div>
+        </div>
+      </div>
+
+      <div class="tl-row">
+        <div class="tl-year">1997</div>
+        <div class="tl-dot"></div>
+        <div>
+          <div class="tl-title">Nicolas Ghesquière and the birth of the Motorcycle bag</div>
+          <div class="tl-body">Appointed Artistic Director, Ghesquière keeps the house's restrained aesthetic while introducing Balenciaga's first true "It" accessory — the Motorcycle bag — and pulls in fans like Madonna along the way.</div>
+        </div>
+      </div>
+
+      <div class="tl-row">
+        <div class="tl-year">2001</div>
+        <div class="tl-dot"></div>
+        <div>
+          <div class="tl-title">Kering (then PPR) takes control</div>
+          <div class="tl-body">The Gucci Group acquires a controlling stake, placing Balenciaga alongside Yves Saint Laurent, Bottega Veneta and Boucheron in the same corporate family it still belongs to today.</div>
+        </div>
+      </div>
+
+      <div class="tl-row spice">
+        <div class="tl-year">2015</div>
+        <div class="tl-dot"></div>
+        <div>
+          <div class="tl-title">Demna arrives. Absurdity becomes strategy.</div>
+          <div class="tl-body">Demna Gvasalia is named creative director and begins deliberately blurring luxury with the mundane: IKEA-style totes, deconstructed sneakers, and price tags that make headlines on purpose. Revenue reportedly approaches $2 billion by 2022.</div>
+          <span class="tl-tag">This is the part you came for</span>
+        </div>
+      </div>
+
+      <div class="tl-row spice">
+        <div class="tl-year">2021</div>
+        <div class="tl-dot"></div>
+        <div>
+          <div class="tl-title">Sweatpants with fake boxers, €1,190</div>
+          <div class="tl-body">Balenciaga releases trompe-l'œil sweatpants designed to look like they have plaid boxers peeking out the top. They are, in fact, just sweatpants. The internet does not recover.</div>
+        </div>
+      </div>
+
+      <div class="tl-row">
+        <div class="tl-year">2025</div>
+        <div class="tl-dot"></div>
+        <div>
+          <div class="tl-title">Pierpaolo Piccioli takes the reins</div>
+          <div class="tl-body">The Italian designer, previously of Valentino, becomes Creative Director — bringing a reputation for romantic, couture-level craftsmanship to a house currently also famous for a bag shaped like garbage.</div>
+        </div>
+      </div>
+
+      <div class="tl-row">
+        <div class="tl-year">2026</div>
+        <div class="tl-dot"></div>
+        <div>
+          <div class="tl-title">You, reading this, right now</div>
+          <div class="tl-body">282 stores worldwide, one Cristóbal Balenciaga Museum in Getaria, and a new era under Piccioli — still deciding whether to be sincere or spectacular. Probably both, at the same time, on purpose.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ARCHIVE -->
+  <section id="archive" class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Chapter Two · The Absurd Archive</div>
+      <h2>Objects that made the internet say "wait, how much?"</h2>
+      <p>A house built on radical silhouettes eventually got radical about pricing. These are the pieces the brand is (unofficially) most famous for — presented with the reverence they deserve, which is to say: some.</p>
+    </div>
+
+    <div class="archive-grid">
+      <div class="card">
+        <span class="badge">Iconic Chaos</span>
+        <div class="icon-stage"><div class="icn-bag"></div></div>
+        <h3>The Bag That Looks Like Trash</h3>
+        <p>A crinkled, oversized leather tote engineered to resemble a bin liner. Technically a marvel of pattern-cutting. Visually, your neighbor's Tuesday.</p>
+        <div class="price-row"><span>Market myth</span><span class="p">"more than your rent"</span></div>
+      </div>
+
+      <div class="card">
+        <span class="badge">Homage?</span>
+        <div class="icon-stage"><div class="icn-ikea"></div></div>
+        <h3>The Blue Tote, Suspiciously Familiar</h3>
+        <p>A giant blue carryall that the entire internet immediately recognized from a certain Swedish furniture store's 99-cent bag aisle. The furniture store had jokes ready within hours.</p>
+        <div class="price-row"><span>Furniture-store version</span><span class="p">€0.99</span></div>
+      </div>
+
+      <div class="card">
+        <span class="badge">Real Product, 2021</span>
+        <div class="icon-stage"><div class="icn-sweats"></div></div>
+        <h3>Sweatpants With Imaginary Boxers</h3>
+        <p>An illusion print designed to make it look like plaid boxer shorts are riding up over your waistband. There are no boxer shorts. There never were.</p>
+        <div class="price-row"><span>Actual price</span><span class="p">€1,190</span></div>
+      </div>
+
+      <div class="card">
+        <span class="badge">Pre-Loved, On Purpose</span>
+        <div class="icon-stage"><div class="icn-sneaker"></div></div>
+        <h3>Sneakers, Aged For You In Advance</h3>
+        <p>Trainers sold deliberately scuffed, cracked, and duct-taped at the toe — so you can skip the years of actually wearing them in.</p>
+        <div class="price-row"><span>Pre-destruction fee</span><span class="p">included</span></div>
+      </div>
+
+      <div class="card">
+        <span class="badge">Footwear, Loosely</span>
+        <div class="icon-stage"><div class="icn-croc"></div></div>
+        <h3>Platform Clogs, Melted Aesthetic</h3>
+        <p>Chunky rubber clogs stacked onto sky-high platforms, styled to look like they survived a very fashionable house fire.</p>
+        <div class="price-row"><span>Ground clearance</span><span class="p">generous</span></div>
+      </div>
+
+      <div class="card">
+        <span class="badge">Proportions, Optional</span>
+        <div class="icon-stage"><div class="icn-sleeve"></div></div>
+        <h3>Sleeves That Outlive The Coat</h3>
+        <p>Draped sleeves engineered to extend well past your fingertips, into the middle distance, and possibly into next season.</p>
+        <div class="price-row"><span>Sleeve-to-arm ratio</span><span class="p">unresolved</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SILHOUETTES / GENIUS -->
+  <section id="silhouettes" class="wrap">
+    <div class="silhouettes">
+      <div class="section-head">
+        <div class="eyebrow">Chapter Three · Before It Was A Bit</div>
+        <h2>The founder was already unthinkable — for real reasons</h2>
+        <p>Long before trash-bag totes, Cristóbal Balenciaga was reshaping what clothing could even do to a body. These silhouettes sounded just as strange in their day. They also happened to be genius.</p>
+      </div>
+      <div class="si-grid">
+        <div class="si-card">
+          <span class="yr">1953</span>
+          <h4>The Balloon Jacket</h4>
+          <p>A jacket cut to billow away from the body entirely, floating around the torso like it forgot it was supposed to be fitted.</p>
+        </div>
+        <div class="si-card">
+          <span class="yr">1957</span>
+          <h4>The Baby Doll Dress</h4>
+          <p>High-waisted, wide-skirted, and unapologetically shaped nothing like the hourglass everyone else was chasing at the time.</p>
+        </div>
+        <div class="si-card">
+          <span class="yr">1957</span>
+          <h4>The Sack Dress</h4>
+          <p>Straight-hanging, waistless, and radical enough that its name was meant as an insult. It became one of the most influential shapes of the decade.</p>
+        </div>
+        <div class="si-card">
+          <span class="yr">1959</span>
+          <h4>The Empire Line</h4>
+          <p>High-waisted coats and dresses cut like kimonos — the culmination of a decade spent quietly moving the waistline wherever he pleased.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- STATS -->
+  <section class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Chapter Four · By The Numbers</div>
+      <h2>The unbothered scale of it all</h2>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="num">1919</div><div class="lbl">Year founded, San Sebastián</div></div>
+      <div class="stat"><div class="num">107</div><div class="lbl">Years old, and still swinging</div></div>
+      <div class="stat"><div class="num">282</div><div class="lbl">Stores worldwide, 2025</div></div>
+      <div class="stat"><div class="num">6</div><div class="lbl">Creative directors since 1919</div></div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- DIRECTORS -->
+  <section class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Chapter Five · Custody Timeline</div>
+      <h2>Who's been holding the scissors</h2>
+    </div>
+    <div class="directors">
+      <div class="dcard"><div class="dot">CB</div><h4>Cristóbal Balenciaga</h4><span class="yrs">1919–1968</span><p>Invented the whole vocabulary. Everyone since has been remixing it, loudly or quietly.</p></div>
+      <div class="dcard"><div class="dot">MG</div><h4>Michel Goma</h4><span class="yrs">1987–1992</span><p>Brought the house back to life after Jacques Bogart's revival, gently.</p></div>
+      <div class="dcard"><div class="dot">JT</div><h4>Josephus Thimister</h4><span class="yrs">1992–1997</span><p>Went bold minimalist, straight from the founder's archive.</p></div>
+      <div class="dcard"><div class="dot">NG</div><h4>Nicolas Ghesquière</h4><span class="yrs">1997–2012</span><p>Fifteen years, one Motorcycle bag, countless imitators.</p></div>
+      <div class="dcard"><div class="dot">AW</div><h4>Alexander Wang</h4><span class="yrs">2013–2015</span><p>Sleek, commercial, three years, exit stage left.</p></div>
+      <div class="dcard"><div class="dot">D</div><h4>Demna Gvasalia</h4><span class="yrs">2015–2025</span><p>Turned "expensive and strange" into the house's whole personality. You've met his work already, above.</p></div>
+      <div class="dcard"><div class="dot">PP</div><h4>Pierpaolo Piccioli</h4><span class="yrs">2025–now</span><p>Arrives from Valentino with a reputation for romance. Watch this space, cautiously.</p></div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- GENERATOR -->
+  <section id="generator" class="wrap">
+    <div class="generator">
+      <div class="eyebrow" style="justify-content:center;">Chapter Six · Interactive Nonsense</div>
+      <h2 style="font-size:clamp(28px,4vw,40px); margin-top:14px;">The Unthinkable Product Generator</h2>
+      <p style="max-width:520px; margin:14px auto 0; color:var(--ink-soft);">Press the button. Receive a completely fictional Balenciaga item, an absurd price, and a runway justification nobody asked for.</p>
+      <div class="readout" id="readout">
+        <div class="item">Press the button to begin.</div>
+        <div class="just">Your future overpriced object awaits.</div>
+      </div>
+      <button class="btn solid" id="genBtn">Generate an unthinkable item</button>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div class="receipt">
+        <h5>★ HOUSE OF ABSURDITY — 2026 ★</h5>
+        <div class="rline"><span>Founded, San Sebastián</span><span>1919</span></div>
+        <div class="rline"><span>Relocated to Paris</span><span>1937</span></div>
+        <div class="rline"><span>Owned by Kering since</span><span>2001</span></div>
+        <div class="rline"><span>Sense of humor</span><span>self-aware</span></div>
+        <div class="rline"><span>Sense of history</span><span>genuine</span></div>
+        <div class="rline rtot"><span>Total absurdity</span><span>priceless*</span></div>
+      </div>
+      <p class="foot-bottom">
+        *Not an actual price. Not an official Balenciaga site. A fan-made, tongue-in-cheek tribute
+        to a fashion house that has, on more than one occasion, priced a garbage bag joke higher than
+        most people's monthly rent — and also, quietly, changed how clothes are cut forever. Both things are true. In 2026, we contain multitudes.
+      </p>
+    </div>
+  </footer>
+
+<script>
+  const items = [
+    ["A single sock, sold individually", "for the customer who lost the other one and has accepted it"],
+    ["Deconstructed umbrella, permanently open", "rain is a state of mind"],
+    ["Oven mitt, extra-long, runway length", "warmth as a silhouette"],
+    ["Doormat, in calfskin", "the first thing your guests should regret stepping on"],
+    ["Traffic cone, hand-finished", "urban planning as outerwear"],
+    ["Bubble wrap trench coat", "pop responsibly"],
+    ["Extension cord, coiled as a necklace", "always be charged"],
+    ["Yoga mat, worn as a cape", "downward dog, upward budget"],
+    ["Paperclip, scaled up 4000%, wearable", "office supplies but make it couture"],
+    ["Ziplock tote, resealable", "freshness meets flex"],
+    ["One (1) actual brick, in a clutch shape", "heavy is the new statement"],
+    ["Inflatable pool flamingo, tailored", "vacation energy, year-round"]
+  ];
+  const readout = document.getElementById('readout');
+  const btn = document.getElementById('genBtn');
+  function euro(){ return (Math.floor(Math.random()*38)+9) * 55 + 90; }
+  btn.addEventListener('click', () => {
+    const pick = items[Math.floor(Math.random()*items.length)];
+    const price = euro().toLocaleString('en-US');
+    readout.innerHTML = `
+      <div class="item">${pick[0]}</div>
+      <div class="just">"${pick[1]}" — creative direction, probably</div>
+      <div class="price">€${price}.00 · limited "concept" run</div>
+    `;
+  });
+</script>
+</body>
+</html>
