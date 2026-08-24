@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Altar</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap');
+
+  :root{
+    --bg-1: #100a08;
+    --bg-2: #1c120d;
+    --ember: #d98a3d;
+    --flame: #ffb15e;
+    --ivory: #efe4cf;
+    --ivory-dim: #cdbfa4;
+    --gold: #b6903f;
+    --line: rgba(182,144,63,0.35);
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    padding:0;
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at 50% 20%, #241811 0%, var(--bg-1) 55%, #060403 100%);
+    font-family:'EB Garamond', serif;
+    color:var(--ivory);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow-x:hidden;
+  }
+
+  .stage{
+    position:relative;
+    width:min(92vw, 480px);
+    padding:38px 0 54px;
+  }
+
+  .eyebrow{
+    text-align:center;
+    letter-spacing:0.32em;
+    text-transform:uppercase;
+    font-size:11px;
+    color:var(--ivory-dim);
+    margin-bottom:6px;
+    opacity:0.75;
+  }
+
+  h1{
+    text-align:center;
+    font-family:'Cormorant Garamond', serif;
+    font-weight:600;
+    font-style:italic;
+    font-size:26px;
+    letter-spacing:0.02em;
+    margin:0 0 22px;
+    color:var(--ivory);
+    text-shadow:0 0 22px rgba(255,177,94,0.18);
+  }
+
+  .frame{
+    position:relative;
+    border-radius:6px;
+    overflow:hidden;
+    box-shadow:
+      0 0 0 1px var(--line),
+      0 30px 70px -20px rgba(0,0,0,0.85),
+      0 0 120px -30px rgba(217,138,61,0.35);
+  }
+
+  .frame::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:5;
+    pointer-events:none;
+    background: radial-gradient(ellipse at 78% 68%, rgba(255,177,94,0.16), transparent 42%),
+                radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.55), transparent 60%),
+                radial-gradient(ellipse at 50% 0%, rgba(0,0,0,0.35), transparent 40%);
+    mix-blend-mode:screen;
+  }
+
+  .imgwrap{
+    position:relative;
+    width:100%;
+    aspect-ratio:720/1280;
+  }
+
+  .imgwrap img{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    transition:opacity 1.1s ease;
+  }
+
+  img.unlit{ opacity:1; }
+  img.lit{ opacity:0; }
+  .stage.is-lit img.unlit{ opacity:0; }
+  .stage.is-lit img.lit{ opacity:1; }
+
+  .hot{
+    position:absolute;
+    background:transparent;
+    border:none;
+    padding:0;
+    margin:0;
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    z-index:6;
+  }
+
+  .hot:focus-visible{
+    outline:2px solid var(--flame);
+    outline-offset:3px;
+    border-radius:4px;
+  }
+
+  .hot .ring{
+    position:absolute;
+    inset:-6%;
+    border-radius:48% 48% 42% 42%;
+    background:radial-gradient(ellipse at center, rgba(255,177,94,0.0) 55%, rgba(255,177,94,0.0) 100%);
+    transition:background 0.4s ease, box-shadow 0.4s ease;
+  }
+
+  .hot:hover .ring, .hot:focus-visible .ring, .hot.speaking .ring{
+    background:radial-gradient(ellipse at center, rgba(255,177,94,0.14) 0%, rgba(255,177,94,0.05) 60%, transparent 100%);
+    box-shadow:0 0 30px 6px rgba(255,177,94,0.12) inset;
+  }
+
+  .hot-figure-1{ left:2%;  top:26%;  width:32%; height:52%; }
+  .hot-figure-2{ left:33%; top:23%;  width:26%; height:56%; }
+  .hot-figure-3{ left:59%; top:24%;  width:27%; height:57%; }
+  .hot-candle  { left:85%; top:57%;  width:15%; height:22%; }
+
+  .caption{
+    text-align:center;
+    margin-top:18px;
+    font-size:13px;
+    font-style:italic;
+    color:var(--ivory-dim);
+    letter-spacing:0.02em;
+    min-height:18px;
+    transition:opacity 0.4s ease;
+  }
+
+  .info-btn{
+    position:absolute;
+    top:14px;
+    right:14px;
+    z-index:20;
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:rgba(16,10,8,0.55);
+    color:var(--ivory);
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-size:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    backdrop-filter:blur(3px);
+    transition:background 0.25s ease, transform 0.25s ease;
+  }
+  .info-btn:hover{ background:rgba(217,138,61,0.25); transform:scale(1.06); }
+
+  .overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(6,4,3,0.72);
+    backdrop-filter:blur(2px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    z-index:50;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.35s ease;
+  }
+  .overlay.open{ opacity:1; pointer-events:auto; }
+
+  .panel{
+    max-width:440px;
+    max-height:80vh;
+    overflow-y:auto;
+    background:linear-gradient(180deg, #201510, #150d0a);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:26px 24px 22px;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,0.8);
+    transform:translateY(8px);
+    transition:transform 0.35s ease;
+  }
+  .overlay.open .panel{ transform:translateY(0); }
+
+  .panel h2{
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-weight:600;
+    font-size:20px;
+    margin:0 0 14px;
+    color:var(--gold);
+    text-align:center;
+    letter-spacing:0.02em;
+  }
+
+  .panel dl{ margin:0; }
+  .panel dt{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:600;
+    font-size:15.5px;
+    color:var(--ivory);
+    margin-top:16px;
+  }
+  .panel dt:first-child{ margin-top:0; }
+  .panel dd{
+    margin:6px 0 0;
+    font-size:14px;
+    line-height:1.55;
+    color:var(--ivory-dim);
+  }
+
+  .panel-close{
+    display:block;
+    margin:20px auto 0;
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--ivory);
+    font-family:'EB Garamond', serif;
+    font-size:13px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    padding:8px 20px;
+    border-radius:3px;
+    cursor:pointer;
+    transition:background 0.25s ease;
+  }
+  .panel-close:hover{ background:rgba(217,138,61,0.18); }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <p class="eyebrow">Un rincón de fe</p>
+  <h1>Altar familiar</h1>
+
+  <div class="frame">
+    <button class="info-btn" id="infoBtn" aria-label="Información" aria-haspopup="dialog">i</button>
+
+    <div class="imgwrap">
+      <img class="unlit" src="images/unlit.jpg" alt="Altar con la vela apagada">
+      <img class="lit" src="images/lit.jpg" alt="Altar con la vela encendida">
+
+      <button class="hot hot-figure-1" id="btnDoctor" aria-label="Beato José Gregorio Hernández">
+        <span class="ring"></span>
+      </button>
+      <button class="hot hot-figure-2" id="btnLourdes" aria-label="Nuestra Señora de Lourdes">
+        <span class="ring"></span>
+      </button>
+      <button class="hot hot-figure-3" id="btnFatima" aria-label="Nuestra Señora de Fátima">
+        <span class="ring"></span>
+      </button>
+      <button class="hot hot-candle" id="btnCandle" aria-label="Encender o apagar la vela">
+        <span class="ring"></span>
+      </button>
+    </div>
+  </div>
+
+  <p class="caption" id="caption">&nbsp;</p>
+</div>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true">
+  <div class="panel">
+    <h2>Sobre este altar</h2>
+    <dl>
+      <dt>Beato José Gregorio Hernández</dt>
+      <dd>Médico venezolano (1864–1919) que atendía gratis a los pobres. Beatificado en 2021, es ampliamente invocado para pedir curaciones físicas milagrosas.</dd>
+
+      <dt>Nuestra Señora de Lourdes / Inmaculada Concepción</dt>
+      <dd>Apariciones de la Virgen María a Santa Bernardita en Francia (1858). Reveló un manantial milagroso que sigue siendo un centro mundial de sanación para los enfermos.</dd>
+
+      <dt>Nuestra Señora de Fátima</dt>
+      <dd>Apariciones de María a tres niños pastores en Portugal (1917). Hizo un llamado a la paz, reveló secretos proféticos y realizó el "Milagro del Sol" ante 70,000 testigos.</dd>
+    </dl>
+    <button class="panel-close" id="panelClose">Cerrar</button>
+  </div>
+</div>
+
+<script>
+  const stage = document.getElementById('stage');
+  const caption = document.getElementById('caption');
+  const btnCandle = document.getElementById('btnCandle');
+  const btnDoctor = document.getElementById('btnDoctor');
+  const btnLourdes = document.getElementById('btnLourdes');
+  const btnFatima = document.getElementById('btnFatima');
+  const infoBtn = document.getElementById('infoBtn');
+  const overlay = document.getElementById('overlay');
+  const panelClose = document.getElementById('panelClose');
+
+  // Candle toggle with seamless crossfade
+  btnCandle.addEventListener('click', () => {
+    stage.classList.toggle('is-lit');
+  });
+
+  // Info popup
+  infoBtn.addEventListener('click', () => overlay.classList.add('open'));
+  panelClose.addEventListener('click', () => overlay.classList.remove('open'));
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('open'); });
+
+  // ---- Speech ----
+  let voices = [];
+  function loadVoices(){ voices = window.speechSynthesis.getVoices(); }
+  loadVoices();
+  if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = loadVoices;
+  }
+
+  function spanishVoices(){
+    return voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('es'));
+  }
+
+  function pickVoice(kind){
+    const es = spanishVoices();
+    const byName = (patterns) => es.find(v => patterns.some(p => v.name.toLowerCase().includes(p)));
+
+    if (kind === 'male'){
+      return byName(['jorge','diego','pablo','carlos','male','hombre','m1']) || es[0] || voices[0];
+    }
+    if (kind === 'female-1'){
+      return byName(['helena','mónica','monica','paulina','female','mujer','f1','laura']) || es[1] || es[0] || voices[0];
+    }
+    if (kind === 'female-2'){
+      return byName(['esperanza','lucia','lucía','elena','sabina','f2']) || es[2] || es[0] || voices[0];
+    }
+    return es[0] || voices[0];
+  }
+
+  function speak(text, kind, {pitch, rate}, btn){
+    if (typeof speechSynthesis === 'undefined') return;
+    speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    const v = pickVoice(kind);
+    if (v) utter.voice = v;
+    utter.lang = 'es-ES';
+    utter.pitch = pitch;
+    utter.rate = rate;
+    utter.volume = 1;
+
+    document.querySelectorAll('.hot').forEach(b => b.classList.remove('speaking'));
+    btn.classList.add('speaking');
+    caption.style.opacity = '0';
+    setTimeout(() => { caption.textContent = text; caption.style.opacity = '1'; }, 150);
+
+    utter.onend = () => btn.classList.remove('speaking');
+    speechSynthesis.speak(utter);
+  }
+
+  btnDoctor.addEventListener('click', () => {
+    speak(
+      'Procuremos siempre hacer el bien a nuestros semejantes, con el rostro alegre y el corazón limpio, porque la bondad es la mejor medicina',
+      'male',
+      { pitch: 0.82, rate: 0.88 },
+      btnDoctor
+    );
+  });
+
+  btnLourdes.addEventListener('click', () => {
+    speak(
+      'No tengas miedo, yo estoy contigo',
+      'female-1',
+      { pitch: 1.12, rate: 0.82 },
+      btnLourdes
+    );
+  });
+
+  btnFatima.addEventListener('click', () => {
+    speak(
+      'Dios está muy contento con vuestros corazones',
+      'female-2',
+      { pitch: 1.26, rate: 0.86 },
+      btnFatima
+    );
+  });
+</script>
+
+</body>
+</html>
