@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Elevator Simulator</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #0d0d0d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    overflow: hidden;
+  }
+  .stage {
+    position: relative;
+    width: min(92vw, 405px);
+    aspect-ratio: 720 / 1280;
+    box-shadow: 0 0 60px rgba(0,0,0,0.8);
+    border-radius: 6px;
+    overflow: hidden;
+    background: #111;
+  }
+  .stage img {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .stage img.visible { opacity: 1; }
+
+  /* Floor indicator lights overlay (over "1 2 3 4 5 6 7 8 9" strip) */
+  .ind-light {
+    position: absolute;
+    width: 1.9%;
+    height: 1.3%;
+    transform: translate(-50%, -50%);
+    border-radius: 2px;
+    pointer-events: none;
+    background: transparent;
+  }
+  .ind-light.active {
+    background: rgba(255, 176, 40, 0.9);
+    box-shadow: 0 0 4px 1px rgba(255,176,40,0.85);
+  }
+
+  /* Floor call buttons overlay */
+  .call-btn {
+    position: absolute;
+    width: 4.6%;
+    height: 2.1%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    cursor: pointer;
+    background: transparent;
+  }
+  .call-btn.lit {
+    background: rgba(255, 200, 60, 0.6);
+    box-shadow: 0 0 5px 1px rgba(255, 190, 50, 0.8);
+  }
+  .call-btn.floor1 {
+    border-radius: 3px;
+    width: 4.6%;
+    height: 2.1%;
+  }
+
+  .status {
+    position: absolute;
+    bottom: 3%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.55);
+    color: #ffcf7a;
+    font-size: 13px;
+    letter-spacing: 1px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .mute-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+    cursor: pointer;
+    z-index: 10;
+  }
+
+  .start-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    cursor: pointer;
+    z-index: 20;
+    text-align: center;
+    padding: 20px;
+  }
+  .start-overlay .icon {
+    font-size: 42px;
+  }
+  .start-overlay.hidden {
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <img id="imgClosed" src="elevator_closed.jpg" class="visible" alt="elevator closed">
+  <img id="imgOpen" src="elevator_open.jpg" alt="elevator open">
+
+  <!-- Indicator lights for floors 1-9 (over top strip) -->
+  <div class="ind-light" id="ind1" style="left:13.2%; top:6.9%;"></div>
+  <div class="ind-light" id="ind2" style="left:19.4%; top:7.2%;"></div>
+  <div class="ind-light" id="ind3" style="left:25.7%; top:7.6%;"></div>
+  <div class="ind-light" id="ind4" style="left:31.3%; top:7.8%;"></div>
+  <div class="ind-light" id="ind5" style="left:37.2%; top:8.2%;"></div>
+  <div class="ind-light" id="ind6" style="left:42.8%; top:8.6%;"></div>
+  <div class="ind-light" id="ind7" style="left:48.6%; top:9.0%;"></div>
+  <div class="ind-light" id="ind8" style="left:54.6%; top:9.4%;"></div>
+  <div class="ind-light" id="ind9" style="left:59.7%; top:9.8%;"></div>
+
+  <!-- Call buttons -->
+  <div class="call-btn" data-floor="8" style="left:56.9%; top:44.1%;"></div>
+  <div class="call-btn" data-floor="9" style="left:65.3%; top:44.1%;"></div>
+  <div class="call-btn" data-floor="6" style="left:56.9%; top:48.8%;"></div>
+  <div class="call-btn" data-floor="7" style="left:65.3%; top:48.8%;"></div>
+  <div class="call-btn" data-floor="4" style="left:56.9%; top:53.5%;"></div>
+  <div class="call-btn" data-floor="5" style="left:65.3%; top:53.5%;"></div>
+  <div class="call-btn" data-floor="2" style="left:56.9%; top:58.2%;"></div>
+  <div class="call-btn" data-floor="3" style="left:65.3%; top:58.2%;"></div>
+  <div class="call-btn floor1" data-floor="1" style="left:56.9%; top:63.3%;"></div>
+
+  <div class="status" id="status">Floor 1</div>
+  <button class="mute-btn" id="muteBtn" title="Mute/Unmute music">&#128266;</button>
+
+  <div class="start-overlay" id="startOverlay">
+    <div class="icon">&#127925;</div>
+    <div>Tap to start the elevator music</div>
+  </div>
+</div>
+
+<audio id="bgMusic" src="https://archive.org/download/lp_playing-the-great-movie-show-themes_bob-ralston/disc1/01.01.%20A%20Man%20And%20A%20Woman%20(A%20Man%20And%20A%20Woman).mp3" loop preload="auto" crossorigin="anonymous"></audio>
+
+<script>
+(function() {
+  const music = document.getElementById('bgMusic');
+  const muteBtn = document.getElementById('muteBtn');
+  const startOverlay = document.getElementById('startOverlay');
+  const imgClosed = document.getElementById('imgClosed');
+  const imgOpen = document.getElementById('imgOpen');
+  const statusEl = document.getElementById('status');
+  const buttons = document.querySelectorAll('.call-btn');
+
+  let currentFloor = 1;
+  let targetFloor = null;
+  let moving = false;
+  let doorOpen = false;
+  let musicStarted = false;
+
+  function hideOverlay() {
+    startOverlay.classList.add('hidden');
+  }
+
+  function tryPlayMusic() {
+    if (musicStarted) return;
+    const playPromise = music.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        musicStarted = true;
+        hideOverlay();
+      }).catch(() => {
+        // Autoplay was blocked - keep the tap-to-start overlay visible
+      });
+    }
+  }
+
+  // Attempt autoplay immediately (works if the browser allows it)
+  window.addEventListener('load', tryPlayMusic);
+
+  // Guaranteed start on first user gesture anywhere on the stage
+  startOverlay.addEventListener('click', () => {
+    tryPlayMusic();
+    hideOverlay();
+  });
+  document.addEventListener('click', tryPlayMusic, { once: true });
+
+  muteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    music.muted = !music.muted;
+    muteBtn.innerHTML = music.muted ? '&#128263;' : '&#128266;';
+    tryPlayMusic();
+  });
+
+  function setIndicator(floor, on) {
+    const el = document.getElementById('ind' + floor);
+    if (el) el.classList.toggle('active', on);
+  }
+
+  function clearAllIndicators() {
+    for (let f = 1; f <= 9; f++) setIndicator(f, false);
+  }
+
+  function lightButton(floor, on) {
+    const btn = document.querySelector('.call-btn[data-floor="' + floor + '"]');
+    if (btn) btn.classList.toggle('lit', on);
+  }
+
+  function playDing() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const now = ctx.currentTime;
+
+      function tone(freq, start, dur, gainPeak) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, now + start);
+        gain.gain.linearRampToValueAtTime(gainPeak, now + start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + start);
+        osc.stop(now + start + dur + 0.05);
+      }
+
+      tone(880, 0, 0.9, 0.35);
+      tone(1318.5, 0.18, 1.0, 0.3);
+    } catch (e) {}
+  }
+
+  function openDoor() {
+    doorOpen = true;
+    imgClosed.classList.remove('visible');
+    imgOpen.classList.add('visible');
+    statusEl.textContent = 'Floor ' + currentFloor + ' - Door Open';
+  }
+
+  function closeDoor() {
+    doorOpen = false;
+    imgOpen.classList.remove('visible');
+    imgClosed.classList.add('visible');
+  }
+
+  function moveToFloor(floor) {
+    if (moving || floor === currentFloor) {
+      if (!moving && floor === currentFloor && !doorOpen) {
+        arriveAtFloor();
+      }
+      return;
+    }
+
+    if (doorOpen) closeDoor();
+
+    moving = true;
+    targetFloor = floor;
+    lightButton(floor, true);
+
+    const direction = floor > currentFloor ? 1 : -1;
+    statusEl.textContent = 'Moving to Floor ' + floor;
+
+    const stepInterval = setInterval(() => {
+      setIndicator(currentFloor, false);
+      currentFloor += direction;
+      setIndicator(currentFloor, true);
+      statusEl.textContent = 'Floor ' + currentFloor;
+
+      if (currentFloor === targetFloor) {
+        clearInterval(stepInterval);
+        moving = false;
+        arriveAtFloor();
+      }
+    }, 700);
+  }
+
+  function arriveAtFloor() {
+    playDing();
+    lightButton(currentFloor, false);
+    setTimeout(() => {
+      openDoor();
+    }, 250);
+  }
+
+  setIndicator(currentFloor, true);
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const floor = parseInt(btn.getAttribute('data-floor'), 10);
+      moveToFloor(floor);
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
