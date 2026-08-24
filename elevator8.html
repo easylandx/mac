@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Elevator Simulator</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    width: 100%;
+    background: #0d0d0d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .stage {
+    position: relative;
+    width: min(92vw, 405px);
+    aspect-ratio: 720 / 1280;
+    box-shadow: 0 0 60px rgba(0,0,0,0.8);
+    border-radius: 6px;
+    overflow: hidden;
+    background: #111;
+    flex-shrink: 0;
+  }
+
+  /* Full-bleed, scrollable fill on phone-sized screens only */
+  @media (max-width: 600px) {
+    html, body {
+      display: block;
+    }
+    .stage {
+      width: 100vw;
+      aspect-ratio: unset;
+      min-height: 100dvh;
+      box-shadow: none;
+      border-radius: 0;
+    }
+  }
+  .stage img {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .stage img.visible { opacity: 1; }
+
+  /* Floor indicator lights overlay (over "1 2 3 4 5 6 7 8 9" strip) */
+  .ind-light {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    border-radius: 2px;
+    pointer-events: none;
+    background: transparent;
+  }
+  .ind-light.active {
+    background: rgba(255, 176, 40, 0.9);
+    box-shadow: 0 0 4px 1px rgba(255,176,40,0.85);
+  }
+
+  /* Floor call buttons overlay */
+  .call-btn {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    cursor: pointer;
+    background: transparent;
+  }
+  .call-btn.lit {
+    background: rgba(255, 200, 60, 0.6);
+    box-shadow: 0 0 5px 1px rgba(255, 190, 50, 0.8);
+  }
+  .call-btn.floor1 {
+    border-radius: 3px;
+  }
+
+  .status {
+    position: absolute;
+    bottom: 3%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.55);
+    color: #ffcf7a;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    text-decoration: underline;
+    white-space: nowrap;
+  }
+
+  .mute-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+    cursor: pointer;
+    z-index: 10;
+  }
+
+  .start-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    cursor: pointer;
+    z-index: 20;
+    text-align: center;
+    padding: 20px;
+  }
+  .start-overlay .icon {
+    font-size: 42px;
+  }
+  .start-overlay.hidden {
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <img id="imgClosed" src="elevator_closed.jpg" class="visible" alt="elevator closed">
+  <img id="imgOpen" src="elevator_open.jpg" alt="elevator open">
+
+  <!-- Indicator lights for floors 1-9 (over top strip) -->
+  <div class="ind-light" id="ind1" data-fx="13.2" data-fy="6.9"></div>
+  <div class="ind-light" id="ind2" data-fx="19.4" data-fy="7.2"></div>
+  <div class="ind-light" id="ind3" data-fx="25.7" data-fy="7.6"></div>
+  <div class="ind-light" id="ind4" data-fx="31.3" data-fy="7.8"></div>
+  <div class="ind-light" id="ind5" data-fx="37.2" data-fy="8.2"></div>
+  <div class="ind-light" id="ind6" data-fx="42.8" data-fy="8.6"></div>
+  <div class="ind-light" id="ind7" data-fx="48.6" data-fy="9.0"></div>
+  <div class="ind-light" id="ind8" data-fx="54.6" data-fy="9.4"></div>
+  <div class="ind-light" id="ind9" data-fx="59.7" data-fy="9.8"></div>
+
+  <!-- Call buttons -->
+  <div class="call-btn" data-floor="8" data-fx="57.4" data-fy="44.8"></div>
+  <div class="call-btn" data-floor="9" data-fx="63.2" data-fy="45.3"></div>
+  <div class="call-btn" data-floor="6" data-fx="57.1" data-fy="49.5"></div>
+  <div class="call-btn" data-floor="7" data-fx="62.9" data-fy="49.8"></div>
+  <div class="call-btn" data-floor="4" data-fx="56.8" data-fy="54.1"></div>
+  <div class="call-btn" data-floor="5" data-fx="62.6" data-fy="54.5"></div>
+  <div class="call-btn" data-floor="2" data-fx="56.5" data-fy="59.0"></div>
+  <div class="call-btn" data-floor="3" data-fx="62.4" data-fy="59.4"></div>
+  <div class="call-btn floor1" data-floor="1" data-fx="56.3" data-fy="65.2"></div>
+
+  <a class="status" id="status" href="https://www.youtube.com/watch?v=Q-TQQE1y68c&t=43s" target="_blank" rel="noopener">Inspired by Short film "The Elevator"</a>
+  <button class="mute-btn" id="muteBtn" title="Mute/Unmute music">&#128266;</button>
+
+  <div class="start-overlay" id="startOverlay">
+    <div class="icon">&#127925;</div>
+    <div>Tap to start the elevator music</div>
+  </div>
+</div>
+
+<audio id="bgMusic" src="https://archive.org/download/lp_playing-the-great-movie-show-themes_bob-ralston/disc1/01.01.%20A%20Man%20And%20A%20Woman%20(A%20Man%20And%20A%20Woman).mp3" loop preload="auto" crossorigin="anonymous"></audio>
+
+<script>
+(function() {
+  const music = document.getElementById('bgMusic');
+  const muteBtn = document.getElementById('muteBtn');
+  const startOverlay = document.getElementById('startOverlay');
+  const imgClosed = document.getElementById('imgClosed');
+  const imgOpen = document.getElementById('imgOpen');
+  const statusEl = document.getElementById('status');
+  const buttons = document.querySelectorAll('.call-btn');
+  const stage = document.getElementById('stage');
+
+  // Source photo dimensions (elevator_open.jpg / elevator_closed.jpg)
+  const IMG_W = 720, IMG_H = 1280;
+
+  // Base sizes (as a fraction of the photo's own width/height) measured
+  // directly on the source image, so buttons stay pixel-accurate on the
+  // real photo no matter how the stage is scaled/cropped by object-fit:cover.
+  const IND_FW = 0.019, IND_FH = 0.013;      // indicator light size
+  const BTN_FW = 0.056, BTN_FH = 0.0315;     // round call button size
+  const BTN1_FW = 0.056, BTN1_FH = 0.055;    // floor-1 button size
+
+  function layoutOverlays() {
+    const cw = stage.clientWidth;
+    const ch = stage.clientHeight;
+    // object-fit: cover scale factor
+    const scale = Math.max(cw / IMG_W, ch / IMG_H);
+    const dispW = IMG_W * scale;
+    const dispH = IMG_H * scale;
+    const offX = (cw - dispW) / 2;
+    const offY = (ch - dispH) / 2;
+
+    function place(el, fxPercent, fyPercent, fw, fh) {
+      const x = offX + (fxPercent / 100) * dispW;
+      const y = offY + (fyPercent / 100) * dispH;
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      if (fw !== undefined) el.style.width = (fw * dispW) + 'px';
+      if (fh !== undefined) el.style.height = (fh * dispH) + 'px';
+    }
+
+    document.querySelectorAll('.ind-light').forEach(el => {
+      place(el, parseFloat(el.dataset.fx), parseFloat(el.dataset.fy), IND_FW, IND_FH);
+    });
+
+    document.querySelectorAll('.call-btn').forEach(el => {
+      const isFloor1 = el.classList.contains('floor1');
+      place(
+        el,
+        parseFloat(el.dataset.fx),
+        parseFloat(el.dataset.fy),
+        isFloor1 ? BTN1_FW : BTN_FW,
+        isFloor1 ? BTN1_FH : BTN_FH
+      );
+    });
+  }
+
+  window.addEventListener('load', layoutOverlays);
+  window.addEventListener('resize', layoutOverlays);
+  window.addEventListener('orientationchange', layoutOverlays);
+  layoutOverlays();
+
+  let currentFloor = 1;
+  let targetFloor = null;
+  let moving = false;
+  let doorOpen = false;
+  let musicStarted = false;
+
+  function hideOverlay() {
+    startOverlay.classList.add('hidden');
+  }
+
+  function tryPlayMusic() {
+    if (musicStarted) return;
+    const playPromise = music.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        musicStarted = true;
+        hideOverlay();
+      }).catch(() => {
+        // Autoplay was blocked - keep the tap-to-start overlay visible
+      });
+    }
+  }
+
+  // Attempt autoplay immediately (works if the browser allows it)
+  window.addEventListener('load', tryPlayMusic);
+
+  // Guaranteed start on first user gesture anywhere on the stage
+  startOverlay.addEventListener('click', () => {
+    tryPlayMusic();
+    hideOverlay();
+  });
+  document.addEventListener('click', tryPlayMusic, { once: true });
+
+  muteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    music.muted = !music.muted;
+    muteBtn.innerHTML = music.muted ? '&#128263;' : '&#128266;';
+    tryPlayMusic();
+  });
+
+  function setIndicator(floor, on) {
+    const el = document.getElementById('ind' + floor);
+    if (el) el.classList.toggle('active', on);
+  }
+
+  function clearAllIndicators() {
+    for (let f = 1; f <= 9; f++) setIndicator(f, false);
+  }
+
+  function lightButton(floor, on) {
+    const btn = document.querySelector('.call-btn[data-floor="' + floor + '"]');
+    if (btn) btn.classList.toggle('lit', on);
+  }
+
+  function playDing() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const now = ctx.currentTime;
+
+      function tone(freq, start, dur, gainPeak) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, now + start);
+        gain.gain.linearRampToValueAtTime(gainPeak, now + start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + start);
+        osc.stop(now + start + dur + 0.05);
+      }
+
+      tone(880, 0, 0.9, 0.35);
+      tone(1318.5, 0.18, 1.0, 0.3);
+    } catch (e) {}
+  }
+
+  function openDoor() {
+    doorOpen = true;
+    imgClosed.classList.remove('visible');
+    imgOpen.classList.add('visible');
+  }
+
+  function closeDoor() {
+    doorOpen = false;
+    imgOpen.classList.remove('visible');
+    imgClosed.classList.add('visible');
+  }
+
+  function moveToFloor(floor) {
+    if (moving || floor === currentFloor) {
+      if (!moving && floor === currentFloor && !doorOpen) {
+        arriveAtFloor();
+      }
+      return;
+    }
+
+    if (doorOpen) closeDoor();
+
+    moving = true;
+    targetFloor = floor;
+    lightButton(floor, true);
+
+    const direction = floor > currentFloor ? 1 : -1;
+
+    const stepInterval = setInterval(() => {
+      setIndicator(currentFloor, false);
+      currentFloor += direction;
+      setIndicator(currentFloor, true);
+
+      if (currentFloor === targetFloor) {
+        clearInterval(stepInterval);
+        moving = false;
+        arriveAtFloor();
+      }
+    }, 700);
+  }
+
+  function arriveAtFloor() {
+    playDing();
+    lightButton(currentFloor, false);
+    setTimeout(() => {
+      openDoor();
+    }, 250);
+  }
+
+  setIndicator(currentFloor, true);
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const floor = parseInt(btn.getAttribute('data-floor'), 10);
+      moveToFloor(floor);
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
