@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>easylandx — Landing pages built for the brain that actually decides</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --amber: #F0A202;
+    --amber-soft: #F6B93B;
+    --amber-deep: #C4780A;
+    --navy: #0E2238;
+    --navy-deep: #081426;
+    --slate-white: #FAF7F1;
+    --slate: #E7DFCE;
+    --ink: #12233A;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background: var(--amber);
+    color: var(--navy);
+    font-family:'Inter', sans-serif;
+    line-height:1.5;
+    overflow-x:hidden;
+  }
+  h1,h2,h3{ font-family:'Fraunces', serif; font-weight:600; letter-spacing:-0.01em; color:var(--navy);}
+  .mono{ font-family:'JetBrains Mono', monospace; letter-spacing:0.02em; }
+  a{ color:inherit; text-decoration:none; }
+  img{max-width:100%; display:block;}
+  .wrap{ max-width:1120px; margin:0 auto; padding:0 32px; }
+
+  /* NAV */
+  nav{
+    position:sticky; top:0; z-index:50;
+    background: rgba(240,162,2,0.92);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid rgba(14,34,56,0.12);
+  }
+  nav .wrap{ display:flex; align-items:center; justify-content:space-between; padding:18px 32px; }
+  .logo{ font-family:'Fraunces', serif; font-weight:700; font-size:22px; color:var(--navy); }
+  .logo span{ color:var(--slate-white); background:var(--navy); padding:1px 8px; border-radius:6px; margin-left:2px;}
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    background: var(--navy); color: var(--slate-white);
+    padding: 13px 26px; border-radius: 999px;
+    font-weight:600; font-size:15px;
+    border: 1px solid var(--navy);
+    transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+    cursor:pointer;
+  }
+  .btn:hover{ background:var(--navy-deep); transform: translateY(-2px); box-shadow:0 10px 24px rgba(8,20,38,0.35);}
+  .btn.ghost{
+    background:transparent; color:var(--navy); border:1.5px solid var(--navy);
+  }
+  .btn.ghost:hover{ background:var(--navy); color:var(--slate-white); }
+  .btn.small{ padding:9px 18px; font-size:13px; }
+
+  /* HERO */
+  .hero{ padding: 96px 0 64px; position:relative; }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace; font-size:12.5px; letter-spacing:0.14em;
+    text-transform:uppercase; color: var(--navy-deep); opacity:0.75;
+    display:flex; align-items:center; gap:10px; margin-bottom:22px;
+  }
+  .eyebrow::before{ content:''; width:26px; height:1px; background:var(--navy); opacity:.5; }
+  .hero h1{ font-size: clamp(38px, 5.4vw, 68px); line-height:1.04; max-width: 880px; }
+  .hero h1 em{ font-style:normal; color: var(--slate-white); background:var(--navy); padding: 0 10px; border-radius:8px; }
+  .hero p.lede{ font-size:19px; max-width:560px; margin-top:22px; color:var(--navy-deep); opacity:0.85; }
+  .hero .cta-row{ display:flex; gap:14px; margin-top:34px; flex-wrap:wrap; align-items:center; }
+  .hero .cta-note{ font-family:'JetBrains Mono', monospace; font-size:12px; opacity:.7; }
+
+  /* SIGNATURE: System 1 / System 2 toggle */
+  .signature{
+    margin-top:64px;
+    background: var(--slate-white);
+    border-radius: 20px;
+    border: 1px solid rgba(14,34,56,0.1);
+    overflow:hidden;
+    box-shadow: 0 30px 60px rgba(8,20,38,0.18);
+  }
+  .sig-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 20px 26px; border-bottom:1px solid var(--slate);
+    flex-wrap:wrap; gap:14px;
+  }
+  .sig-head .label{ font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:.06em; opacity:.65;}
+  .toggle{
+    display:flex; background: var(--slate); border-radius: 999px; padding:4px; gap:2px;
+  }
+  .toggle button{
+    border:none; background:transparent; padding:9px 18px; border-radius:999px;
+    font-family:'JetBrains Mono', monospace; font-size:12.5px; cursor:pointer; color:var(--navy);
+    transition: background .2s ease, color .2s ease;
+  }
+  .toggle button.active{ background:var(--navy); color:var(--slate-white); }
+  .sig-body{ position:relative; min-height: 320px; }
+  .sig-panel{
+    display:none; padding: 34px 26px 30px; grid-template-columns: 1.1fr 1fr; gap: 30px; align-items:center;
+  }
+  .sig-panel.active{ display:grid; }
+  .sig-panel .mockup{
+    background: var(--navy); border-radius:12px; padding:22px; min-height:220px;
+    display:flex; flex-direction:column; gap:12px; justify-content:center;
+  }
+  .mockup .m-headline{ height:16px; width:78%; background: var(--amber-soft); border-radius:5px; }
+  .mockup .m-sub{ height:9px; width:55%; background: rgba(250,247,241,0.35); border-radius:5px; }
+  .mockup .m-btn{ height:30px; width:130px; background: var(--slate-white); border-radius:999px; margin-top:6px; }
+  .sig-panel.slow .mockup{ background: var(--slate); }
+  .sig-panel.slow .m-headline{ background: var(--navy); opacity:.75; }
+  .sig-panel.slow .m-sub{ background: var(--navy); opacity:.25; width:90%; }
+  .sig-panel.slow .m-btn{ background: var(--navy); opacity:.55; width:190px; }
+  .sig-panel h4{ font-family:'Fraunces', serif; font-size:22px; margin-bottom:10px; }
+  .sig-panel p{ font-size:14.5px; opacity:.85; }
+  .sig-panel .stat{ font-family:'JetBrains Mono', monospace; font-size:12.5px; margin-top:14px; color: var(--amber-deep); }
+
+  /* SECTION generic */
+  section{ padding: 84px 0; }
+  .section-head{ max-width:640px; margin-bottom:48px; }
+  .section-head .eyebrow{ margin-bottom:14px; }
+  .section-head h2{ font-size: clamp(28px, 3.6vw, 42px); line-height:1.08; }
+  .section-head p{ margin-top:14px; font-size:16.5px; opacity:.85; }
+
+  /* dark band */
+  .band-dark{ background: var(--navy); color: var(--slate-white); }
+  .band-dark h2, .band-dark h3, .band-dark h4{ color: var(--slate-white); }
+  .band-dark .eyebrow{ color: var(--amber-soft); opacity:1; }
+  .band-dark .eyebrow::before{ background: var(--amber-soft); opacity:1; }
+  .band-dark .section-head p{ color: rgba(250,247,241,0.75); }
+
+  /* Bias grid */
+  .bias-grid{ display:grid; grid-template-columns: repeat(2, 1fr); gap:22px; }
+  .bias-card{
+    background: rgba(250,247,241,0.06);
+    border: 1px solid rgba(250,247,241,0.14);
+    border-radius: var(--radius);
+    padding: 26px;
+  }
+  .bias-card .tag{
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:.08em;
+    color: var(--amber-soft); text-transform:uppercase;
+  }
+  .bias-card h3{ font-size:21px; margin: 10px 0 8px; color:var(--slate-white); }
+  .bias-card p{ font-size:14.5px; color: rgba(250,247,241,0.78); }
+  .bias-card .apply{
+    margin-top:14px; padding-top:14px; border-top:1px dashed rgba(250,247,241,0.2);
+    font-size:13.5px; color: var(--amber-soft);
+  }
+
+  /* Risk / loss aversion section (amber again) */
+  .risk-wrap{ display:grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items:start; }
+  .risk-card{
+    background: var(--slate-white); border-radius: var(--radius); padding:30px;
+    border:1px solid rgba(14,34,56,0.1);
+  }
+  .risk-card h3{ font-size:22px; margin-bottom:10px; }
+  .risk-card p{ font-size:15px; opacity:.85; margin-bottom:16px; }
+  .risk-card ul{ list-style:none; display:flex; flex-direction:column; gap:10px; }
+  .risk-card li{ font-size:14.5px; display:flex; gap:10px; align-items:flex-start; }
+  .risk-card li::before{ content:'—'; color: var(--amber-deep); flex-shrink:0; }
+
+  /* Peak-end timeline */
+  .peakend{
+    background: var(--navy-deep); color: var(--slate-white); border-radius:20px; padding: 44px 40px;
+  }
+  .pe-track{ position:relative; margin-top:44px; padding-left: 6px; }
+  .pe-line{ position:absolute; left:0; top:10px; bottom:10px; width:2px; background: rgba(250,247,241,0.18); }
+  .pe-step{ position:relative; padding-left:34px; padding-bottom:34px; }
+  .pe-step:last-child{ padding-bottom:0; }
+  .pe-step::before{
+    content:''; position:absolute; left:-5px; top:2px; width:12px; height:12px; border-radius:50%;
+    background: var(--amber-soft); border:3px solid var(--navy-deep);
+  }
+  .pe-step.peak::before, .pe-step.end::before{ background: var(--amber); width:16px; height:16px; left:-7px; }
+  .pe-step .k{ font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--amber-soft); }
+  .pe-step h4{ font-size:19px; margin: 4px 0 6px; color:var(--slate-white); }
+  .pe-step p{ font-size:14px; color: rgba(250,247,241,0.72); max-width:520px; }
+
+  /* Final CTA */
+  .final-cta{
+    text-align:center; padding: 100px 0 110px;
+  }
+  .final-cta h2{ font-size: clamp(30px, 5vw, 54px); max-width:720px; margin: 0 auto 18px; line-height:1.08; }
+  .final-cta p{ font-size:17px; max-width: 460px; margin:0 auto 32px; opacity:.85; }
+
+  footer{
+    background: var(--navy-deep); color: rgba(250,247,241,0.6); padding: 34px 0; font-size:13px;
+  }
+  footer .wrap{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+  footer .logo{ color: var(--slate-white); font-size:16px; }
+  footer .logo span{ background: var(--amber); color:var(--navy); }
+
+  @media (max-width: 860px){
+    .bias-grid{ grid-template-columns: 1fr; }
+    .risk-wrap{ grid-template-columns: 1fr; }
+    .sig-panel{ grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; scroll-behavior:auto !important; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="logo">easyland<span>x</span></div>
+    <a class="btn small" href="https://easylandx.com" target="_blank" rel="noopener">Start free</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Built on how people actually decide</div>
+    <h1>Visitors don't <em>read</em> your landing page.<br>They feel it, in under a second.</h1>
+    <p class="lede">Most page builders design for the mind that carefully weighs pros and cons. easylandx designs for the one that's actually in charge: fast, intuitive, and already halfway to a decision before it reads your headline.</p>
+    <div class="cta-row">
+      <a class="btn" href="https://easylandx.com" target="_blank" rel="noopener">Build with easylandx →</a>
+      <a class="btn ghost" href="#systems">See how it works</a>
+    </div>
+    <div class="cta-note">No credit card · Live page in under 10 minutes</div>
+
+    <div class="signature" id="systems">
+      <div class="sig-head">
+        <div class="label">Which mind is your page talking to?</div>
+        <div class="toggle" role="tablist">
+          <button class="active" data-panel="fast">System 1 — fast</button>
+          <button data-panel="slow">System 2 — slow</button>
+        </div>
+      </div>
+      <div class="sig-body">
+        <div class="sig-panel fast active">
+          <div class="mockup">
+            <div class="m-headline"></div>
+            <div class="m-sub"></div>
+            <div class="m-btn"></div>
+          </div>
+          <div>
+            <h4>What most visitors get</h4>
+            <p>One clear promise, one visual anchor, one obvious next step. Nothing competes for attention, so the intuitive mind doesn't have to work to know what you're offering — or what to click.</p>
+            <div class="stat">This is the mode easylandx templates default to.</div>
+          </div>
+        </div>
+        <div class="sig-panel slow">
+          <div class="mockup">
+            <div class="m-headline"></div>
+            <div class="m-sub"></div>
+            <div class="m-btn"></div>
+          </div>
+          <div>
+            <h4>What careful visitors need</h4>
+            <p>Specs, pricing logic, comparisons, proof. This mind shows up later, after the fast one is already interested — so easylandx tucks it a scroll away, never in front of the headline.</p>
+            <div class="stat">Available on every page as an optional "Details" section.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="band-dark">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Four shortcuts, four page decisions</div>
+      <h2>Your visitor's brain is already cutting corners. Design for the corners it cuts.</h2>
+      <p>Behavioral research on judgment under uncertainty describes a handful of predictable mental shortcuts. Every easylandx template is built around them.</p>
+    </div>
+    <div class="bias-grid">
+      <div class="bias-card">
+        <div class="tag">Limited-information bias</div>
+        <h3>One offer, not five</h3>
+        <p>People build a confident story from whatever's on screen — and ignore everything that isn't. A page crowded with options doesn't inform; it just makes the story harder to trust.</p>
+        <div class="apply">easylandx flags pages with more than one primary CTA above the fold.</div>
+      </div>
+      <div class="bias-card">
+        <div class="tag">Question substitution</div>
+        <h3>Answer the easy question first</h3>
+        <p>"Is this worth $49/month" is hard. "Do I like what I'm looking at right now" is easy — and the brain quietly swaps one for the other. Your hero image is doing more selling than your pricing table.</p>
+        <div class="apply">Built-in hero layouts are tested for a two-second gut reaction, not a spec sheet.</div>
+      </div>
+      <div class="bias-card">
+        <div class="tag">Anchoring</div>
+        <h3>Show the number you want compared to</h3>
+        <p>The first price a visitor sees becomes the ruler for every price after it. A crossed-out "before" price isn't a trick — it's giving the intuitive mind the reference point it's going to use anyway.</p>
+        <div class="apply">Pricing blocks come with an anchor field by default.</div>
+      </div>
+      <div class="bias-card">
+        <div class="tag">Availability</div>
+        <h3>Make proof vivid, not just present</h3>
+        <p>A stat buried in text barely registers. A named customer, a real number, a specific result — those are what come to mind later, which is the only kind of "remembered" that drives a return visit.</p>
+        <div class="apply">Testimonial blocks require a name, a number, and a face — never a stat alone.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Risk feels bigger than reward</div>
+      <h2>Losing $10 hurts more than gaining $10 feels good. Your page should account for that.</h2>
+      <p>People weigh a possible loss roughly twice as heavily as an equivalent gain. That single fact explains most of what makes a checkout page convert — or stall.</p>
+    </div>
+    <div class="risk-wrap">
+      <div class="risk-card">
+        <h3>Remove the loss, not just add the gain</h3>
+        <p>A guarantee doesn't sell the upside — it cancels out the downside the visitor is already picturing. That's a different job, and it needs its own block.</p>
+        <ul>
+          <li>Money-back guarantee badge, placed next to price — not in the footer</li>
+          <li>"Cancel anytime" stated before checkout, not after</li>
+          <li>Free trial with no card required, so there's nothing to lose by starting</li>
+        </ul>
+      </div>
+      <div class="risk-card">
+        <h3>Don't let past effort set the price</h3>
+        <p>Visitors who've already spent ten minutes customizing a page are prone to finishing the purchase just to justify the time — not because the offer is right for them. easylandx flags this so you can fix it, not exploit it.</p>
+        <ul>
+          <li>Progress is auto-saved, so leaving never feels like losing work</li>
+          <li>Exit-intent prompts offer to save the draft, not just "wait, don't go"</li>
+          <li>Pricing is shown before the builder, not after time is already sunk</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band-dark">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">How the visit gets remembered</div>
+      <h2>People don't rate an experience by its length. They rate it by its high point and its last point.</h2>
+      <p>Whatever happens at the most intense moment and the final moment of a visit is what gets carried forward as "what your product is like." easylandx treats both as designed moments, not accidents.</p>
+    </div>
+    <div class="peakend">
+      <div class="pe-track">
+        <div class="pe-line"></div>
+        <div class="pe-step">
+          <div class="k">Arrival</div>
+          <h4>Sets expectations, low intensity</h4>
+          <p>Fast to load, one clear message. Nothing here needs to be memorable — it just needs to not create friction.</p>
+        </div>
+        <div class="pe-step peak">
+          <div class="k">Peak · designed</div>
+          <h4>One moment of genuine delight</h4>
+          <p>A live preview updating instantly, a satisfying save animation, a surprisingly good default template — one high point the visit is built around.</p>
+        </div>
+        <div class="pe-step">
+          <div class="k">Middle</div>
+          <h4>Can be forgettable — and that's fine</h4>
+          <p>Form fields, settings, and details don't need to be memorable. They need to be out of the way.</p>
+        </div>
+        <div class="pe-step end">
+          <div class="k">Ending · designed</div>
+          <h4>The last screen the visitor sees</h4>
+          <p>A confirmation page, a "your page is live" moment, a clear next step. This is the last data point their memory keeps — easylandx never lets it be a blank loading spinner.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="final-cta">
+  <div class="wrap">
+    <div class="eyebrow" style="justify-content:center;">Ready when you are</div>
+    <h2>Build the page the fast mind says yes to — and the slow mind doesn't regret.</h2>
+    <p>Start with a template built around how people actually decide, then customize everything else.</p>
+    <a class="btn" href="https://easylandx.com" target="_blank" rel="noopener">Start with easylandx →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="logo">easyland<span>x</span></div>
+    <div>© 2026 easylandx. Landing pages built for how people think.</div>
+  </div>
+</footer>
+
+<script>
+  const toggleBtns = document.querySelectorAll('.toggle button');
+  const panels = document.querySelectorAll('.sig-panel');
+  toggleBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      toggleBtns.forEach(b => b.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelector('.sig-panel.' + btn.dataset.panel).classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>easylandx — Landing pages that look outward</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Outward Horizon Blue — background family */
+    --bg-deep: #0D2436;
+    --bg-mid: #1C4467;
+    --bg-horizon: #4A83AC;
+    --bg-horizon-soft: #6FA0C4;
+
+    /* Gratitude Emerald — primary accent */
+    --emerald: #1FAE79;
+    --emerald-deep: #13805A;
+    --emerald-glow: rgba(31,174,121,0.18);
+
+    /* Uncluttered Attention Canvas — quiet foreground */
+    --canvas: #F5EFE1;
+    --canvas-dim: #E7DFC9;
+    --canvas-line: #D8CEB2;
+
+    --ink: #0B2030;
+    --ink-soft: #45586A;
+    --mist: #C7D9E6;
+
+    --display: 'Fraunces', serif;
+    --body: 'Inter', -apple-system, sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  *{margin:0; padding:0; box-sizing:border-box;}
+
+  html{scroll-behavior:smooth;}
+
+  body{
+    font-family: var(--body);
+    background: var(--bg-deep);
+    color: var(--mist);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  a{color:inherit; text-decoration:none;}
+
+  .wrap{
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 32px;
+  }
+
+  /* ---------- NAV ---------- */
+  header{
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(10px);
+    background: rgba(13,36,54,0.72);
+    border-bottom: 1px solid rgba(199,217,230,0.12);
+  }
+  nav.wrap{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding-top: 18px;
+    padding-bottom: 18px;
+  }
+  .logo{
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: var(--canvas);
+    letter-spacing: -0.01em;
+  }
+  .logo span{color: var(--emerald);}
+  .nav-cta{
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    background: var(--canvas);
+    color: var(--ink);
+    padding: 10px 18px;
+    border-radius: 100px;
+    transition: background 0.2s ease, transform 0.2s ease;
+    display:inline-block;
+  }
+  .nav-cta:hover{ background: var(--emerald); color: var(--canvas); transform: translateY(-1px); }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position: relative;
+    padding: 110px 0 0;
+    background: radial-gradient(120% 90% at 50% -10%, var(--bg-horizon-soft) 0%, var(--bg-mid) 38%, var(--bg-deep) 78%);
+  }
+  .eyebrow{
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--emerald);
+    margin-bottom: 22px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:7px; height:7px;
+    border-radius:50%;
+    background: var(--emerald);
+    box-shadow: 0 0 0 5px var(--emerald-glow);
+    animation: pulse 2.6s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ box-shadow: 0 0 0 5px var(--emerald-glow); }
+    50%{ box-shadow: 0 0 0 9px rgba(31,174,121,0.06); }
+  }
+  h1{
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(2.4rem, 5.4vw, 4.1rem);
+    line-height: 1.06;
+    color: var(--canvas);
+    letter-spacing: -0.02em;
+    max-width: 780px;
+  }
+  h1 em{
+    font-style: normal;
+    color: var(--emerald);
+  }
+  .hero-sub{
+    max-width: 560px;
+    margin-top: 26px;
+    font-size: 1.08rem;
+    color: var(--mist);
+  }
+  .cta-row{
+    display:flex;
+    align-items:center;
+    gap: 22px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+  }
+  .btn-primary{
+    font-family: var(--body);
+    font-weight: 600;
+    font-size: 0.98rem;
+    background: var(--canvas);
+    color: var(--ink);
+    padding: 16px 30px;
+    border-radius: 100px;
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    transition: background 0.22s ease, transform 0.22s ease, color 0.22s ease;
+  }
+  .btn-primary:hover{
+    background: var(--emerald);
+    color: var(--canvas);
+    transform: translateY(-2px);
+  }
+  .btn-ghost{
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--mist);
+    border-bottom: 1px solid rgba(199,217,230,0.35);
+    padding-bottom: 2px;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+  .btn-ghost:hover{ color: var(--canvas); border-color: var(--canvas); }
+
+  /* Horizon divider */
+  .horizon{
+    margin-top: 90px;
+    width: 100%;
+    display:block;
+  }
+
+  /* ---------- SECTION SHELL ---------- */
+  section{ padding: 90px 0; }
+  .canvas-section{
+    background: var(--canvas);
+    color: var(--ink);
+  }
+  .label{
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--emerald-deep);
+    margin-bottom: 16px;
+  }
+  .dark-label{ color: var(--emerald); }
+  h2{
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+    letter-spacing: -0.01em;
+    max-width: 640px;
+  }
+  .lede{
+    max-width: 640px;
+    margin-top: 20px;
+    font-size: 1.05rem;
+    color: var(--ink-soft);
+  }
+  .canvas-section .lede{ color: var(--ink-soft); }
+  .hero, .dark-section{ }
+  .dark-section .lede{ color: var(--mist); }
+
+  /* ---------- LESSONS ---------- */
+  .lessons{ margin-top: 64px; display:flex; flex-direction:column; }
+  .lesson-row{
+    display:grid;
+    grid-template-columns: 90px 1fr 1fr;
+    gap: 36px;
+    padding: 34px 0;
+    border-top: 1px solid var(--canvas-line);
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .lesson-row.visible{ opacity: 1; transform: translateY(0); }
+  .lesson-row:last-child{ border-bottom: 1px solid var(--canvas-line); }
+  .lesson-num{
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--emerald-deep);
+    padding-top: 4px;
+  }
+  .lesson-title{
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.28rem;
+    color: var(--ink);
+  }
+  .lesson-title .why{
+    display:block;
+    font-family: var(--body);
+    font-weight: 400;
+    font-size: 0.94rem;
+    color: var(--ink-soft);
+    margin-top: 10px;
+  }
+  .lesson-practice{
+    font-size: 0.96rem;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--emerald);
+    padding-left: 18px;
+  }
+  .lesson-practice strong{
+    display:block;
+    color: var(--ink);
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    letter-spacing: 0.01em;
+  }
+
+  @media (max-width: 760px){
+    .lesson-row{ grid-template-columns: 1fr; gap: 12px; }
+    .lesson-practice{ border-left:none; border-top: 2px solid var(--emerald); padding-left:0; padding-top: 14px; }
+  }
+
+  /* ---------- HABIT CALLOUT ---------- */
+  .habit-box{
+    margin-top: 70px;
+    background: var(--ink);
+    color: var(--canvas);
+    border-radius: 22px;
+    padding: 48px;
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items:center;
+  }
+  .habit-box h3{
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.6rem;
+    line-height:1.2;
+  }
+  .habit-box h3 em{ color: var(--emerald); font-style:normal; }
+  .habit-stats{
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--mist);
+    display:flex;
+    flex-direction:column;
+    gap: 14px;
+  }
+  .habit-stats b{ color: var(--canvas); font-size: 1.4rem; display:block; font-family: var(--body); }
+  @media (max-width: 760px){ .habit-box{ grid-template-columns: 1fr; padding: 32px; } }
+
+  /* ---------- FINAL CTA ---------- */
+  .final-cta{
+    background: radial-gradient(110% 130% at 50% 110%, var(--bg-horizon) 0%, var(--bg-mid) 45%, var(--bg-deep) 85%);
+    text-align:center;
+    padding: 110px 0;
+  }
+  .final-cta h2{ max-width: 700px; margin: 0 auto; color: var(--canvas); }
+  .final-cta .lede{ margin-left:auto; margin-right:auto; }
+  .final-cta .cta-row{ justify-content:center; margin-top: 44px; }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    background: var(--bg-deep);
+    padding: 40px 0;
+    border-top: 1px solid rgba(199,217,230,0.12);
+  }
+  .foot-wrap{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap: 16px;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+  }
+  .foot-wrap .logo{ font-size: 1rem; }
+  .footnote{
+    max-width: 1080px;
+    margin: 24px auto 0;
+    padding: 0 32px;
+    font-size: 0.76rem;
+    color: rgba(199,217,230,0.45);
+    line-height: 1.6;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+    html{ scroll-behavior:auto; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <div class="logo">easyland<span>x</span></div>
+    <a class="nav-cta" href="https://easylandx.com/get-started" target="_blank" rel="noopener">Get started →</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Built on the science of attention</div>
+    <h1>Most landing pages talk about the company. <em>Yours should look at the visitor.</em></h1>
+    <p class="hero-sub">Research on happiness found something landing pages quietly get wrong too: brains fixate on themselves by default, and that self-focus is exactly what drives people away. easylandx helps you build pages that turn outward — toward the person reading them.</p>
+    <div class="cta-row">
+      <a class="btn-primary" href="https://easylandx.com/get-started" target="_blank" rel="noopener">Build with easylandx →</a>
+      <a class="btn-ghost" href="#lessons">See the 7 principles</a>
+    </div>
+  </div>
+
+  <svg class="horizon" viewBox="0 0 1200 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,55 C 250,20 450,75 700,45 C 900,22 1050,60 1200,40 L1200,90 L0,90 Z" fill="#F5EFE1"></path>
+  </svg>
+</section>
+
+<section class="canvas-section">
+  <div class="wrap">
+    <div class="label">The problem</div>
+    <h2>Every unclicked button is a page still thinking about itself.</h2>
+    <p class="lede">Founders write hero sections the way people talk when they're anxious: about themselves. Big logo, "About us," a paragraph on company history before a single word about the visitor's problem. It reads fine internally. It bounces externally. The fix isn't more polish — it's a different center of gravity, from egocentric to outward-looking.</p>
+  </div>
+</section>
+
+<section class="canvas-section" id="lessons" style="padding-top:0;">
+  <div class="wrap">
+    <div class="label">Seven shifts</div>
+    <h2>Seven ways to point a landing page outward</h2>
+    <p class="lede">Each one is a small correction to the same instinct: write about you first. easylandx builds these corrections into the editor, so the outward-facing version is the easy default, not an extra step.</p>
+
+    <div class="lessons">
+
+      <div class="lesson-row">
+        <div class="lesson-num">01</div>
+        <div class="lesson-title">Speak to them, not about you.
+          <span class="why">Visitors scan for themselves in the first five seconds. If the headline is about your company, they don't find themselves — and they leave.</span>
+        </div>
+        <div class="lesson-practice">
+          <strong>In easylandx</strong>
+          Headline blocks default to a "you" prompt instead of a "we" prompt, so the first line names the visitor's problem before your product name.
+        </div>
+      </div>
+
+      <div class="lesson-row">
+        <div class="lesson-num">02</div>
+        <div class="lesson-title">Show them they're not the only one.
+          <span class="why">A page that looks like nobody else uses it reads as risky. Isolation makes people hesitate; visible company is what lets them relax.</span>
+        </div>
+        <div class="lesson-practice">
+          <strong>In easylandx</strong>
+          Drag-in social proof blocks — logos, quotes, usage counts — that pull live from your account instead of sitting there as static placeholder text.
+        </div>
+      </div>
+
+      <div class="lesson-row">
+        <div class="lesson-num">03</div>
+        <div class="lesson-title">Skip the manufactured comparison.
+          <span class="why">Fake countdown timers and "3 people are viewing this" banners exploit the same comparison instinct that makes social media exhausting. It works once and costs trust forever.</span>
+        </div>
+        <div class="lesson-practice">
+          <strong>In easylandx</strong>
+          No dark-pattern components in the library, on purpose. Urgency elements are opt-in and tied to something real, like an actual enrollment date.
+        </div>
+      </div>
+
+      <div class="lesson-row">
+        <div class="lesson-num">04</div>
+        <div class="lesson-title">Lead with the win, not the warning.
+          <span class="why">People remember threats longer than they remember good news. A page stacked with pain points and fear reads as heavy before anyone reaches the offer.</span>
+        </div>
+        <div class="lesson-practice">
+          <strong>In easylandx</strong>
+          The copy assistant nudges every section toward outcome-first phrasing: what changes for the visitor, stated before what's wrong today.
+        </div>
+      </div>
+
+      <div class="lesson-row">
+        <div class="lesson-num">05</div>
+        <div class="lesson-title">Give attention one place to land.
+          <span class="why">A wandering eye is an unconverted visitor. Five competing calls to action don't multiply your chances — they cancel each other out.</span>
+        </div>
+        <div class="lesson-practice">
+          <strong>In easylandx</strong>
+          The layout engine flags a page the moment it has more than one primary action, and shows a clutter score as you build.
+        </div>
+      </div>
+
+      <div class="lesson-row">
+        <div class="lesson-num">06</div>
+        <div class="lesson-title">Let strangers talk to you first.
+          <span class="why">Small, low-stakes contact — a chat bubble, a quick question — does more for trust than another paragraph of features ever will.</span>
+        </div>
+        <div class="lesson-practice">
+          <strong>In easylandx</strong>
+          One-click live chat and short-form contact widgets, styled to match your page instead of sitting on top of it like a plugin.
+        </div>
+      </div>
+
+      <div class="lesson-row">
+        <div class="lesson-num">07</div>
+        <div class="lesson-title">Zoom out before you ask for the click.
+          <span class="why">A page that's all close-up detail — specs, pricing tiers, fine print — never gives the visitor a reason to feel anything. A wider view does.</span>
+        </div>
+        <div class="lesson-practice">
+          <strong>In easylandx</strong>
+          Full-bleed imagery and generous whitespace templates built for one big idea per screen, instead of a dashboard of small boxes.
+        </div>
+      </div>
+
+    </div>
+
+    <div class="habit-box">
+      <div>
+        <h3>A launched page isn't a finished page. It's a <em>page in training.</em></h3>
+        <p style="margin-top:16px; color: var(--mist); font-size:0.96rem;">The same research that shaped these seven shifts found something else: the lift from applying them fades back to baseline within months if nobody keeps at it. Landing pages behave the same way. Traffic sources shift, copy goes stale, the "you" your headline was written for changes.</p>
+      </div>
+      <div class="habit-stats">
+        <div><b>10–15%</b>typical lift from a first outward-focused rewrite</div>
+        <div><b>Ongoing</b>testing cadence easylandx schedules for you automatically</div>
+        <div><b>1 page</b>kept current beats 5 pages launched and abandoned</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="final-cta">
+  <div class="wrap">
+    <div class="label dark-label">Start today</div>
+    <h2>Build the page your visitors can actually see themselves in.</h2>
+    <p class="lede">No dark patterns, no clutter, no page that's secretly about you. Just a fast editor built around the one question that matters: what does the person on the other end of this link need to see?</p>
+    <div class="cta-row">
+      <a class="btn-primary" href="https://easylandx.com/get-started" target="_blank" rel="noopener">Build with easylandx →</a>
+      <a class="btn-ghost" href="https://easylandx.com/examples" target="_blank" rel="noopener">See a live example</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-wrap">
+    <div class="logo">easyland<span>x</span></div>
+    <div>© 2026 easylandx. Landing pages that look outward.</div>
+  </div>
+  <p class="footnote">Design principles on this page are inspired by research on attention, comparison, and outward-focused thinking popularized in Dr. Bruce Hood's "The Science of Happiness" — reframed here for landing page design, not offered as psychological advice.</p>
+</footer>
+
+<script>
+  const rows = document.querySelectorAll('.lesson-row');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        e.target.classList.add('visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  rows.forEach(r => io.observe(r));
+</script>
+
+</body>
+</html>

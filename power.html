@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>easylandx — Every page has more potential than you shipped</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,450;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --emerald-950:#081F17;
+    --emerald-900:#0B2E22;
+    --emerald-800:#123F30;
+    --emerald-700:#1A5240;
+    --emerald-600:#22684F;
+    --amber-500:#E8A23D;
+    --amber-400:#F0B65E;
+    --amber-300:#F2C57C;
+    --white-100:#FAF7EF;
+    --white-60:rgba(250,247,239,0.6);
+    --white-30:rgba(250,247,239,0.3);
+    --white-14:rgba(250,247,239,0.14);
+    --serif:'Fraunces', serif;
+    --sans:'Inter', sans-serif;
+    --mono:'IBM Plex Mono', monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--emerald-950);
+    color:var(--white-100);
+    font-family:var(--sans);
+    line-height:1.5;
+    overflow-x:hidden;
+  }
+  a{color:inherit;text-decoration:none;}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 32px;}
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12.5px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--amber-400);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .eyebrow::before{
+    content:'';
+    width:20px;height:1px;
+    background:var(--amber-500);
+    display:inline-block;
+  }
+
+  /* NAV */
+  nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(8,31,23,0.86);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--white-14);
+  }
+  nav .wrap{
+    display:flex;align-items:center;justify-content:space-between;
+    height:72px;
+  }
+  .logo{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:22px;
+    letter-spacing:-0.01em;
+  }
+  .logo span{color:var(--amber-500);}
+  .navlinks{display:flex;gap:32px;font-size:14.5px;color:var(--white-60);}
+  .navlinks a:hover{color:var(--white-100);}
+  .btn{
+    display:inline-flex;align-items:center;gap:10px;
+    font-family:var(--sans);
+    font-weight:600;
+    font-size:15px;
+    padding:13px 26px;
+    border-radius:3px;
+    background:var(--amber-500);
+    color:var(--emerald-950);
+    border:1px solid var(--amber-500);
+    transition:background .2s ease, transform .2s ease, box-shadow .2s ease;
+    cursor:pointer;
+  }
+  .btn:hover{background:var(--amber-400);transform:translateY(-1px);box-shadow:0 8px 24px -8px rgba(232,162,61,0.5);}
+  .btn.ghost{
+    background:transparent;color:var(--white-100);border:1px solid var(--white-30);
+  }
+  .btn.ghost:hover{border-color:var(--amber-500);color:var(--amber-400);background:transparent;box-shadow:none;}
+  .btn-nav{padding:10px 20px;font-size:14px;}
+
+  /* HERO */
+  header.hero{padding:120px 0 90px;position:relative;}
+  header.hero::after{
+    content:'';
+    position:absolute;top:-120px;right:-200px;
+    width:600px;height:600px;border-radius:50%;
+    background:radial-gradient(circle, rgba(232,162,61,0.14), transparent 70%);
+    pointer-events:none;
+  }
+  .hero .eyebrow{margin-bottom:28px;}
+  h1{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:clamp(40px, 6vw, 74px);
+    line-height:1.04;
+    letter-spacing:-0.02em;
+    max-width:15ch;
+  }
+  h1 em{font-style:italic;font-weight:450;color:var(--amber-400);}
+  .hero p.sub{
+    margin-top:28px;
+    max-width:52ch;
+    font-size:18.5px;
+    color:var(--white-60);
+    line-height:1.65;
+  }
+  .hero-ctas{display:flex;gap:16px;margin-top:44px;flex-wrap:wrap;}
+
+  /* RUBBER BAND SIGNATURE */
+  .band-section{padding:40px 0 130px;}
+  .band-card{
+    border:1px solid var(--white-14);
+    border-radius:6px;
+    background:linear-gradient(180deg, var(--emerald-900), var(--emerald-950));
+    padding:56px 48px;
+    position:relative;
+    overflow:hidden;
+  }
+  .band-label-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12.5px;color:var(--white-60);letter-spacing:0.06em;margin-bottom:36px;}
+  .band-label-row .to{color:var(--amber-400);}
+  svg.band{width:100%;height:auto;display:block;}
+  .band-caption{
+    margin-top:32px;
+    font-size:15.5px;
+    color:var(--white-60);
+    max-width:60ch;
+  }
+  .band-caption strong{color:var(--white-100);font-weight:600;}
+
+  /* EQUATION */
+  .equation-section{padding:20px 0 130px;}
+  .eq-title{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:clamp(28px, 4vw, 42px);
+    letter-spacing:-0.01em;
+    max-width:20ch;
+    margin-bottom:56px;
+  }
+  .eq-row{
+    display:flex;
+    align-items:stretch;
+    gap:18px;
+    flex-wrap:wrap;
+  }
+  .eq-term{
+    flex:1 1 200px;
+    background:var(--emerald-900);
+    border:1px solid var(--white-14);
+    border-radius:6px;
+    padding:32px 26px;
+  }
+  .eq-term .tag{font-family:var(--mono);font-size:12px;color:var(--amber-400);letter-spacing:0.08em;text-transform:uppercase;}
+  .eq-term h3{font-family:var(--serif);font-size:24px;font-weight:600;margin-top:10px;}
+  .eq-term p{font-size:14.5px;color:var(--white-60);margin-top:12px;line-height:1.6;}
+  .eq-op{
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--serif);font-size:32px;color:var(--white-30);
+    flex:0 0 auto;padding:0 4px;
+  }
+  .eq-result{
+    flex:1 1 220px;
+    background:var(--amber-500);
+    color:var(--emerald-950);
+    border-radius:6px;
+    padding:32px 26px;
+  }
+  .eq-result .tag{font-family:var(--mono);font-size:12px;color:var(--emerald-900);letter-spacing:0.08em;text-transform:uppercase;opacity:0.75;}
+  .eq-result h3{font-family:var(--serif);font-size:24px;font-weight:700;margin-top:10px;}
+  .eq-result p{font-size:14.5px;margin-top:12px;line-height:1.6;opacity:0.85;}
+
+  /* SECTION HEADERS */
+  .section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:48px;}
+  .section-head h2{font-family:var(--serif);font-weight:600;font-size:clamp(30px,4vw,44px);letter-spacing:-0.01em;max-width:14ch;}
+  .section-head p{font-size:15px;color:var(--white-60);max-width:34ch;}
+
+  /* BUILT-IN GRID */
+  .builtin-section{padding:60px 0;}
+  .card-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+    gap:16px;
+  }
+  .b-card{
+    background:var(--emerald-900);
+    border:1px solid var(--white-14);
+    border-radius:6px;
+    padding:26px 22px;
+    transition:border-color .25s ease, transform .25s ease;
+    opacity:0;transform:translateY(14px);
+  }
+  .b-card.in{opacity:1;transform:translateY(0);}
+  .b-card:hover{border-color:var(--emerald-600);}
+  .b-card .num{font-family:var(--mono);font-size:12px;color:var(--white-30);}
+  .b-card h4{font-family:var(--serif);font-size:19px;font-weight:600;margin-top:14px;}
+  .b-card p{font-size:13.8px;color:var(--white-60);margin-top:8px;line-height:1.55;}
+
+  /* CHOICE GRID */
+  .choice-section{padding:100px 0;}
+  .c-card{
+    background:var(--emerald-800);
+    border:1px solid rgba(232,162,61,0.22);
+    border-radius:6px;
+    padding:26px 22px;
+    transition:border-color .25s ease, background .25s ease, transform .25s ease;
+    opacity:0;transform:translateY(14px);
+  }
+  .c-card.in{opacity:1;transform:translateY(0);}
+  .c-card:hover{border-color:var(--amber-500);background:var(--emerald-700);}
+  .c-card .num{font-family:var(--mono);font-size:12px;color:var(--amber-400);}
+  .c-card h4{font-family:var(--serif);font-size:19px;font-weight:600;margin-top:14px;}
+  .c-card p{font-size:13.8px;color:var(--white-60);margin-top:8px;line-height:1.55;}
+
+  /* TENSION QUOTE */
+  .tension-section{padding:60px 0 140px;}
+  .tension-card{
+    border-top:1px solid var(--white-14);
+    border-bottom:1px solid var(--white-14);
+    padding:64px 0;
+    display:grid;
+    grid-template-columns:1fr 1.6fr;
+    gap:40px;
+  }
+  .tension-card .eyebrow{margin-bottom:20px;}
+  .tension-card blockquote{
+    font-family:var(--serif);
+    font-size:clamp(24px,3vw,32px);
+    font-weight:450;
+    line-height:1.35;
+    letter-spacing:-0.01em;
+  }
+  .tension-card blockquote em{font-style:italic;color:var(--amber-400);}
+  .tension-card .attribution{
+    margin-top:20px;font-size:14px;color:var(--white-60);
+  }
+
+  /* FINAL CTA */
+  .final-section{padding:40px 0 140px;text-align:center;}
+  .final-card{
+    background:linear-gradient(160deg, var(--emerald-800), var(--emerald-950));
+    border:1px solid var(--white-14);
+    border-radius:10px;
+    padding:90px 40px;
+    position:relative;
+    overflow:hidden;
+  }
+  .final-card::before{
+    content:'';
+    position:absolute;bottom:-160px;left:50%;transform:translateX(-50%);
+    width:700px;height:400px;border-radius:50%;
+    background:radial-gradient(ellipse, rgba(232,162,61,0.16), transparent 70%);
+  }
+  .final-card h2{
+    font-family:var(--serif);font-weight:600;
+    font-size:clamp(32px,5vw,52px);
+    max-width:16ch;margin:0 auto 20px;
+    letter-spacing:-0.01em;
+    position:relative;
+  }
+  .final-card p{color:var(--white-60);font-size:16.5px;max-width:44ch;margin:0 auto 40px;position:relative;}
+  .final-card .btn{position:relative;font-size:16px;padding:16px 34px;}
+
+  /* FOOTER */
+  footer{border-top:1px solid var(--white-14);padding:40px 0;}
+  footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+  footer .fnote{font-size:13px;color:var(--white-30);font-family:var(--mono);}
+
+  @media (max-width:760px){
+    .tension-card{grid-template-columns:1fr;}
+    .navlinks{display:none;}
+    .eq-row{flex-direction:column;}
+    .eq-op{transform:rotate(90deg);padding:6px 0;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    .b-card,.c-card{transition:none;opacity:1;transform:none;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="logo">easyland<span>x</span></div>
+    <div class="navlinks">
+      <a href="#equation">The Equation</a>
+      <a href="#builtin">Built In</a>
+      <a href="#choices">You Choose</a>
+    </div>
+    <a class="btn btn-nav" href="https://easylandx.com" target="_blank" rel="noopener">Open easylandx</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Landing pages, built for growth</p>
+    <h1>Your page has more <em>potential</em> than the one you shipped.</h1>
+    <p class="sub">Most landing pages plateau not because the idea was weak, but because nobody kept stretching it. easylandx gives you the tools — what you do with them is still the whole game.</p>
+    <div class="hero-ctas">
+      <a class="btn" href="https://easylandx.com" target="_blank" rel="noopener">Build your page with easylandx →</a>
+      <a class="btn ghost" href="#equation">See how it works</a>
+    </div>
+  </div>
+</header>
+
+<section class="band-section">
+  <div class="wrap">
+    <div class="band-card">
+      <div class="band-label-row">
+        <span>WHERE THE PAGE STANDS TODAY</span>
+        <span class="to">WHERE IT COULD STAND</span>
+      </div>
+      <svg class="band" viewBox="0 0 1000 160" xmlns="http://www.w3.org/2000/svg">
+        <line x1="60" y1="80" x2="940" y2="80" stroke="rgba(250,247,239,0.14)" stroke-width="1" stroke-dasharray="2 6"/>
+        <path id="bandPath" d="M 60 80 C 300 80, 500 40, 940 80" fill="none" stroke="#E8A23D" stroke-width="2.5"/>
+        <circle cx="60" cy="80" r="7" fill="#FAF7EF"/>
+        <circle cx="940" cy="80" r="9" fill="#E8A23D"/>
+        <circle cx="940" cy="80" r="16" fill="none" stroke="#E8A23D" stroke-width="1" opacity="0.5"/>
+      </svg>
+      <p class="band-caption"><strong>Growth needs tension.</strong> A page only improves while there's a gap between the version live now and the version you know is possible. Close that gap by settling, and improvement stops — that's the moment a page needs a new headline, a new test, a new offer, not a new coat of paint.</p>
+    </div>
+  </div>
+</section>
+
+<section class="equation-section" id="equation">
+  <div class="wrap">
+    <h2 class="eq-title">Every page converts at the ceiling of one simple equation.</h2>
+    <div class="eq-row">
+      <div class="eq-term">
+        <span class="tag">01</span>
+        <h3>Awareness</h3>
+        <p>Knowing exactly where visitors stall — the section they abandon, the field they won't fill, the price they hesitate on.</p>
+      </div>
+      <div class="eq-op">+</div>
+      <div class="eq-term">
+        <span class="tag">02</span>
+        <h3>Ability</h3>
+        <p>The tools in your hands: fast hosting, flexible blocks, and an editor that gets out of your way.</p>
+      </div>
+      <div class="eq-op">+</div>
+      <div class="eq-term">
+        <span class="tag">03</span>
+        <h3>Choices</h3>
+        <p>What you actually do with both — the headline you commit to, the test you run, the field you cut.</p>
+      </div>
+      <div class="eq-op">=</div>
+      <div class="eq-result">
+        <span class="tag">Result</span>
+        <h3>Conversion Capacity</h3>
+        <p>easylandx supplies the first two in full. The third is yours — and it's the one that compounds.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="builtin-section" id="builtin">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>What's built in</h2>
+      <p>Seven capacities that come with every page, calibrated from day one — your starting line, not your ceiling.</p>
+    </div>
+    <div class="card-grid" id="builtinGrid">
+      <div class="b-card"><span class="num">01</span><h4>Speed Capacity</h4><p>Pages load in under a second on any connection, so nobody bounces before they see your offer.</p></div>
+      <div class="b-card"><span class="num">02</span><h4>Stability Capacity</h4><p>Traffic spikes don't crash the page — a launch day and a quiet Tuesday feel identical to your host.</p></div>
+      <div class="b-card"><span class="num">03</span><h4>Clarity Capacity</h4><p>An editor that shows you exactly what visitors will see, with nothing extra cluttering the way there.</p></div>
+      <div class="b-card"><span class="num">04</span><h4>Audience Capacity</h4><p>Forms, chat, and capture tools built to understand who's actually landing on your page.</p></div>
+      <div class="b-card"><span class="num">05</span><h4>Design Capacity</h4><p>Flexible blocks and layouts that stretch to an original page, not a template with your logo dropped in.</p></div>
+      <div class="b-card"><span class="num">06</span><h4>Publish Capacity</h4><p>From a blank draft to a live URL in minutes, with rollback if a change doesn't land.</p></div>
+      <div class="b-card"><span class="num">07</span><h4>Trust Capacity</h4><p>SSL, clean markup, and fast delivery — the quiet fundamentals that make a page feel credible before anyone reads a word.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="choice-section" id="choices">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>What you choose</h2>
+      <p>Ten decisions that separate a page that plateaus from one that keeps compounding. easylandx hands you the controls — these are yours to pull.</p>
+    </div>
+    <div class="card-grid" id="choiceGrid">
+      <div class="c-card"><span class="num">01</span><h4>Ownership</h4><p>Treat a flat conversion rate as your call to make, not the template's fault.</p></div>
+      <div class="c-card"><span class="num">02</span><h4>Honesty</h4><p>Write copy and pricing a visitor could double-check and still trust.</p></div>
+      <div class="c-card"><span class="num">03</span><h4>Opportunity</h4><p>Treat every visitor as a chance, not a scarce lead you can't afford to waste.</p></div>
+      <div class="c-card"><span class="num">04</span><h4>Discipline</h4><p>Run the test on the schedule, whether or not you feel like it that week.</p></div>
+      <div class="c-card"><span class="num">05</span><h4>Focus</h4><p>One page, one goal, one call to action — cut the rest, however tempting.</p></div>
+      <div class="c-card"><span class="num">06</span><h4>Framing</h4><p>Read a bad week of numbers as information to act on, not a verdict on the page.</p></div>
+      <div class="c-card"><span class="num">07</span><h4>Experimentation</h4><p>Ship the bolder headline even when the safe one feels less risky.</p></div>
+      <div class="c-card"><span class="num">08</span><h4>Iteration</h4><p>Commit to small, weekly improvements instead of one big redesign a year.</p></div>
+      <div class="c-card"><span class="num">09</span><h4>Integration</h4><p>Connect the page to your CRM, email, and analytics instead of letting leads sit unread.</p></div>
+      <div class="c-card"><span class="num">10</span><h4>Value</h4><p>Leave visitors with something useful even on the visits that don't convert.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="tension-section">
+  <div class="wrap">
+    <div class="tension-card">
+      <div>
+        <p class="eyebrow">The rubber band effect</p>
+      </div>
+      <div>
+        <blockquote>A page only grows while there's <em>honest tension</em> between the version that's live and the version you know it could become.</blockquote>
+        <p class="attribution">Lose that tension — stop testing, stop questioning the headline, stop watching where people drop off — and the page stops growing with you.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="final-section">
+  <div class="wrap">
+    <div class="final-card">
+      <h2>Stop shipping the safe version.</h2>
+      <p>easylandx gives you the speed, the stability, and the tools. The tension that makes a page grow is still yours to hold onto.</p>
+      <a class="btn" href="https://easylandx.com" target="_blank" rel="noopener">Start building with easylandx →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="logo" style="font-size:18px;">easyland<span>x</span></div>
+    <span class="fnote">CONVERSION CAPACITY = AWARENESS + ABILITY + CHOICES</span>
+  </div>
+</footer>
+
+<script>
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, {threshold:0.15});
+  document.querySelectorAll('.b-card, .c-card').forEach(el=>io.observe(el));
+</script>
+
+</body>
+</html>
