@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>✦ EasylandX • Interactive Worlds</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0b12;
+      --card: rgba(255,255,255,0.05);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      background-image: 
+        radial-gradient(ellipse 80% 50% at 20% -20%, rgba(99,102,241,0.25), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(236,72,153,0.2), transparent),
+        radial-gradient(ellipse 50% 30% at 50% 50%, rgba(34,211,238,0.08), transparent);
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 60px 20px 40px;
+      position: relative;
+    }
+
+    header h1 {
+      font-size: clamp(2.4rem, 6vw, 3.8rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #a5b4fc, #f9a8d4, #67e8f9, #fcd34d);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradient 8s ease infinite;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+    }
+
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 1.2rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Sticky Category Nav */
+    .nav-wrapper {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(11,11,18,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding: 14px 0;
+    }
+
+    .nav {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 0 20px;
+      scrollbar-width: none;
+    }
+
+    .nav::-webkit-scrollbar { display: none; }
+
+    .nav a {
+      flex-shrink: 0;
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      color: var(--muted);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .nav a:hover,
+    .nav a.active {
+      color: white;
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    /* Main Content */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+
+    .category {
+      margin-bottom: 70px;
+      scroll-margin-top: 80px;
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .category-icon {
+      font-size: 2rem;
+    }
+
+    .category-title {
+      font-size: 1.7rem;
+      font-weight: 700;
+    }
+
+    .category-count {
+      background: rgba(255,255,255,0.1);
+      padding: 3px 12px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    /* Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 20px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .emoji {
+      font-size: 2.4rem;
+      line-height: 1;
+    }
+
+    .title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .desc {
+      font-size: 0.92rem;
+      color: var(--muted);
+      flex-grow: 1;
+    }
+
+    .open {
+      font-size: 0.85rem;
+      font-weight: 600;
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: all 0.3s;
+    }
+
+    .card:hover .open {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* Category Colors */
+    .japanese .card::before { background: linear-gradient(135deg, rgba(244,114,182,0.15), transparent); }
+    .japanese .card:hover { border-color: #f472b6; }
+    .japanese .open { color: #f9a8d4; }
+
+    .nature .card::before { background: linear-gradient(135deg, rgba(52,211,153,0.15), transparent); }
+    .nature .card:hover { border-color: #34d399; }
+    .nature .open { color: #6ee7b7; }
+
+    .travel .card::before { background: linear-gradient(135deg, rgba(56,189,248,0.15), transparent); }
+    .travel .card:hover { border-color: #38bdf8; }
+    .travel .open { color: #7dd3fc; }
+
+    .scifi .card::before { background: linear-gradient(135deg, rgba(167,139,250,0.18), transparent); }
+    .scifi .card:hover { border-color: #a78bfa; }
+    .scifi .open { color: #c4b5fd; }
+
+    .simulators .card::before { background: linear-gradient(135deg, rgba(251,191,36,0.15), transparent); }
+    .simulators .card:hover { border-color: #fbbf24; }
+    .simulators .open { color: #fcd34d; }
+
+    .fun .card::before { background: linear-gradient(135deg, rgba(248,113,113,0.15), transparent); }
+    .fun .card:hover { border-color: #f87171; }
+    .fun .open { color: #fca5a5; }
+
+    footer {
+      text-align: center;
+      padding: 40px 20px;
+      color: #64748b;
+      font-size: 0.9rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    footer a {
+      color: #94a3b8;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      color: #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>✦ EasylandX Worlds</h1>
+    <p>Interactive experiments & visual playgrounds — now beautifully categorized</p>
+  </header>
+
+  <div class="nav-wrapper">
+    <nav class="nav">
+      <a href="#japanese">🇯🇵 Japanese Patterns</a>
+      <a href="#nature">🌿 Nature & Landscapes</a>
+      <a href="#travel">✈️ Travel & Vehicles</a>
+      <a href="#scifi">🛸 Sci-Fi & Tech</a>
+      <a href="#simulators">🎮 Simulators</a>
+      <a href="#fun">✨ Fun & Misc</a>
+    </nav>
+  </div>
+
+  <div class="container">
+
+    <!-- Japanese Patterns -->
+    <section class="category japanese" id="japanese">
+      <div class="category-header">
+        <div class="category-icon">🇯🇵</div>
+        <h2 class="category-title">Japanese Patterns</h2>
+        <span class="category-count">11</span>
+      </div>
+      <div class="grid">
+        <a class="card" href="https://easylandx.github.io/mac/seiga.html" target="_blank">
+          <div class="emoji">🌊</div>
+          <div class="title">Seigaiha</div>
+          <div class="desc">Peace, resilience and good fortune</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/asak.html" target="_blank">
+          <div class="emoji">🏮</div>
+          <div class="title">Asakusa</div>
+          <div class="desc">Tokyo neon sign that never sleeps</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/ship.html" target="_blank">
+          <div class="emoji">👑</div>
+          <div class="title">Shippo</div>
+          <div class="desc">Seven Treasures</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/asan.html" target="_blank">
+          <div class="emoji">💪</div>
+          <div class="title">Asanoha</div>
+          <div class="desc">Healthy Growth & Vigor</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/uroko.html" target="_blank">
+          <div class="emoji">🐦‍🔥</div>
+          <div class="title">Uroko</div>
+          <div class="desc">Protective power and spiritual rebirth</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/sayagata.html" target="_blank">
+          <div class="emoji">🧧</div>
+          <div class="title">Sayagata</div>
+          <div class="desc">Life longevity, family prosperity, and unending good fortune</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/yagasuri.html" target="_blank">
+          <div class="emoji">🪶</div>
+          <div class="title">Yagasuri</div>
+          <div class="desc">Determination, high aspirations, and protection</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/kikko.html" target="_blank">
+          <div class="emoji">🐢</div>
+          <div class="title">Kikko</div>
+          <div class="desc">Long life, longevity, and continuous good fortune</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/karakusa.html" target="_blank">
+          <div class="emoji">💰</div>
+          <div class="title">Karakusa</div>
+          <div class="desc">Longevity, prosperity, and family continuity</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/ichi.html" target="_blank">
+          <div class="emoji">🍀</div>
+          <div class="title">Ichimatsu</div>
+          <div class="desc">Infinite continuity, business prosperity, and family longevity</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/tatew.html" target="_blank">
+          <div class="emoji">💵</div>
+          <div class="title">Tatewaku</div>
+          <div class="desc">Rising fortune, prosperity, and high social status</div>
+          <div class="open">Open →</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Nature & Landscapes -->
+    <section class="category nature" id="nature">
+      <div class="category-header">
+        <div class="category-icon">🌿</div>
+        <h2 class="category-title">Nature & Landscapes</h2>
+        <span class="category-count">13</span>
+      </div>
+      <div class="grid">
+        <a class="card" href="https://easylandx.github.io/mac/cave.html" target="_blank">
+          <div class="emoji">🔥</div>
+          <div class="title">Cave</div>
+          <div class="desc">Cave painting simulator</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/beach.html" target="_blank">
+          <div class="emoji">🏖️</div>
+          <div class="title">Beach</div>
+          <div class="desc">Sunny shores, waves & chill vibes</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/city.html" target="_blank">
+          <div class="emoji">🌃</div>
+          <div class="title">City</div>
+          <div class="desc">Neon nights & urban skylines</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/clay.html" target="_blank">
+          <div class="emoji">🏺</div>
+          <div class="title">Clay</div>
+          <div class="desc">Soft sculpting & organic forms</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/coral.html" target="_blank">
+          <div class="emoji">🐚</div>
+          <div class="title">Coral</div>
+          <div class="desc">Underwater reef in vibrant color</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/cows.html" target="_blank">
+          <div class="emoji">🐄</div>
+          <div class="title">Cows</div>
+          <div class="desc">Peaceful pasture & friendly herd</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/goat.html" target="_blank">
+          <div class="emoji">🐐</div>
+          <div class="title">Goat</div>
+          <div class="desc">Mountain climber on rocky cliffs</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/jungle.html" target="_blank">
+          <div class="emoji">🌴</div>
+          <div class="title">Jungle</div>
+          <div class="desc">Lush canopy & wild adventure</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/light.html" target="_blank">
+          <div class="emoji">⚓</div>
+          <div class="title">Light</div>
+          <div class="desc">Fenwick Point Lighthouse Simulator</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/maya.html" target="_blank">
+          <div class="emoji">🏛️</div>
+          <div class="title">Maya</div>
+          <div class="desc">Ancient temples & lost civilization</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/rain.html" target="_blank">
+          <div class="emoji">🌧️</div>
+          <div class="title">Rain</div>
+          <div class="desc">Gentle rainfall & atmospheric mood</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/eclipse.html" target="_blank">
+          <div class="emoji">🌑</div>
+          <div class="title">Eclipse</div>
+          <div class="desc">Celestial shadow & cosmic darkness</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/waves.html" target="_blank">
+          <div class="emoji">🏖️</div>
+          <div class="title">Tropical Beach Projection</div>
+          <div class="desc">White noise</div>
+          <div class="open">Open →</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Travel & Vehicles -->
+    <section class="category travel" id="travel">
+      <div class="category-header">
+        <div class="category-icon">✈️</div>
+        <h2 class="category-title">Travel & Vehicles</h2>
+        <span class="category-count">5</span>
+      </div>
+      <div class="grid">
+        <a class="card" href="https://easylandx.github.io/mac/train.html" target="_blank">
+          <div class="emoji">🚄</div>
+          <div class="title">Shinkansen</div>
+          <div class="desc">Shinkansen View</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/yacht.html" target="_blank">
+          <div class="emoji">🛥️</div>
+          <div class="title">Yacht</div>
+          <div class="desc">Yacht View</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/wind/" target="_blank">
+          <div class="emoji">✈️</div>
+          <div class="title">Airplane</div>
+          <div class="desc">Window Seat</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/fly.html" target="_blank">
+          <div class="emoji">✈️</div>
+          <div class="title">Fly</div>
+          <div class="desc">For real</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/iss.html" target="_blank">
+          <div class="emoji">🌍</div>
+          <div class="title">ISS</div>
+          <div class="desc">Earth from the ISS</div>
+          <div class="open">Open →</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Sci-Fi & Tech -->
+    <section class="category scifi" id="scifi">
+      <div class="category-header">
+        <div class="category-icon">🛸</div>
+        <h2 class="category-title">Sci-Fi & Tech Interfaces</h2>
+        <span class="category-count">7</span>
+      </div>
+      <div class="grid">
+        <a class="card" href="https://easylandx.github.io/mac/muthur.html" target="_blank">
+          <div class="emoji">👽</div>
+          <div class="title">MU/TH/UR</div>
+          <div class="desc">Alien ship computer interface</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/lcars.html" target="_blank">
+          <div class="emoji">🖖</div>
+          <div class="title">LCARS</div>
+          <div class="desc">Starfleet computer interface</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/hal.html" target="_blank">
+          <div class="emoji">🔴</div>
+          <div class="title">HAL</div>
+          <div class="desc">HAL9000</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/ai.html" target="_blank">
+          <div class="emoji">🤖</div>
+          <div class="title">AI</div>
+          <div class="desc">Artificial intelligence Notes</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/pc.html" target="_blank">
+          <div class="emoji">💻</div>
+          <div class="title">PC</div>
+          <div class="desc">Retro computer terminal vibes</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/camwatch.html" target="_blank">
+          <div class="emoji">⌚</div>
+          <div class="title">Camera Watch</div>
+          <div class="desc">Classic phosphor green</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/morse.html" target="_blank">
+          <div class="emoji">📻</div>
+          <div class="title">Morse</div>
+          <div class="desc">Interactive Morse code playground</div>
+          <div class="open">Open →</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Simulators -->
+    <section class="category simulators" id="simulators">
+      <div class="category-header">
+        <div class="category-icon">🎮</div>
+        <h2 class="category-title">Simulators & Toys</h2>
+        <span class="category-count">12</span>
+      </div>
+      <div class="grid">
+        <a class="card" href="https://easylandx.github.io/mac/atis.html" target="_blank">
+          <div class="emoji">📡</div>
+          <div class="title">ATIS</div>
+          <div class="desc">Live aviation weather & radio simulation</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/pop.html" target="_blank">
+          <div class="emoji">🍦</div>
+          <div class="title">Pop</div>
+          <div class="desc">Popscicle</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/race.html" target="_blank">
+          <div class="emoji">🐢</div>
+          <div class="title">Race</div>
+          <div class="desc">Infinite race — progress over position</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/struct.html" target="_blank">
+          <div class="emoji">🏗️</div>
+          <div class="title">Architectural</div>
+          <div class="desc">Typologies & Engineering</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/cactuse.html" target="_blank">
+          <div class="emoji">🌵</div>
+          <div class="title">Cactus</div>
+          <div class="desc">Talking Cactus</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/photo.html" target="_blank">
+          <div class="emoji">📷</div>
+          <div class="title">Photo Booth</div>
+          <div class="desc">Strike a pose</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/didge.html" target="_blank">
+          <div class="emoji">🐨</div>
+          <div class="title">Didgeridoo</div>
+          <div class="desc">Aboriginal wind instrument</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/elevator.html" target="_blank">
+          <div class="emoji">🛗</div>
+          <div class="title">The Elevator</div>
+          <div class="desc">Elevator</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/change.html" target="_blank">
+          <div class="emoji">🪙</div>
+          <div class="title">The Coin Machine</div>
+          <div class="desc">Coin Machine</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/att.html" target="_blank">
+          <div class="emoji">📞</div>
+          <div class="title">AT&T</div>
+          <div class="desc">Phone Simulator</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/parking.html" target="_blank">
+          <div class="emoji">🅿️</div>
+          <div class="title">Parking</div>
+          <div class="desc">Ticket Station</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/egg.html" target="_blank">
+          <div class="emoji">🥚</div>
+          <div class="title">Egg</div>
+          <div class="desc">The Egg Simulator</div>
+          <div class="open">Open →</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Fun & Misc -->
+    <section class="category fun" id="fun">
+      <div class="category-header">
+        <div class="category-icon">✨</div>
+        <h2 class="category-title">Fun & Miscellaneous</h2>
+        <span class="category-count">5</span>
+      </div>
+      <div class="grid">
+        <a class="card" href="https://easylandx.github.io/mac/save.html" target="_blank">
+          <div class="emoji">🚀</div>
+          <div class="title">About being here</div>
+          <div class="desc">On growth</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/bale.html" target="_blank">
+          <div class="emoji">💎</div>
+          <div class="title">Balenciaga</div>
+          <div class="desc">Unthinkable Product Generator</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/nhk.html" target="_blank">
+          <div class="emoji">📺</div>
+          <div class="title">NHK World Japan</div>
+          <div class="desc">Modern Japanese Serenity</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/altar.html" target="_blank">
+          <div class="emoji">🙏</div>
+          <div class="title">Altar familiar</div>
+          <div class="desc">Un rincón de fe</div>
+          <div class="open">Open →</div>
+        </a>
+        <a class="card" href="https://easylandx.github.io/mac/examen.html" target="_blank">
+          <div class="emoji">📝</div>
+          <div class="title">Examen</div>
+          <div class="desc">A Silent Confession</div>
+          <div class="open">Open →</div>
+        </a>
+      </div>
+    </section>
+
+  </div>
+
+  <footer>
+    Based on <a href="https://easylandx.github.io/mac/" target="_blank">easylandx.github.io/mac</a> • Redesigned with categories & color
+  </footer>
+
+</body>
+</html>
