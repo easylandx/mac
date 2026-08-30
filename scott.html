@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Entertainer — Scott Joplin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Cormorant+SC:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #f6ecd4;
+    --paper-deep: #efe0b8;
+    --ink: #3d2814;
+    --ink-soft: #6b4a2c;
+    --mahogany: #5c2f1c;
+    --brass: #a97a2b;
+    --brass-light: #cf9f3f;
+    --oxblood: #8a3324;
+    --rule: rgba(61,40,20,0.28);
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 800px at 15% -10%, #fff8e6 0%, transparent 55%),
+      radial-gradient(1000px 700px at 110% 10%, #fdf1d0 0%, transparent 50%),
+      var(--paper);
+    color:var(--ink);
+    font-family:'EB Garamond', serif;
+    font-size:19px;
+    line-height:1.6;
+  }
+
+  /* faint paper grain */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    pointer-events:none;
+    opacity:0.5;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(61,40,20,0.015) 0px, rgba(61,40,20,0.015) 1px, transparent 1px, transparent 3px);
+    z-index:0;
+  }
+
+  .wrap{
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 56px 28px 90px;
+    position:relative;
+    z-index:1;
+  }
+
+  /* ---------- ornamental frame ---------- */
+  .frame{
+    border: 2.5px solid var(--mahogany);
+    outline: 1px solid var(--brass);
+    outline-offset: 6px;
+    padding: 40px 32px 34px;
+    background: linear-gradient(180deg, rgba(255,251,236,0.55), rgba(239,224,184,0.35));
+    position:relative;
+  }
+  .frame::before, .frame::after{
+    content:"❧";
+    position:absolute;
+    font-size:22px;
+    color:var(--brass);
+    top:-16px;
+  }
+  .frame::before{ left:22px; background:var(--paper); padding:0 8px; }
+  .frame::after{ right:22px; background:var(--paper); padding:0 8px; transform:scaleX(-1); }
+
+  .eyebrow{
+    text-align:center;
+    font-family:'Cormorant SC', serif;
+    letter-spacing:0.32em;
+    font-size:13px;
+    color:var(--oxblood);
+    text-transform:uppercase;
+    margin:0 0 6px;
+  }
+
+  h1.title{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-style:italic;
+    text-align:center;
+    font-size:clamp(44px, 9vw, 76px);
+    line-height:0.95;
+    margin: 4px 0 2px;
+    color:var(--mahogany);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+  }
+
+  .subtitle{
+    text-align:center;
+    font-family:'Cormorant SC', serif;
+    font-size:16px;
+    letter-spacing:0.18em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    margin: 0 0 26px;
+  }
+  .subtitle em{ font-style:normal; color:var(--brass); }
+
+  /* ---------- staff / signature element ---------- */
+  .staff{
+    margin: 8px auto 28px;
+    max-width: 560px;
+  }
+  .staff svg{ width:100%; display:block; }
+  .staff-line{ stroke: var(--rule); stroke-width:1.4; }
+  .note{
+    fill: var(--mahogany);
+    transform-origin: center;
+    animation: bob 2.4s ease-in-out infinite;
+  }
+  .note.n2{ animation-delay:0.25s; }
+  .note.n3{ animation-delay:0.5s; }
+  .note.n4{ animation-delay:0.75s; }
+  .note.n5{ animation-delay:1s; }
+  .note.n6{ animation-delay:1.25s; }
+  @keyframes bob{
+    0%, 100%{ transform: translateY(0); }
+    50%{ transform: translateY(-5px); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .note{ animation:none; }
+  }
+
+  /* ---------- player ---------- */
+  .player-box{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    margin: 4px 0 30px;
+  }
+  audio{
+    width: 100%;
+    max-width: 480px;
+    accent-color: var(--mahogany);
+  }
+  .player-note{
+    font-family:'Cormorant SC', serif;
+    font-size:13px;
+    letter-spacing:0.06em;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+  .unmute-btn{
+    display:none;
+    font-family:'Cormorant SC', serif;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    font-size:14px;
+    background: var(--mahogany);
+    color: var(--paper);
+    border:none;
+    padding:10px 22px;
+    cursor:pointer;
+    border-radius: 2px;
+    box-shadow: 0 2px 0 var(--brass);
+  }
+  .unmute-btn:hover{ background: var(--oxblood); }
+
+  hr.rule{
+    border:none;
+    border-top: 1px solid var(--rule);
+    margin: 30px 0;
+  }
+
+  /* ---------- curiosities ---------- */
+  h2.section-title{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-weight:600;
+    font-size:28px;
+    color:var(--mahogany);
+    text-align:center;
+    margin: 0 0 6px;
+  }
+  .section-sub{
+    text-align:center;
+    font-family:'Cormorant SC', serif;
+    font-size:13px;
+    letter-spacing:0.24em;
+    text-transform:uppercase;
+    color:var(--brass);
+    margin: 0 0 28px;
+  }
+
+  .curios{
+    list-style:none;
+    margin:0; padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+  .curios li{
+    display:grid;
+    grid-template-columns: 40px 1fr;
+    gap:14px;
+    align-items:start;
+  }
+  .curios .mark{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:26px;
+    color:var(--brass);
+    line-height:1.1;
+    text-align:center;
+  }
+  .curios .txt strong{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-weight:600;
+    color:var(--mahogany);
+    font-size:19px;
+  }
+  .curios .txt{ color:var(--ink); }
+
+  footer{
+    text-align:center;
+    margin-top:44px;
+    font-family:'Cormorant SC', serif;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+
+  @media (max-width:480px){
+    .wrap{padding:32px 14px 60px;}
+    .frame{padding:28px 18px 26px;}
+    body{font-size:17px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="frame">
+    <p class="eyebrow">A Rag, for Piano</p>
+    <h1 class="title">The Entertainer</h1>
+    <p class="subtitle">Scott Joplin <em>·</em> 1902</p>
+
+    <div class="staff" aria-hidden="true">
+      <svg viewBox="0 0 560 70">
+        <line class="staff-line" x1="0" y1="14" x2="560" y2="14"/>
+        <line class="staff-line" x1="0" y1="28" x2="560" y2="28"/>
+        <line class="staff-line" x1="0" y1="42" x2="560" y2="42"/>
+        <line class="staff-line" x1="0" y1="56" x2="560" y2="56"/>
+        <line class="staff-line" x1="0" y1="70" x2="560" y2="70"/>
+        <g class="note n1" transform="translate(60,20)"><circle cx="0" cy="30" r="6.5"/><rect x="5.4" y="-6" width="2" height="36"/></g>
+        <g class="note n2" transform="translate(140,10)"><circle cx="0" cy="30" r="6.5"/><rect x="5.4" y="-6" width="2" height="36"/></g>
+        <g class="note n3" transform="translate(220,26)"><circle cx="0" cy="30" r="6.5"/><rect x="5.4" y="-6" width="2" height="36"/></g>
+        <g class="note n4" transform="translate(320,16)"><circle cx="0" cy="30" r="6.5"/><rect x="5.4" y="-6" width="2" height="36"/></g>
+        <g class="note n5" transform="translate(400,4)"><circle cx="0" cy="30" r="6.5"/><rect x="5.4" y="-6" width="2" height="36"/></g>
+        <g class="note n6" transform="translate(480,22)"><circle cx="0" cy="30" r="6.5"/><rect x="5.4" y="-6" width="2" height="36"/></g>
+      </svg>
+    </div>
+
+    <div class="player-box">
+      <audio id="rag" controls preload="auto">
+        <source src="https://ia803203.us.archive.org/13/items/joplin_ragtime_jop_20_scott_jop/joplin_ragtime_jop_01_the_enter.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+      </audio>
+      <button id="unmuteBtn" class="unmute-btn">▶ Begin the Rag</button>
+      <p class="player-note">recording from the Internet Archive</p>
+    </div>
+
+    <hr class="rule">
+
+    <h2 class="section-title">Notes &amp; Curiosities</h2>
+    <p class="section-sub">Lesser‑Known Facts</p>
+
+    <ul class="curios">
+      <li>
+        <span class="mark">♪</span>
+        <span class="txt"><strong>Ice cream truck theme.</strong> The tune is known worldwide today largely because it's one of the most common pre‑programmed melodies used by modern ice cream trucks.</span>
+      </li>
+      <li>
+        <span class="mark">♫</span>
+        <span class="txt"><strong>A destroyed opera.</strong> After a manager absconded with his box‑office funds, Joplin couldn't cover his rent — and his boarding‑house landlord confiscated and destroyed the score of his first full opera.</span>
+      </li>
+      <li>
+        <span class="mark">♪</span>
+        <span class="txt"><strong>A prophetic prediction.</strong> Stung by critics who dismissed his music as a cheap fad, Joplin predicted he'd only be appreciated long after he was gone — and he was right.</span>
+      </li>
+      <li>
+        <span class="mark">♫</span>
+        <span class="txt"><strong>An unmarked grave.</strong> Joplin died destitute and was buried in a pauper's grave with no headstone. He finally got one in 1974 — the same year his music won an Oscar.</span>
+      </li>
+      <li>
+        <span class="mark">♪</span>
+        <span class="txt"><strong>The "penny" contract.</strong> His first hit, "Maple Leaf Rag," earned him just a penny in royalties per copy sold — but as sales exploded, that penny added up to a steady income.</span>
+      </li>
+      <li>
+        <span class="mark">♫</span>
+        <span class="txt"><strong>Free lessons.</strong> Joplin's career was launched by a German immigrant music teacher who spotted his talent and taught him classical theory free of charge.</span>
+      </li>
+    </ul>
+
+    <footer>Ragtime, 1899 – 1917</footer>
+  </div>
+</div>
+
+<script>
+  const audio = document.getElementById('rag');
+  const btn = document.getElementById('unmuteBtn');
+
+  function tryAutoplay(){
+    const p = audio.play();
+    if (p !== undefined) {
+      p.catch(() => {
+        // Autoplay blocked by browser policy — reveal a start button instead.
+        btn.style.display = 'inline-block';
+      });
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', tryAutoplay);
+
+  btn.addEventListener('click', () => {
+    audio.play();
+    btn.style.display = 'none';
+  });
+</script>
+</body>
+</html>
