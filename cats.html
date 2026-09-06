@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A Cat's-Eye View of Japan (NHK)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Playfair+Display:wght@600&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: linear-gradient(160deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+      color: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 15px 50px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.4rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: #fff;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+
+    header p {
+      margin-top: 8px;
+      font-size: 1.05rem;
+      opacity: 0.85;
+      letter-spacing: 0.5px;
+    }
+
+    .player-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      background: #0d0d1a;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+
+    .video-container {
+      position: relative;
+      width: 100%;
+      padding-bottom: 56.25%; /* 16:9 */
+      background: #000;
+    }
+
+    .video-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 20px;
+      background: rgba(15, 20, 40, 0.95);
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .nav-btn {
+      background: #e94560;
+      color: white;
+      border: none;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4);
+    }
+
+    .nav-btn:hover {
+      background: #ff6b81;
+      transform: scale(1.08);
+    }
+
+    .nav-btn:active {
+      transform: scale(0.96);
+    }
+
+    .nav-btn:disabled {
+      background: #555;
+      cursor: not-allowed;
+      box-shadow: none;
+      opacity: 0.5;
+    }
+
+    .title-area {
+      flex: 1;
+      text-align: center;
+      padding: 0 15px;
+    }
+
+    #video-title {
+      font-size: 1.15rem;
+      font-weight: 500;
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+
+    #video-counter {
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+
+    footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 0.85rem;
+      opacity: 0.6;
+    }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 1.7rem;
+      }
+      .nav-btn {
+        width: 46px;
+        height: 46px;
+        font-size: 1.3rem;
+      }
+      #video-title {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>A Cat's-Eye View of Japan</h1>
+    <p>NHK WORLD-JAPAN</p>
+  </header>
+
+  <div class="player-wrapper">
+    <div class="video-container">
+      <iframe id="player"
+        src=""
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+        referrerpolicy="strict-origin-when-cross-origin">
+      </iframe>
+    </div>
+
+    <div class="controls">
+      <button class="nav-btn" id="prev-btn" title="Previous video">❮</button>
+      
+      <div class="title-area">
+        <div id="video-title">Loading...</div>
+        <div id="video-counter"></div>
+      </div>
+
+      <button class="nav-btn" id="next-btn" title="Next video">❯</button>
+    </div>
+  </div>
+
+  <footer>
+    Videos from NHK WORLD-JAPAN • A Cat's-Eye View of Japan
+  </footer>
+
+  <script>
+    const videos = [
+      {
+        id: "1YYgbcRYoTQ",
+        title: "Tokyo: Shinjuku Never Sleeps"
+      },
+      {
+        id: "9ZdQeIWs9U4",
+        title: "Sendai: In Deep Green"
+      },
+      {
+        id: "DY4HTdPR7Og",
+        title: "Fukui: Cats Along the Shore"
+      },
+      {
+        id: "iTgwSlcNOWg",
+        title: "Aizu: Love Your Neighbor"
+      },
+      {
+        id: "Ti2yykmUtuI",
+        title: "Atami: Relaxing With Yoga"
+      },
+      {
+        id: "eCVRIhmk1VY",
+        title: "Aomori: Looking for Attention"
+      },
+      {
+        id: "IQaA9-pMA-k",
+        title: "Kagawa: Cats Along a Pilgrimage Route"
+      },
+      {
+        id: "uizn1jP2vVg",
+        title: "Yamanashi: Cats and Grapes"
+      },
+      {
+        id: "UrdyVOSSEqA",
+        title: "Kyoto: Happy Reunions"
+      },
+      {
+        id: "ap0P87QxxaA",
+        title: "Osaka: Steeped in Tradition"
+      },
+      {
+        id: "KU0B2S5o214",
+        title: "Yamaguchi: Surrounded by Green"
+      },
+      {
+        id: "5I7vuCqJtrA",
+        title: "Akita: Good Manners Even Between Friends"
+      }
+    ];
+
+    let currentIndex = 0;
+    const player = document.getElementById("player");
+    const titleEl = document.getElementById("video-title");
+    const counterEl = document.getElementById("video-counter");
+    const prevBtn = document.getElementById("prev-btn");
+    const nextBtn = document.getElementById("next-btn");
+
+    function loadVideo(index) {
+      const video = videos[index];
+      // autoplay + mute (required by browsers for autoplay)
+      player.src = `https://www.youtube.com/embed/${video.id}?autoplay=1&mute=1&rel=0&modestbranding=1`;
+      titleEl.textContent = video.title + " - A Cat's-Eye View of Japan";
+      counterEl.textContent = `Video ${index + 1} of ${videos.length}`;
+      
+      prevBtn.disabled = index === 0;
+      nextBtn.disabled = index === videos.length - 1;
+    }
+
+    prevBtn.addEventListener("click", () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        loadVideo(currentIndex);
+      }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      if (currentIndex < videos.length - 1) {
+        currentIndex++;
+        loadVideo(currentIndex);
+      }
+    });
+
+    // Keyboard support
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") prevBtn.click();
+      if (e.key === "ArrowRight") nextBtn.click();
+    });
+
+    // Start with the first video
+    loadVideo(0);
+  </script>
+</body>
+</html>
