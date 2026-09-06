@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Cat's-Eye View of Japan — NHK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #e9e3d2;
+    --paper-deep: #ddd5bd;
+    --ink: #262319;
+    --ink-soft: #6f6a5a;
+    --hanko: #9c2b26;
+    --hanko-deep: #7c211d;
+    --line: #c7bda1;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html,body{
+    margin:0;
+    padding:0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+  }
+
+  body{
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(255,255,255,0.35), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(0,0,0,0.04), transparent 45%);
+    min-height: 100vh;
+    display:flex;
+    justify-content:center;
+    padding: 48px 20px 64px;
+  }
+
+  .page{
+    width: 100%;
+    max-width: 760px;
+  }
+
+  header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap: 24px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 40px;
+  }
+
+  .title-block h1{
+    font-family: 'Shippori Mincho', serif;
+    font-weight: 700;
+    font-size: clamp(2rem, 5vw, 2.9rem);
+    line-height: 1.15;
+    margin: 0 0 10px;
+    letter-spacing: 0.01em;
+  }
+
+  .title-block p{
+    margin:0;
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+    max-width: 34ch;
+  }
+
+  .stamp{
+    flex-shrink:0;
+    width: 74px;
+    height: 74px;
+    border: 2.5px solid var(--hanko);
+    border-radius: 6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color: var(--hanko);
+    font-family: 'Shippori Mincho', serif;
+    font-size: 2rem;
+    transform: rotate(-4deg);
+    opacity: 0.9;
+    margin-top: 4px;
+  }
+
+  .stage{
+    position: relative;
+  }
+
+  .frame{
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #14130f;
+    border: 1px solid var(--line);
+    box-shadow: 0 18px 40px -22px rgba(20,18,12,0.55);
+    overflow: hidden;
+  }
+
+  .frame iframe{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    border: 0;
+  }
+
+  .frame::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+  }
+
+  .controls{
+    display:grid;
+    grid-template-columns: auto 1fr auto;
+    align-items:center;
+    gap: 18px;
+    margin-top: 22px;
+  }
+
+  .nav-btn{
+    appearance:none;
+    border: 1px solid var(--ink);
+    background: transparent;
+    color: var(--ink);
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+    font-family: inherit;
+  }
+
+  .nav-btn:hover{
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .nav-btn:active{
+    transform: scale(0.94);
+  }
+
+  .nav-btn:focus-visible{
+    outline: 2px solid var(--hanko);
+    outline-offset: 3px;
+  }
+
+  .now-showing{
+    text-align:center;
+    min-width: 0;
+  }
+
+  .now-showing .eyebrow{
+    display:block;
+    color: var(--hanko-deep);
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+
+  #video-title{
+    font-family: 'Shippori Mincho', serif;
+    font-weight: 500;
+    font-size: clamp(1.05rem, 3vw, 1.35rem);
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .track{
+    display:flex;
+    justify-content:center;
+    gap: 7px;
+    margin-top: 22px;
+    flex-wrap: wrap;
+  }
+
+  .dot{
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--paper-deep);
+    border: 1px solid var(--line);
+    cursor: pointer;
+    padding:0;
+  }
+
+  .dot.active{
+    background: var(--hanko);
+    border-color: var(--hanko);
+  }
+
+  footer{
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+    text-align:center;
+  }
+
+  @media (max-width: 520px){
+    .controls{ gap: 10px; }
+    .nav-btn{ width: 40px; height: 40px; }
+    #video-title{ white-space: normal; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="title-block">
+        <h1>A Cat's-Eye<br>View of Japan</h1>
+        <p>Wildlife photographer Iwago Mitsuaki tours Japan's towns and countryside, one whisker at a time.</p>
+      </div>
+      <div class="stamp" aria-hidden="true">猫</div>
+    </header>
+
+    <div class="stage">
+      <div class="frame">
+        <iframe id="player" src="" title="Episode player" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+      </div>
+
+      <div class="controls">
+        <button class="nav-btn" id="prevBtn" aria-label="Previous episode">‹</button>
+        <div class="now-showing">
+          <span class="eyebrow" id="video-counter">Episode 1 of 12</span>
+          <p id="video-title">Loading…</p>
+        </div>
+        <button class="nav-btn" id="nextBtn" aria-label="Next episode">›</button>
+      </div>
+
+      <div class="track" id="track"></div>
+    </div>
+
+    <footer>
+      An unofficial fan page for NHK WORLD-JAPAN's <em>A Cat's-Eye View of Japan</em>.
+    </footer>
+  </div>
+
+<script>
+  const videoIds = [
+    "1YYgbcRYoTQ",
+    "9ZdQeIWs9U4",
+    "DY4HTdPR7Og",
+    "iTgwSlcNOWg",
+    "Ti2yykmUtuI",
+    "eCVRIhmk1VY",
+    "IQaA9-pMA-k",
+    "uizn1jP2vVg",
+    "UrdyVOSSEqA",
+    "ap0P87QxxaA",
+    "KU0B2S5o214",
+    "5I7vuCqJtrA"
+  ];
+
+  const player = document.getElementById('player');
+  const titleEl = document.getElementById('video-title');
+  const counterEl = document.getElementById('video-counter');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const track = document.getElementById('track');
+
+  let current = 0;
+  const titleCache = {};
+
+  videoIds.forEach((id, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'dot';
+    dot.setAttribute('aria-label', 'Go to episode ' + (i + 1));
+    dot.addEventListener('click', () => loadVideo(i));
+    track.appendChild(dot);
+  });
+
+  function updateDots(){
+    [...track.children].forEach((dot, i) => {
+      dot.classList.toggle('active', i === current);
+    });
+  }
+
+  async function fetchTitle(id){
+    if (titleCache[id]) return titleCache[id];
+    try{
+      const res = await fetch('https://www.youtube.com/oembed?url=' +
+        encodeURIComponent('https://www.youtube.com/watch?v=' + id) + '&format=json');
+      if(!res.ok) throw new Error('oEmbed failed');
+      const data = await res.json();
+      titleCache[id] = data.title;
+      return data.title;
+    }catch(e){
+      return 'Episode ' + (videoIds.indexOf(id) + 1);
+    }
+  }
+
+  async function loadVideo(index){
+    current = (index + videoIds.length) % videoIds.length;
+    const id = videoIds[current];
+
+    player.src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&mute=1&rel=0';
+    counterEl.textContent = 'Episode ' + (current + 1) + ' of ' + videoIds.length;
+    titleEl.textContent = 'Loading…';
+    updateDots();
+
+    const title = await fetchTitle(id);
+    if (videoIds[current] === id) titleEl.textContent = title;
+  }
+
+  prevBtn.addEventListener('click', () => loadVideo(current - 1));
+  nextBtn.addEventListener('click', () => loadVideo(current + 1));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') loadVideo(current - 1);
+    if (e.key === 'ArrowRight') loadVideo(current + 1);
+  });
+
+  loadVideo(0);
+</script>
+</body>
+</html>
