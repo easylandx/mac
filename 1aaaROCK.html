@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Showdown — Beat the machine, win a landing page</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Monoton&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#07020f;
+    --bg-1:#0e0322;
+    --pink:#ff2bd6;
+    --cyan:#00fff2;
+    --yellow:#eaff00;
+    --purple:#b026ff;
+    --text:#f3ecff;
+    --muted:#a698c9;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+
+  html,body{
+    background:var(--bg-0);
+    color:var(--text);
+    font-family:'Space Grotesk',sans-serif;
+    min-height:100%;
+    overflow-x:hidden;
+  }
+
+  body{
+    background:
+      radial-gradient(circle at 15% 20%, rgba(176,38,255,.25), transparent 40%),
+      radial-gradient(circle at 85% 15%, rgba(0,255,242,.18), transparent 45%),
+      radial-gradient(circle at 50% 90%, rgba(255,43,214,.2), transparent 50%),
+      var(--bg-0);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:6vh 5vw 8vh;
+  }
+
+  .grid-floor{
+    position:fixed;
+    left:0;right:0;bottom:0;
+    height:40vh;
+    background-image:
+      linear-gradient(rgba(0,255,242,.14) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,242,.14) 1px, transparent 1px);
+    background-size:48px 48px;
+    transform:perspective(400px) rotateX(60deg);
+    transform-origin:bottom;
+    opacity:.5;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  header{
+    position:relative;
+    z-index:1;
+    text-align:center;
+    max-width:720px;
+  }
+
+  .eyebrow{
+    font-size:14px;
+    letter-spacing:.4em;
+    color:var(--cyan);
+    text-shadow:0 0 8px var(--cyan), 0 0 18px rgba(0,255,242,.6);
+    font-weight:700;
+  }
+
+  h1{
+    font-family:'Monoton',cursive;
+    font-weight:400;
+    font-size:clamp(3.2rem, 12vw, 7.5rem);
+    line-height:.95;
+    color:var(--pink);
+    text-shadow:
+      0 0 6px var(--pink),
+      0 0 18px var(--pink),
+      0 0 40px rgba(255,43,214,.6),
+      0 0 80px rgba(176,38,255,.35);
+    margin:.3em 0 .2em;
+    animation:flicker 4.5s ease-in-out 1;
+  }
+
+  @keyframes flicker{
+    0%{opacity:0;}
+    4%{opacity:1;}
+    8%{opacity:.4;}
+    12%{opacity:1;}
+    14%{opacity:.3;}
+    16%{opacity:1;}
+    100%{opacity:1;}
+  }
+
+  .sub{
+    font-size:clamp(1rem, 2.4vw, 1.2rem);
+    color:var(--muted);
+    max-width:520px;
+    margin:0 auto;
+    line-height:1.6;
+  }
+
+  .sub strong{
+    color:var(--text);
+    font-weight:700;
+  }
+
+  main{
+    position:relative;
+    z-index:1;
+    width:100%;
+    max-width:560px;
+    margin-top:6vh;
+  }
+
+  .card{
+    background:rgba(15,4,35,.6);
+    border:1px solid rgba(0,255,242,.35);
+    border-radius:20px;
+    padding:clamp(24px,4vw,44px);
+    backdrop-filter:blur(6px);
+    box-shadow:0 0 40px rgba(176,38,255,.25), inset 0 0 40px rgba(0,255,242,.05);
+  }
+
+  .prompt{
+    text-align:center;
+    font-size:1.1rem;
+    font-weight:700;
+    color:var(--text);
+    margin-bottom:28px;
+    letter-spacing:.02em;
+  }
+
+  .choices{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+  }
+
+  .choice{
+    background:rgba(255,255,255,.02);
+    border:2px solid var(--purple);
+    border-radius:16px;
+    padding:18px 8px 14px;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+    color:var(--text);
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:.85rem;
+    letter-spacing:.06em;
+  }
+
+  .choice svg{
+    width:44px;
+    height:44px;
+    stroke:var(--cyan);
+    fill:none;
+    stroke-width:2.2;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    filter:drop-shadow(0 0 6px rgba(0,255,242,.7));
+    transition:stroke .15s ease;
+  }
+
+  .choice:hover:not(:disabled){
+    transform:translateY(-4px);
+    border-color:var(--pink);
+    box-shadow:0 0 22px rgba(255,43,214,.45);
+  }
+
+  .choice:hover:not(:disabled) svg{
+    stroke:var(--pink);
+    filter:drop-shadow(0 0 8px rgba(255,43,214,.8));
+  }
+
+  .choice:disabled{
+    cursor:default;
+    opacity:.35;
+  }
+
+  .choice.picked{
+    opacity:1;
+    border-color:var(--yellow);
+    box-shadow:0 0 26px rgba(234,255,0,.5);
+  }
+
+  .choice.picked svg{
+    stroke:var(--yellow);
+    filter:drop-shadow(0 0 10px rgba(234,255,0,.9));
+  }
+
+  .versus{
+    display:none;
+    align-items:center;
+    justify-content:center;
+    gap:22px;
+    margin:30px 0 10px;
+  }
+
+  .versus.show{
+    display:flex;
+  }
+
+  .versus .slot{
+    text-align:center;
+  }
+
+  .versus .slot span{
+    display:block;
+    font-size:.72rem;
+    letter-spacing:.2em;
+    color:var(--muted);
+    margin-bottom:8px;
+  }
+
+  .versus .slot svg{
+    width:56px;
+    height:56px;
+    stroke-width:2.2;
+    fill:none;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+
+  .versus .you svg{
+    stroke:var(--cyan);
+    filter:drop-shadow(0 0 10px rgba(0,255,242,.8));
+  }
+
+  .versus .machine svg{
+    stroke:var(--pink);
+    filter:drop-shadow(0 0 10px rgba(255,43,214,.8));
+  }
+
+  .vs-label{
+    font-family:'Monoton',cursive;
+    font-size:1.4rem;
+    color:var(--yellow);
+    text-shadow:0 0 10px var(--yellow);
+  }
+
+  .result{
+    display:none;
+    text-align:center;
+    margin-top:22px;
+  }
+
+  .result.show{
+    display:block;
+  }
+
+  .result h2{
+    font-family:'Monoton',cursive;
+    font-weight:400;
+    font-size:clamp(2rem,7vw,2.8rem);
+    margin-bottom:10px;
+  }
+
+  .result.win h2{
+    color:var(--cyan);
+    text-shadow:0 0 8px var(--cyan), 0 0 26px rgba(0,255,242,.7);
+  }
+
+  .result.lose h2{
+    color:var(--pink);
+    text-shadow:0 0 8px var(--pink), 0 0 26px rgba(255,43,214,.7);
+  }
+
+  .result p{
+    color:var(--muted);
+    font-size:1rem;
+    line-height:1.6;
+    max-width:400px;
+    margin:0 auto 22px;
+  }
+
+  .cta{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    padding:14px 30px;
+    border-radius:999px;
+    font-weight:700;
+    font-size:.95rem;
+    letter-spacing:.03em;
+    text-decoration:none;
+    border:none;
+    cursor:pointer;
+  }
+
+  .cta.whatsapp{
+    background:var(--cyan);
+    color:#04211f;
+    box-shadow:0 0 26px rgba(0,255,242,.6);
+  }
+
+  .cta.buy{
+    background:var(--pink);
+    color:#2b0021;
+    box-shadow:0 0 26px rgba(255,43,214,.6);
+  }
+
+  .cta:active{
+    transform:scale(.97);
+  }
+
+  .again{
+    display:block;
+    margin:20px auto 0;
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-size:.85rem;
+    text-decoration:underline;
+    cursor:pointer;
+  }
+
+  .again:hover{
+    color:var(--text);
+  }
+
+  footer{
+    position:relative;
+    z-index:1;
+    margin-top:6vh;
+    font-size:.78rem;
+    color:var(--muted);
+    text-align:center;
+  }
+
+  footer a{
+    color:var(--cyan);
+  }
+
+  @media (max-width:420px){
+    .choices{gap:10px;}
+    .choice{padding:14px 4px 10px;font-size:.72rem;}
+    .choice svg{width:36px;height:36px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="grid-floor"></div>
+
+<header>
+  <div class="eyebrow">rock · paper · scissors</div>
+  <h1>SHOWDOWN</h1>
+  <p class="sub">One throw decides it. Beat the machine and <strong>win a free landing page from EasyLandX.</strong> Lose, and you can still grab one for $89.</p>
+</header>
+
+<main>
+  <div class="card">
+    <div class="prompt" id="prompt">Make your move</div>
+
+    <div class="choices" id="choices">
+      <button class="choice" data-choice="rock" aria-label="Rock">
+        <svg viewBox="0 0 48 48"><circle cx="24" cy="26" r="14"></circle><path d="M14 24 Q24 16 34 24"></path></svg>
+        Rock
+      </button>
+      <button class="choice" data-choice="paper" aria-label="Paper">
+        <svg viewBox="0 0 48 48"><rect x="12" y="10" width="24" height="30" rx="4"></rect><path d="M12 20h24M12 28h24"></path></svg>
+        Paper
+      </button>
+      <button class="choice" data-choice="scissors" aria-label="Scissors">
+        <svg viewBox="0 0 48 48"><circle cx="16" cy="34" r="5"></circle><circle cx="32" cy="34" r="5"></circle><path d="M18 30 L38 10 M30 30 L10 10"></path></svg>
+        Scissors
+      </button>
+    </div>
+
+    <div class="versus" id="versus">
+      <div class="slot you">
+        <span>you</span>
+        <svg id="you-icon" viewBox="0 0 48 48"></svg>
+      </div>
+      <div class="vs-label">VS</div>
+      <div class="slot machine">
+        <span>machine</span>
+        <svg id="machine-icon" viewBox="0 0 48 48"></svg>
+      </div>
+    </div>
+
+    <div class="result" id="result">
+      <h2 id="result-title"></h2>
+      <p id="result-text"></p>
+      <div id="result-cta"></div>
+    </div>
+
+    <button class="again" id="again" style="display:none;">Play again</button>
+  </div>
+</main>
+
+<footer>
+  Built for the throw of your life. Landing pages by <a href="https://easylandx.github.io" target="_blank" rel="noopener">EasyLandX</a>.
+</footer>
+
+<script>
+  const icons = {
+    rock: '<circle cx="24" cy="26" r="14"></circle><path d="M14 24 Q24 16 34 24"></path>',
+    paper: '<rect x="12" y="10" width="24" height="30" rx="4"></rect><path d="M12 20h24M12 28h24"></path>',
+    scissors: '<circle cx="16" cy="34" r="5"></circle><circle cx="32" cy="34" r="5"></circle><path d="M18 30 L38 10 M30 30 L10 10"></path>'
+  };
+
+  const beats = { rock: 'scissors', paper: 'rock', scissors: 'paper' };
+
+  const choicesEl = document.getElementById('choices');
+  const promptEl = document.getElementById('prompt');
+  const versusEl = document.getElementById('versus');
+  const youIcon = document.getElementById('you-icon');
+  const machineIcon = document.getElementById('machine-icon');
+  const resultEl = document.getElementById('result');
+  const resultTitle = document.getElementById('result-title');
+  const resultText = document.getElementById('result-text');
+  const resultCta = document.getElementById('result-cta');
+  const againBtn = document.getElementById('again');
+
+  let audioCtx;
+  function tone(freq, duration, type){
+    try{
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type || 'square';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }catch(e){}
+  }
+
+  function playClick(){ tone(320, 0.08, 'square'); }
+  function playWin(){ tone(660, 0.12, 'sawtooth'); setTimeout(()=>tone(880, 0.18, 'sawtooth'), 120); }
+  function playLose(){ tone(180, 0.25, 'triangle'); }
+
+  function pickWinner(user, cpu){
+    if(user === cpu) return 'tie';
+    return beats[user] === cpu ? 'win' : 'lose';
+  }
+
+  function handleChoice(userChoice){
+    playClick();
+    [...choicesEl.children].forEach(btn => {
+      btn.disabled = true;
+      btn.classList.toggle('picked', btn.dataset.choice === userChoice);
+    });
+
+    const options = Object.keys(icons);
+    const cpuChoice = options[Math.floor(Math.random() * options.length)];
+
+    youIcon.innerHTML = icons[userChoice];
+    machineIcon.innerHTML = icons[cpuChoice];
+    versusEl.classList.add('show');
+    promptEl.textContent = 'Throwing...';
+
+    setTimeout(() => {
+      const outcome = pickWinner(userChoice, cpuChoice);
+      showResult(outcome, userChoice, cpuChoice);
+    }, 900);
+  }
+
+  function showResult(outcome, userChoice, cpuChoice){
+    resultEl.classList.add('show');
+    againBtn.style.display = 'block';
+
+    if(outcome === 'win'){
+      playWin();
+      promptEl.textContent = userChoice + ' beats ' + cpuChoice;
+      resultEl.classList.add('win');
+      resultEl.classList.remove('lose');
+      resultTitle.textContent = 'YOU WIN';
+      resultText.innerHTML = 'You just beat the machine. That gets you a <strong>free landing page from EasyLandX</strong> — send us the message below and we will set it up.';
+      const msg = encodeURIComponent("I won the Showdown game and I'm claiming my free landing page from EasyLandX!");
+      resultCta.innerHTML = '<a class="cta whatsapp" href="https://wa.me/609204298?text=' + msg + '" target="_blank" rel="noopener">Claim it on WhatsApp</a>';
+    } else {
+      playLose();
+      promptEl.textContent = outcome === 'tie' ? userChoice + ' tied with ' + cpuChoice : cpuChoice + ' beats ' + userChoice;
+      resultEl.classList.add('lose');
+      resultEl.classList.remove('win');
+      resultTitle.textContent = outcome === 'tie' ? 'TIE — NO WIN' : 'MACHINE WINS';
+      resultText.innerHTML = 'Not your round. You can still walk away with a landing page — <strong>get yours for $89</strong>, no game required.';
+      resultCta.innerHTML = '<a class="cta buy" href="https://easylandx.github.io" target="_blank" rel="noopener">Get my landing page — $89</a>';
+    }
+  }
+
+  choicesEl.addEventListener('click', e => {
+    const btn = e.target.closest('.choice');
+    if(!btn || btn.disabled) return;
+    handleChoice(btn.dataset.choice);
+  });
+
+  againBtn.addEventListener('click', () => {
+    [...choicesEl.children].forEach(btn => {
+      btn.disabled = false;
+      btn.classList.remove('picked');
+    });
+    versusEl.classList.remove('show');
+    resultEl.classList.remove('show', 'win', 'lose');
+    againBtn.style.display = 'none';
+    promptEl.textContent = 'Make your move';
+  });
+</script>
+
+</body>
+</html>
