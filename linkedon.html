@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>LinkedOn</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f1ff;--card:#fff;--ink:#17142b;--mut:#6b6788;--ac:#6c4cff;--ac2:#ff4c9a;--ln:#e6e1fa;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f0d1c;--card:#1a1730;--ink:#f1eeff;--mut:#9d98c0;--ln:#2c2850}}
+:root[data-theme=dark]{--bg:#0f0d1c;--card:#1a1730;--ink:#f1eeff;--mut:#9d98c0;--ln:#2c2850}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif}
+button{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:8px 16px;background:var(--ac);color:#fff;font-weight:600}
+button.g{background:transparent;color:var(--ink);border:1px solid var(--ln)}button.g.on{border-color:var(--ac2);color:var(--ac2)}
+input,textarea,select{font:inherit;width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--ln);background:var(--bg);color:var(--ink)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border-bottom:1px solid var(--ln);display:flex;gap:8px;align-items:center;padding:10px 14px;flex-wrap:wrap}
+.logo{font-weight:700;font-size:22px;background:linear-gradient(90deg,var(--ac),var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent;margin-right:8px}
+nav{display:flex;gap:4px;flex-wrap:wrap;flex:1}nav button{background:transparent;color:var(--mut);padding:8px 12px}nav button.on{background:var(--ac);color:#fff}
+main{max-width:1000px;margin:auto;padding:14px;display:grid;grid-template-columns:260px 1fr;gap:14px}
+@media(max-width:760px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:18px;padding:14px;margin-bottom:14px}
+.av{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;flex:none}
+.row{display:flex;gap:10px;align-items:center}.sp{justify-content:space-between}.mut{color:var(--mut);font-size:13px}
+.bar{height:8px;border-radius:9px;background:var(--ln);overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),var(--ac2));transition:width .5s}
+.chip{display:inline-block;padding:4px 10px;border-radius:99px;background:var(--bg);border:1px solid var(--ln);margin:3px 3px 0 0;font-size:13px;cursor:pointer}
+.chat{height:260px;overflow:auto;display:flex;flex-direction:column;gap:6px;padding:6px}
+.m{max-width:78%;padding:8px 12px;border-radius:14px;background:var(--bg)}.m.me{align-self:flex-end;background:var(--ac);color:#fff}
+.hid{display:none}.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;opacity:0;transition:.3s;pointer-events:none}.toast.s{opacity:1}
+body.focus .side,body.focus .sug{display:none}body.focus main{grid-template-columns:1fr}
+</style></head><body>
+<header><span class="logo">LinkedOn</span>
+<nav id="nav"></nav><button class="g" id="foc" title="Hide distractions">Focus</button><button class="g" id="thm">Theme</button></header>
+<main><aside class="side"><div class="card" id="me"></div><div class="card"><b>Streak</b><div class="mut" id="strk"></div><div id="badges"></div></div></aside>
+<section id="view"></section></main><div class="toast" id="t"></div>
+<script>
+const $=s=>document.querySelector(s);
+const COL=['#6c4cff','#ff4c9a','#00a98f','#ff8a1f','#2b7de9','#c23ad8'];
+const def={me:{name:'Your Name',head:'Add your headline',skills:{Design:2,JavaScript:1},about:''},
+ posts:[{id:1,a:'Maya Chen',h:'Product Designer @ Loop',t:'Shipped our new onboarding today. Cut steps from 9 to 4 and activation jumped 31%. Fewer screens, more clarity.',l:42,c:[['Leo','Love this.']],tag:'win'},
+ {id:2,a:'Tomas Ruiz',h:'Founder, Sol Studio',t:'Hot take: your portfolio should show 3 projects, not 30. Curate ruthlessly.',l:88,c:[],tag:'advice'},
+ {id:3,a:'Aiko Tanaka',h:'Backend Engineer',t:'Learned the hard way: always add an index before the dashboard ships, not after.',l:57,c:[],tag:'learned'}],
+ people:[{n:'Priya Nair',h:'Data Scientist',x:0},{n:'Sam Okafor',h:'Growth Lead',x:0},{n:'Lena Vogel',h:'Illustrator',x:0},{n:'Carlos Mena',h:'iOS Developer',x:0},{n:'Zoe Hart',h:'Recruiter @ Nova',x:0}],
+ jobs:[{id:1,t:'Frontend Developer',co:'Nova Labs',loc:'Remote',sk:['JavaScript','Design'],s:0,ap:0},{id:2,t:'UX Designer',co:'Loop',loc:'Madrid',sk:['Design','Research'],s:0,ap:0},{id:3,t:'Growth Marketer',co:'Sol Studio',loc:'Remote',sk:['Marketing','Analytics'],s:0,ap:0},{id:4,t:'Data Analyst',co:'Orbit',loc:'Berlin',sk:['Analytics','SQL'],s:0,ap:0}],
+ chats:{'Maya Chen':[['t','Hey! Saw your profile, love the work.']],'Zoe Hart':[['t','We have a role that fits you.']]},
+ streak:0,last:'',pts:0};
+let S;try{S=JSON.parse(localStorage.getItem('lo')||'null')}catch(e){}S=S||JSON.parse(JSON.stringify(def));
+const save=()=>{try{localStorage.setItem('lo',JSON.stringify(S))}catch(e){}};
+const toast=m=>{const t=$('#t');t.textContent=m;t.classList.add('s');setTimeout(()=>t.classList.remove('s'),1800)};
+const ini=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2);
+const av=n=>`<div class="av" style="background:${COL[n.length%6]}">${ini(n)}</div>`;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let tab='feed',chat='Maya Chen',filt='';
+const tabs=[['feed','Feed'],['net','Network'],['jobs','Jobs'],['msg','Messages'],['prof','Profile']];
+function bump(n){S.pts+=n;const d=new Date().toDateString();if(S.last!==d){const y=new Date(Date.now()-864e5).toDateString();S.streak=S.last===y?S.streak+1:1;S.last=d}save()}
+function strength(){const m=S.me;let s=0;if(m.name!=='Your Name')s+=25;if(m.head!=='Add your headline')s+=25;if(m.about.length>20)s+=25;if(Object.keys(m.skills).length>=4)s+=25;return s}
+function match(j){const k=Object.keys(S.me.skills);const h=j.sk.filter(x=>k.includes(x)).length;return Math.round(40+60*h/j.sk.length)}
+function side(){const st=strength();$('#me').innerHTML=`<div class="row">${av(S.me.name)}<div><b>${esc(S.me.name)}</b><div class="mut">${esc(S.me.head)}</div></div></div><p class="mut" style="margin-bottom:6px">Profile power ${st}%</p><div class="bar"><i style="width:${st}%"></i></div><p class="mut">${S.pts} Pulse points</p>`;
+ $('#strk').textContent=S.streak?`${S.streak} day streak. Come back tomorrow to keep it.`:'Do anything today to start a streak.';
+ const b=[];if(S.pts>=10)b.push('Rising');if(S.pts>=40)b.push('Connector');if(S.streak>=3)b.push('On fire');if(st==100)b.push('All star');
+ $('#badges').innerHTML=b.map(x=>`<span class="chip">${x}</span>`).join('')||'<span class="mut">Earn points to unlock badges</span>';
+ $('#nav').innerHTML=tabs.map(t=>`<button class="${tab==t[0]?'on':''}" onclick="go('${t[0]}')">${t[1]}</button>`).join('')}
+function go(t){tab=t;render()}
+function polish(t){t=t.trim().replace(/\s+/g,' ');t=t.replace(/\b(very|really|just|basically)\s/gi,'');if(t&&!/[.!?]$/.test(t))t+='.';return t.charAt(0).toUpperCase()+t.slice(1)}
+function render(){side();const v=$('#view');
+if(tab=='feed'){v.innerHTML=`<div class="card"><textarea id="np" rows="3" placeholder="Share a win, a lesson, a hot take..."></textarea><div class="row sp" style="margin-top:8px"><select id="tg" style="width:auto"><option>win</option><option>advice</option><option>learned</option><option>question</option></select><span class="row"><button class="g" onclick="pol()">Polish</button><button onclick="post()">Post</button></span></div></div>
+<div class="row" style="margin-bottom:10px;flex-wrap:wrap">${['','win','advice','learned','question'].map(f=>`<button class="g ${filt==f?'on':''}" onclick="filt='${f}';render()">${f||'All'}</button>`).join('')}</div>`+
+S.posts.filter(p=>!filt||p.tag==filt).map(p=>`<div class="card"><div class="row">${av(p.a)}<div><b>${esc(p.a)}</b><div class="mut">${esc(p.h)} &middot; #${p.tag}</div></div></div><p>${esc(p.t)}</p>
+<div class="row"><button class="g ${p.lk?'on':''}" onclick="like(${p.id})">Like ${p.l}</button><button class="g" onclick="rep(${p.id})">Repost</button></div>
+${p.c.map(c=>`<div class="mut" style="margin-top:8px"><b>${esc(c[0])}</b> ${esc(c[1])}</div>`).join('')}
+<input style="margin-top:8px" placeholder="Comment and press Enter" onkeydown="if(event.key=='Enter')cmt(${p.id},this)"></div>`).join('')}
+else if(tab=='net'){v.innerHTML=`<div class="card"><b>People you may know</b></div>`+S.people.map((p,i)=>`<div class="card row sp"><div class="row">${av(p.n)}<div><b>${p.n}</b><div class="mut">${p.h}</div></div></div><button class="${p.x?'g':''}" onclick="conn(${i})">${p.x?'Connected':'Connect'}</button></div>`).join('')}
+else if(tab=='jobs'){v.innerHTML=`<div class="card"><input id="jq" placeholder="Search jobs or companies" oninput="jf()"></div><div id="jl"></div>`;jf()}
+else if(tab=='msg'){const cs=Object.keys(S.chats);v.innerHTML=`<div class="card"><div class="row" style="flex-wrap:wrap">${cs.map(c=>`<button class="g ${chat==c?'on':''}" onclick="chat='${c}';render()">${c}</button>`).join('')}</div></div>
+<div class="card"><div class="chat" id="ch">${(S.chats[chat]||[]).map(m=>`<div class="m ${m[0]=='me'?'me':''}">${esc(m[1])}</div>`).join('')}</div><input id="mi" placeholder="Write a message" onkeydown="if(event.key=='Enter')send()"></div>`;const c=$('#ch');if(c)c.scrollTop=1e5}
+else{const m=S.me;v.innerHTML=`<div class="card"><b>Edit profile</b><p class="mut">Name</p><input id="pn" value="${esc(m.name)}"><p class="mut">Headline</p><input id="ph" value="${esc(m.head==def.me.head?'':m.head)}" placeholder="Add your headline"><p class="mut">About</p><textarea id="pa" rows="3">${esc(m.about)}</textarea><br><br><button onclick="savep()">Save</button></div>
+<div class="card"><b>Skills</b><div class="mut">Tap a skill to endorse it. Add new ones below.</div>${Object.entries(m.skills).map(([k,v])=>`<span class="chip" onclick="endo('${k}')">${esc(k)} &middot; ${v}</span>`).join('')}<div class="row" style="margin-top:10px"><input id="sk" placeholder="New skill"><button onclick="addsk()">Add</button></div></div>`}}
+function post(){const t=$('#np').value.trim();if(!t)return toast('Write something first');S.posts.unshift({id:Date.now(),a:S.me.name,h:S.me.head,t,l:0,c:[],tag:$('#tg').value});bump(5);toast('Posted +5');render()}
+function pol(){const e=$('#np');e.value=polish(e.value);toast('Polished')}
+function like(id){const p=S.posts.find(x=>x.id==id);p.lk=!p.lk;p.l+=p.lk?1:-1;if(p.lk)bump(1);save();render()}
+function rep(id){const p=S.posts.find(x=>x.id==id);S.posts.unshift({...p,id:Date.now(),a:S.me.name,h:'Reposted from '+p.a,l:0,c:[],lk:0});bump(2);toast('Reposted');render()}
+function cmt(id,el){if(!el.value.trim())return;S.posts.find(x=>x.id==id).c.push([S.me.name,el.value]);bump(2);render()}
+function conn(i){const p=S.people[i];p.x=!p.x;if(p.x){bump(5);toast('Connected +5');if(!S.chats[p.n])S.chats[p.n]=[['t','Thanks for connecting, '+S.me.name.split(' ')[0]+'!']]}save();render()}
+function jf(){const q=($('#jq').value||'').toLowerCase();$('#jl').innerHTML=S.jobs.filter(j=>(j.t+j.co).toLowerCase().includes(q)).sort((a,b)=>match(b)-match(a)).map(j=>`<div class="card"><div class="row sp"><div><b>${j.t}</b><div class="mut">${j.co} &middot; ${j.loc}</div></div><b style="color:var(--ac2)">${match(j)}% match</b></div><div>${j.sk.map(s=>`<span class="chip">${s}</span>`).join('')}</div><div class="row" style="margin-top:10px"><button class="g ${j.s?'on':''}" onclick="jb(${j.id},'s')">${j.s?'Saved':'Save'}</button><button onclick="jb(${j.id},'ap')" ${j.ap?'disabled':''}>${j.ap?'Applied':'1-tap apply'}</button></div></div>`).join('')}
+function jb(id,k){const j=S.jobs.find(x=>x.id==id);j[k]=j[k]?0:1;if(k=='ap'){bump(10);toast('Applied +10')}save();render()}
+function send(){const i=$('#mi'),t=i.value.trim();if(!t)return;const c=chat;S.chats[c].push(['me',t]);bump(1);render();
+setTimeout(()=>{const r=['Sounds great, let us chat this week.','Interesting! Tell me more.','Thanks for reaching out!','Love it. Send me your portfolio?'];S.chats[c].push(['t',r[Math.floor(Math.random()*r.length)]]);save();if(tab=='msg')render()},1100)}
+function savep(){S.me.name=$('#pn').value.trim()||'Your Name';S.me.head=$('#ph').value.trim()||def.me.head;S.me.about=$('#pa').value;bump(3);toast('Profile saved');render()}
+function addsk(){const v=$('#sk').value.trim();if(v){S.me.skills[v]=S.me.skills[v]||0;save();render()}}
+function endo(k){S.me.skills[k]++;bump(1);render()}
+$('#thm').onclick=()=>{const r=document.documentElement,d=r.dataset.theme=='dark'||(!r.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches);r.dataset.theme=d?'light':'dark'};
+$('#foc').onclick=()=>document.body.classList.toggle('focus');
+render();
+</script></body></html>
