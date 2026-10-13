@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Half a self-portrait</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --wall:#3a3735;
+  --wall-deep:#2b2928;
+  --paper:#fbfaf7;
+  --ink:#f3efe9;
+  --muted:#aaa49c;
+  --crayon:#e07a1f;
+  --line:rgba(243,239,233,.18);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--wall);
+  color:var(--ink);
+  font-family:'DM Sans',system-ui,sans-serif;
+  line-height:1.5;
+  min-height:100vh;
+  padding:
+    max(clamp(24px,5vw,56px),env(safe-area-inset-top))
+    max(clamp(22px,6vw,72px),env(safe-area-inset-right))
+    max(clamp(32px,6vw,72px),env(safe-area-inset-bottom))
+    max(clamp(22px,6vw,72px),env(safe-area-inset-left));
+}
+main{
+  width:100%;
+  max-width:520px;
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:22px;
+}
+header h1{
+  font-family:'Bricolage Grotesque',system-ui,sans-serif;
+  font-weight:700;
+  font-size:clamp(30px,8vw,44px);
+  line-height:1.05;
+  letter-spacing:-.02em;
+  margin:0 0 10px;
+}
+header p{margin:0;color:var(--muted);max-width:44ch}
+
+.stage{
+  position:relative;
+  width:100%;
+  aspect-ratio:4/5;
+  background:var(--wall-deep);
+  border-radius:4px;
+  overflow:hidden;
+}
+.stage video,.stage canvas{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+}
+.stage video{transform:scaleX(-1)}
+.stage[data-mode="idle"] video,
+.stage[data-mode="idle"] canvas,
+.stage[data-mode="live"] canvas,
+.stage[data-mode="result"] video{display:none}
+
+.empty{
+  position:absolute;inset:0;display:none;
+  align-items:center;justify-content:center;text-align:center;
+  padding:32px;color:var(--muted);
+}
+.stage[data-mode="idle"] .empty{display:flex}
+
+.guide{
+  position:absolute;top:8%;bottom:8%;left:52%;width:0;
+  border-left:2px dashed rgba(255,255,255,.55);
+  display:none;pointer-events:none;
+}
+.stage[data-mode="live"] .guide{display:block}
+.guide-note{
+  position:absolute;left:12px;right:12px;bottom:12px;display:none;
+  font-size:14px;text-align:center;color:#fff;
+  text-shadow:0 1px 8px rgba(0,0,0,.7);
+}
+.stage[data-mode="live"] .guide-note{display:block}
+
+.count{
+  position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:min(34vw,180px);
+  color:#fff;text-shadow:0 4px 30px rgba(0,0,0,.55);
+}
+.count.on{display:flex}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.flash.go{animation:flash .45s ease-out}
+@keyframes flash{from{opacity:.9}to{opacity:0}}
+
+.row{display:flex;flex-wrap:wrap;gap:12px}
+button,.btn{
+  font:inherit;font-weight:500;
+  min-height:48px;padding:0 22px;
+  border-radius:999px;border:1.5px solid var(--line);
+  background:transparent;color:var(--ink);
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+}
+button.primary{background:var(--crayon);border-color:var(--crayon);color:#1d1a18}
+button:hover,.btn:hover{border-color:var(--ink)}
+button.primary:hover{filter:brightness(1.08);border-color:var(--crayon)}
+button:focus-visible,.btn:focus-within,input:focus-visible{outline:3px solid #fff;outline-offset:3px}
+button:disabled{opacity:.5;cursor:default}
+[hidden]{display:none!important}
+
+.msg{margin:0;color:#f0b98a;min-height:1.5em}
+
+.tuning{display:grid;gap:14px}
+.tuning label{display:grid;grid-template-columns:120px 1fr;align-items:center;gap:14px;font-size:15px;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--crayon);height:28px}
+.swatches{display:flex;align-items:center;gap:12px;font-size:15px;color:var(--muted)}
+.swatches span.l{width:120px;flex:none}
+.sw{
+  width:34px;height:34px;min-height:0;padding:0;border-radius:50%;
+  border:2px solid transparent;
+}
+.sw[aria-pressed="true"]{border-color:#fff}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Half a self-portrait</h1>
+    <p>Take a selfie. One half of your face stays a photo and the other half turns into a crayon sketch on a sketchbook page.</p>
+  </header>
+
+  <div class="stage" id="stage" data-mode="idle">
+    <video id="video" playsinline muted></video>
+    <canvas id="out" aria-label="Your half photo, half sketch portrait"></canvas>
+    <div class="empty" id="empty">Your portrait appears here.</div>
+    <div class="guide"></div>
+    <div class="guide-note">Put the middle of your face on the dashed line. The page covers the left side.</div>
+    <div class="count" id="count"></div>
+    <div class="flash" id="flash"></div>
+  </div>
+
+  <p class="msg" id="msg" role="status"></p>
+
+  <div class="row" id="startRow">
+    <button class="primary" id="openCam">Open camera</button>
+    <label class="btn">Use a photo instead<input type="file" id="file" accept="image/*" capture="user" hidden></label>
+  </div>
+
+  <div class="row" id="liveRow" hidden>
+    <button class="primary" id="snap">Take selfie</button>
+  </div>
+
+  <div id="resultRow" hidden>
+    <div class="tuning">
+      <label>Page edge <input type="range" id="split" min="30" max="70" value="52"></label>
+      <label>Page height <input type="range" id="half" min="18" max="46" value="32"></label>
+      <label>Page up or down <input type="range" id="mid" min="35" max="65" value="46"></label>
+      <div class="swatches" role="group" aria-label="Crayon colour">
+        <span class="l">Crayon</span>
+        <button class="sw" style="background:#e07a1f" data-c="#e07a1f" aria-pressed="true" aria-label="Orange"></button>
+        <button class="sw" style="background:#d23b2e" data-c="#d23b2e" aria-pressed="false" aria-label="Red"></button>
+        <button class="sw" style="background:#2f5fd0" data-c="#2f5fd0" aria-pressed="false" aria-label="Blue"></button>
+        <button class="sw" style="background:#3b3b3b" data-c="#3b3b3b" aria-pressed="false" aria-label="Graphite"></button>
+      </div>
+    </div>
+    <div class="row" style="margin-top:22px">
+      <button class="primary" id="save">Download image</button>
+      <button id="again">Retake</button>
+      <button id="redraw">Redraw sketch</button>
+    </div>
+  </div>
+</main>
+
+<script>
+(function(){
+  const W = 1080, H = 1350;
+  const $ = id => document.getElementById(id);
+  const stage = $('stage'), video = $('video'), out = $('out'), msg = $('msg');
+  out.width = W; out.height = H;
+  const ctx = out.getContext('2d');
+
+  const photo = document.createElement('canvas'); photo.width = W; photo.height = H;
+  const sketch = document.createElement('canvas'); sketch.width = W; sketch.height = H;
+
+  let stream = null;
+  let strokes = [], smudges = [];
+  const state = { split: .52, half: .32, mid: .46, color: '#e07a1f' };
+
+  /* ---------- helpers ---------- */
+  function setMode(m){
+    stage.dataset.mode = m;
+    $('startRow').hidden = m !== 'idle';
+    $('liveRow').hidden = m !== 'live';
+    $('resultRow').hidden = m !== 'result';
+  }
+  function say(t){ msg.textContent = t || ''; }
+  function rgb(hex){
+    const n = parseInt(hex.slice(1), 16);
+    return [n >> 16 & 255, n >> 8 & 255, n & 255];
+  }
+  function rot(x, y, cx, cy, a){
+    const dx = x - cx, dy = y - cy, c = Math.cos(a), s = Math.sin(a);
+    return [cx + dx * c - dy * s, cy + dx * s + dy * c];
+  }
+  function drawCover(src, sw, sh, mirror){
+    const p = photo.getContext('2d');
+    p.save(); p.clearRect(0, 0, W, H);
+    const k = Math.max(W / sw, H / sh), dw = sw * k, dh = sh * k;
+    if (mirror){ p.translate(W, 0); p.scale(-1, 1); }
+    p.drawImage(src, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    p.restore();
+  }
+
+  /* ---------- camera ---------- */
+  async function openCamera(){
+    say('');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      say('This browser cannot open the camera here. Use a photo instead.');
+      return;
+    }
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 1600 } },
+        audio: false
+      });
+      video.srcObject = stream;
+      await video.play();
+      setMode('live');
+    }catch(e){
+      say('Camera blocked or not found. Allow camera access, or use a photo instead.');
+    }
+  }
+  function stopCamera(){
+    if (stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
+  }
+  function countdown(n){
+    return new Promise(res => {
+      const c = $('count');
+      c.classList.add('on');
+      let i = n;
+      c.textContent = i;
+      const t = setInterval(() => {
+        i--;
+        if (i <= 0){ clearInterval(t); c.classList.remove('on'); res(); }
+        else c.textContent = i;
+      }, 900);
+    });
+  }
+  async function snap(){
+    $('snap').disabled = true;
+    await countdown(3);
+    drawCover(video, video.videoWidth, video.videoHeight, true);
+    const f = $('flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+    stopCamera();
+    $('snap').disabled = false;
+    build();
+  }
+
+  /* ---------- sketch analysis ---------- */
+  function blur(g, w, h){
+    const o = new Float32Array(g.length);
+    for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++){
+      let s = 0;
+      for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) s += g[(y + j) * w + x + i];
+      o[y * w + x] = s / 9;
+    }
+    return o;
+  }
+  function analyse(){
+    const sw = 270, sh = 338, k = W / sw;
+    const c = document.createElement('canvas'); c.width = sw; c.height = sh;
+    const x = c.getContext('2d', { willReadFrequently: true });
+    x.drawImage(photo, 0, 0, sw, sh);
+    const d = x.getImageData(0, 0, sw, sh).data;
+    let g = new Float32Array(sw * sh);
+    for (let i = 0; i < g.length; i++) g[i] = .299 * d[i*4] + .587 * d[i*4+1] + .114 * d[i*4+2];
+    g = blur(blur(g, sw, sh), sw, sh);
+
+    const mag = new Float32Array(sw * sh), ang = new Float32Array(sw * sh);
+    for (let y = 5; y < sh - 5; y++) for (let xx = 5; xx < sw - 5; xx++){
+      const i = y * sw + xx;
+      const gx = -g[i-sw-1] - 2*g[i-1] - g[i+sw-1] + g[i-sw+1] + 2*g[i+1] + g[i+sw+1];
+      const gy = -g[i-sw-1] - 2*g[i-sw] - g[i-sw+1] + g[i+sw-1] + 2*g[i+sw] + g[i+sw+1];
+      mag[i] = Math.hypot(gx, gy);
+      ang[i] = Math.atan2(gy, gx);
+    }
+    const sortedMag = Float32Array.from(mag).sort();
+    const thr = Math.max(sortedMag[Math.floor(sortedMag.length * .86)], 8);
+    const sortedLum = Float32Array.from(g).sort();
+    const darkThr = sortedLum[Math.floor(sortedLum.length * .32)];
+
+    strokes = [];
+    for (let y = 5; y < sh - 5; y += 2) for (let xx = 5; xx < sw - 5; xx += 2){
+      const m = mag[y * sw + xx];
+      if (m < thr) continue;
+      const p = Math.min(1, (m - thr) / (thr * 2)) * .55 + .35;
+      if (Math.random() > p) continue;
+      const a = ang[y * sw + xx] + Math.PI / 2 + (Math.random() - .5) * .6;
+      strokes.push({
+        x: xx * k + (Math.random() - .5) * 6,
+        y: y * k + (Math.random() - .5) * 6,
+        a, l: 10 + Math.random() * 26,
+        w: 2 + Math.random() * 2.6,
+        o: .55 + Math.random() * .4,
+        wob: (Math.random() - .5) * 10
+      });
+    }
+    smudges = [];
+    for (let y = 6; y < sh - 6; y += 5) for (let xx = 6; xx < sw - 6; xx += 5){
+      const v = g[y * sw + xx];
+      if (v < darkThr){
+        smudges.push({
+          x: xx * k, y: y * k,
+          r: 16 + Math.random() * 14,
+          a: Math.min(.2, (darkThr - v) / darkThr * .35)
+        });
+      }
+    }
+  }
+
+  const grain = (() => {
+    const n = document.createElement('canvas'); n.width = n.height = 300;
+    const nc = n.getContext('2d'), id = nc.createImageData(300, 300);
+    for (let i = 0; i < 300 * 300; i++) id.data[i*4+3] = Math.random() < .45 ? Math.random() * 255 : 0;
+    nc.putImageData(id, 0, 0);
+    return n;
+  })();
+
+  function renderSketch(){
+    const s = sketch.getContext('2d');
+    s.clearRect(0, 0, W, H);
+    s.lineCap = 'round';
+    const [r, g, b] = rgb(state.color);
+    for (const m of smudges){
+      s.fillStyle = `rgba(${r},${g},${b},${m.a})`;
+      s.beginPath(); s.arc(m.x, m.y, m.r, 0, 7); s.fill();
+    }
+    for (const t of strokes){
+      const dx = Math.cos(t.a) * t.l / 2, dy = Math.sin(t.a) * t.l / 2;
+      const nx = -Math.sin(t.a) * t.wob, ny = Math.cos(t.a) * t.wob;
+      s.strokeStyle = `rgba(${r},${g},${b},${t.o})`;
+      s.lineWidth = t.w;
+      s.beginPath();
+      s.moveTo(t.x - dx, t.y - dy);
+      s.quadraticCurveTo(t.x + nx, t.y + ny, t.x + dx, t.y + dy);
+      s.stroke();
+    }
+    s.globalCompositeOperation = 'destination-out';
+    s.fillStyle = s.createPattern(grain, 'repeat');
+    s.fillRect(0, 0, W, H);
+    s.globalCompositeOperation = 'source-over';
+  }
+
+  /* ---------- composite ---------- */
+  function compose(){
+    ctx.clearRect(0, 0, W, H);
+    ctx.drawImage(photo, 0, 0);
+
+    const R = state.split * W;
+    const cy = state.mid * H;
+    const top = cy - state.half * H, bot = cy + state.half * H;
+    const pw = W * .5;
+    const tilt = -.025;
+    const path = (ox, oy) => {
+      const pts = [[R - pw, top], [R, top], [R, bot], [R - pw, bot]]
+        .map(([x, y]) => rot(x + ox, y + oy, R, cy, tilt));
+      ctx.beginPath();
+      pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+      ctx.closePath();
+      return pts;
+    };
+
+    // pages behind the top sheet
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 3;
+    for (let i = 3; i >= 1; i--){
+      path(-i * 3, -i * 7);
+      ctx.fillStyle = i % 2 ? '#dedbd4' : '#ebe8e2';
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // main sheet
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 44; ctx.shadowOffsetY = 16;
+    const pts = path(0, 0);
+    const grad = ctx.createLinearGradient(R - pw, 0, R, 0);
+    grad.addColorStop(0, '#f0eee9');
+    grad.addColorStop(.12, '#fbfaf7');
+    grad.addColorStop(.9, '#fbfaf7');
+    grad.addColorStop(1, '#ecebe6');
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.restore();
+
+    // sketch clipped to the sheet
+    ctx.save();
+    path(0, 0);
+    ctx.clip();
+    ctx.drawImage(sketch, 0, 0);
+    // soft shade on the open edge of the page
+    const edge = ctx.createLinearGradient(R - 36, 0, R, 0);
+    edge.addColorStop(0, 'rgba(0,0,0,0)');
+    edge.addColorStop(1, 'rgba(0,0,0,.10)');
+    ctx.fillStyle = edge;
+    ctx.fillRect(R - 40, 0, 44, H);
+    ctx.restore();
+  }
+
+  function build(){
+    analyse();
+    renderSketch();
+    compose();
+    setMode('result');
+    say('');
+  }
+
+  /* ---------- events ---------- */
+  $('openCam').addEventListener('click', openCamera);
+  $('snap').addEventListener('click', snap);
+  $('again').addEventListener('click', () => { setMode('idle'); say(''); openCamera(); });
+  $('redraw').addEventListener('click', () => { analyse(); renderSketch(); compose(); });
+
+  $('file').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    const img = new Image();
+    img.onload = () => {
+      drawCover(img, img.naturalWidth, img.naturalHeight, false);
+      URL.revokeObjectURL(img.src);
+      stopCamera();
+      build();
+    };
+    img.onerror = () => say('That file could not be opened as an image.');
+    img.src = URL.createObjectURL(f);
+    e.target.value = '';
+  });
+
+  [['split', 'split'], ['half', 'half'], ['mid', 'mid']].forEach(([id, key]) => {
+    $(id).addEventListener('input', e => { state[key] = e.target.value / 100; compose(); });
+  });
+
+  document.querySelectorAll('.sw').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.sw').forEach(x => x.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', 'true');
+      state.color = b.dataset.c;
+      renderSketch(); compose();
+    });
+  });
+
+  $('save').addEventListener('click', () => {
+    out.toBlob(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'half-self-portrait.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    }, 'image/png');
+  });
+
+  window.addEventListener('pagehide', stopCamera);
+  setMode('idle');
+})();
+</script>
+</body>
+</html>
