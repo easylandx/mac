@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gemini 4 Argon: One Million Tokens of Thought</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0624;--bg2:#150b3a;--mag:#ff3da5;--cy:#19e3ff;--lime:#b6ff3b;--org:#ff8a1f;--vio:#8b5cff;--yel:#ffd60a;--tx:#f4f0ff;--mu:#b9afe0;--pad:clamp(20px,6vw,80px)}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font:400 1.05rem/1.65 Outfit,system-ui,sans-serif;overflow-x:hidden}
+canvas#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+section,header,footer{position:relative;z-index:1;padding:clamp(56px,9vw,110px) var(--pad)}
+.in{max-width:1120px;margin:0 auto}
+h1,h2,h3{font-family:Unbounded,sans-serif;line-height:1.12;letter-spacing:-.01em}
+h1{font-weight:800;font-size:clamp(2.3rem,7vw,5rem);background:linear-gradient(90deg,var(--cy),var(--vio),var(--mag),var(--org),var(--yel));-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% 100%;animation:sh 8s linear infinite}
+@keyframes sh{to{background-position:200% 0}}
+h2{font-weight:800;font-size:clamp(1.6rem,4vw,2.7rem);margin-bottom:14px}
+h3{font-weight:500;font-size:1.15rem;margin-bottom:8px}
+p.lead{color:var(--mu);max-width:62ch;font-size:1.12rem}
+.hero .in{display:grid;grid-template-columns:1.15fr .85fr;gap:40px;align-items:center}
+.hero p.lead{margin:22px 0 28px}
+.btn{display:inline-block;border:0;cursor:pointer;font:600 1rem Outfit,sans-serif;padding:14px 26px;border-radius:999px;color:#10062b;text-decoration:none;background:linear-gradient(90deg,var(--lime),var(--cy));box-shadow:0 0 28px #19e3ff66;transition:transform .15s}
+.btn:hover{transform:translateY(-2px) scale(1.03)}
+.btn.alt{background:linear-gradient(90deg,var(--mag),var(--org));box-shadow:0 0 28px #ff3da566}
+:focus-visible{outline:3px solid var(--yel);outline-offset:3px}
+.counter{margin-top:30px;padding:18px 22px;border-radius:20px;background:#ffffff0d;border:1px solid #ffffff22;max-width:480px}
+.counter b{font:800 clamp(1.7rem,4vw,2.5rem) Unbounded,sans-serif;color:var(--lime);display:block}
+.bar{height:10px;border-radius:9px;background:#ffffff1a;margin-top:10px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cy),var(--mag),var(--yel));border-radius:9px}
+.orb{width:100%;max-width:440px;margin:auto;filter:drop-shadow(0 0 30px #8b5cff88)}
+.orb .r{transform-origin:200px 200px;animation:spin 14s linear infinite}
+.orb .r2{animation-duration:22s;animation-direction:reverse}
+.orb .r3{animation-duration:9s}
+@keyframes spin{to{transform:rotate(360deg)}}
+.panel{background:linear-gradient(160deg,#ffffff12,#ffffff06);border:1px solid #ffffff24;border-radius:26px;padding:clamp(20px,4vw,38px);margin-top:30px}
+input[type=range]{width:100%;accent-color:var(--mag);height:34px}
+.read{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:18px}
+.read div{border-radius:16px;padding:14px 16px;background:#0b0624aa;border:1px solid #ffffff1f}
+.read b{display:block;font:800 1.5rem Unbounded,sans-serif}
+.read span{color:var(--mu);font-size:.92rem}
+.stack{display:grid;gap:10px;margin-top:20px}
+.row{display:flex;align-items:center;gap:12px;font-size:.92rem;color:var(--mu)}
+.row em{font-style:normal;min-width:94px}
+.row .bar{flex:1;margin:0;height:16px}
+.msg{margin-top:16px;font-weight:600;color:var(--yel);min-height:1.6em}
+.tools{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+svg text{font-family:Outfit,sans-serif}
+.tree path{fill:none;stroke-width:4;stroke-linecap:round;stroke-dasharray:600;stroke-dashoffset:600;transition:stroke-dashoffset 1.4s ease,opacity .6s}
+.tree.go path{stroke-dashoffset:0}
+.tree.fix path.lose{opacity:.12}
+.tree .win{stroke-width:7;filter:drop-shadow(0 0 8px #b6ff3b)}
+.tree circle.n{opacity:0;transition:opacity .5s 1s}
+.tree.go circle.n{opacity:1}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:28px}
+.card{text-align:left;color:var(--tx);font:inherit;cursor:pointer;border-radius:22px;padding:22px;border:1px solid #ffffff2b;background:#ffffff0a;transition:transform .2s,border-color .2s,background .2s}
+.card:hover{transform:translateY(-4px)}
+.card svg{width:54px;height:54px;margin-bottom:12px}
+.card .d{max-height:0;overflow:hidden;color:var(--mu);font-size:.97rem;transition:max-height .4s}
+.card[aria-expanded=true] .d{max-height:200px;margin-top:8px}
+.card[aria-expanded=true]{background:#ffffff16}
+.c1{border-color:var(--cy)}.c2{border-color:var(--lime)}.c3{border-color:var(--mag)}.c4{border-color:var(--org)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:center;margin-top:28px}
+.ring{width:100%;max-width:300px;margin:auto}
+.ring circle{fill:none;stroke-width:18;stroke-linecap:round}
+.ring .v{stroke:url(#g);stroke-dasharray:534;stroke-dashoffset:534;transition:stroke-dashoffset 1.8s cubic-bezier(.2,.8,.2,1);transform:rotate(-90deg);transform-origin:100px 100px}
+.step{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+.step button{border:2px solid #ffffff44;background:transparent;color:var(--tx);font:600 1rem Outfit,sans-serif;padding:10px 20px;border-radius:999px;cursor:pointer}
+.step button[aria-pressed=true]{background:var(--mag);border-color:var(--mag);color:#10062b}
+.term{font:500 .95rem/1.7 ui-monospace,Menlo,Consolas,monospace;background:#05021499;border:1px solid #ffffff22;border-radius:16px;padding:18px;min-height:130px;color:var(--lime)}
+.shield{width:100%;max-width:260px;margin:auto;transition:filter .5s}
+.tabs{display:flex;gap:10px;flex-wrap:wrap}
+.tabs button{border:0;border-radius:999px;padding:10px 20px;font:600 1rem Outfit,sans-serif;cursor:pointer;color:var(--tx);background:#ffffff18}
+.tabs button[aria-selected=true]{color:#10062b;background:var(--cy)}
+.tabp{margin-top:20px;min-height:90px;font-size:1.12rem}
+.cta{text-align:center}
+.cta .in{border-radius:34px;padding:clamp(32px,6vw,70px) clamp(20px,5vw,60px);background:linear-gradient(120deg,#8b5cff55,#ff3da544,#19e3ff44);border:1px solid #ffffff3a}
+.cta p{margin:0 auto 26px;color:var(--tx);max-width:52ch}
+footer{text-align:center;color:var(--mu);font-size:.9rem;padding-top:20px;padding-bottom:50px}
+@media(max-width:820px){.hero .in,.split{grid-template-columns:1fr}.orb{max-width:300px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+
+<header class="hero">
+ <div class="in">
+  <div>
+   <h1>Gemini 4 Argon</h1>
+   <p class="lead">Most models are great at quick answers. Argon thinks for hundreds of thousands of tokens and delivers up to 1 million output tokens in a single trajectory.</p>
+   <button class="btn" id="run">Run the trajectory</button>
+   <div class="counter" aria-live="off">
+    <b id="cnt">0</b>
+    <span style="color:var(--mu)">output tokens streamed</span>
+    <div class="bar"><i id="cbar"></i></div>
+   </div>
+  </div>
+  <svg class="orb" viewBox="0 0 400 400" role="img" aria-label="Glowing atom-like orb with three orbiting rings">
+   <defs><radialGradient id="core"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#19e3ff"/><stop offset="1" stop-color="#8b5cff"/></radialGradient></defs>
+   <circle cx="200" cy="200" r="52" fill="url(#core)"/>
+   <g class="r"><ellipse cx="200" cy="200" rx="170" ry="60" fill="none" stroke="#ff3da5" stroke-width="3"/><circle cx="370" cy="200" r="13" fill="#ff3da5"/></g>
+   <g class="r r2"><ellipse cx="200" cy="200" rx="60" ry="170" fill="none" stroke="#b6ff3b" stroke-width="3"/><circle cx="200" cy="30" r="12" fill="#b6ff3b"/></g>
+   <g class="r r3"><circle cx="200" cy="200" r="130" fill="none" stroke="#ffd60a" stroke-width="3" stroke-dasharray="8 14"/><circle cx="330" cy="200" r="11" fill="#ff8a1f"/></g>
+  </svg>
+ </div>
+</header>
+
+<section>
+ <div class="in">
+  <h2>From 64K to 1 million</h2>
+  <p class="lead">Previous frontier models were typically limited to about 64K output tokens. Drag the slider to see how much room that leaves, and how much Argon adds.</p>
+  <div class="panel">
+   <label for="sl" style="font-weight:600">Output length: <span id="slv">64K</span> tokens</label>
+   <input type="range" id="sl" min="1" max="1000" value="64" step="1">
+   <div class="stack">
+    <div class="row"><em>Earlier models</em><div class="bar"><i id="b1" style="background:var(--mag)"></i></div></div>
+    <div class="row"><em>Argon</em><div class="bar"><i id="b2" style="background:linear-gradient(90deg,var(--lime),var(--cy))"></i></div></div>
+   </div>
+   <div class="read">
+    <div><b id="w" style="color:var(--cy)">0</b><span>words, roughly</span></div>
+    <div><b id="pg" style="color:var(--lime)">0</b><span>pages of text</span></div>
+    <div><b id="x" style="color:var(--org)">1x</b><span>vs the 64K ceiling</span></div>
+   </div>
+   <p class="msg" id="msg"></p>
+  </div>
+ </div>
+</section>
+
+<section>
+ <div class="in">
+  <h2>Room to think, try, and correct</h2>
+  <p class="lead">With this much space, Argon can explore several approaches, notice a dead end, and back up. Complete, polished results arrive from one trajectory instead of many separate prompts.</p>
+  <div class="panel">
+   <svg class="tree" id="tree" viewBox="0 0 700 280" role="img" aria-label="Branching reasoning paths from one question to one chosen answer">
+    <circle cx="40" cy="140" r="14" fill="#fff"/>
+    <path stroke="#ff3da5" class="lose" d="M54 140 C150 140 150 40 300 40 S 480 60 560 80"/>
+    <path stroke="#ffd60a" class="lose" d="M54 140 C170 140 190 100 300 110 S 460 200 520 230"/>
+    <path stroke="#8b5cff" class="lose" d="M54 140 C170 140 190 240 300 240 S 430 250 480 260"/>
+    <path stroke="#b6ff3b" class="win" d="M54 140 C200 140 230 170 340 170 S 500 150 620 140"/>
+    <circle class="n" cx="560" cy="80" r="9" fill="#ff3da5"/><circle class="n" cx="520" cy="230" r="9" fill="#ffd60a"/><circle class="n" cx="480" cy="260" r="9" fill="#8b5cff"/>
+    <circle class="n" cx="640" cy="140" r="20" fill="#b6ff3b"/>
+    <text x="640" y="146" text-anchor="middle" font-size="18" fill="#10062b" font-weight="700" class="n" style="opacity:0">ok</text>
+   </svg>
+   <div class="tools">
+    <button class="btn" id="ex">Explore approaches</button>
+    <button class="btn alt" id="fx">Self-correct</button>
+    <button class="btn" id="rs" style="background:#ffffff22;color:var(--tx);box-shadow:none">Reset</button>
+   </div>
+   <p class="msg" id="tmsg">Press explore to send out four lines of thought.</p>
+  </div>
+ </div>
+</section>
+
+<section>
+ <div class="in">
+  <h2>Already proven at scale</h2>
+  <p class="lead">Google has shown these results internally. Tap a card to open it.</p>
+  <div class="grid">
+   <button class="card c1" aria-expanded="false"><svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="9" fill="#19e3ff"/><g stroke="#19e3ff" stroke-width="5" stroke-linecap="round"><path d="M27 4v8M27 42v8M4 27h8M42 27h8M11 11l6 6M37 37l6 6M43 11l-6 6M17 37l-6 6"/></g></svg><h3>C/C++ to Rust</h3><div class="d">Large-scale migrations covering hundreds of thousands of lines of code.</div></button>
+   <button class="card c2" aria-expanded="false"><svg viewBox="0 0 54 54"><rect x="6" y="10" width="42" height="9" rx="4" fill="#b6ff3b"/><rect x="6" y="23" width="30" height="9" rx="4" fill="#b6ff3b" opacity=".7"/><rect x="6" y="36" width="18" height="9" rx="4" fill="#b6ff3b" opacity=".45"/></svg><h3>Data center memory</h3><div class="d">Autonomous memory optimizations across data centers saved hundreds of TiB.</div></button>
+   <button class="card c3" aria-expanded="false"><svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="6" fill="#ff3da5"/><ellipse cx="27" cy="27" rx="22" ry="9" fill="none" stroke="#ff3da5" stroke-width="3"/><ellipse cx="27" cy="27" rx="22" ry="9" fill="none" stroke="#ff3da5" stroke-width="3" transform="rotate(60 27 27)"/><ellipse cx="27" cy="27" rx="22" ry="9" fill="none" stroke="#ff3da5" stroke-width="3" transform="rotate(120 27 27)"/></svg><h3>Quantum algorithms</h3><div class="d">Improvements that beat published baselines by 40% in minutes.</div></button>
+   <button class="card c4" aria-expanded="false"><svg viewBox="0 0 54 54"><path d="M8 40V18l19-11 19 11v22L27 51z" fill="none" stroke="#ff8a1f" stroke-width="4" stroke-linejoin="round"/><path d="M8 18l19 11 19-11M27 29v22" stroke="#ff8a1f" stroke-width="3" fill="none"/></svg><h3>Architectural refactors</h3><div class="d">Complex refactors in Chrome and other massive codebases.</div></button>
+  </div>
+ </div>
+</section>
+
+<section>
+ <div class="in">
+  <h2>Top-tier on hard, real-world work</h2>
+  <p class="lead">Argon leads the Vals Index, which measures economic value across finance, legal, tax, and coding. It also sets a new high on long-horizon software engineering.</p>
+  <div class="split">
+   <svg class="ring" id="ring" viewBox="0 0 200 200" role="img" aria-label="DeepSWE v1.1 score of 77.9 percent">
+    <defs><linearGradient id="g"><stop offset="0" stop-color="#19e3ff"/><stop offset=".5" stop-color="#ff3da5"/><stop offset="1" stop-color="#ffd60a"/></linearGradient></defs>
+    <circle cx="100" cy="100" r="85" stroke="#ffffff1c"/>
+    <circle class="v" cx="100" cy="100" r="85"/>
+    <text x="100" y="104" text-anchor="middle" fill="#fff" font-size="38" font-weight="700" id="rv">0%</text>
+    <text x="100" y="128" text-anchor="middle" fill="#b9afe0" font-size="13">DeepSWE v1.1</text>
+   </svg>
+   <div>
+    <div class="tabs" role="tablist">
+     <button role="tab" aria-selected="true" data-t="0">Messy tasks</button>
+     <button role="tab" aria-selected="false" data-t="1">Precision</button>
+     <button role="tab" aria-selected="false" data-t="2">Persistence</button>
+    </div>
+    <p class="tabp" id="tp" role="tabpanel"></p>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section>
+ <div class="in">
+  <h2>A defender that finds, checks, and fixes</h2>
+  <p class="lead">Argon can autonomously find, validate, and patch critical vulnerabilities. It is strong enough that Google first released a less-restricted version to trusted cyber defenders.</p>
+  <div class="panel split" style="margin-top:30px">
+   <svg class="shield" id="sh" viewBox="0 0 200 220" role="img" aria-label="Shield that changes as each defense step runs">
+    <path id="shp" d="M100 10 L180 40 V110 C180 160 140 195 100 212 C60 195 20 160 20 110 V40 Z" fill="#8b5cff33" stroke="#8b5cff" stroke-width="6"/>
+    <text id="shi" x="100" y="128" text-anchor="middle" font-size="64" fill="#fff">?</text>
+   </svg>
+   <div>
+    <div class="step" role="group" aria-label="Defense steps">
+     <button aria-pressed="true" data-s="0">Find</button>
+     <button aria-pressed="false" data-s="1">Validate</button>
+     <button aria-pressed="false" data-s="2">Patch</button>
+    </div>
+    <div class="term" id="term"></div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section class="cta">
+ <div class="in">
+  <h2 style="background:linear-gradient(90deg,var(--yel),var(--org),var(--mag));-webkit-background-clip:text;background-clip:text;color:transparent">Ready to turn big ideas into live pages?</h2>
+  <p>Argon is built for the longest, most complex problems. EasyLandX is built to get your landing page out the door fast.</p>
+  <a class="btn" href="https://easylandx.github.io" target="_blank" rel="noopener">Visit EasyLandX</a>
+ </div>
+</section>
+
+<footer>An explainer about Gemini 4 Argon. Built with EasyLandX energy.</footer>
+
+<script>
+const rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+// background particles
+(function(){const c=document.getElementById('bg'),x=c.getContext('2d');const cols=['#19e3ff','#ff3da5','#b6ff3b','#ffd60a','#8b5cff','#ff8a1f'];let W,H,P=[];
+function rs(){W=c.width=innerWidth;H=c.height=innerHeight;P=Array.from({length:Math.min(90,W/14)},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2+.6,v:Math.random()*.35+.08,c:cols[Math.random()*6|0]}))}
+function d(){x.clearRect(0,0,W,H);const g=x.createRadialGradient(W*.8,0,0,W*.8,0,W*.9);g.addColorStop(0,'#2a0f6a99');g.addColorStop(1,'#0b062400');x.fillStyle=g;x.fillRect(0,0,W,H);
+P.forEach(p=>{x.fillStyle=p.c;x.globalAlpha=.75;x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fill();if(!rm){p.y-=p.v;if(p.y<-5){p.y=H+5;p.x=Math.random()*W}}});x.globalAlpha=1;if(!rm)requestAnimationFrame(d)}
+addEventListener('resize',rs);rs();d()})();
+
+// hero counter
+const cnt=document.getElementById('cnt'),cbar=document.getElementById('cbar');let ct;
+function run(){cancelAnimationFrame(ct);const t0=performance.now(),dur=rm?1:4200;
+(function f(n){const k=Math.min(1,(n-t0)/dur),e=1-Math.pow(1-k,3),v=Math.round(e*1e6);cnt.textContent=v.toLocaleString('en-US');cbar.style.width=(e*100)+'%';if(k<1)ct=requestAnimationFrame(f)})(t0)}
+document.getElementById('run').onclick=run;setTimeout(run,600);
+
+// slider
+const sl=document.getElementById('sl');
+function up(){const k=+sl.value,t=k*1000,w=Math.round(t*.75),p=Math.round(w/500);
+document.getElementById('slv').textContent=k>=1000?'1M':k+'K';
+document.getElementById('w').textContent=w.toLocaleString('en-US');
+document.getElementById('pg').textContent=p.toLocaleString('en-US');
+document.getElementById('x').textContent=(k/64).toFixed(k/64<10?1:0)+'x';
+document.getElementById('b1').style.width=Math.min(100,k/64*100)+'%';
+document.getElementById('b2').style.width=(k/10)+'%';
+document.getElementById('msg').textContent=k<=64?'Inside the range earlier models handled.':k<1000?'Past the old ceiling. Argon keeps going in a single trajectory.':'The full 1 million output tokens, in one run.'}
+sl.oninput=up;up();
+
+// tree
+const tr=document.getElementById('tree'),tm=document.getElementById('tmsg');
+document.getElementById('ex').onclick=()=>{tr.classList.remove('fix');tr.classList.add('go');tr.querySelectorAll('text.n').forEach(t=>t.style.opacity=1);tm.textContent='Four approaches explored in parallel.'};
+document.getElementById('fx').onclick=()=>{if(!tr.classList.contains('go')){tm.textContent='Explore first, then self-correct.';return}tr.classList.add('fix');tm.textContent='Three dead ends dropped. The strongest path stays and finishes the job.'};
+document.getElementById('rs').onclick=()=>{tr.classList.remove('go','fix');tr.querySelectorAll('text.n').forEach(t=>t.style.opacity=0);tm.textContent='Press explore to send out four lines of thought.'};
+
+// cards
+document.querySelectorAll('.card').forEach(c=>c.onclick=()=>c.setAttribute('aria-expanded',c.getAttribute('aria-expanded')!=='true'));
+
+// ring
+const ring=document.getElementById('ring'),rv=document.getElementById('rv');
+new IntersectionObserver((e,o)=>{if(e[0].isIntersecting){ring.querySelector('.v').style.strokeDashoffset=534*(1-.779);const t0=performance.now();(function f(n){const k=Math.min(1,(n-t0)/1800);rv.textContent=(77.9*(1-Math.pow(1-k,3))).toFixed(1)+'%';if(k<1)requestAnimationFrame(f)})(t0);o.disconnect()}},{threshold:.4}).observe(ring);
+
+// tabs
+const T=['Argon handles the multi-document, multi-tool tasks professionals actually face, where answers are never tidy.','Stronger visual understanding of long videos and charts, with better adherence to style and instructions.','Less hedging and repetition, and the focus to stay on target across very long workflows.'],tp=document.getElementById('tp'),tb=document.querySelectorAll('.tabs button');
+tp.textContent=T[0];tb.forEach(b=>b.onclick=()=>{tb.forEach(x=>x.setAttribute('aria-selected',x===b));tp.textContent=T[b.dataset.t]});
+
+// defender
+const S=[{c:'#ff3da5',i:'!',l:['$ scan codebase','> reading modules...','> critical flaw found in input handler']},{c:'#ffd60a',i:'?',l:['$ reproduce issue','> exploit path confirmed','> severity: critical, finding is real']},{c:'#b6ff3b',i:'\u2713',l:['$ write fix','> patch applied, tests passing','> vulnerability closed']}],
+term=document.getElementById('term'),shp=document.getElementById('shp'),shi=document.getElementById('shi'),sb=document.querySelectorAll('.step button');let tt;
+function step(n){sb.forEach(b=>b.setAttribute('aria-pressed',b.dataset.s==n));const s=S[n];shp.setAttribute('stroke',s.c);shp.setAttribute('fill',s.c+'33');shi.textContent=s.i;shi.setAttribute('fill',s.c);term.innerHTML='';clearTimeout(tt);let i=0;(function l(){if(i<s.l.length){const d=document.createElement('div');d.textContent=s.l[i++];term.appendChild(d);tt=setTimeout(l,rm?0:550)}})()}
+sb.forEach(b=>b.onclick=()=>step(+b.dataset.s));step(0);
+</script>
+</body>
+</html>
