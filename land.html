@@ -12,7 +12,7 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;background:#7cc8f0;overscroll-behavior:none}
   #bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
-  #world{position:relative;z-index:1;height:320vh;overflow:hidden}
+  #world{position:relative;z-index:1;height:300vh;overflow:hidden}
   .g{position:absolute;display:flex;flex-wrap:wrap;gap:2px;width:150px;font-size:34px;line-height:1.1;will-change:transform;user-select:none;-webkit-user-select:none}
   .g span{display:inline-block;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
   #rain{position:fixed;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
@@ -77,7 +77,9 @@
     "🐸 🐊 🐢 🦎 🐍 🐉 🐲 🦖 🦕",
     "🐳 🐋 🐬 🦭 🐟 🐠 🐡 🦈 🐙 🐚 🪼 🦀 🦞 🦑 🦪",
     "🐌 🦋 🐛 🐜 🐝 🪲 🐞 🦗 🪳 🕷️ 🕸️ 🦂 🦟 🪰 🪱 🦠"
-  ].map(function(s){return s.split(" ")});
+  ].join(" ").split(" ");
+  var skip = ["🪶","🪽","🐾","🕸️","🦠"];
+  var ALL = C.filter(function(e,i,a){return e && e.indexOf("\u200d")<0 && skip.indexOf(e)<0 && a.indexOf(e)===i});
 
   var world = document.getElementById("world");
   var groups = [];
@@ -85,11 +87,11 @@
   function build(){
     world.innerHTML = ""; groups = [];
     var W = window.innerWidth, H = world.offsetHeight;
-    var n = 40, margin = 18;
+    var n = ALL.length, margin = 18;
     for(var i=0;i<n;i++){
-      var cat = C[i % C.length];
+      var cat = [ALL[i]];
       var el = document.createElement("div"); el.className = "g";
-      var k = 3 + Math.floor(Math.random()*4);
+      var k = 1;
       for(var j=0;j<k;j++){var s=document.createElement("span"); s.textContent=pick(cat); el.appendChild(s)}
       var x = margin + Math.random()*Math.max(10, W - 150 - margin*2);
       var y = 30 + Math.random()*(H - 160);
@@ -184,30 +186,25 @@
     var s = noise(), lp = ac.createBiquadFilter(), g = ac.createGain();
     lp.type="lowpass"; lp.frequency.value=380; g.gain.value=.12;
     s.connect(lp); lp.connect(g); g.connect(jungG); s.start();
-    /* insect drone */
-    var o = ac.createOscillator(), am = ac.createOscillator(), ag = ac.createGain(), og = ac.createGain();
-    o.type="square"; o.frequency.value=4300; am.frequency.value=38; ag.gain.value=.5; og.gain.value=.012;
-    var bp = ac.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=4300; bp.Q.value=6;
-    am.connect(ag); ag.connect(og.gain); o.connect(bp); bp.connect(og); og.connect(jungG); o.start(); am.start();
   }
   function tone(type, f0, f1, t0, dur, vol){
     var o = ac.createOscillator(), g = ac.createGain();
     o.type = type; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f1, t0+dur);
     g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0+dur*.2); g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
-    o.connect(g); g.connect(jungG); o.start(t0); o.stop(t0+dur+.05);
+    var lf = ac.createBiquadFilter(); lf.type = "lowpass"; lf.frequency.value = 3200; o.connect(g); g.connect(lf); lf.connect(jungG); o.start(t0); o.stop(t0+dur+.05);
   }
   function call(){
     var t = ac.currentTime + .02, r = Math.random();
     if(r < .5){ /* songbird */
       var base = 1800 + Math.random()*2200, n = 2 + Math.floor(Math.random()*4);
-      for(var i=0;i<n;i++) tone("sine", base*(1+Math.random()*.3), base*(1.3+Math.random()*.6), t+i*.11, .09, .12);
+      for(var i=0;i<n;i++) tone("sine", base*(1+Math.random()*.3), base*(1.2+Math.random()*.4), t+i*.13, .12, .07);
     } else if(r < .72){ /* tropical whoop */
       var b = 600 + Math.random()*400;
-      tone("triangle", b, b*2.2, t, .35, .12); tone("triangle", b*2.2, b*1.1, t+.35, .3, .1);
+      tone("sine", b, b*2.2, t, .4, .09); tone("sine", b*2.2, b*1.1, t+.4, .35, .07);
     } else if(r < .88){ /* owl hoot */
       tone("sine", 360, 320, t, .35, .2); tone("sine", 360, 300, t+.5, .5, .2);
     } else { /* frog */
-      for(var j=0;j<4;j++) tone("sawtooth", 220, 160, t+j*.12, .09, .05);
+      for(var j=0;j<4;j++) tone("sine", 220, 160, t+j*.14, .1, .05);
     }
   }
   function loop(){ call(); timer = setTimeout(loop, 250 + Math.random()*1300) }
