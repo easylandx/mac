@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Jungle</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#7cc8f0">
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:#7cc8f0;overscroll-behavior:none}
+  #bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+  #world{position:relative;z-index:1;height:320vh;overflow:hidden}
+  .g{position:absolute;display:flex;flex-wrap:wrap;gap:2px;width:150px;font-size:34px;line-height:1.1;will-change:transform;user-select:none;-webkit-user-select:none}
+  .g span{display:inline-block;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+  #rain{position:fixed;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
+  .btn{position:fixed;z-index:3;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);width:56px;height:56px;border-radius:50%;border:2px solid rgba(255,255,255,.7);background:rgba(20,40,30,.45);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:0;opacity:.75}
+  .btn.on{opacity:1;background:rgba(40,140,80,.8);box-shadow:0 0 0 3px rgba(255,255,255,.5)}
+  #bRain{left:calc(env(safe-area-inset-left,0px) + 18px)}
+  #bSnd{right:calc(env(safe-area-inset-right,0px) + 18px)}
+</style>
+</head>
+<body>
+<svg id="bg" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f9ee6"/><stop offset="1" stop-color="#bfe6fb"/></linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f8fc9"/><stop offset="1" stop-color="#1b6fa8"/></linearGradient>
+    <linearGradient id="mt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a8f9c"/><stop offset="1" stop-color="#58627a"/></linearGradient>
+    <linearGradient id="gr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#58b947"/><stop offset="1" stop-color="#1f7a34"/></linearGradient>
+    <radialGradient id="sun"><stop offset="0" stop-color="#fff7b0"/><stop offset=".45" stop-color="#ffd84a"/><stop offset="1" stop-color="#ffd84a" stop-opacity="0"/></radialGradient>
+    <g id="cloud"><ellipse cx="0" cy="0" rx="34" ry="13" fill="#fff"/><ellipse cx="-18" cy="-8" rx="18" ry="12" fill="#fff"/><ellipse cx="10" cy="-12" rx="22" ry="15" fill="#fff"/></g>
+    <g id="tree"><rect x="-3" y="0" width="6" height="26" fill="#6b4423"/><circle cx="0" cy="-6" r="20" fill="#1f8a3a"/><circle cx="-13" cy="4" r="14" fill="#2aa044"/><circle cx="13" cy="4" r="14" fill="#2aa044"/></g>
+    <g id="palm"><path d="M0 40 Q6 15 2 -20" stroke="#7a5230" stroke-width="5" fill="none"/><path d="M2 -20 Q-20 -34 -34 -18 M2 -20 Q-10 -42 -28 -40 M2 -20 Q20 -40 36 -30 M2 -20 Q24 -22 34 -6 M2 -20 Q2 -44 12 -48" stroke="#1f9a3c" stroke-width="6" fill="none" stroke-linecap="round"/></g>
+    <g id="bush"><ellipse cx="0" cy="0" rx="22" ry="12" fill="#2f9d3f"/><ellipse cx="-14" cy="3" rx="14" ry="9" fill="#3cb44c"/><ellipse cx="14" cy="3" rx="14" ry="9" fill="#26873a"/></g>
+    <g id="fern"><path d="M0 0 Q-14 -18 -26 -16 M0 0 Q-6 -26 -12 -34 M0 0 Q0 -30 2 -40 M0 0 Q8 -26 14 -34 M0 0 Q14 -18 26 -16" stroke="#1b7d32" stroke-width="4" fill="none" stroke-linecap="round"/></g>
+  </defs>
+  <rect width="400" height="800" fill="url(#sky)"/>
+  <circle cx="310" cy="110" r="90" fill="url(#sun)"/>
+  <circle cx="310" cy="110" r="30" fill="#ffe45e"/>
+  <use href="#cloud" x="80" y="90"/><use href="#cloud" x="200" y="170" transform="translate(0 0) scale(1)"/><use href="#cloud" x="340" y="230"/><use href="#cloud" x="40" y="260"/>
+  <polygon points="-20,430 120,170 200,300 250,240 340,350 420,430" fill="url(#mt)"/>
+  <polygon points="120,170 96,208 112,200 124,216 136,200 148,210" fill="#fff"/>
+  <polygon points="250,240 236,262 246,258 254,268 264,258 272,264" fill="#f2f5fa"/>
+  <rect x="0" y="425" width="400" height="95" fill="url(#sea)"/>
+  <g stroke="#bfe6fb" stroke-width="2" fill="none" opacity=".7" stroke-linecap="round">
+    <path d="M30 450 q8 -6 16 0 t16 0"/><path d="M180 470 q8 -6 16 0 t16 0"/><path d="M300 445 q8 -6 16 0 t16 0"/><path d="M90 495 q8 -6 16 0 t16 0"/><path d="M250 505 q8 -6 16 0 t16 0"/>
+  </g>
+  <path d="M0 520 Q70 478 150 505 T300 495 T400 515 L400 800 L0 800Z" fill="#4fae44"/>
+  <path d="M0 580 Q120 530 240 575 T400 560 L400 800 L0 800Z" fill="url(#gr)"/>
+  <path d="M0 700 Q140 650 280 695 T400 685 L400 800 L0 800Z" fill="#1d6f30"/>
+  <use href="#palm" x="40" y="505"/><use href="#tree" x="120" y="520"/><use href="#tree" x="170" y="530"/><use href="#palm" x="340" y="500"/><use href="#tree" x="290" y="522"/>
+  <use href="#tree" x="30" y="610" transform="translate(0 0)"/><use href="#tree" x="360" y="600"/><use href="#palm" x="200" y="585"/>
+  <use href="#bush" x="90" y="585"/><use href="#bush" x="300" y="590"/><use href="#bush" x="150" y="690"/><use href="#bush" x="330" y="700"/>
+  <use href="#fern" x="60" y="700"/><use href="#fern" x="230" y="720"/><use href="#fern" x="370" y="760"/><use href="#fern" x="20" y="770"/><use href="#fern" x="140" y="775"/>
+  <g><circle cx="110" cy="650" r="3" fill="#ff5d8f"/><circle cx="260" cy="660" r="3" fill="#ffd23f"/><circle cx="200" cy="740" r="3" fill="#fff"/><circle cx="310" cy="750" r="3" fill="#ff5d8f"/><circle cx="50" cy="740" r="3" fill="#ffd23f"/></g>
+</svg>
+
+<div id="world"></div>
+<canvas id="rain"></canvas>
+<button class="btn" id="bRain" aria-label="Rain">🌧️</button>
+<button class="btn" id="bSnd" aria-label="Jungle sounds">🔊</button>
+
+<script>
+(function(){
+  var C = [
+    "🐵 🐒 🦍 🦧",
+    "🐶 🐕 🦮 🐕‍🦺 🐩 🐺 🦊",
+    "🐱 🐈 🐈‍⬛ 🦁 🐯 🐅 🐆",
+    "🐴 🐎 🫏 🫎 🦓 🦌 🦬 🐮 🐂 🐃 🐄",
+    "🐷 🐖 🐗 🐽 🐏 🐑 🐐 🦙 🐪 🐫 🦒",
+    "🐘 🦣 🦏 🦛",
+    "🐭 🐀 🐹 🐰 🐇 🐿️ 🦫 🦔",
+    "🦇 🐻 🐻‍❄️ 🐨 🐼 🦥 🦦 🦨 🦘 🦡 🐾",
+    "🦃 🦅 🦆 🦢 🦉 🦤 🪶 🪽 🐔 🐓 🐣 🐤 🐥 🐦 🐧 🕊️ 🦩 🦚 🦜 🪿 🐦‍⬛",
+    "🐸 🐊 🐢 🦎 🐍 🐉 🐲 🦖 🦕",
+    "🐳 🐋 🐬 🦭 🐟 🐠 🐡 🦈 🐙 🐚 🪼 🦀 🦞 🦑 🦪",
+    "🐌 🦋 🐛 🐜 🐝 🪲 🐞 🦗 🪳 🕷️ 🕸️ 🦂 🦟 🪰 🪱 🦠"
+  ].map(function(s){return s.split(" ")});
+
+  var world = document.getElementById("world");
+  var groups = [];
+  function pick(a){return a[Math.floor(Math.random()*a.length)]}
+  function build(){
+    world.innerHTML = ""; groups = [];
+    var W = window.innerWidth, H = world.offsetHeight;
+    var n = 40, margin = 18;
+    for(var i=0;i<n;i++){
+      var cat = C[i % C.length];
+      var el = document.createElement("div"); el.className = "g";
+      var k = 3 + Math.floor(Math.random()*4);
+      for(var j=0;j<k;j++){var s=document.createElement("span"); s.textContent=pick(cat); el.appendChild(s)}
+      var x = margin + Math.random()*Math.max(10, W - 150 - margin*2);
+      var y = 30 + Math.random()*(H - 160);
+      el.style.left = x+"px"; el.style.top = y+"px";
+      world.appendChild(el);
+      groups.push({el:el, d:0.35+Math.random()*0.95, ph:Math.random()*6.28, cx:0, cy:0});
+    }
+  }
+  build();
+  var rt; window.addEventListener("resize", function(){clearTimeout(rt); rt=setTimeout(build,250)});
+
+  var tx = 0, ty = 0, oriOn = false;
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+  function onOri(e){
+    if(e.gamma == null) return;
+    oriOn = true;
+    tx = clamp(e.gamma/35, -1, 1);
+    ty = clamp(((e.beta||0)-40)/35, -1, 1);
+  }
+  window.addEventListener("deviceorientation", onOri);
+  window.addEventListener("mousemove", function(e){
+    if(oriOn) return;
+    tx = (e.clientX/window.innerWidth - .5)*2;
+    ty = (e.clientY/window.innerHeight - .5)*2;
+  });
+  var asked = false;
+  function askOri(){
+    if(asked) return; asked = true;
+    if(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function"){
+      DeviceOrientationEvent.requestPermission().then(function(r){
+        if(r === "granted") window.addEventListener("deviceorientation", onOri);
+      }).catch(function(){asked=false});
+    }
+  }
+  window.addEventListener("touchend", askOri, {passive:true});
+  window.addEventListener("click", askOri);
+
+  function frame(t){
+    var W = window.innerWidth, s = t/1000;
+    for(var i=0;i<groups.length;i++){
+      var g = groups[i];
+      var gx = tx*W*0.55*g.d + Math.sin(s*.6+g.ph)*6;
+      var gy = ty*W*0.35*g.d + Math.cos(s*.5+g.ph)*6;
+      g.cx += (gx-g.cx)*0.07; g.cy += (gy-g.cy)*0.07;
+      g.el.style.transform = "translate3d("+g.cx.toFixed(1)+"px,"+g.cy.toFixed(1)+"px,0)";
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* Rain */
+  var cv = document.getElementById("rain"), cx = cv.getContext("2d"), drops = [], rainOn = false, raf = 0;
+  function size(){var r=window.devicePixelRatio||1; cv.width=innerWidth*r; cv.height=innerHeight*r; cx.setTransform(r,0,0,r,0,0)}
+  size(); window.addEventListener("resize", size);
+  for(var i=0;i<170;i++) drops.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,l:10+Math.random()*16,v:12+Math.random()*10});
+  function rainLoop(){
+    cx.clearRect(0,0,innerWidth,innerHeight);
+    cx.fillStyle = "rgba(60,80,100,.18)"; cx.fillRect(0,0,innerWidth,innerHeight);
+    cx.strokeStyle = "rgba(220,235,255,.65)"; cx.lineWidth = 1.4; cx.beginPath();
+    for(var i=0;i<drops.length;i++){
+      var d = drops[i];
+      cx.moveTo(d.x,d.y); cx.lineTo(d.x-d.l*.25,d.y+d.l);
+      d.y += d.v; d.x -= d.v*.25;
+      if(d.y>innerHeight||d.x<0){d.y=-20; d.x=Math.random()*(innerWidth+80)}
+    }
+    cx.stroke();
+    raf = requestAnimationFrame(rainLoop);
+  }
+
+  /* Audio */
+  var ac, master, nbuf, rainG, jungG, timer, insectG, started = {};
+  function audio(){
+    if(!ac){
+      var AC = window.AudioContext || window.webkitAudioContext;
+      ac = new AC(); master = ac.createGain(); master.gain.value = .9; master.connect(ac.destination);
+      nbuf = ac.createBuffer(1, ac.sampleRate*2, ac.sampleRate);
+      var d = nbuf.getChannelData(0); for(var i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    }
+    if(ac.state === "suspended") ac.resume();
+  }
+  function noise(){var s=ac.createBufferSource(); s.buffer=nbuf; s.loop=true; return s}
+  function initRain(){
+    if(started.rain) return; started.rain = true;
+    var s = noise(), hp = ac.createBiquadFilter(), lp = ac.createBiquadFilter();
+    hp.type="highpass"; hp.frequency.value=700; lp.type="lowpass"; lp.frequency.value=7000;
+    rainG = ac.createGain(); rainG.gain.value = 0;
+    s.connect(hp); hp.connect(lp); lp.connect(rainG); rainG.connect(master); s.start();
+  }
+  function initJungle(){
+    if(started.jun) return; started.jun = true;
+    jungG = ac.createGain(); jungG.gain.value = 0; jungG.connect(master);
+    var s = noise(), lp = ac.createBiquadFilter(), g = ac.createGain();
+    lp.type="lowpass"; lp.frequency.value=380; g.gain.value=.12;
+    s.connect(lp); lp.connect(g); g.connect(jungG); s.start();
+    /* insect drone */
+    var o = ac.createOscillator(), am = ac.createOscillator(), ag = ac.createGain(), og = ac.createGain();
+    o.type="square"; o.frequency.value=4300; am.frequency.value=38; ag.gain.value=.5; og.gain.value=.012;
+    var bp = ac.createBiquadFilter(); bp.type="bandpass"; bp.frequency.value=4300; bp.Q.value=6;
+    am.connect(ag); ag.connect(og.gain); o.connect(bp); bp.connect(og); og.connect(jungG); o.start(); am.start();
+  }
+  function tone(type, f0, f1, t0, dur, vol){
+    var o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f1, t0+dur);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0+dur*.2); g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    o.connect(g); g.connect(jungG); o.start(t0); o.stop(t0+dur+.05);
+  }
+  function call(){
+    var t = ac.currentTime + .02, r = Math.random();
+    if(r < .5){ /* songbird */
+      var base = 1800 + Math.random()*2200, n = 2 + Math.floor(Math.random()*4);
+      for(var i=0;i<n;i++) tone("sine", base*(1+Math.random()*.3), base*(1.3+Math.random()*.6), t+i*.11, .09, .12);
+    } else if(r < .72){ /* tropical whoop */
+      var b = 600 + Math.random()*400;
+      tone("triangle", b, b*2.2, t, .35, .12); tone("triangle", b*2.2, b*1.1, t+.35, .3, .1);
+    } else if(r < .88){ /* owl hoot */
+      tone("sine", 360, 320, t, .35, .2); tone("sine", 360, 300, t+.5, .5, .2);
+    } else { /* frog */
+      for(var j=0;j<4;j++) tone("sawtooth", 220, 160, t+j*.12, .09, .05);
+    }
+  }
+  function loop(){ call(); timer = setTimeout(loop, 250 + Math.random()*1300) }
+
+  var bRain = document.getElementById("bRain"), bSnd = document.getElementById("bSnd");
+  bRain.addEventListener("click", function(){
+    rainOn = !rainOn; bRain.classList.toggle("on", rainOn);
+    try{
+      audio(); initRain();
+      rainG.gain.cancelScheduledValues(ac.currentTime);
+      rainG.gain.linearRampToValueAtTime(rainOn ? .22 : 0, ac.currentTime+.4);
+    }catch(e){}
+    if(rainOn){ cancelAnimationFrame(raf); rainLoop(); }
+    else { cancelAnimationFrame(raf); cx.clearRect(0,0,innerWidth,innerHeight); }
+  });
+  var sndOn = false;
+  bSnd.addEventListener("click", function(){
+    sndOn = !sndOn; bSnd.classList.toggle("on", sndOn);
+    try{
+      audio(); initJungle();
+      jungG.gain.cancelScheduledValues(ac.currentTime);
+      jungG.gain.linearRampToValueAtTime(sndOn ? 1 : 0, ac.currentTime+.5);
+    }catch(e){}
+    clearTimeout(timer);
+    if(sndOn) loop();
+  });
+})();
+</script>
+</body>
+</html>
