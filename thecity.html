@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>City</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#6cb4ea">
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:#6cb4ea;overscroll-behavior:none}
+  #bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+  #world{position:relative;z-index:1;height:300vh;overflow:hidden}
+  .g{position:absolute;font-size:34px;line-height:1.1;will-change:transform;user-select:none;-webkit-user-select:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+  #rain{position:fixed;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
+  .btn{position:fixed;z-index:3;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);width:56px;height:56px;border-radius:50%;border:2px solid rgba(255,255,255,.7);background:rgba(20,30,50,.5);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:0;opacity:.75}
+  .btn.on{opacity:1;background:rgba(40,110,190,.85);box-shadow:0 0 0 3px rgba(255,255,255,.5)}
+  #bRain{left:calc(env(safe-area-inset-left,0px) + 18px)}
+  #bSnd{right:calc(env(safe-area-inset-right,0px) + 18px)}
+</style>
+</head>
+<body>
+<svg id="bg" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a8fe0"/><stop offset="1" stop-color="#cfeaf9"/></linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b95cf"/><stop offset="1" stop-color="#1f70a8"/></linearGradient>
+    <linearGradient id="mt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8c97ad"/><stop offset="1" stop-color="#5b6a86"/></linearGradient>
+    <radialGradient id="sun"><stop offset="0" stop-color="#fff7b0"/><stop offset=".45" stop-color="#ffd84a"/><stop offset="1" stop-color="#ffd84a" stop-opacity="0"/></radialGradient>
+    <pattern id="win" width="7" height="9" patternUnits="userSpaceOnUse"><rect x="1.5" y="2" width="3.5" height="4.5" fill="#d9efff" opacity=".7"/></pattern>
+    <g id="cloud"><ellipse rx="34" ry="13" fill="#fff"/><ellipse cx="-18" cy="-8" rx="18" ry="12" fill="#fff"/><ellipse cx="10" cy="-12" rx="22" ry="15" fill="#fff"/></g>
+    <g id="crane"><rect x="-2" y="-46" width="4" height="46" fill="#e8892b"/><rect x="-6" y="-48" width="38" height="4" fill="#e8892b"/><line x1="26" y1="-44" x2="26" y2="-24" stroke="#444" stroke-width="1.5"/><rect x="22" y="-24" width="8" height="6" fill="#c44"/></g>
+    <g id="tree"><rect x="-2" y="0" width="4" height="14" fill="#6b4423"/><circle cy="-6" r="13" fill="#2f9d3f"/></g>
+    <g id="lamp"><rect x="-1" y="-30" width="2" height="30" fill="#444"/><rect x="-1" y="-31" width="10" height="2" fill="#444"/><circle cx="8" cy="-28" r="2.5" fill="#ffe27a"/></g>
+    <g id="pylon"><path d="M0 0 L-9 0 L-2 -50 M0 0 L9 0 L2 -50 M-5 -20 H5 M-4 -34 H4" stroke="#555" stroke-width="2" fill="none"/><path d="M-14 -46 H14" stroke="#555" stroke-width="2"/></g>
+  </defs>
+  <rect width="400" height="800" fill="url(#sky)"/>
+  <circle cx="305" cy="105" r="95" fill="url(#sun)"/><circle cx="305" cy="105" r="30" fill="#ffe45e"/>
+  <use href="#cloud" x="80" y="80"/><use href="#cloud" x="205" y="165"/><use href="#cloud" x="345" y="235"/><use href="#cloud" x="45" y="250"/>
+  <polygon points="-20,400 90,230 170,330 240,210 330,320 420,260 420,400" fill="url(#mt)"/>
+  <polygon points="90,230 72,262 86,256 96,268 106,256 112,262" fill="#fff"/><polygon points="240,210 222,244 236,238 246,250 258,238 264,244" fill="#f2f5fa"/>
+  <rect x="0" y="385" width="400" height="75" fill="url(#sea)"/>
+  <g stroke="#cfeaf9" stroke-width="2" fill="none" opacity=".7" stroke-linecap="round"><path d="M260 430 q8 -6 16 0 t16 0"/><path d="M330 405 q8 -6 16 0 t16 0"/><path d="M200 445 q8 -6 16 0 t16 0"/></g>
+  <!-- bridge -->
+  <g stroke="#b53a2d" fill="none" stroke-width="3"><path d="M120 400 Q250 340 400 400"/><line x1="180" y1="377" x2="180" y2="402"/><line x1="230" y1="366" x2="230" y2="402"/><line x1="280" y1="366" x2="280" y2="402"/><line x1="330" y1="377" x2="330" y2="402"/><rect x="115" y="400" width="290" height="5" fill="#8a2b22" stroke="none"/><line x1="230" y1="340" x2="230" y2="410" stroke-width="5"/><line x1="290" y1="340" x2="290" y2="410" stroke-width="5" opacity="0"/></g>
+  <!-- port -->
+  <rect x="0" y="440" width="170" height="14" fill="#6a7482"/>
+  <use href="#crane" x="30" y="440"/><use href="#crane" x="110" y="440" transform="translate(0 0)"/>
+  <rect x="48" y="428" width="14" height="12" fill="#d85a3a"/><rect x="62" y="428" width="14" height="12" fill="#3a78d8"/><rect x="76" y="428" width="14" height="12" fill="#e0b33a"/><rect x="62" y="416" width="14" height="12" fill="#3a9d5a"/>
+  <path d="M240 455 L330 455 L318 470 L252 470Z" fill="#2d3b55"/><rect x="262" y="440" width="36" height="15" fill="#f4f4f4"/><rect x="280" y="430" width="10" height="10" fill="#d85a3a"/>
+  <path d="M345 470 L385 470 L378 478 L352 478Z" fill="#c44"/><line x1="365" y1="470" x2="365" y2="450" stroke="#444"/><path d="M365 451 L378 468 L365 468Z" fill="#fff"/>
+  <rect x="0" y="454" width="400" height="346" fill="#8aa07c"/>
+  <g id="skyline"></g>
+  <rect x="0" y="560" width="400" height="240" fill="#9bb38a"/>
+  <g id="houses"></g>
+  <!-- roads -->
+  <rect x="0" y="618" width="400" height="46" fill="#4a4f58"/>
+  <rect x="0" y="618" width="400" height="3" fill="#cfd3da"/><rect x="0" y="661" width="400" height="3" fill="#cfd3da"/>
+  <g stroke="#ffe27a" stroke-width="3" stroke-dasharray="18 14"><line x1="0" y1="641" x2="400" y2="641"/></g>
+  <rect x="190" y="560" width="26" height="60" fill="#4a4f58"/><line x1="203" y1="562" x2="203" y2="616" stroke="#ffe27a" stroke-width="2" stroke-dasharray="10 8"/>
+  <rect x="0" y="664" width="400" height="136" fill="#a8bf94"/>
+  <rect x="0" y="720" width="400" height="22" fill="#4a4f58"/><line x1="0" y1="731" x2="400" y2="731" stroke="#fff" stroke-width="2" stroke-dasharray="14 12"/>
+  <use href="#pylon" x="30" y="560"/><use href="#pylon" x="370" y="560"/><path d="M30 514 Q200 540 370 514" stroke="#555" fill="none" stroke-width="1.5"/>
+  <use href="#lamp" x="60" y="618"/><use href="#lamp" x="140" y="618"/><use href="#lamp" x="260" y="618"/><use href="#lamp" x="340" y="618"/>
+  <use href="#tree" x="20" y="690"/><use href="#tree" x="110" y="696"/><use href="#tree" x="190" y="692"/><use href="#tree" x="285" y="696"/><use href="#tree" x="375" y="690"/>
+  <use href="#tree" x="60" y="775"/><use href="#tree" x="160" y="780"/><use href="#tree" x="250" y="776"/><use href="#tree" x="350" y="780"/>
+  <!-- cars -->
+  <g><rect x="40" y="632" width="26" height="9" rx="3" fill="#d94b4b"/><rect x="46" y="627" width="14" height="6" rx="2" fill="#d94b4b"/><rect x="250" y="643" width="28" height="9" rx="3" fill="#3a78d8"/><rect x="256" y="638" width="15" height="6" rx="2" fill="#3a78d8"/><rect x="330" y="632" width="30" height="10" rx="3" fill="#f0c43a"/><rect x="100" y="725" width="26" height="9" rx="3" fill="#fff"/></g>
+</svg>
+
+<div id="world"></div>
+<canvas id="rain"></canvas>
+<button class="btn" id="bRain" aria-label="Rain">🌧️</button>
+<button class="btn" id="bSnd" aria-label="City sounds">🔊</button>
+
+<script>
+(function(){
+  /* seeded random for stable scenery */
+  var sd = 7; function sr(){sd=(sd*9301+49297)%233280; return sd/233280}
+  var NS = "http://www.w3.org/2000/svg";
+  function el(n,a,p){var e=document.createElementNS(NS,n); for(var k in a)e.setAttribute(k,a[k]); p.appendChild(e); return e}
+  var sky = document.getElementById("skyline"), cols = ["#9aa6bd","#7f8da8","#b4bfd1","#6f7f9c","#a3adc0"];
+  for(var x=-4;x<404;){
+    var w = 18+sr()*16, h = 45+sr()*(x>120&&x<300?130:80), c = cols[Math.floor(sr()*cols.length)];
+    el("rect",{x:x,y:564-h,width:w,height:h,fill:c},sky);
+    el("rect",{x:x,y:564-h,width:w,height:h,fill:"url(#win)"},sky);
+    if(sr()>.7) el("rect",{x:x+w/2-1,y:564-h-14,width:2,height:14,fill:"#667"},sky);
+    x += w+1+sr()*3;
+  }
+  var hs = document.getElementById("houses"), hc = ["#e8c9a0","#d9856b","#f1e2b5","#b9d2e8","#e6a8a0"], rc = ["#a84b3a","#7a4a3a","#5b6b8c"];
+  for(var hx=6;hx<390;hx+=58){
+    var hw = 34+sr()*10, hy = 600 - 24;
+    el("rect",{x:hx,y:hy,width:hw,height:26,fill:hc[Math.floor(sr()*hc.length)]},hs);
+    el("polygon",{points:hx+","+hy+" "+(hx+hw/2)+","+(hy-16)+" "+(hx+hw)+","+hy,fill:rc[Math.floor(sr()*rc.length)]},hs);
+    el("rect",{x:hx+hw/2-3,y:hy+11,width:6,height:15,fill:"#6b4423"},hs);
+    el("rect",{x:hx+4,y:hy+6,width:6,height:6,fill:"#d9efff"},hs);
+  }
+  for(var hy2=0;hy2<1;hy2++){
+    for(var h2=20;h2<390;h2+=70){
+      var w2=36, y2=698;
+      el("rect",{x:h2,y:y2,width:w2,height:22,fill:hc[Math.floor(sr()*hc.length)]},hs);
+      el("polygon",{points:h2+","+y2+" "+(h2+w2/2)+","+(y2-14)+" "+(h2+w2)+","+y2,fill:rc[Math.floor(sr()*rc.length)]},hs);
+      el("rect",{x:h2+w2/2-3,y:y2+9,width:6,height:13,fill:"#6b4423"},hs);
+    }
+  }
+
+  var raw = "🏙️ 🌃 🌆 🌇 🏢 🏣 🏤 🏥 🏦 🏨 🏪 🏫 🏬 🏭 🏯 🏰 💒 🗼 🗽 ⛩️ 🕋 🕌 🛕 🕍 ⛪ 🏛️ 🌁 ⛲ ⛺ 🏠 🏡 🏘️ 🏚️ " +
+    "🚗 🚕 🚙 🚌 🚎 🏎️ 🚓 🚑 🚒 🚐 🛻 🚚 🚛 🚜 🛵 🏍️ 🛺 🚲 🛴 🛹 " +
+    "🚂 🚊 🚝 🚄 🚅 🚈 🚋 🚃 🚟 🚠 🚡 🚆 🚇 🚉 " +
+    "✈️ 🛫 🛬 🛩️ 🚁 🪂 🚀 🛸 " +
+    "⛵ 🛶 🚤 🛳️ ⛴️ 🚢 ⚓ 🛟 " +
+    "🚏 🚥 🚦 🚧 🗺️ 🗿 ⛽ 🚨 🛑 🛣️ 🛤️ 🎡 🎢 🎠";
+  var ALL = raw.split(" ").filter(function(e,i,a){return e && a.indexOf(e)===i});
+
+  var world = document.getElementById("world"), groups = [];
+  function build(){
+    world.innerHTML = ""; groups = [];
+    var W = innerWidth, H = world.offsetHeight, m = 18;
+    for(var i=0;i<ALL.length;i++){
+      var e = document.createElement("div"); e.className = "g"; e.textContent = ALL[i];
+      e.style.left = (m + Math.random()*Math.max(10, W-50-m*2))+"px";
+      e.style.top = (30 + Math.random()*(H-120))+"px";
+      world.appendChild(e);
+      groups.push({el:e, d:0.35+Math.random()*0.95, ph:Math.random()*6.28, cx:0, cy:0});
+    }
+  }
+  build();
+  var rt; addEventListener("resize", function(){clearTimeout(rt); rt=setTimeout(build,250)});
+
+  var tx=0, ty=0, oriOn=false;
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+  function onOri(e){ if(e.gamma==null) return; oriOn=true; tx=clamp(e.gamma/35,-1,1); ty=clamp(((e.beta||0)-40)/35,-1,1) }
+  addEventListener("deviceorientation", onOri);
+  addEventListener("mousemove", function(e){ if(oriOn) return; tx=(e.clientX/innerWidth-.5)*2; ty=(e.clientY/innerHeight-.5)*2 });
+  var asked=false;
+  function askOri(){
+    if(asked) return; asked=true;
+    if(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission==="function"){
+      DeviceOrientationEvent.requestPermission().then(function(r){ if(r==="granted") addEventListener("deviceorientation", onOri) }).catch(function(){asked=false});
+    }
+  }
+  addEventListener("touchend", askOri, {passive:true}); addEventListener("click", askOri);
+  function frame(t){
+    var W=innerWidth, s=t/1000;
+    for(var i=0;i<groups.length;i++){
+      var g=groups[i];
+      var gx=tx*W*0.55*g.d+Math.sin(s*.6+g.ph)*6, gy=ty*W*0.35*g.d+Math.cos(s*.5+g.ph)*6;
+      g.cx+=(gx-g.cx)*0.07; g.cy+=(gy-g.cy)*0.07;
+      g.el.style.transform="translate3d("+g.cx.toFixed(1)+"px,"+g.cy.toFixed(1)+"px,0)";
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* Rain */
+  var cv=document.getElementById("rain"), cx=cv.getContext("2d"), drops=[], rainOn=false, raf=0;
+  function size(){var r=devicePixelRatio||1; cv.width=innerWidth*r; cv.height=innerHeight*r; cx.setTransform(r,0,0,r,0,0)}
+  size(); addEventListener("resize", size);
+  for(var i=0;i<170;i++) drops.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,l:10+Math.random()*16,v:12+Math.random()*10});
+  function rainLoop(){
+    cx.clearRect(0,0,innerWidth,innerHeight);
+    cx.fillStyle="rgba(60,80,100,.18)"; cx.fillRect(0,0,innerWidth,innerHeight);
+    cx.strokeStyle="rgba(220,235,255,.65)"; cx.lineWidth=1.4; cx.beginPath();
+    for(var i=0;i<drops.length;i++){
+      var d=drops[i]; cx.moveTo(d.x,d.y); cx.lineTo(d.x-d.l*.25,d.y+d.l);
+      d.y+=d.v; d.x-=d.v*.25; if(d.y>innerHeight||d.x<0){d.y=-20; d.x=Math.random()*(innerWidth+80)}
+    }
+    cx.stroke(); raf=requestAnimationFrame(rainLoop);
+  }
+
+  /* Audio: soft city bed + wind */
+  var ac, master, nbuf, rainG, cityG, timer, started={};
+  function audio(){
+    if(!ac){
+      var AC=window.AudioContext||window.webkitAudioContext;
+      ac=new AC(); master=ac.createGain(); master.gain.value=.9; master.connect(ac.destination);
+      nbuf=ac.createBuffer(1, ac.sampleRate*3, ac.sampleRate);
+      var d=nbuf.getChannelData(0), last=0;
+      for(var i=0;i<d.length;i++){ var w=Math.random()*2-1; last=(last+.02*w)/1.02; d[i]=last*3.5 }
+    }
+    if(ac.state==="suspended") ac.resume();
+  }
+  function noise(){var s=ac.createBufferSource(); s.buffer=nbuf; s.loop=true; s.loopStart=0; return s}
+  function initRain(){
+    if(started.rain) return; started.rain=true;
+    var s=noise(), hp=ac.createBiquadFilter(), lp=ac.createBiquadFilter();
+    hp.type="highpass"; hp.frequency.value=600; lp.type="lowpass"; lp.frequency.value=5000;
+    rainG=ac.createGain(); rainG.gain.value=0; s.connect(hp); hp.connect(lp); lp.connect(rainG); rainG.connect(master); s.start();
+  }
+  function initCity(){
+    if(started.city) return; started.city=true;
+    cityG=ac.createGain(); cityG.gain.value=0; cityG.connect(master);
+    /* low city rumble */
+    var r=noise(), rl=ac.createBiquadFilter(), rg=ac.createGain(); rl.type="lowpass"; rl.frequency.value=180; rg.gain.value=.5;
+    r.connect(rl); rl.connect(rg); rg.connect(cityG); r.start();
+    /* distant traffic bed, slowly swelling */
+    var t=noise(), tb=ac.createBiquadFilter(), tg=ac.createGain(), tl=ac.createOscillator(), tlg=ac.createGain();
+    tb.type="bandpass"; tb.frequency.value=420; tb.Q.value=.6; tg.gain.value=.35; tl.frequency.value=.07; tlg.gain.value=.15;
+    tl.connect(tlg); tlg.connect(tg.gain); t.connect(tb); tb.connect(tg); tg.connect(cityG); t.start(); tl.start();
+    /* wind with slow movement */
+    var w=noise(), wb=ac.createBiquadFilter(), wg=ac.createGain(), l1=ac.createOscillator(), l1g=ac.createGain(), l2=ac.createOscillator(), l2g=ac.createGain();
+    wb.type="bandpass"; wb.frequency.value=500; wb.Q.value=.8; wg.gain.value=.55;
+    l1.frequency.value=.11; l1g.gain.value=220; l2.frequency.value=.17; l2g.gain.value=.3;
+    l1.connect(l1g); l1g.connect(wb.frequency); l2.connect(l2g); l2g.connect(wg.gain);
+    w.connect(wb); wb.connect(wg); wg.connect(cityG); w.start(); l1.start(); l2.start();
+  }
+  function swell(freq, dur, vol, f2){
+    var t0=ac.currentTime+.02, s=ac.createBufferSource(); s.buffer=nbuf; s.loopStart=0;
+    var bp=ac.createBiquadFilter(), g=ac.createGain(); bp.type="bandpass"; bp.Q.value=.7;
+    bp.frequency.setValueAtTime(freq,t0); bp.frequency.linearRampToValueAtTime(f2,t0+dur);
+    g.gain.setValueAtTime(0.0001,t0); g.gain.linearRampToValueAtTime(vol,t0+dur*.5); g.gain.linearRampToValueAtTime(0.0001,t0+dur);
+    s.connect(bp); bp.connect(g); g.connect(cityG); s.start(t0, Math.random()*1.5, dur+.1);
+  }
+  function horn(f, dur, vol){
+    var t0=ac.currentTime+.02, lf=ac.createBiquadFilter(), g=ac.createGain(); lf.type="lowpass"; lf.frequency.value=700;
+    g.gain.setValueAtTime(0.0001,t0); g.gain.linearRampToValueAtTime(vol,t0+dur*.35); g.gain.linearRampToValueAtTime(0.0001,t0+dur);
+    lf.connect(g); g.connect(cityG);
+    [1,1.25].forEach(function(m){var o=ac.createOscillator(); o.type="sine"; o.frequency.value=f*m; o.connect(lf); o.start(t0); o.stop(t0+dur+.05)});
+  }
+  function event(){
+    var r=Math.random();
+    if(r<.6) swell(250+Math.random()*200, 3+Math.random()*2.5, .45, 450+Math.random()*250);
+    else if(r<.85) horn(300+Math.random()*80, .5, .035);
+    else horn(95+Math.random()*20, 2.2, .07);
+  }
+  function loop(){ event(); timer=setTimeout(loop, 1800+Math.random()*3500) }
+
+  var bRain=document.getElementById("bRain"), bSnd=document.getElementById("bSnd");
+  bRain.addEventListener("click", function(){
+    rainOn=!rainOn; bRain.classList.toggle("on", rainOn);
+    try{ audio(); initRain(); rainG.gain.cancelScheduledValues(ac.currentTime); rainG.gain.linearRampToValueAtTime(rainOn?.2:0, ac.currentTime+.4) }catch(e){}
+    cancelAnimationFrame(raf);
+    if(rainOn) rainLoop(); else cx.clearRect(0,0,innerWidth,innerHeight);
+  });
+  var sndOn=false;
+  bSnd.addEventListener("click", function(){
+    sndOn=!sndOn; bSnd.classList.toggle("on", sndOn);
+    try{ audio(); initCity(); cityG.gain.cancelScheduledValues(ac.currentTime); cityG.gain.linearRampToValueAtTime(sndOn?1:0, ac.currentTime+.6) }catch(e){}
+    clearTimeout(timer); if(sndOn) loop();
+  });
+})();
+</script>
+</body>
+</html>
