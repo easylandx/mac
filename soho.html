@@ -36,7 +36,7 @@
 <div id="world"></div>
 <div class="bar end"><a class="lx" href="https://easylandx.github.io" target="_blank" rel="noopener">EasyLandX</a></div>
 <canvas id="rain"></canvas>
-<button class="btn" id="bRain" aria-label="Rain">🌧️</button>
+<button class="btn" id="bRain" aria-label="Money rain">💵</button>
 <button class="btn" id="bSnd" aria-label="Sound">🔊</button>
 
 <script>
@@ -97,16 +97,16 @@
   var cv=document.getElementById("rain"), cx=cv.getContext("2d"), drops=[], rainOn=false, raf=0;
   function size(){var r=devicePixelRatio||1; cv.width=innerWidth*r; cv.height=innerHeight*r; cx.setTransform(r,0,0,r,0,0)}
   size(); addEventListener("resize", size);
-  for(var i=0;i<170;i++) drops.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,l:10+Math.random()*16,v:12+Math.random()*10});
+  for(var i=0;i<70;i++) drops.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,s:24+Math.random()*18,v:2.5+Math.random()*3.5,r:Math.random()*6,w:(Math.random()-.5)*.05,p:Math.random()*6,e:i%2?"💵":"💶"});
   function rainLoop(){
     cx.clearRect(0,0,innerWidth,innerHeight);
-    cx.fillStyle="rgba(60,80,100,.16)"; cx.fillRect(0,0,innerWidth,innerHeight);
-    cx.strokeStyle="rgba(230,240,255,.7)"; cx.lineWidth=1.4; cx.beginPath();
+    cx.textAlign="center"; cx.textBaseline="middle";
+    
     for(var i=0;i<drops.length;i++){
-      var d=drops[i]; cx.moveTo(d.x,d.y); cx.lineTo(d.x-d.l*.25,d.y+d.l);
-      d.y+=d.v; d.x-=d.v*.25; if(d.y>innerHeight||d.x<0){d.y=-20; d.x=Math.random()*(innerWidth+80)}
+      var d=drops[i]; cx.save(); cx.translate(d.x,d.y); cx.rotate(d.r); cx.font=d.s+"px serif"; cx.fillText(d.e,0,0); cx.restore();
+      d.y+=d.v; d.r+=d.w; d.x+=Math.sin(d.y/60+d.p)*.8; if(d.y>innerHeight+40){d.y=-40; d.x=Math.random()*innerWidth}
     }
-    cx.stroke(); raf=requestAnimationFrame(rainLoop);
+    raf=requestAnimationFrame(rainLoop);
   }
 
   /* Soft UI sounds */
