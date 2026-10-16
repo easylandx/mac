@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Latest post from @paniaguai</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sun: #FFE55C;
+    --pink: #FF9FCB;
+    --sky: #8ED6FF;
+    --violet: #C7B3FF;
+    --orange: #FFB37A;
+    --ink: #2A1F4D;
+    --card: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 8% 12%, var(--pink) 0, transparent 38%),
+      radial-gradient(circle at 92% 18%, var(--sky) 0, transparent 40%),
+      radial-gradient(circle at 85% 90%, var(--violet) 0, transparent 42%),
+      radial-gradient(circle at 10% 92%, var(--orange) 0, transparent 38%),
+      var(--sun);
+    background-attachment: fixed;
+  }
+  .page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: clamp(40px, 8vw, 96px) clamp(28px, 10vw, 140px);
+    display: grid;
+    gap: clamp(28px, 4vw, 48px);
+    justify-items: center;
+  }
+  header { text-align: center; max-width: 560px; }
+  h1 {
+    font-size: clamp(2.2rem, 6vw, 3.8rem);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    font-weight: 800;
+    margin: 0 0 14px;
+  }
+  header p { margin: 0; font-size: 1.1rem; line-height: 1.5; }
+  .card {
+    width: 100%;
+    max-width: 550px;
+    min-height: 220px;
+    background: var(--card);
+    border-radius: 28px;
+    padding: 20px;
+    box-shadow: 10px 10px 0 var(--ink);
+    border: 3px solid var(--ink);
+  }
+  .status {
+    display: flex; align-items: center; gap: 10px;
+    font-size: .95rem; font-weight: 700;
+  }
+  .dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #1FBF75;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 50% { opacity: .35; } }
+  @media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+  .fallback { display: none; text-align: center; padding: 24px 8px; line-height: 1.5; }
+  .fallback a {
+    display: inline-block; margin-top: 12px; padding: 12px 22px;
+    background: var(--ink); color: #fff; border-radius: 999px;
+    font-weight: 700; text-decoration: none;
+  }
+  a:focus-visible { outline: 3px solid var(--violet); outline-offset: 3px; }
+</style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <h1>The latest from @paniaguai</h1>
+      <p>This page shows the newest post on X and checks for a new one every minute.</p>
+    </header>
+
+    <section class="card" aria-live="polite">
+      <div id="post"></div>
+      <div class="fallback" id="fallback">
+        The post couldn't load here. X may be blocked by your browser or an ad blocker.<br>
+        <a href="https://x.com/paniaguai" target="_blank" rel="noopener">Open @paniaguai on X</a>
+      </div>
+    </section>
+
+    <div class="status"><span class="dot"></span><span id="status">Loading the latest post…</span></div>
+  </main>
+
+  <script>
+    var USER = "paniaguai";
+    var REFRESH_MS = 60 * 1000; // how often to check for a new post
+    var box = document.getElementById("post");
+    var statusEl = document.getElementById("status");
+    var fallback = document.getElementById("fallback");
+
+    // Load X's widget script
+    window.twttr = (function (d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0], t = window.twttr || {};
+      if (d.getElementById(id)) return t;
+      js = d.createElement(s); js.id = id;
+      js.src = "https://platform.twitter.com/widgets.js";
+      js.onerror = showFallback;
+      fjs.parentNode.insertBefore(js, fjs);
+      t._e = []; t.ready = function (f) { t._e.push(f); };
+      return t;
+    }(document, "script", "twitter-wjs"));
+
+    function showFallback() {
+      fallback.style.display = "block";
+      statusEl.textContent = "Couldn't load the post";
+    }
+
+    function render() {
+      // Build the new embed off-screen, then swap it in so the page never flashes empty
+      var next = document.createElement("div");
+      twttr.widgets.createTimeline(
+        { sourceType: "profile", screenName: USER },
+        next,
+        { tweetLimit: 1, chrome: "noheader nofooter noborders transparent", dnt: true, width: 510 }
+      ).then(function (el) {
+        if (!el) { if (!box.firstChild) showFallback(); return; }
+        fallback.style.display = "none";
+        box.replaceChildren(next);
+        statusEl.textContent = "Updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      }).catch(showFallback);
+    }
+
+    twttr.ready(function () {
+      render();
+      setInterval(render, REFRESH_MS);
+    });
+
+    // Show the fallback if nothing appears after 12 seconds
+    setTimeout(function () { if (!box.firstChild) showFallback(); }, 12000);
+  </script>
+</body>
+</html>
