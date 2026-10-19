@@ -56,9 +56,9 @@ button:hover{background:#2e3037}button:disabled{opacity:.5;cursor:wait}
   <p class="sub">Click any display and type. Month takes JAN to DEC or 1 to 12. Tap AM or PM to switch.</p>
   <div class="panel" id="p"></div>
   <div class="ctl">
-    <div class="ai"><input id="q" placeholder="Ask the AI: the day Apollo 11 landed, or leave empty to surprise me" maxlength="140"><button id="ai">AI</button></div>
+    <div class="ai"><input id="q" placeholder="Ask the AI for a date, or leave empty for a random past or future event" maxlength="140"><button id="ai">AI</button></div>
     <div class="btns"><button id="rnd">RANDOM DATE</button><button class="go" id="go">ENGAGE</button><button id="rst">RESET</button></div>
-    <div class="pre" id="pre"><small>Doc's famous destinations</small></div>
+    
     <div id="st" aria-live="polite"></div>
   </div>
 </div>
@@ -145,12 +145,15 @@ $('go').onclick=()=>{
   S.last=get('pres');whoosh();$('fl').classList.add('on');
   setTimeout(()=>{S.off=S.dest-nowL();paintAll();$('fl').classList.remove('on');say('Temporal displacement complete.')},900);
 };
-const PRE=[['NOV 05 1955',1955,10,5,6,0],['DEC 25 0000',0,11,25,0,0],['JUL 04 1776',1776,6,4,12,0],['OCT 21 2015',2015,9,21,16,29]];
-PRE.forEach(([t,...a])=>{const b=document.createElement('button');b.textContent=t;b.onclick=()=>setDest(...a,t+' loaded. Press ENGAGE to travel.');$('pre').appendChild(b)});
 
-const FAMOUS=[[1969,6,20,20,17,'Apollo 11 lands on the Moon.'],[1912,3,15,0,15,'The Titanic is slipping beneath the Atlantic.'],[1989,10,9,18,57,'The Berlin Wall is about to open.'],[1903,11,17,10,35,'The Wright brothers take flight at Kitty Hawk.'],[2015,9,21,16,29,'Marty arrives from 1985 in the sequel.'],[1815,5,18,11,30,'The Battle of Waterloo is underway.']];
+
+
+const PAST=[[1969,7,20,20,17,'Apollo 11 lands on the Moon.'],[1912,4,15,2,20,'The Titanic slips beneath the Atlantic.'],[1989,11,9,18,57,'The Berlin Wall is about to open.'],[1903,12,17,10,35,'The Wright brothers take flight at Kitty Hawk.'],[1215,6,15,12,0,'King John seals the Magna Carta.'],[1066,10,14,9,0,'The Battle of Hastings begins.'],[1492,10,12,2,0,'Columbus sights land in the Americas.'],[1937,5,6,19,25,'The Hindenburg arrives at Lakehurst.'],[79,8,24,13,0,'Vesuvius erupts over Pompeii (traditional date).'],[1883,8,27,10,2,'Krakatoa explodes.']];
+const FUTURE=[[2027,8,2,10,7,'A total solar eclipse crosses Spain and North Africa.'],[2028,7,14,19,0,'The Los Angeles Olympics open.'],[2029,4,13,21,46,'Asteroid Apophis passes closer than our satellites.'],[2038,1,19,3,14,'Old 32-bit Unix clocks roll over.'],[2039,11,12,12,0,'A hopeful first crewed Mars landing (a forecast, not a promise).'],[2061,7,28,12,0,'Halley\u2019s Comet returns.'],[2063,4,5,12,0,'Zefram Cochrane\u2019s first warp flight (a Star Trek date).'],[2100,1,1,0,0,'The year 2100 arrives.'],[2117,12,11,3,0,'The next transit of Venus.'],[3000,1,1,0,0,'The year 3000 arrives.']];
+const pickBuilt=why=>{const fut=Math.random()<.5,L=fut?FUTURE:PAST,f=L[rand(0,L.length-1)];setDest(f[0],f[1]-1,f[2],f[3],f[4],(fut?'FUTURE: ':'PAST: ')+f[5]+(why||' Press ENGAGE to travel.'))};
 $('ai').onclick=async()=>{
   const btn=$('ai'),q=$('q').value.trim();btn.disabled=true;say('Consulting the flux capacitor...');
+  if(!q){pickBuilt();btn.disabled=false;return}
   try{
     const sm=window.claude?await window.claude.use('sample'):null;
     if(!sm)throw{code:'none'};
@@ -159,8 +162,7 @@ $('ai').onclick=async()=>{
     if(![y,m,d,h,mi].every(Number.isFinite)||y<0||y>9999||m<0||m>11||h<0||h>23||mi<0||mi>59||d<1)throw{code:'bad'};
     setDest(y,m,d,h,mi,String(r.note||'Destination set.'));
   }catch(e){
-    const f=FAMOUS[rand(0,FAMOUS.length-1)];
-    setDest(f[0],f[1]-1,f[2],f[3],f[4],f[5]+' (built-in pick, the AI is not available here)');
+    pickBuilt(' (built-in pick, the AI is not available here)');
   }finally{btn.disabled=false}
 };
 $('q').addEventListener('keydown',e=>{if(e.key==='Enter')$('ai').click()});
