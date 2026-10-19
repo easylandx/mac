@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#fff1c9">
 <title>when you imagine (short film)</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { width: 100%; }
   body { min-height: calc(100dvh + 1px); overflow-x: hidden; -webkit-overflow-scrolling: touch; }
-  #stage { position: sticky; top: 0; width: 100%; height: 100dvh; overflow: hidden; cursor: pointer; user-select: none; -webkit-user-select: none; }
-  #stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .35s ease; -webkit-user-drag: none; }
+  #stage { background: #fff1c9; position: sticky; top: 0; width: 100%; height: 100dvh; overflow: hidden; cursor: pointer; user-select: none; -webkit-user-select: none; }
+  #stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity .35s ease; -webkit-user-drag: none; }
   #stage img.on { opacity: 1; }
   #link { position: absolute; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom, 0px) + 36px); text-align: center; z-index: 2; pointer-events: none; }
-  #link a { pointer-events: auto; color: #fff; font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 17px; letter-spacing: .02em; text-decoration: underline; text-underline-offset: 4px; text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+  #link a { pointer-events: auto; color: #3a2a00; background: rgba(255,241,201,.85); padding: 6px 14px; border-radius: 999px; font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 17px; letter-spacing: .02em; text-decoration: underline; text-underline-offset: 4px;  }
 </style>
 </head>
 <body>
