@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Postapp | Postcard generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Nunito:wght@400;700;800&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}
+body{font-family:Nunito,system-ui,sans-serif;color:#f3efe3;min-height:100vh;
+background:repeating-linear-gradient(135deg,#1c2a52 0 36px,#1f2f5a 36px 72px)}
+.wrap{max-width:960px;margin:0 auto;padding:0 clamp(20px,5vw,48px) 48px}
+header{padding:36px 0 22px;text-align:center}
+h1{font:400 clamp(46px,9vw,76px)/1 Pacifico,cursive;color:#fff;text-shadow:4px 4px 0 #d9453d}
+header p{margin-top:14px;font-size:17px;color:#cdd6f0}
+.panel{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:end;background:#fbf5e6;color:#26335f;padding:18px;border-radius:6px;border:3px dashed #d9453d;outline:3px solid #fbf5e6;outline-offset:-9px}
+label{display:block;font-weight:800;font-size:14px;margin-bottom:6px}
+select,input{width:100%;padding:13px 14px;font:700 16px Nunito,sans-serif;color:#26335f;background:#fff;border:2px solid #c9bb98;border-radius:8px}
+select:focus-visible,input:focus-visible,button:focus-visible{outline:3px solid #2d5db5;outline-offset:2px}
+button{font:800 16px Nunito,sans-serif;border:0;border-radius:8px;padding:14px 20px;cursor:pointer;transition:transform .12s}
+button:active{transform:scale(.97)}
+.send{background:#25d366;color:#08331a;white-space:nowrap}
+.ghost{background:transparent;color:#fff;border:2px solid #8fa2d6}
+.card{margin:30px 0 18px;transform:rotate(-.8deg)}
+canvas{display:block;width:100%;height:auto;border-radius:4px;box-shadow:0 22px 44px rgba(0,0,0,.45)}
+.row{display:flex;gap:18px;align-items:center;justify-content:space-between}
+.hint{font-size:15px;color:#cdd6f0;max-width:62ch;line-height:1.5}
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,40px);opacity:0;background:#fbf5e6;color:#26335f;padding:14px 18px;border-radius:8px;font-weight:700;max-width:min(520px,calc(100vw - 40px));transition:.25s;pointer-events:none;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+@media(max-width:760px){.panel{grid-template-columns:1fr}.row{flex-direction:column;align-items:stretch}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>Postapp</h1><p>Pick a country, get a postcard, send it on WhatsApp.</p></header>
+<section class="panel">
+<div><label for="co">Country</label><select id="co"></select></div>
+<button id="send" class="send">Send on WhatsApp</button>
+</section>
+<main class="card"><canvas id="cv" width="1200" height="800" aria-label="Postcard preview"></canvas></main>
+<div class="row">
+<p class="hint">Press send, choose WhatsApp, then pick the recipient from your contacts. On a computer, the postcard is copied and WhatsApp opens: choose a contact, paste it in and press send.</p>
+<button id="dl" class="ghost">Save image</button>
+</div>
+</div>
+<div id="toast" role="status"></div>
+<script>
+const $=id=>document.getElementById(id),PI=Math.PI;let g;
+const R=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h)};
+const C=(x,y,r,c)=>{g.fillStyle=c;g.beginPath();g.arc(x,y,r,0,7);g.fill()};
+const D=(x,y,r,c)=>{g.fillStyle=c;g.beginPath();g.arc(x,y,r,PI,0);g.fill()};
+const P=(c,...p)=>{g.fillStyle=c;g.beginPath();g.moveTo(p[0],p[1]);for(let i=2;i<p.length;i+=2)g.lineTo(p[i],p[i+1]);g.closePath();g.fill()};
+const L=(c,w,...p)=>{g.strokeStyle=c;g.lineWidth=w;g.beginPath();g.moveTo(p[0],p[1]);for(let i=2;i<p.length;i+=2)g.lineTo(p[i],p[i+1]);g.stroke()};
+const star=(x,y,r,c,n=5,k=.4,st)=>{g.beginPath();for(let i=0;i<n*2;i++){const a=-PI/2+i*PI/n,q=i%2?r*k:r;g.lineTo(x+Math.cos(a)*q,y+Math.sin(a)*q)}g.closePath();if(st){g.strokeStyle=c;g.lineWidth=1.2;g.stroke()}else{g.fillStyle=c;g.fill()}};
+const palm=(x,h)=>{L('#7a5a3a',6,x,290,x+8,290-h/2,x+3,290-h);for(let a=-3;a<=.1;a+=.6)L('#2f8f4e',5,x+3,290-h,x+3+Math.cos(a)*36,290-h+Math.sin(a)*14+14)};
+const E=(x,y,rx,ry,c)=>{g.fillStyle=c;g.beginPath();g.ellipse(x,y,rx,ry,0,0,7);g.fill()};
+const onion=(x,y,r,c)=>{C(x,y,r,c);P(c,x-r*.6,y-r*.7,x,y-r*2,x+r*.6,y-r*.7);L('#f2c230',2,x,y-r*2,x,y-r*2-7)};
+const pine=x=>{P('#2f6b45',x-18,290,x,232,x+18,290);P('#2f6b45',x-14,262,x,208,x+14,262)};
+
+/* ---------- flags ---------- */
+function stripes(x,y,w,h,v,a){const t=a.reduce((s,e)=>s+e[1],0);let o=0;a.forEach(e=>{const l=e[1]/t;g.fillStyle=e[0];v?g.fillRect(x+o*w,y,l*w+.5,h):g.fillRect(x,y+o*h,w,l*h+.5);o+=l})}
+function uk(x,y,w,h){g.save();g.beginPath();g.rect(x,y,w,h);g.clip();R(x,y,w,h,'#012169');
+L('#fff',h*.22,x,y,x+w,y+h);L('#fff',h*.22,x+w,y,x,y+h);L('#c8102e',h*.09,x,y,x+w,y+h);L('#c8102e',h*.09,x+w,y,x,y+h);
+R(x,y+h*.37,w,h*.26,'#fff');R(x+w*.4,y,w*.2,h,'#fff');R(x,y+h*.43,w,h*.14,'#c8102e');R(x+w*.45,y,w*.1,h,'#c8102e');g.restore()}
+function flag(k,x,y,w,h){g.save();g.beginPath();g.rect(x,y,w,h);g.clip();
+const S=(v,...a)=>stripes(x,y,w,h,v,a.map(e=>Array.isArray(e)?e:[e,1])),cx=x+w/2,cy=y+h/2;
+const NO=(bg,a,b)=>{const t=b?.3:.2;R(x,y,w,h,bg);R(x+w*.26,y,h*t,h,a);R(x,cy-h*t/2,w,h*t,a);if(b){R(x+w*.26+h*.07,y,h*.16,h,b);R(x,cy-h*.08,w,h*.16,b)}};
+switch(k){
+case'fr':S(1,'#0055a4','#fff','#ef4135');break;
+case'es':S(0,['#aa151b',1],['#f1bf00',2],['#aa151b',1]);break;
+case'us':S(0,...Array.from({length:13},(_,i)=>i%2?'#fff':'#b22234'));R(x,y,w*.4,h*7/13,'#3c3b6e');for(let r=0;r<4;r++)for(let c=0;c<5;c++)C(x+w*.05+c*w*.075,y+h*.07+r*h*.12,.7,'#fff');break;
+case'cn':S(0,'#de2910');star(x+w*.2,y+h*.3,h*.22,'#ffde00');break;
+case'it':S(1,'#009246','#fff','#ce2b37');break;
+case'tr':S(0,'#e30a17');C(cx-w*.1,cy,h*.3,'#fff');C(cx-w*.03,cy,h*.24,'#e30a17');star(cx+w*.13,cy,h*.1,'#fff');break;
+case'mx':S(1,'#006847','#fff','#ce1126');C(cx,cy,h*.17,'#8c6a3b');break;
+case'th':S(0,['#a51931',1],['#f4f5f8',1],['#2d2a4a',2],['#f4f5f8',1],['#a51931',1]);break;
+case'de':S(0,'#000','#dd0000','#ffce00');break;
+case'uk':uk(x,y,w,h);break;
+case'jp':R(x,y,w,h,'#fff');C(cx,cy,h*.3,'#bc002d');break;
+case'gr':{S(0,...Array.from({length:9},(_,i)=>i%2?'#fff':'#0d5eaf'));const c=h*5/9;R(x,y,c,c,'#0d5eaf');R(x,y+c/2-h*.055,c,h*.11,'#fff');R(x+c/2-h*.055,y,h*.11,c,'#fff');break}
+case'pt':S(1,['#046a38',2],['#da291c',3]);C(x+w*.4,cy,h*.2,'#ffe900');break;
+case'nl':S(0,'#ae1c28','#fff','#21468b');break;
+case'ca':S(1,['#d80621',1],['#fff',2],['#d80621',1]);star(cx,cy,h*.32,'#d80621',8,.5);break;
+case'eg':S(0,'#ce1126','#fff','#000');C(cx,cy,h*.1,'#c09300');break;
+case'in':S(0,'#ff9933','#fff','#138808');g.strokeStyle='#000080';g.lineWidth=1;g.beginPath();g.arc(cx,cy,h*.15,0,7);g.stroke();break;
+case'br':R(x,y,w,h,'#009c3b');P('#ffdf00',cx,y+h*.1,x+w*.9,cy,cx,y+h*.9,x+w*.1,cy);C(cx,cy,h*.22,'#002776');break;
+case'au':R(x,y,w,h,'#00008b');uk(x,y,w/2,h/2);star(x+w*.25,y+h*.75,h*.12,'#fff',7,.5);star(x+w*.75,y+h*.5,h*.1,'#fff',7,.5);star(x+w*.62,y+h*.25,h*.07,'#fff',7,.5);break;
+case'ae':S(0,'#00732f','#fff','#000');R(x,y,w*.25,h,'#ff0000');break;
+case'kr':R(x,y,w,h,'#fff');C(cx,cy,h*.25,'#cd2e3a');g.fillStyle='#0047a0';g.beginPath();g.arc(cx,cy,h*.25,0,PI);g.fill();[[.1,.14],[.8,.14],[.1,.78],[.8,.78]].forEach(([a,b])=>{R(x+w*a,y+h*b,w*.1,h*.05,'#000');R(x+w*a,y+h*(b+.09),w*.1,h*.05,'#000')});break;
+case'ma':R(x,y,w,h,'#c1272d');star(cx,cy,h*.28,'#006233',5,.382,1);break;
+case'ch':R(x,y,w,h,'#da291c');R(cx-h*.11,cy-h*.3,h*.22,h*.6,'#fff');R(cx-h*.3,cy-h*.11,h*.6,h*.22,'#fff');break;
+case'id':S(0,'#e70011','#fff');break;
+case'at':S(0,'#ed2939','#fff','#ed2939');break;
+case'pl':S(0,'#fff','#dc143c');break;
+case'cz':S(0,'#fff','#d7141a');P('#11457e',x,y,x+w*.5,cy,x,y+h);break;
+case'hu':S(0,'#ce2939','#fff','#477050');break;
+case'hr':S(0,'#ff0000','#fff','#171796');R(cx-w*.06,cy-h*.17,w*.12,h*.32,'#fff');R(cx-w*.05,cy-h*.14,w*.1,h*.26,'#e03030');break;
+case'ie':S(1,'#169b62','#fff','#ff883e');break;
+case'se':NO('#006aa7','#fecc00');break;
+case'no':NO('#ba0c2f','#fff','#00205b');break;
+case'dk':NO('#c8102e','#fff');break;
+case'fi':NO('#fff','#003580');break;
+case'is':NO('#02529c','#fff','#dc1e35');break;
+case'be':S(1,'#000','#fdda24','#ef3340');break;
+case'ru':S(0,'#fff','#0039a6','#d52b1e');break;
+case'ar':S(0,'#74acdf','#fff','#74acdf');C(cx,cy,h*.1,'#f6b40e');break;
+case'cl':S(0,'#fff','#d52b1e');R(x,y,w*.33,h*.5,'#0039a6');star(x+w*.165,y+h*.25,h*.14,'#fff');break;
+case'pe':S(1,'#d91023','#fff','#d91023');break;
+case'co':S(0,['#fcd116',2],['#003893',1],['#ce1126',1]);break;
+case'cu':S(0,...Array.from({length:5},(_,i)=>i%2?'#fff':'#002a8f'));P('#cf142b',x,y,x+w*.43,cy,x,y+h);star(x+w*.14,cy,h*.15,'#fff');break;
+case'za':R(x,y,w,h/2,'#de3831');R(x,cy,w,h/2,'#002395');L('#fff',h*.42,x,y,x+w*.42,cy,x,y+h);L('#fff',h*.42,x+w*.42,cy,x+w,cy);L('#007a4d',h*.26,x,y,x+w*.42,cy,x,y+h);L('#007a4d',h*.26,x+w*.42,cy,x+w,cy);P('#000',x,y+h*.2,x+w*.26,cy,x,y+h*.8);break;
+case'ke':S(0,['#000',3],['#fff',.6],['#bb0000',3],['#fff',.6],['#006600',3]);C(cx,cy,h*.22,'#bb0000');break;
+case'vn':R(x,y,w,h,'#da251d');star(cx,cy+1,h*.3,'#ff0',5,.4);break;
+case'sg':S(0,'#ef3340','#fff');C(x+w*.2,y+h*.25,h*.18,'#fff');C(x+w*.25,y+h*.25,h*.16,'#ef3340');star(x+w*.38,y+h*.25,h*.07,'#fff');break;
+case'my':S(0,...Array.from({length:7},(_,i)=>i%2?'#fff':'#cc0001'));R(x,y,w*.5,h*4/7,'#010066');C(x+w*.2,y+h*.28,h*.17,'#fc0');C(x+w*.25,y+h*.28,h*.14,'#010066');star(x+w*.34,y+h*.28,h*.09,'#fc0',14,.5);break;
+case'ph':S(0,'#0038a8','#ce1126');P('#fff',x,y,x+w*.5,cy,x,y+h);C(x+w*.14,cy,h*.1,'#fcd116');break;
+case'nz':R(x,y,w,h,'#00247d');uk(x,y,w/2,h/2);[[.75,.3],[.62,.52],[.88,.5],[.75,.78]].forEach(([a,b])=>star(x+w*a,y+h*b,h*.07,'#cc142b'));break;
+case'il':{R(x,y,w,h,'#fff');R(x,y+h*.1,w,h*.13,'#0038b8');R(x,y+h*.77,w,h*.13,'#0038b8');const r=h*.2;L('#0038b8',1.2,cx,cy-r,cx+r*.87,cy+r/2,cx-r*.87,cy+r/2,cx,cy-r);L('#0038b8',1.2,cx,cy+r,cx+r*.87,cy-r/2,cx-r*.87,cy-r/2,cx,cy+r);break}
+case'tn':R(x,y,w,h,'#e70013');C(cx,cy,h*.3,'#fff');C(cx-h*.03,cy,h*.2,'#e70013');C(cx,cy,h*.16,'#fff');star(cx+h*.02,cy,h*.08,'#e70013');break;
+case'cr':S(0,['#002b7f',1],['#fff',1],['#ce1126',2],['#fff',1],['#002b7f',1]);break;
+case'gh':S(0,'#ce1126','#fcd116','#006b3f');star(cx,cy,h*.2,'#000');break}
+g.restore();g.strokeStyle='rgba(0,0,0,.3)';g.lineWidth=1;g.strokeRect(x,y,w,h)}
+
+/* ---------- countries: name, sky/ground colours, flag, fact, landmark ---------- */
+const K=[
+{n:'France',s:['#7ec8f0','#fde9d0','#8fbf6a'],fl:'fr',f:'France makes more than 1,000 different kinds of cheese.',d(){C(50,268,26,'#5f9a4f');C(268,272,22,'#5f9a4f');P('#3d3d52',160,112,168,170,184,290,170,290,160,238,150,290,136,290,152,170);R(142,172,36,6,'#3d3d52');R(146,226,28,5,'#3d3d52')}},
+{n:'Spain',s:['#f9a85a','#ffe8b5','#d8a763'],fl:'es',f:"Every August, Bunol hosts La Tomatina, the world's biggest tomato fight.",d(){R(80,252,160,38,'#c9a06e');[[98,215],[129,175],[160,140],[191,175],[222,215]].forEach(([x,t])=>{R(x-8,t,16,252-t,'#dcb98a');P('#c89b66',x-9,t,x,t-30,x+9,t);R(x-2,t+26,4,12,'#7a5a3a');R(x-2,t+60,4,12,'#7a5a3a')})}},
+{n:'United States',s:['#6fb4ea','#d5ecfb','#7bbf6f'],fl:'us',f:'The Statue of Liberty was a gift from France in 1886.',d(){const c='#7fc4a5';R(130,250,60,40,'#a8a8a8');P(c,142,250,178,250,172,185,148,185);C(160,172,13,c);for(let i=-2;i<=2;i++)P(c,160+i*7-3,162,160+i*7,146+Math.abs(i)*4,160+i*7+3,162);L(c,8,172,192,188,140);P('#ffb703',181,138,195,138,188,112)}},
+{n:'China',s:['#f7b7a3','#fff0dc','#9bb88a'],fl:'cn',f:'Chinese New Year triggers the largest yearly human migration on Earth.',d(){P('#a9c1b2',0,290,80,200,170,290);P('#8fae9d',140,290,240,210,320,290);for(let i=0;i<4;i++){const y=262-i*40;R(132+i*9,y-24,56-i*18,28,'#c0392b');P('#2d4a3e',108+i*12,y+4,160,y-34,212-i*12,y+4)}}},
+{n:'Italy',s:['#8ec5e8','#fff1d6','#9cc274'],fl:'it',f:'Italy has more UNESCO World Heritage Sites than almost any other country.',d(){P('#3d6b3a',20,290,28,200,36,290);P('#3d6b3a',284,290,292,200,300,290);R(46,150,228,140,'#d8b88a');for(let r=0;r<3;r++){const y=162+r*40;R(46,y-6,228,5,'#c4a276');for(let i=0;i<8;i++){const x=58+i*26;R(x,y+10,14,18,'#8a6a45');D(x+7,y+10,7,'#8a6a45')}}}},
+{n:'Turkey',s:['#7fc0e6','#ffe6cc','#c9b27c'],fl:'tr',f:'Istanbul is the only major city that sits on two continents.',d(){R(100,196,120,94,'#e3b995');D(160,196,54,'#c9a27a');D(112,210,18,'#d4ae88');D(208,210,18,'#d4ae88');R(62,150,12,140,'#f3ebdd');P('#6b7b8a',59,150,68,118,77,150);R(246,150,12,140,'#f3ebdd');P('#6b7b8a',243,150,252,118,261,150);for(let i=0;i<4;i++)R(120+i*20,230,8,16,'#7a5a3a');C(160,138,3,'#e5b53c')}},
+{n:'Mexico',s:['#5fc0d8','#ffe3a8','#c79a5b'],fl:'mx',f:'Chocolate was first served here as a bitter drink thousands of years ago.',d(){for(let i=0;i<5;i++){const w=200-i*34;R(160-w/2,290-(i+1)*28,w,28,i%2?'#b9a37a':'#cbb68c')}R(140,122,40,28,'#a8916a');R(153,132,14,18,'#3a2d1c');R(150,150,20,140,'#8d7a56');const c='#4d8b4f';R(34,236,10,54,c);R(22,250,12,8,c);R(22,244,6,14,c);R(44,258,12,6,c);R(50,250,6,14,c)}},
+{n:'Thailand',s:['#ffb3a0','#ffe9c2','#8fbf6a'],fl:'th',f:'Thailand is the only Southeast Asian country never ruled by a European power.',d(){R(60,274,200,16,'#c98f2a');P('#d9a52f',84,274,96,210,108,274);P('#d9a52f',212,274,224,210,236,274);P('#e5b53c',160,108,170,160,184,220,196,274,124,274,136,220,150,160);L('#b8862b',3,138,220,182,220);L('#b8862b',3,146,170,174,170)}},
+{n:'Germany',s:['#9ab8d8','#e8eef5','#86b07a'],fl:'de',f:'Germany is famous for having over 300 different kinds of bread.',d(){R(58,176,204,16,'#d9cdb0');R(66,164,188,12,'#e6dcc2');R(132,142,56,22,'#6f8a5a');C(160,134,9,'#6f8a5a');L('#6f8a5a',4,160,112,160,126);for(let i=0;i<6;i++)R(70+i*34,192,20,92,'#e6dcc2');R(56,284,208,8,'#cfc3a6')}},
+{n:'United Kingdom',s:['#9fb3c8','#e9edf2','#7fa86f'],fl:'uk',f:'Big Ben is actually the name of the bell, not the clock tower.',d(){R(60,262,76,28,'#b99a5a');R(184,262,76,28,'#b99a5a');[68,192].forEach(a=>{for(let i=0;i<4;i++)R(a+i*16,270,6,10,'#6b5426')});P('#4b5a6a',135,162,160,112,185,162);R(135,162,50,128,'#c8a96a');C(160,190,17,'#4b5a6a');C(160,190,13,'#f7f3e3');L('#222',2,160,190,160,180);L('#222',2,160,190,167,193);R(146,226,6,18,'#6b5426');R(168,226,6,18,'#6b5426')}},
+{n:'Japan',s:['#ffc9d4','#fff3e6','#9fc27a'],fl:'jp',f:'Japan is made up of more than 6,800 islands.',d(){P('#5b7fa6',30,290,160,150,290,290);P('#fff',160,150,128,184,142,180,152,190,160,178,170,190,180,180,192,184);C(250,132,20,'#e63946');R(205,236,7,54,'#d62828');R(248,236,7,54,'#d62828');R(196,228,68,9,'#d62828');R(202,244,56,6,'#d62828');R(44,215,6,75,'#5a3d2b');C(40,200,16,'#f4a6c0');C(58,208,14,'#f7c0d3')}},
+{n:'Greece',s:['#4fb3ee','#e4f4ff','#e0d6bc'],fl:'gr',f:'Greece has more than 6,000 islands and islets, but only about 230 are inhabited.',d(){R(55,278,210,12,'#ece4d0');R(65,268,190,10,'#e4dbc3');for(let i=0;i<8;i++)R(72+i*24,185,12,83,'#f2ebd9');R(62,168,196,17,'#e4dbc3');P('#f2ebd9',58,168,160,128,262,168)}},
+{n:'Portugal',s:['#8fd0f0','#fff0d2','#c9b79a'],fl:'pt',f:"Lisbon's Livraria Bertrand has been selling books since 1732.",d(){R(0,170,70,120,'#e8c9a0');R(250,150,70,140,'#f0d6b8');R(64,192,192,10,'#fff');R(70,200,180,70,'#f2c230');for(let i=0;i<5;i++)R(80+i*34,212,24,24,'#9ad0e8');R(70,244,180,10,'#fff');C(105,276,10,'#333');C(215,276,10,'#333');L('#333',3,200,192,215,150);L('#555',1.5,215,152,320,140)}},
+{n:'Netherlands',s:['#9bd0ee','#f1f6fb','#6fb26b'],fl:'nl',f:'About a quarter of the Netherlands lies below sea level.',d(){P('#b5563b',130,290,190,290,176,180,144,180);P('#4a3b30',138,180,160,152,182,180);g.save();g.translate(160,172);g.rotate(.4);L('#4a3b30',5,0,-62,0,62);L('#4a3b30',5,-62,0,62,0);R(3,-62,14,28,'#efe3cb');R(-62,-17,28,14,'#efe3cb');R(-17,34,14,28,'#efe3cb');R(34,3,28,14,'#efe3cb');g.restore();for(let i=0;i<14;i++){const x=16+i*22;L('#3f8f3f',2,x,292,x,274);C(x,270,6,['#e63946','#f6c026','#f28ab2'][i%3])}}},
+{n:'Canada',s:['#7ab6e8','#e6f2fb','#5aa0c8'],fl:'ca',f:'Canada has the longest coastline of any country in the world.',d(){P('#8aa5b8',0,290,90,170,180,290);P('#fff',90,170,72,198,90,190,108,198);P('#7490a6',120,290,220,190,320,290);P('#fff',220,190,206,210,220,203,234,210);P('#9aa4ad',156,112,164,112,166,230,170,290,150,290,154,230);R(142,176,36,14,'#c5ccd2');pine(40);pine(280)}},
+{n:'Egypt',s:['#f6a56b','#ffe6b8','#e2bd7e'],fl:'eg',f:'The Great Pyramid was the tallest human-made structure for nearly 4,000 years.',d(){C(70,150,24,'#fff1c4');P('#d6ac66',20,290,60,240,100,290);P('#e0b870',60,290,150,170,240,290);P('#c79c54',150,170,240,290,150,290);P('#e6c382',190,290,240,215,290,290);palm(284,70)}},
+{n:'India',s:['#ffb48a','#ffe7c9','#8cc5cf'],fl:'in',f:'Chess was invented in India over 1,500 years ago.',d(){R(70,250,180,40,'#f4eee3');R(120,192,80,58,'#f4eee3');D(160,192,34,'#fbf7ef');L('#d6b24a',3,160,160,160,128);[78,232].forEach(x=>{R(x,170,10,120,'#fbf7ef');D(x+5,170,8,'#fbf7ef')});R(150,224,20,26,'#8aa0b8');D(160,224,10,'#8aa0b8')}},
+{n:'Brazil',s:['#59bdf0','#e2f6ff','#f1d58a'],fl:'br',f:'Brazil holds around 60 percent of the Amazon rainforest.',d(){P('#6a8f6a',20,290,120,205,260,290);P('#4d7c4d',60,290,160,190,260,290);R(150,174,20,16,'#e6e6e0');R(154,130,12,46,'#eae9e2');R(122,140,76,10,'#eae9e2');C(160,124,8,'#eae9e2');palm(40,60);palm(276,50)}},
+{n:'Australia',s:['#ffb266','#ffeccb','#3f8fc0'],fl:'au',f:'Australia has more kangaroos than people.',d(){R(50,266,230,24,'#d7cdb5');for(let i=0;i<3;i++){const x=70+i*50,h=100-i*18;P('#f6f2e8',x,266,x+34,266-h,x+52,266);P('#e4dcc9',x+30,266,x+58,266-h*.8,x+80,266)}}},
+{n:'United Arab Emirates',s:['#f9b873','#ffeccb','#e9c27a'],fl:'ae',f:'The Burj Khalifa in Dubai stands 828 meters tall.',d(){P('#e3b66b',0,290,0,250,90,235,200,270,320,250,320,290);R(40,220,18,70,'#c7d0d8');R(66,240,16,50,'#c7d0d8');R(220,230,20,60,'#c7d0d8');R(248,200,16,90,'#c7d0d8');P('#aeb9c4',158,108,162,108,170,200,178,290,142,290,150,200);L('#8794a1',2,160,150,160,290)}},
+{n:'South Korea',s:['#9fd0ee','#fff0e0','#8bbf7a'],fl:'kr',f:'King Sejong created the Korean alphabet, Hangul, in the 15th century.',d(){P('#9db4a5',0,290,80,190,160,290);R(95,240,130,50,'#c0392b');R(148,252,24,38,'#6b1f17');for(let i=0;i<4;i++)R(104+i*34,246,6,44,'#9d2b22');P('#33424a',58,208,88,226,232,226,262,208,252,242,68,242);R(118,206,84,34,'#c0392b');P('#33424a',92,196,125,212,195,212,228,196,208,172,112,172)}},
+{n:'Morocco',s:['#f4a26a','#ffe5bf','#d9a35f'],fl:'ma',f:'The University of al-Qarawiyyin in Fez is one of the oldest in the world.',d(){P('#e3b66b',0,290,0,262,80,248,200,272,320,250,320,290);R(132,150,56,140,'#c88a55');R(124,142,72,12,'#b9773f');R(146,112,28,30,'#c88a55');C(160,106,8,'#e5b53c');R(132,150,56,6,'#2a9d8f');for(let i=0;i<3;i++){R(148,184+i*34,24,24,'#8a5a30');D(160,184+i*34,12,'#8a5a30')}palm(270,70)}},
+{n:'Switzerland',s:['#6fb2ec','#e6f3fc','#7cbf6a'],fl:'ch',f:'Switzerland has four official languages: German, French, Italian and Romansh.',d(){P('#6f7f99',40,290,160,112,300,290);P('#56667f',160,112,300,290,200,290);P('#fff',160,112,134,160,148,152,160,170,172,152,188,160);R(40,248,50,42,'#a0693d');P('#5a3a22',34,248,65,222,96,248);R(58,264,14,26,'#3a2415');pine(272)}},
+{n:'Austria',s:['#8fc3ea','#f4ecd8','#8fbf7a'],fl:'at',f:"Vienna's Giant Ferris Wheel has been turning since 1897.",d(){P('#a9bfa8',0,290,70,220,150,290);P('#9ab49a',170,290,250,215,320,290);L('#7a1f19',6,160,190,120,290);L('#7a1f19',6,160,190,200,290);for(let i=0;i<12;i++){const a=i*PI/6;L('#c0392b',2,160,190,160+Math.cos(a)*78,190+Math.sin(a)*78);C(160+Math.cos(a)*78,190+Math.sin(a)*78,6,'#f2c230')}g.strokeStyle='#c0392b';g.lineWidth=5;g.beginPath();g.arc(160,190,78,0,7);g.stroke();g.lineWidth=3;g.beginPath();g.arc(160,190,58,0,7);g.stroke();C(160,190,8,'#7a1f19')}},
+{n:'Indonesia',s:['#ffb98a','#ffeccf','#6fae55'],fl:'id',f:'Indonesia is an archipelago of more than 17,000 islands.',d(){P('#6a6a7a',40,290,160,150,280,290);C(160,138,14,'#ddd');C(174,120,12,'#e8e8e8');C(192,108,10,'#f0f0f0');for(let i=0;i<4;i++)L('#5a9a3f',4,0,296+i*14,320,296+i*14);palm(56,90);palm(262,80)}},
+{n:'Poland',s:['#9fb9d6','#f2e9dc','#8aae6c'],fl:'pl',f:"Warsaw's Old Town was rebuilt brick by brick after World War II.",d(){R(60,250,200,40,'#c96a50');R(90,170,50,80,'#b5523b');P('#6b3a2e',86,170,115,122,144,170);R(180,200,40,50,'#b5523b');P('#6b3a2e',176,200,200,160,224,200);for(let i=0;i<3;i++){R(100,185+i*20,8,12,'#f2e9dc');R(122,185+i*20,8,12,'#f2e9dc')}R(150,262,20,28,'#4a2a20')}},
+{n:'Czech Republic',s:['#a9b9d8','#f6e8d8','#9ab57c'],fl:'cz',f:'Prague Castle is the largest ancient castle complex in the world.',d(){R(60,262,200,28,'#d9c9a8');for(const x of[110,210]){R(x-18,190,36,72,'#c9b690');P('#3f4a55',x-20,190,x,112,x+20,190)}R(130,222,60,40,'#d9c9a8');P('#3f4a55',126,222,160,190,194,222)}},
+{n:'Hungary',s:['#8fb4d8','#f5e3d0','#5ea3c8'],fl:'hu',f:'Budapest has more than 100 natural thermal springs.',d(){R(40,236,240,54,'#e8dfd0');for(let i=0;i<10;i++)R(48+i*23,248,8,16,'#8a7a62');R(120,190,80,46,'#e8dfd0');D(160,190,32,'#7fa3b5');L('#b8a98c',3,160,158,160,126);[60,260].forEach(x=>P('#7fa3b5',x-12,236,x,196,x+12,236));[90,230].forEach(x=>P('#7fa3b5',x-8,236,x,208,x+8,236))}},
+{n:'Croatia',s:['#5db5ec','#e9f5fc','#2f86c4'],fl:'hr',f:"Dubrovnik's city walls are almost two kilometers long and still stand.",d(){R(30,214,260,76,'#e6d2ac');for(let i=0;i<12;i++)R(30+i*22,206,12,8,'#e6d2ac');R(56,170,46,120,'#d9c196');P('#d9622b',50,170,79,136,108,170);R(216,160,46,130,'#d9c196');P('#d9622b',210,160,239,124,268,160);for(let i=0;i<5;i++)P('#d9622b',116+i*18,240,125+i*18,226,134+i*18,240);R(150,248,22,42,'#8a6a45');D(161,248,11,'#8a6a45')}},
+{n:'Ireland',s:['#a8c4d4','#eaf1ea','#4f9d4a'],fl:'ie',f:'Ireland has no snakes, and Halloween began here as the festival of Samhain.',d(){D(50,290,90,'#3f8a3c');D(270,290,80,'#5aa851');R(145,160,30,130,'#8a8f8a');P('#6e736e',141,160,160,112,179,160);R(154,196,12,18,'#2b2f2b');R(154,246,12,44,'#4a3a2b');C(54,258,12,'#2f8f4e');C(70,244,12,'#2f8f4e');C(86,258,12,'#2f8f4e');R(68,258,4,22,'#2f8f4e')}},
+{n:'Sweden',s:['#8ec0e6','#fdeccf','#f3f6f8'],fl:'se',f:'Sweden has about 267,000 islands, more than any other country.',d(){pine(40);pine(280);R(90,232,110,58,'#b3392e');P('#4a2f2a',82,232,145,190,208,232);R(98,246,22,22,'#fff');R(170,246,22,22,'#fff');R(134,258,22,32,'#6b2a22');R(90,232,5,58,'#fff');R(195,232,5,58,'#fff')}},
+{n:'Norway',s:['#6fa7d6','#e6eef6','#2f6f9f'],fl:'no',f:"Norway's fjords are so deep that some reach more than a kilometer below sea level.",d(){P('#7f93a6',0,290,60,190,130,250,170,200,240,260,320,170,320,290);P('#fff',60,190,48,208,60,204,72,210);R(0,246,320,44,'#2f6f9f');P('#8a5a2b',70,246,250,246,226,278,94,278);P('#8a5a2b',246,246,266,212,258,248);L('#5a3a1b',4,160,246,160,150);R(124,150,72,60,'#c0392b');R(124,166,72,10,'#fff');R(124,186,72,10,'#fff');for(let i=0;i<6;i++)C(96+i*26,262,6,['#f2c230','#c0392b'][i%2])}},
+{n:'Denmark',s:['#8fbfe6','#fff1db','#3f7fb0'],fl:'dk',f:'The word hygge, a feeling of cozy togetherness, comes from Denmark.',d(){R(0,276,320,14,'#7a6a58');[['#e63946',100],['#f6c026',120],['#3a86c8',90],['#f28ab2',125],['#4fae78',105],['#f08a3c',115]].forEach(([c,h],i)=>{const x=10+i*50;R(x,276-h,46,h,c);P('#4a3a30',x-3,276-h,x+23,276-h-24,x+49,276-h);for(let r=0;r<3;r++){R(x+8,276-h+14+r*28,8,14,'#fff');R(x+28,276-h+14+r*28,8,14,'#fff')}})}},
+{n:'Finland',s:['#9db9d8','#eef2f7','#dfe9f1'],fl:'fi',f:'Finland has about three million saunas for roughly 5.5 million people.',d(){R(90,270,140,20,'#e4e8ec');R(100,250,120,20,'#dfe3e7');R(110,190,100,60,'#f5f6f4');for(let i=0;i<6;i++)R(116+i*16,196,8,52,'#d5d9dc');P('#f5f6f4',104,190,160,162,216,190);R(140,150,40,40,'#f5f6f4');D(160,150,28,'#3e8f72');L('#e5b53c',3,160,122,160,108)}},
+{n:'Belgium',s:['#8db8e0','#fbeed6','#8db36f'],fl:'be',f:'The Atomium in Brussels is an iron crystal magnified 165 billion times.',d(){const p=[[160,130],[100,175],[220,175],[160,175],[100,235],[220,235],[160,235]];p.forEach(q=>L('#9aa4ad',7,160,175,q[0],q[1]));L('#9aa4ad',7,100,175,100,235);L('#9aa4ad',7,220,175,220,235);L('#9aa4ad',7,160,235,160,290);p.forEach(([x,y])=>{C(x,y,17,'#c5ccd2');C(x-5,y-5,6,'#fff')})}},
+{n:'Iceland',s:['#10204a','#2d6a8a','#e3eef6'],fl:'is',f:'Iceland has no mosquitoes, but it has plenty of volcanoes and hot springs.',d(){L('rgba(90,255,170,.4)',14,0,150,80,115,170,140,260,110,320,140);L('rgba(150,120,255,.3)',9,0,175,90,140,180,165,270,135,320,165);R(147,150,26,140,'#e8ecef');P('#e8ecef',147,150,160,112,173,150);P('#dfe4e8',108,290,108,236,147,196,147,290);P('#dfe4e8',212,290,212,236,173,196,173,290);R(156,175,8,30,'#2b3a4a');R(156,225,8,30,'#2b3a4a')}},
+{n:'Russia',s:['#7fb0e0','#f2ecf6','#e9eef2'],fl:'ru',f:'Russia is the largest country on Earth, stretching across 11 time zones.',d(){R(60,250,200,40,'#c0392b');R(145,190,30,60,'#e8d8b8');R(92,222,36,28,'#e8d8b8');R(192,222,36,28,'#e8d8b8');[[160,172,20,'#2a9d8f'],[110,208,15,'#e63946'],[210,208,15,'#f2c230'],[75,238,12,'#3a86c8'],[245,238,12,'#e63946']].forEach(a=>onion(...a));for(let i=0;i<8;i++)R(70+i*24,262,10,16,'#f2e9dc')}},
+{n:'Argentina',s:['#78b6ea','#e8f5fb','#7fb86a'],fl:'ar',f:'Tango was born in the port neighborhoods of Buenos Aires.',d(){R(30,230,50,60,'#c9c2b4');R(240,214,48,76,'#d6cfc0');R(86,246,40,44,'#bfb8a8');R(200,250,36,40,'#c9c2b4');P('#ece8de',152,160,160,112,168,160);P('#ece8de',152,160,168,160,172,290,148,290);R(144,284,32,6,'#cfc9ba')}},
+{n:'Chile',s:['#7db9e8','#fbe9d2','#8fa66a'],fl:'cl',f:'Chile is about 4,300 kilometers long but only around 180 kilometers wide.',d(){P('#7c8fa6',0,290,70,190,140,290);P('#fff',70,190,58,210,70,204,82,212);[80,160,240].forEach(x=>{R(x-18,194,36,96,'#8a7f73');R(x-14,212,28,7,'#6b6258');R(x-3,220,6,26,'#6b6258');R(x-9,256,18,5,'#5c544b')})}},
+{n:'Peru',s:['#79b6e0','#fdebd0','#6fa55e'],fl:'pe',f:'Machu Picchu was built by the Inca around 1450, nearly 2,400 meters up.',d(){P('#4d7f5d',20,290,170,140,310,290);P('#3f6e4f',170,140,310,290,170,290);[190,215,240,265].forEach(y=>L('#a9c98f',4,170-(y-140)*.73,y,170+(y-140)*.8,y));R(140,228,30,12,'#c8c2b0');R(190,246,22,10,'#c8c2b0')}},
+{n:'Colombia',s:['#86c3ea','#f3f5e0','#6fb25a'],fl:'co',f:"Colombia's national tree is the wax palm, the tallest palm in the world.",d(){D(60,290,90,'#4f9d4a');D(260,290,100,'#5aa851');for(const[x,h]of[[90,150],[170,176],[240,140]]){L('#7a6a58',4,x,290,x+2,290-h);for(let a=-3;a<=.1;a+=.6)L('#2f8f4e',4,x+2,290-h,x+2+Math.cos(a)*26,290-h+Math.sin(a)*10+10)}}},
+{n:'Cuba',s:['#6cc3ee','#fff1d1','#e3c88a'],fl:'cu',f:'Cuba is famous for its classic American cars from the 1950s.',d(){palm(40,90);palm(284,100);R(56,238,208,30,'#f08aa8');R(56,254,208,6,'#fff');P('#f08aa8',100,238,126,200,200,200,228,238);P('#bfe6f5',112,238,130,208,158,208,158,238);P('#bfe6f5',164,238,164,208,196,208,214,238);C(104,268,17,'#222');C(216,268,17,'#222');C(104,268,8,'#ccc');C(216,268,8,'#ccc');R(52,246,8,12,'#f2c230');R(260,246,8,12,'#f2c230')}},
+{n:'South Africa',s:['#7fb9e6','#fdeccf','#c9b27c'],fl:'za',f:'Table Mountain is one of the oldest mountains on Earth.',d(){P('#6b8aa0',0,290,40,205,70,176,250,176,290,206,320,290);P('#567488',200,290,250,176,290,206,320,290);for(const[x,y,r]of[[100,172,16],[140,168,20],[190,170,18],[225,172,14]])E(x,y,r*1.6,r*.6,'#fff')}},
+{n:'Kenya',s:['#ffa564','#ffe3b5','#d6b26a'],fl:'ke',f:'Every year over a million wildebeest cross the Mara River in the great migration.',d(){C(230,170,36,'#ff8c3a');P('#a37a5a',0,290,60,240,130,262,200,236,320,266,320,290);L('#5a3d2b',8,110,290,118,230,150,200);L('#5a3d2b',6,118,230,84,206);E(130,196,70,18,'#3f7f3a');E(86,206,34,12,'#3f7f3a');E(180,198,36,12,'#4a8f44')}},
+{n:'Vietnam',s:['#9ad0e8','#f1f4e8','#3f9fb5'],fl:'vn',f:'Ha Long Bay has nearly 2,000 limestone islands rising from the sea.',d(){D(60,252,64,'#5a7d5a');D(150,252,46,'#4d6f4d');D(262,252,66,'#5a7d5a');R(0,252,320,38,'#3f9fb5');P('#6b3f26',100,262,200,262,188,280,112,280);L('#4a2c1a',3,150,262,150,200);P('#b5452a',150,202,196,222,196,258,150,258);P('#c9573b',146,222,110,238,110,258,146,258)}},
+{n:'Singapore',s:['#7fb6e6','#fbe8d0','#2f86b5'],fl:'sg',f:'Marina Bay Sands has a rooftop pool 57 floors up.',d(){R(0,262,320,28,'#2f86b5');for(const x of[92,148,204])P('#c9d3dc',x,262,x+12,150,x+34,150,x+46,262);P('#aab8c4',60,144,260,144,240,158,80,158);R(190,138,50,5,'#7fd0e8')}},
+{n:'Malaysia',s:['#86b9e4','#fde6cf','#6faa5a'],fl:'my',f:'The Petronas Towers were the tallest buildings in the world from 1998 to 2004.',d(){for(const x of[100,172]){R(x,170,48,120,'#c0c8d0');P('#c0c8d0',x+6,170,x+24,114,x+42,170);L('#e8edf2',2,x+24,114,x+24,102);for(let i=0;i<5;i++)L('#8f9aa4',2,x,190+i*20,x+48,190+i*20)}L('#9aa4ad',7,148,220,172,220)}},
+{n:'Philippines',s:['#7cc2ea','#fff0d4','#f2dc9c'],fl:'ph',f:'The Philippines is made up of more than 7,600 islands.',d(){[[40,56],[110,70],[190,58],[270,66]].forEach(([x,r])=>D(x,290,r,'#9bb04e'));palm(150,90);palm(214,70)}},
+{n:'New Zealand',s:['#7ab4e6','#eaf3fb','#6fb25a'],fl:'nz',f:'New Zealand has far more sheep than people.',d(){P('#6f84a0',90,290,170,128,250,290);P('#fff',170,128,150,164,164,156,172,170,182,154,192,164);D(50,290,90,'#5aa851');D(270,290,100,'#4f9d4a');for(const[x,y]of[[80,262],[130,274],[210,266],[250,278]]){E(x,y,13,9,'#f4f1ea');C(x+11,y-2,5,'#333');R(x-6,y+6,2,7,'#333');R(x+4,y+6,2,7,'#333')}}},
+{n:'Israel',s:['#8cc3ea','#fde9cc','#2f8fb5'],fl:'il',f:'The Dead Sea is the lowest point on land, about 430 meters below sea level.',d(){P('#c9a06e',0,290,0,230,40,200,120,180,200,180,280,200,320,230,320,290);P('#b88a58',200,180,280,200,320,230,320,290,250,290,220,230);R(130,170,12,10,'#e8dcc0');R(150,166,18,14,'#e8dcc0');R(176,172,10,8,'#e8dcc0');R(0,262,320,28,'#2f8fb5')}},
+{n:'Tunisia',s:['#6fbfee','#e9f6fc','#2f86c4'],fl:'tn',f:'Sidi Bou Said is famous for its white houses with bright blue doors.',d(){R(0,250,320,40,'#2f86c4');[[20,70,90],[100,60,120],[170,80,100],[256,56,80]].forEach(([x,w,h])=>{R(x,250-h,w,h,'#fbfbf6');R(x+w-6,250-h,6,h,'#e8e6dc');R(x+w/2-7,224,14,26,'#2a6fb8');D(x+w/2,224,7,'#2a6fb8');R(x+10,250-h+14,10,14,'#2a6fb8');D(x+15,250-h+14,5,'#2a6fb8')});D(130,130,16,'#fbfbf6');C(110,176,5,'#e0457b');C(120,184,5,'#e0457b');C(36,190,5,'#e0457b')}},
+{n:'Costa Rica',s:['#7fd0e0','#f2f8d8','#3f9f5a'],fl:'cr',f:'Costa Rica has no army and protects about a quarter of its land as nature reserves.',d(){for(const[x,y,a]of[[40,200,-.5],[280,190,.5],[60,262,.3],[270,256,-.3]]){g.save();g.translate(x,y);g.rotate(a);E(0,0,60,16,'#2f9f4e');L('#1f7a3a',2,-56,0,56,0);g.restore()}L('#7a5a3a',8,40,250,280,250);P('#1c1c24',124,240,104,284,144,252);E(140,208,32,46,'#1c1c24');E(150,214,18,28,'#fff');C(152,160,22,'#1c1c24');P('#f08a1c',166,154,232,160,226,184,166,180);C(156,156,5,'#fff');C(157,156,2.5,'#000')}},
+{n:'Ghana',s:['#8ccaee','#fff0d2','#2f86b5'],fl:'gh',f:'Ghana was the first sub-Saharan African country to gain independence, in 1957.',d(){R(0,256,320,12,'#e8d1a0');R(60,200,200,56,'#f6f3ea');for(let i=0;i<10;i++)R(60+i*22,192,12,8,'#f6f3ea');R(40,170,50,86,'#efeadf');R(230,170,50,86,'#efeadf');for(let i=0;i<3;i++)L('#444',5,110+i*36,230,128+i*36,224);R(150,222,20,34,'#6b4a2e');D(160,222,10,'#6b4a2e');L('#555',2,65,170,65,150);R(65,150,16,10,'#ce1126')}}
+];
+
+/* ---------- drawing ---------- */
+K.sort((a,b)=>a.n.localeCompare(b.n));let cur=K.find(k=>k.n==='France');
+function scene(k){const gr=g.createLinearGradient(0,0,0,290);gr.addColorStop(0,k.s[0]);gr.addColorStop(1,k.s[1]);g.fillStyle=gr;g.fillRect(0,0,320,290);C(262,128,24,'rgba(255,248,210,.9)');R(0,290,320,70,k.s[2]);k.d();R(0,290,320,3,'rgba(0,0,0,.12)')}
+function wrap(t,x,y,mw,lh){let l='';t.split(' ').forEach(w=>{const n=l?l+' '+w:w;if(g.measureText(n).width>mw&&l){g.fillText(l,x,y);y+=lh;l=w}else l=n});g.fillText(l,x,y)}
+function stamp(k){const w=88,h=110;g.save();g.translate(488+w/2,28+h/2);g.rotate(.04);g.translate(-w/2,-h/2);
+g.shadowColor='rgba(0,0,0,.25)';g.shadowBlur=4;g.shadowOffsetY=1.5;R(0,0,w,h,'#fffdf6');g.shadowColor='transparent';
+for(let i=3;i<w;i+=8){C(i,0,3,'#fbf5e6');C(i,h,3,'#fbf5e6')}for(let j=3;j<h;j+=8){C(0,j,3,'#fbf5e6');C(w,j,3,'#fbf5e6')}
+g.save();g.translate(8,8);g.beginPath();g.rect(0,0,72,78);g.clip();g.scale(.225,.225);scene(k);g.restore();
+g.strokeStyle='#b23a48';g.lineWidth=1;g.strokeRect(8,8,72,78);
+g.fillStyle='#b23a48';g.textAlign='center';g.font='800 10px Nunito,sans-serif';g.fillText('POSTCARD '+k.fl.toUpperCase(),w/2,99);g.font='400 9px Pacifico,cursive';g.fillText('1.00',w/2,108);g.restore()}
+function mark(k){g.save();g.strokeStyle='rgba(45,50,80,.55)';g.fillStyle='rgba(45,50,80,.65)';g.lineWidth=1.8;g.beginPath();g.arc(452,88,30,0,7);g.stroke();g.lineWidth=1;g.beginPath();g.arc(452,88,24,0,7);g.stroke();
+g.textAlign='center';g.font='800 13px Nunito,sans-serif';g.fillText(k.fl.toUpperCase(),452,86);g.font='800 7px Nunito,sans-serif';g.fillText(new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase(),452,98);
+g.lineWidth=1.5;for(let j=0;j<4;j++){const y=66+j*9;g.beginPath();g.moveTo(482,y);for(let i=1;i<=7;i++)g.quadraticCurveTo(482+i*14-7,y+(i%2?-5:5),482+i*14,y);g.stroke()}g.restore()}
+async function draw(){
+await Promise.all([document.fonts.load('22px Pacifico'),document.fonts.load('600 24px Caveat')]).catch(()=>{});
+const k=cur;g=$('cv').getContext('2d');g.setTransform(2,0,0,2,0,0);
+R(0,0,600,400,'#fbf5e6');g.save();g.beginPath();g.rect(0,0,600,400);g.clip();
+for(let x=-120;x<640;x+=32){P('#d9453d',x,0,x+11,0,x-69,400,x-80,400);P('#2d5db5',x+16,0,x+27,0,x-53,400,x-64,400)}g.restore();
+g.fillStyle='#fbf5e6';g.fillRect(9,9,582,382);
+/* illustration */
+g.save();g.translate(24,20);g.beginPath();g.roundRect(0,0,320,360,12);g.clip();scene(k);
+g.textAlign='center';g.lineJoin='round';g.font='22px Pacifico,cursive';g.strokeStyle='rgba(0,0,0,.35)';g.lineWidth=5;g.strokeText('Greetings from',160,40);g.fillStyle='#fff';g.fillText('Greetings from',160,40);
+let s=40;do{g.font=s+'px Pacifico,cursive';s-=2}while(g.measureText(k.n).width>296&&s>14);
+g.strokeText(k.n,160,84);g.fillText(k.n,160,84);g.restore();
+g.beginPath();g.roundRect(24,20,320,360,12);g.strokeStyle='#fff';g.lineWidth=5;g.stroke();g.strokeStyle='rgba(0,0,0,.15)';g.lineWidth=1;g.stroke();
+/* message side */
+g.setLineDash([4,5]);L('#c9bb98',1.5,358,34,358,366);g.setLineDash([]);
+flag(k.fl,372,30,48,32);
+stamp(k);mark(k);
+g.textAlign='left';g.fillStyle='#26335f';g.font='600 30px Caveat,cursive';g.fillText('Dear friend,',374,170);
+g.font='600 23px Caveat,cursive';wrap(k.f,374,198,200,24);
+[342,366].forEach(y=>L('#b9ad8c',1,372,y,576,y));}
+
+/* ---------- ui ---------- */
+const sel=$('co');K.forEach((k,i)=>sel.add(new Option(k.n,i)));sel.value=K.indexOf(cur);
+sel.onchange=()=>{cur=K[sel.value];draw()};
+let tt;const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),5200)};
+const blob=()=>new Promise(r=>$('cv').toBlob(r,'image/png'));
+const fname=()=>'postcard-'+cur.n.toLowerCase().replace(/\W+/g,'-')+'.png';
+function save(b){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fname();document.body.appendChild(a);a.click();a.remove()}
+$('dl').onclick=async()=>{await draw();save(await blob());toast('Postcard saved.')};
+$('send').onclick=async()=>{
+await draw();
+const b=await blob(),file=new File([b],fname(),{type:'image/png'}),text='Greetings from '+cur.n+'!';
+if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text});return}catch(e){if(e.name==='AbortError')return}}
+let copied=false;try{await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);copied=true}catch(e){}
+if(!copied)save(b);
+window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(text),'_blank');
+toast(copied?'Postcard copied. Choose a contact in WhatsApp, paste it and press send.':'Postcard saved. Choose a contact in WhatsApp and attach it.')};
+draw();
+</script>
+</body>
+</html>
