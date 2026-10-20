@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Postapp</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Pick an animal, get an illustrated postcard, and send it on WhatsApp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Caveat:wght@500;700&family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: an airmail-striped postcard preview with one control panel beside it (stacked on phones). The postcard itself is drawn on a canvas. */
+:root{
+  --bg:#e8edf2; --surface:#f7f9fb; --fg:#13202d; --muted:#4f5f6e; --line:#c7d1db;
+  --red:#d6283e; --blue:#1d4fa0; --paper:#ffffff;
+  --go:#0e7a3f; --go-fg:#ffffff; --focus:#1d4fa0;
+  --display:"Bowlby One","Arial Black",Impact,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"DM Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d141c; --surface:#16202b; --fg:#e8eef4; --muted:#9db0c1; --line:#2a3846;
+    --red:#ee4a5f; --blue:#6b97e8; --paper:#dfe6ed;
+    --go:#32c274; --go-fg:#04210f; --focus:#8fb2f2; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d141c; --surface:#16202b; --fg:#e8eef4; --muted:#9db0c1; --line:#2a3846;
+  --red:#ee4a5f; --blue:#6b97e8; --paper:#dfe6ed;
+  --go:#32c274; --go-fg:#04210f; --focus:#8fb2f2; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;
+  background:var(--bg); color:var(--fg); font:16px/1.5 var(--body);
+  padding-block:28px 44px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.app{max-width:1140px;margin:0 auto;display:grid;gap:22px;grid-template-columns:minmax(0,1fr)}
+.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
+.word{margin:0;font:400 2.1rem/1 var(--display);letter-spacing:.01em}
+.tag{margin:0;color:var(--muted);min-width:0}
+.frame{
+  border:12px solid transparent;
+  border-image:repeating-linear-gradient(135deg,var(--red) 0 16px,var(--paper) 16px 32px,var(--blue) 32px 48px,var(--paper) 48px 64px) 12;
+  background:var(--paper);min-width:0;
+}
+canvas{display:block;width:100%;max-width:100%;height:auto;aspect-ratio:3/2}
+.panel{
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:18px;display:grid;gap:16px;min-width:0;align-content:start;
+}
+.field{display:grid;gap:6px}
+label{font:500 .75rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+select{
+  appearance:none;-webkit-appearance:none;width:100%;min-height:50px;padding:0 44px 0 14px;
+  font:500 1.05rem var(--body);color:var(--fg);background-color:var(--bg);
+  border:1.5px solid var(--line);border-radius:10px;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--fg) 50%),linear-gradient(135deg,var(--fg) 50%,transparent 50%);
+  background-position:calc(100% - 22px) 50%,calc(100% - 16px) 50%;background-size:6px 6px;background-repeat:no-repeat;
+}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{
+  font:600 1rem var(--body);min-height:50px;padding:0 16px;border-radius:10px;cursor:pointer;
+  border:1.5px solid var(--line);background:transparent;color:var(--fg);transition:background-color .15s,border-color .15s;
+}
+button:hover{border-color:var(--fg)}
+.go{grid-column:1/-1;background:var(--go);color:var(--go-fg);border-color:var(--go);font-size:1.05rem;display:flex;align-items:center;justify-content:center;gap:10px}
+.go:hover{border-color:var(--go);filter:brightness(1.08)}
+.go svg{width:20px;height:20px;flex:none}
+select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.status{margin:0;min-height:2.6em;font:400 .8rem/1.45 var(--mono);color:var(--muted)}
+.hint{margin:0;font-size:.88rem;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+.sheet{position:fixed;inset:0;z-index:50;background:rgba(8,12,18,.72);display:flex;align-items:center;justify-content:center;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet-in{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;width:min(560px,100%);max-height:100%;overflow:auto}
+.sheet-in img{width:100%;height:auto;display:block;border:1px solid var(--line)}
+.sheet-in p{margin:0;font-size:.95rem}
+.sheet-row{display:flex;flex-wrap:wrap;gap:10px}
+.sheet-row a,.sheet-row button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 16px;border-radius:10px;font:600 .95rem var(--body);text-decoration:none}
+.sheet-row a{background:var(--go);color:var(--go-fg)}
+@media (min-width:920px){
+  .app{grid-template-columns:minmax(0,1fr) 300px;align-items:start;column-gap:28px}
+  .top{grid-column:1/-1}
+  .word{font-size:2.5rem}
+}
+@media (max-width:420px){.row{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<main class="app">
+  <header class="top">
+    <h1 class="word">Postapp</h1>
+    <p class="tag">Choose an animal, get a postcard, send it on WhatsApp.</p>
+  </header>
+
+  <div class="frame"><canvas id="card" width="1200" height="800" role="img" aria-label="Postcard"></canvas></div>
+
+  <section class="panel" aria-label="Postcard controls">
+    <div class="field">
+      <label for="animal">Animal</label>
+      <select id="animal"></select>
+    </div>
+    <div class="row">
+      <button id="fact" type="button">Another fact</button>
+      <button id="rand" type="button">Surprise me</button>
+      <button id="send" type="button" class="go">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
+        Send on WhatsApp
+      </button>
+    </div>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+    <p class="hint">Send opens your phone's share sheet with the postcard image attached. Choose WhatsApp, then pick the person you want from your WhatsApp contacts.</p>
+  </section>
+</main>
+
+<div id="sheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-msg">
+  <div class="sheet-in">
+    <img id="sheet-img" alt="Your finished postcard">
+    <p id="sheet-msg"></p>
+    <div class="sheet-row">
+      <a id="sheet-wa" href="https://wa.me/?text=Postcard%20from%20Postapp" target="_blank" rel="noopener">Open WhatsApp</a>
+      <button id="sheet-close" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var W=1200,H=800;
+
+/* ---------- tiny drawing kit (all animals are drawn in a 400x400 box) ---------- */
+var X;
+function fs(f,s,lw){if(f){X.fillStyle=f;X.fill();}if(s){X.strokeStyle=s;X.lineWidth=lw||4;X.lineJoin='round';X.lineCap='round';X.stroke();}}
+function E(x,y,rx,ry,f,rot,s,lw){X.beginPath();X.ellipse(x,y,rx,ry,rot||0,0,Math.PI*2);fs(f,s,lw);}
+function C(x,y,r,f,s,lw){E(x,y,r,r,f,0,s,lw);}
+function D(d,f,s,lw){var p=new Path2D(d);if(f){X.fillStyle=f;X.fill(p);}if(s){X.strokeStyle=s;X.lineWidth=lw||4;X.lineJoin='round';X.lineCap='round';X.stroke(p);}}
+function L(d,s,lw){D(d,null,s,lw);}
+function eye(x,y,r){C(x,y,r,'#17171d');C(x+r*.32,y-r*.32,r*.36,'#fff');}
+function sym(f){f();X.save();X.translate(400,0);X.scale(-1,1);f();X.restore();}
+function clipD(d,f){X.save();X.clip(new Path2D(d));f();X.restore();}
+function bearHead(o){
+  E(200,358,108,58,o.body);
+  sym(function(){C(112,122,29,o.body);C(112,124,15,o.inner);});
+  E(200,208,104,92,o.body);
+  E(200,244,52,40,o.muz);
+  sym(function(){eye(158,192,9);});
+  E(200,224,21,14,o.nose);C(194,220,4,'rgba(255,255,255,.5)');
+  L('M200 236 L200 254 M200 254 Q184 270 170 258 M200 254 Q216 270 230 258',o.nose,4);
+}
+
+/* ---------- the 35 animals ---------- */
+var ART={
+dog:function(){
+  E(200,356,92,56,'#d99a4a');
+  sym(function(){D('M100 118 C62 126 44 196 66 250 C84 276 118 250 124 196 Z','#8f5428');});
+  E(200,208,100,92,'#e2a553');
+  D('M200 120 C186 150 186 176 200 188 C214 176 214 150 200 120 Z','#f6e8cc');
+  E(200,254,54,42,'#f7e6c6');
+  sym(function(){eye(160,196,11);C(158,172,6,'#b87a36');});
+  E(200,234,22,15,'#2a1f1f');E(193,229,6,3,'rgba(255,255,255,.55)');
+  L('M200 248 L200 262 M200 262 Q184 282 166 266 M200 262 Q216 282 234 266','#2a1f1f',4);
+  D('M185 272 Q200 314 215 272 Z','#e8607a');
+  D('M118 308 Q200 348 282 308 L284 330 Q200 370 116 330 Z','#d63f3f');C(200,358,12,'#f4c542');
+},
+cat:function(){
+  E(200,364,86,50,'#e8913a');
+  sym(function(){D('M104 168 L92 58 L172 120 Z','#e8913a');D('M112 148 L106 92 L152 122 Z','#f2b3ad');});
+  E(200,222,102,90,'#e8913a');
+  L('M200 138 L200 172','#b25e16',7);L('M170 146 L176 170','#b25e16',6);L('M230 146 L224 170','#b25e16',6);
+  E(200,262,60,40,'#fff0dc');
+  sym(function(){E(158,214,19,15,'#a9d86e');E(158,214,6,13,'#17171d');C(163,208,4,'#fff');});
+  D('M187 240 L213 240 L200 255 Z','#e0707e');
+  L('M200 255 L200 263 M200 263 Q186 276 173 265 M200 263 Q214 276 227 265','#6b4128',3.5);
+  sym(function(){L('M152 262 L98 252 M152 270 L100 278','#6b4128',3);});
+},
+lion:function(){
+  for(var i=0;i<18;i++){var a=i/18*Math.PI*2;C(200+Math.cos(a)*128,206+Math.sin(a)*122,42,'#a85a1a');}
+  C(200,206,132,'#b86a22');
+  sym(function(){C(108,122,24,'#dca457');C(108,124,12,'#f2c9a0');});
+  E(200,218,88,92,'#ecb762');
+  E(200,258,50,38,'#f8e0b4');
+  sym(function(){eye(166,204,9);L('M146 188 Q164 178 182 188','#8a5a24',4);});
+  D('M183 234 L217 234 L200 252 Z','#5a3524');
+  L('M200 252 L200 266 M200 266 Q182 284 166 270 M200 266 Q218 284 234 270','#5a3524',4);
+},
+tiger:function(){
+  E(200,364,88,50,'#f08a24');
+  sym(function(){C(112,128,28,'#f08a24');C(112,130,14,'#fff4e6');});
+  E(200,222,106,94,'#f08a24');
+  sym(function(){E(134,256,44,36,'#fff4e6');});
+  E(200,266,50,38,'#fff4e6');
+  L('M200 126 L200 172','#1b130d',9);L('M166 134 L176 170','#1b130d',8);L('M234 134 L224 170','#1b130d',8);
+  sym(function(){L('M96 204 L130 210 M94 236 L128 238 M102 266 L132 258','#1b130d',8);});
+  sym(function(){E(160,208,16,11,'#f7e27a');C(160,208,6,'#1b130d');});
+  D('M186 242 L214 242 L200 258 Z','#e0707e');
+  L('M200 258 L200 268 M200 268 Q184 282 170 270 M200 268 Q216 282 230 270','#1b130d',4);
+},
+elephant:function(){
+  sym(function(){D('M118 128 C44 96 6 186 36 262 C56 304 112 296 128 252 Z','#8793a2');D('M110 150 C64 132 40 192 60 244 C74 272 106 266 114 240 Z','#e0b3b6');});
+  E(200,188,88,94,'#a5b0bd');
+  D('M168 214 C166 286 174 338 200 352 C226 338 234 286 232 214 Z','#a5b0bd');
+  L('M176 262 L224 262 M178 292 L222 292 M184 322 L216 322','#8793a2',4);
+  sym(function(){D('M166 262 C146 290 146 322 168 338 C176 320 176 292 180 266 Z','#f8f2e2');});
+  sym(function(){eye(166,168,9);});
+},
+giraffe:function(){
+  D('M150 240 L128 400 L272 400 L250 240 Z','#f2c24b');
+  C(172,322,14,'#b9772e');C(228,304,16,'#b9772e');C(190,376,12,'#b9772e');C(244,364,13,'#b9772e');C(150,370,9,'#b9772e');
+  sym(function(){L('M170 96 L166 56','#b9772e',8);C(166,50,9,'#6b4423');});
+  sym(function(){E(116,142,30,14,'#f2c24b',-0.45);E(120,142,15,6,'#f1a7a0',-0.45);});
+  E(200,172,64,82,'#f2c24b');
+  C(178,118,8,'#b9772e');C(224,124,7,'#b9772e');C(200,98,6,'#b9772e');C(160,160,6,'#b9772e');
+  E(200,226,44,40,'#f7e2aa');
+  sym(function(){eye(172,160,9);C(186,232,4.5,'#6b4423');});
+  L('M178 254 Q200 264 222 254','#6b4423',4);
+},
+panda:function(){
+  sym(function(){E(112,332,34,58,'#1c1c22',0.3);});
+  E(200,352,100,60,'#fbfbf7');
+  sym(function(){C(116,118,36,'#1c1c22');});
+  E(200,206,110,94,'#fbfbf7');
+  sym(function(){E(158,202,28,36,'#1c1c22',0.45);C(160,200,9,'#fff');C(162,202,5,'#1c1c22');});
+  E(200,240,19,13,'#1c1c22');
+  L('M200 252 L200 264 M200 264 Q186 278 172 268 M200 264 Q214 278 228 268','#1c1c22',4);
+},
+penguin:function(){
+  sym(function(){D('M120 188 C70 228 66 292 84 322 C110 292 126 252 130 208 Z','#1d2733');});
+  E(200,238,92,140,'#1d2733');
+  E(200,262,66,114,'#fbfbf7');
+  C(200,122,64,'#1d2733');
+  sym(function(){E(152,150,14,24,'#f6c95a',0.25);});
+  D('M184 138 L216 138 L200 172 Z','#f08a24');
+  sym(function(){C(176,118,10,'#fff');C(177,119,5,'#17171d');});
+  sym(function(){E(166,380,28,12,'#f08a24');});
+},
+dolphin:function(){
+  var body='M30 292 C46 214 120 150 214 134 C268 124 312 138 340 162 L388 156 C384 176 366 190 346 194 C328 238 270 290 200 308 C130 324 60 326 30 292 Z';
+  D('M52 270 L6 238 C12 262 18 276 30 290 C16 300 8 312 4 332 L52 304 Z','#4a7fa8');
+  D(body,'#5d93bd');
+  clipD(body,function(){D('M0 300 C120 270 260 250 400 200 L400 400 L0 400 Z','#dbe9f3');});
+  D('M170 150 C190 108 214 98 236 94 C226 112 226 128 236 140 Z','#4a7fa8');
+  D('M236 236 C256 262 262 286 258 308 C240 292 220 270 214 250 Z','#4a7fa8');
+  eye(330,168,6.5);
+  L('M386 160 Q354 182 334 178','#2f5f86',3.5);
+  L('M10 362 Q50 340 90 362 T170 362 T250 362 T330 362 T410 356','#ffffff',7);
+},
+horse:function(){
+  sym(function(){D('M138 84 L128 28 L172 70 Z','#8a5a34');D('M140 74 L134 44 L158 68 Z','#e0b690');});
+  D('M170 62 Q200 40 230 62 L226 134 L174 134 Z','#3a2518');
+  var head='M130 90 C130 70 270 70 270 90 C284 160 262 250 250 330 C246 372 154 372 150 330 C138 250 116 160 130 90 Z';
+  D(head,'#a86a3a');
+  D('M190 80 L210 80 L218 286 L182 286 Z','#fbf4e6');
+  E(200,338,48,34,'#d9a77a');
+  sym(function(){C(182,342,5,'#2b1a10');eye(144,172,9);});
+  D('M170 74 Q200 112 230 74 L222 122 Q200 92 178 122 Z','#3a2518');
+},
+wolf:function(){
+  sym(function(){D('M112 150 L100 44 L176 108 Z','#6f7a86');D('M118 138 L112 80 L152 110 Z','#2b3038');});
+  sym(function(){D('M110 236 L74 264 L114 262 L98 296 L138 270 Z','#8c97a3');});
+  D('M200 112 C290 112 312 190 292 240 C282 280 236 300 200 336 C164 300 118 280 108 240 C88 190 110 112 200 112 Z','#8c97a3');
+  D('M200 178 C250 190 262 250 200 330 C138 250 150 190 200 178 Z','#e9edf1');
+  sym(function(){E(158,196,14,8,'#f4d35e',0.25);C(158,196,4.5,'#17171d');L('M138 182 L180 192','#3a424c',4);});
+  E(200,316,17,11,'#17171d');
+  L('M200 326 L200 340','#17171d',4);
+},
+fox:function(){
+  sym(function(){D('M104 150 L92 48 L170 110 Z','#e8651d');D('M112 134 L108 84 L148 112 Z','#2b1a14');});
+  D('M200 116 C268 116 314 156 318 198 C320 226 296 238 270 262 C246 284 222 320 200 338 C178 320 154 284 130 262 C104 238 80 226 82 198 C86 156 132 116 200 116 Z','#e8651d');
+  sym(function(){D('M84 200 C92 232 126 244 150 268 C172 290 188 320 200 338 L200 300 C178 286 150 262 130 238 C106 224 92 214 84 200 Z','#fff6ec');});
+  sym(function(){eye(160,198,9);L('M140 182 L176 190','#2b1a14',4);});
+  C(200,332,13,'#17171d');
+},
+bear:function(){
+  bearHead({body:'#8a5a36',inner:'#d1a572',muz:'#d1a572',nose:'#2b1a12'});
+},
+rabbit:function(){
+  E(200,360,86,46,'#efe9df');
+  sym(function(){D('M150 160 C118 100 122 24 150 16 C176 24 186 96 180 160 Z','#e9e2d8');D('M152 138 C138 92 140 46 150 38 C164 48 168 96 166 138 Z','#f4b6c0');});
+  E(200,238,92,80,'#efe9df');
+  E(200,264,40,30,'#fbf7f0');
+  sym(function(){eye(160,224,10);L('M152 264 L104 256 M152 272 L106 282','#8a7a6a',3);});
+  C(200,248,9,'#e07a8a');
+  L('M200 257 L200 268 M200 268 Q188 280 178 272 M200 268 Q212 280 222 272','#8a6a6a',3.5);
+  D('M192 272 L208 272 L208 294 L192 294 Z','#fff','#d8cfc2',2);
+},
+monkey:function(){
+  E(200,364,82,50,'#8a5a36');
+  sym(function(){C(100,206,32,'#8a5a36');C(100,206,19,'#ecd1a8');});
+  E(200,200,94,94,'#8a5a36');
+  D('M150 124 Q200 84 250 124 Q200 112 150 124 Z','#6b4226');
+  D('M200 192 C170 150 118 170 128 214 C134 250 170 270 200 298 C230 270 266 250 272 214 C282 170 230 150 200 192 Z','#ecd1a8');
+  sym(function(){eye(168,208,9);C(190,254,3.5,'#5a3a24');});
+  L('M170 270 Q200 292 230 270','#5a3a24',4);
+},
+owl:function(){
+  L('M40 376 L360 376','#5a3a24',16);
+  E(200,236,98,132,'#8b6a4a');
+  E(200,274,64,92,'#e8d5b5');
+  L('M160 242 Q200 264 240 242 M154 274 Q200 298 246 274 M160 306 Q200 328 240 306','#b89a74',4);
+  sym(function(){D('M118 128 L108 70 L164 102 Z','#6b4f36');});
+  sym(function(){D('M112 192 C70 252 80 322 120 342 C128 292 124 242 128 202 Z','#6b4f36');});
+  sym(function(){C(158,170,45,'#e8d5b5');C(158,170,29,'#f6c445');C(158,170,14,'#17171d');C(163,165,4,'#fff');});
+  D('M188 184 L212 184 L200 216 Z','#e8913a');
+  sym(function(){L('M176 366 L168 382 M184 366 L184 384 M192 366 L200 382','#e8913a',6);});
+},
+eagle:function(){
+  D('M246 196 C300 246 312 330 306 400 L104 400 C100 330 116 268 152 224 Z','#5a3b25');
+  L('M150 330 Q180 316 210 330 M200 352 Q232 338 262 352 M140 376 Q172 362 204 376 M232 378 Q262 364 292 378 M170 300 Q196 288 222 300','#7a5636',5);
+  D('M126 168 C126 120 180 94 226 114 C254 128 262 168 248 214 C236 244 216 262 200 262 C190 232 160 212 138 194 Z','#fbfbf6');
+  D('M130 160 C100 152 76 170 82 200 C88 224 110 224 124 208 C138 198 140 176 130 160 Z','#f3b82c');
+  D('M82 200 C80 214 92 228 106 226 C96 220 92 210 94 198 Z','#d99a12');
+  C(170,158,9,'#f9e27a');C(168,158,4.5,'#17171d');
+  L('M146 142 L192 152','#d9a912',6);
+},
+shark:function(){
+  var body='M24 256 C70 200 170 160 262 176 C314 186 354 208 390 238 C340 242 292 270 220 282 C140 294 62 292 24 256 Z';
+  D('M40 250 L2 196 L52 232 Z','#566f89');D('M36 262 L4 318 L62 270 Z','#566f89');
+  D(body,'#6f8aa3');
+  clipD(body,function(){D('M0 270 C140 250 280 250 400 236 L400 400 L0 400 Z','#eef3f7');});
+  D('M176 180 L208 100 L252 182 Z','#566f89');
+  D('M236 276 L286 340 L206 284 Z','#566f89');
+  C(324,214,6,'#17171d');
+  L('M280 214 Q272 228 280 242 M292 212 Q284 228 292 244','#40566e',3.5);
+  L('M390 238 Q356 254 316 246','#2d3d50',3.5);
+  D('M360 249 L365 260 L370 248 Z M340 252 L345 262 L350 251 Z','#fff');
+},
+whale:function(){
+  var body='M22 236 C22 170 100 134 196 142 C290 150 334 196 352 236 L388 196 L394 262 L350 258 C318 300 232 326 142 320 C70 316 22 288 22 236 Z';
+  D(body,'#4f82b4');
+  clipD(body,function(){D('M0 262 C100 236 240 256 400 282 L400 400 L0 400 Z','#d2e3f0');L('M40 276 Q120 268 200 284 M44 292 Q120 286 190 300','#b3cde0',3);});
+  D('M176 286 L142 342 L226 300 Z','#3d6c9a');
+  eye(70,232,7);
+  L('M26 258 Q70 286 124 276','#2c5580',4);
+  L('M104 142 L104 112 M104 112 Q84 92 72 100 M104 112 Q124 90 138 100','#b9e3f5',8);
+  L('M6 366 Q46 346 86 366 T166 366 T246 366 T326 366 T406 360','#ffffff',7);
+},
+zebra:function(){
+  sym(function(){D('M138 84 L128 28 L172 70 Z','#fbfbf7');D('M140 74 L134 44 L158 68 Z','#1c1c22');});
+  D('M170 62 Q200 40 230 62 L226 134 L174 134 Z','#1c1c22');
+  var head='M130 90 C130 70 270 70 270 90 C284 160 262 250 250 330 C246 372 154 372 150 330 C138 250 116 160 130 90 Z';
+  D(head,'#fbfbf7');
+  clipD(head,function(){
+    for(var y=100;y<=280;y+=36){L('M100 '+y+' Q200 '+(y+26)+' 300 '+y,'#1c1c22',14);}
+    E(200,340,52,36,'#34343c');
+  });
+  sym(function(){C(182,342,5,'#0f0f13');C(144,172,12,'#fbfbf7');eye(144,172,8);});
+},
+koala:function(){
+  E(200,360,92,56,'#a7b0ba');E(200,368,60,40,'#e9e6df');
+  sym(function(){C(98,152,46,'#9aa3ad');C(98,154,28,'#f1eee8');});
+  E(200,216,98,88,'#a7b0ba');
+  sym(function(){eye(158,196,8);});
+  E(200,226,25,34,'#2b2b33');E(192,214,6,9,'rgba(255,255,255,.45)');
+  L('M200 262 Q186 282 170 276 M200 262 Q214 282 230 276','#4a4a55',4);
+},
+kangaroo:function(){
+  D('M140 300 C110 340 110 392 130 400 L270 400 C290 392 290 340 260 300 Z','#d9a066');
+  E(200,362,40,40,'#f2dcbc');
+  sym(function(){D('M146 322 C120 338 116 364 126 374 C136 362 146 352 152 342 Z','#c98a4e');});
+  sym(function(){D('M140 124 C110 74 120 24 146 20 C170 42 176 98 170 134 Z','#c98a4e');D('M142 104 C128 72 132 44 146 38 C158 54 160 84 158 108 Z','#f1b2a8');});
+  D('M130 150 C130 110 270 110 270 150 C276 200 250 250 226 290 C214 312 186 312 174 290 C150 250 124 200 130 150 Z','#d9a066');
+  E(200,278,32,26,'#f2dcbc');
+  sym(function(){eye(166,172,9);});
+  E(200,292,15,10,'#3a2a24');
+  L('M200 302 L200 310','#3a2a24',3);
+},
+flamingo:function(){
+  L('M200 288 L200 392 M190 392 L226 392','#e04c6c',7);
+  L('M218 286 L244 330 L208 338 M200 338 L232 338','#e04c6c',7);
+  D('M118 214 L60 252 L124 262 Z','#e04c6c');
+  E(196,232,90,60,'#f26d85',-0.15);
+  D('M120 226 C150 288 236 282 274 222 C232 244 176 244 120 226 Z','#e04c6c');
+  L('M262 198 C342 162 322 60 252 56 C222 56 208 80 218 100','#f26d85',22);
+  C(214,104,17,'#f26d85');
+  D('M200 98 C190 104 188 120 204 126 C214 126 222 118 224 108 Z','#fbe9dc');
+  D('M196 116 C198 126 208 128 216 122 L206 112 Z','#17171d');
+  C(218,98,4,'#17171d');
+},
+parrot:function(){
+  L('M50 382 L350 382','#6b4a2c',14);
+  D('M180 250 L148 394 L190 382 L212 394 L226 250 Z','#2f6fd6');
+  D('M190 250 L178 330 L206 330 L216 250 Z','#d93a3a');
+  E(200,200,72,112,'#d93a3a');
+  sym(function(){D('M138 170 C110 230 124 300 160 330 C168 280 160 220 156 170 Z','#2f6fd6');D('M132 214 C130 240 138 264 148 282 C152 262 152 238 150 214 Z','#f6c93a');});
+  C(200,108,58,'#d93a3a');
+  E(214,116,34,32,'#fbfbf7');
+  C(222,110,8,'#17171d');C(224,108,3,'#fff');
+  D('M232 98 C292 90 306 152 262 166 C264 144 252 126 232 122 Z','#f2efe6');
+  D('M236 124 C250 126 258 138 262 158 C246 158 236 148 236 124 Z','#3a3a40');
+  sym(function(){L('M184 360 L184 380','#3a3a40',6);});
+},
+butterfly:function(){
+  sym(function(){
+    D('M196 190 C150 60 40 40 30 120 C26 180 90 210 196 206 Z','#f08a24','#1c1410',6);
+    D('M196 210 C120 214 70 260 96 322 C130 350 190 300 196 250 Z','#f4a640','#1c1410',6);
+    L('M190 198 L60 100 M190 202 L40 150','#1c1410',4);
+    C(74,92,6,'#fff');C(52,118,5,'#fff');C(110,70,5,'#fff');C(112,300,5,'#fff');C(96,276,4,'#fff');
+    L('M196 142 Q180 100 160 86','#1c1410',4);
+  });
+  E(200,228,10,76,'#1c1410');C(200,148,13,'#1c1410');
+},
+octopus:function(){
+  for(var i=0;i<8;i++){var x=104+i*27,d=i%2?1:-1;L('M'+x+' 214 C'+(x-22*d)+' 262 '+(x+26*d)+' 300 '+(x-6*d)+' 346 C'+(x-18*d)+' 364 '+(x-34*d)+' 366 '+(x-40*d)+' 352','#a86bd6',24);}
+  E(200,152,96,90,'#a86bd6');
+  C(200,96,9,'#c79be6');C(160,108,7,'#c79be6');C(240,108,7,'#c79be6');C(226,80,5,'#c79be6');
+  sym(function(){C(160,160,25,'#fff');C(163,164,12,'#17171d');C(167,160,4,'#fff');});
+  L('M170 208 Q200 232 230 208','#6c3a96',5);
+},
+turtle:function(){
+  sym(function(){E(112,138,36,16,'#6fae6b',-0.7);E(116,292,30,14,'#6fae6b',0.7);});
+  D('M190 330 L200 376 L210 330 Z','#6fae6b');
+  C(200,70,36,'#7fbf7a');
+  sym(function(){C(188,64,5,'#17171d');});
+  E(200,210,100,126,'#3f7f3b');
+  E(200,210,86,112,'#63a85e');
+  D('M200 160 L238 180 L238 222 L200 244 L162 222 L162 180 Z','#3f7f3b');
+  L('M200 160 L200 112 M238 180 L276 160 M238 222 L276 244 M200 244 L200 296 M162 222 L124 244 M162 180 L124 160','#3f7f3b',6);
+},
+frog:function(){
+  sym(function(){E(96,334,46,30,'#46a046',-0.3);});
+  E(200,272,122,92,'#5cb85c');
+  E(200,306,82,58,'#d4eeb6');
+  E(200,204,102,70,'#5cb85c');
+  sym(function(){C(140,142,40,'#5cb85c');C(140,140,27,'#fbfbf7');E(140,140,10,17,'#17171d');});
+  L('M108 216 Q200 276 292 216','#2f6f2f',5);
+  C(190,190,3,'#2f6f2f');C(210,190,3,'#2f6f2f');
+  sym(function(){C(122,236,12,'rgba(240,120,120,.55)');});
+},
+hippo:function(){
+  sym(function(){E(122,112,19,23,'#8d86a3');E(122,114,9,12,'#e3a9b8');});
+  sym(function(){C(152,116,26,'#8d86a3');});
+  E(200,176,102,70,'#8d86a3');
+  sym(function(){eye(152,114,9);});
+  E(200,266,120,92,'#9c95b2');
+  sym(function(){C(158,234,15,'#8d86a3');E(158,234,7,4.5,'#3a3550');});
+  L('M96 292 Q200 326 304 292','#5b5575',5);
+  sym(function(){D('M148 304 L150 326 L168 308 Z','#fff');C(104,276,10,'rgba(230,150,170,.6)');});
+},
+crocodile:function(){
+  var body='M20 214 C60 200 120 192 160 184 C200 168 270 168 316 190 C352 206 376 236 396 264 C356 258 330 266 296 276 C240 292 150 288 84 262 L20 246 Z';
+  D(body,'#5f9e4a');
+  clipD(body,function(){D('M0 252 C120 250 260 262 400 262 L400 400 L0 400 Z','#cfe3a4');});
+  for(var i=0;i<7;i++){D('M'+(190+i*24)+' 176 L'+(198+i*24)+' 158 L'+(206+i*24)+' 178 Z','#4a8238');}
+  C(142,184,15,'#5f9e4a');C(144,181,7.5,'#f6d23a');E(144,181,2.2,6.5,'#17171d');
+  C(36,214,4,'#2f5a28');
+  D('M22 246 L30 258 L40 246 L50 258 L60 246 L70 258 L80 247 L90 258 L100 249 L110 259 L120 252 L130 261 L22 246 Z','#fff');
+  L('M20 246 L150 262','#3d6e2f',3.5);
+  L('M10 374 Q50 354 90 374 T170 374 T250 374 T330 374 T410 368','#ffffff',7);
+},
+pig:function(){
+  E(200,364,100,50,'#f7b6c4');
+  sym(function(){D('M112 124 L100 68 L164 102 Z','#f29bb0');});
+  E(200,212,102,92,'#f7b6c4');
+  sym(function(){C(130,242,17,'rgba(240,138,160,.65)');eye(158,196,9);});
+  E(200,254,50,35,'#f08aa0');
+  sym(function(){E(184,254,7,12,'#b8485f');});
+},
+cow:function(){
+  E(200,372,90,40,'#fbfbf7');
+  sym(function(){D('M138 112 C120 82 120 62 130 56 C146 68 156 92 160 114 Z','#f1e3b8');});
+  sym(function(){E(90,162,38,18,'#fbfbf7',0.4);E(94,162,22,9,'#f2a9a3',0.4);});
+  var head='M130 112 C130 102 270 102 270 112 C286 190 270 260 246 296 C236 316 164 316 154 296 C130 260 114 190 130 112 Z';
+  D(head,'#fbfbf7');
+  clipD(head,function(){D('M120 100 L214 100 C210 150 170 182 118 172 Z','#2b2b30');});
+  D('M170 108 Q200 86 230 108 Q200 130 170 108 Z','#dcd5c8');
+  E(200,278,58,40,'#f5b5b0');
+  sym(function(){C(180,282,6,'#c0707a');});
+  eye(240,172,9);C(160,172,9,'#fbfbf7');eye(160,172,9);
+},
+deer:function(){
+  D('M160 296 L138 400 L262 400 L240 296 Z','#b87a4a');
+  D('M184 330 L200 400 L216 330 Z','#f3e4cd');
+  sym(function(){L('M152 112 C124 76 114 46 104 20 M132 82 L102 72 M124 58 L96 50 M142 98 L152 62','#6b4a2c',8);});
+  sym(function(){E(100,152,34,16,'#b87a4a',-0.5);E(104,152,18,8,'#f0c4b0',-0.5);});
+  D('M140 122 C140 112 260 112 260 122 C276 200 250 262 232 300 C222 322 178 322 168 300 C150 262 124 200 140 122 Z','#b87a4a');
+  E(200,302,34,24,'#f3e4cd');
+  E(200,314,16,10,'#2b1a12');
+  sym(function(){eye(164,178,9);C(150,206,5,'#f3e4cd');});
+},
+hedgehog:function(){
+  var cx=180,cy=268,pts=[],i,a,f;
+  for(i=0;i<=44;i++){a=Math.PI+i/44*Math.PI;f=(i%2)?0.86:1;pts.push([cx+Math.cos(a)*150*f,cy+Math.sin(a)*160*f]);}
+  var p='M'+pts.map(function(q){return q[0].toFixed(1)+' '+q[1].toFixed(1);}).join(' L')+' L330 316 L30 316 Z';
+  D(p,'#5a3d2b');
+  var pts2=[];for(i=0;i<=34;i++){a=Math.PI+i/34*Math.PI;f=(i%2)?0.62:0.74;pts2.push([cx+Math.cos(a)*150*f,cy+Math.sin(a)*160*f]);}
+  D('M'+pts2.map(function(q){return q[0].toFixed(1)+' '+q[1].toFixed(1);}).join(' L')+' L262 300 L98 300 Z','#7a5538');
+  D('M262 226 C320 212 376 246 394 292 C380 314 322 324 276 316 Z','#ecd3a8');
+  E(120,322,24,12,'#d1ae7e');E(268,324,24,12,'#d1ae7e');
+  C(394,290,9,'#17171d');C(336,264,7,'#17171d');C(338,262,2.5,'#fff');C(298,240,11,'#d1ae7e');
+},
+polarbear:function(){
+  bearHead({body:'#f4f6f8',inner:'#cfd9e3',muz:'#e4ebf2',nose:'#1c1c22'});
+}
+};
+
+/* ---------- the 35 postcards: name, habitat, palette, two facts each ---------- */
+var ANIMALS=[
+{k:'dog',n:'Dog',h:'the Dog Park',bg:'#2f7f8f',sun:'#f2c14e',ground:'#1f5f6f',f:['A dog’s nose print is as unique as a human fingerprint.','Many dogs learn to understand around 150 words and gestures.']},
+{k:'cat',n:'Cat',h:'the Sunny Windowsill',bg:'#3b5aa8',sun:'#f4c95d',ground:'#2b4488',f:['Most cats sleep somewhere between 12 and 16 hours a day.','A cat’s whiskers help it sense whether it can squeeze through a gap.']},
+{k:'lion',n:'Lion',h:'the Savanna',bg:'#2f8a7a',sun:'#f4d27a',ground:'#1f6a5c',f:['A lion’s roar can be heard from up to eight kilometres away.','Lions are the only big cats that live in social groups called prides.']},
+{k:'tiger',n:'Tiger',h:'the Jungle',bg:'#2f7d4f',sun:'#f6df8a',ground:'#1f5b38',f:['No two tigers share a stripe pattern, and their skin is striped too.','Tigers are strong swimmers and often cool off in rivers and lakes.']},
+{k:'elephant',n:'Elephant',h:'the Waterhole',bg:'#d1603d',sun:'#f7c873',ground:'#9e3f23',f:['An elephant’s trunk has no bones, yet it can lift a log or pick up a peanut.','Elephants can recognise themselves in a mirror.']},
+{k:'giraffe',n:'Giraffe',h:'the Acacia Plains',bg:'#3e6fb0',sun:'#fbe28a',ground:'#2c5a93',f:['A giraffe has the same number of neck bones as you: seven.','A giraffe’s tongue can be about 45 centimetres long.']},
+{k:'panda',n:'Panda',h:'the Bamboo Forest',bg:'#4f9a5a',sun:'#d7efb4',ground:'#357a42',f:['Giant pandas can spend 12 hours or more a day eating bamboo.','A newborn panda is roughly the size of a stick of butter.']},
+{k:'penguin',n:'Penguin',h:'the Ice Shelf',bg:'#2a6fa8',sun:'#bfe6f7',ground:'#cfe9f5',f:['Emperor penguins can dive deeper than 500 metres to hunt.','Male emperor penguins keep an egg warm on their feet for about two months.']},
+{k:'dolphin',n:'Dolphin',h:'the Open Ocean',bg:'#1f8fb5',sun:'#ffe08a',ground:'#136f93',f:['Dolphins call each other using signature whistles that work like names.','Dolphins sleep with one half of their brain at a time.']},
+{k:'horse',n:'Horse',h:'the Meadow',bg:'#8a4fa0',sun:'#f6d98c',ground:'#63357a',f:['Horses can sleep standing up thanks to a locking mechanism in their legs.','A horse’s eyes sit on the sides of its head, giving it near all-round vision.']},
+{k:'wolf',n:'Wolf',h:'the Moonlit Forest',bg:'#34457a',sun:'#e8ecf4',ground:'#232f58',f:['A wolf pack’s howl can carry for many kilometres in open country.','Wolves live and hunt in family packs, usually a breeding pair and their young.']},
+{k:'fox',n:'Fox',h:'the Autumn Woods',bg:'#2b6c8f',sun:'#f6cf6a',ground:'#1f5370',f:['A red fox can hear a mouse moving under snow and pounce on it.','Red foxes seem to use Earth’s magnetic field to aim their pounce.']},
+{k:'bear',n:'Bear',h:'the Mountains',bg:'#d89a2f',sun:'#f8d77a',ground:'#9a6a1f',f:['Brown bears sleep through the winter in dens, living off stored body fat.','A brown bear can run at around 50 kilometres per hour over short distances.']},
+{k:'rabbit',n:'Rabbit',h:'the Clover Field',bg:'#e5849a',sun:'#fde3b0',ground:'#bf5a72',f:['A rabbit’s teeth never stop growing.','A happy rabbit may leap and twist in mid-air in a move called a binky.']},
+{k:'monkey',n:'Monkey',h:'the Treetops',bg:'#3aa0a0',sun:'#f9e08e',ground:'#26777a',f:['Many monkeys groom each other to bond and keep the peace.','Capuchin monkeys use stones as tools to crack open nuts.']},
+{k:'owl',n:'Owl',h:'the Night Sky',bg:'#3a3f7a',sun:'#f6e6a8',ground:'#262a5a',f:['An owl can turn its head about 270 degrees.','Soft edges on an owl’s feathers make its flight almost silent.']},
+{k:'eagle',n:'Eagle',h:'the Cliffs',bg:'#5b8fd1',sun:'#fff0b8',ground:'#3d6aa8',f:['Bald eagles build nests that can weigh a tonne or more.','An eagle can spot a rabbit from more than a kilometre away.']},
+{k:'shark',n:'Shark',h:'the Reef',bg:'#1d5f8f',sun:'#9fdcf0',ground:'#0f4263',f:['Sharks have skeletons made of cartilage, not bone.','A shark can lose and regrow thousands of teeth in its lifetime.']},
+{k:'whale',n:'Whale',h:'the Deep Blue',bg:'#183f73',sun:'#7fc8e6',ground:'#0e2a52',f:['Blue whales are the largest animals known ever to have lived.','A blue whale’s low call can travel for hundreds of kilometres underwater.']},
+{k:'zebra',n:'Zebra',h:'the Grasslands',bg:'#e0973a',sun:'#f9d98a',ground:'#b06d1f',f:['Every zebra has its own stripe pattern, like a fingerprint.','A zebra foal can stand within minutes and run within hours of being born.']},
+{k:'koala',n:'Koala',h:'the Eucalyptus Grove',bg:'#5aa37a',sun:'#e6f2c4',ground:'#3d7d58',f:['Koalas can sleep up to 20 hours a day.','Koalas have fingerprints that are almost identical to human ones.']},
+{k:'kangaroo',n:'Kangaroo',h:'the Outback',bg:'#2f8aa8',sun:'#f9d27a',ground:'#c47a3a',f:['A kangaroo can hop faster than 50 kilometres per hour.','A baby kangaroo, or joey, is born about the size of a jellybean.']},
+{k:'flamingo',n:'Flamingo',h:'the Lagoon',bg:'#2aa6a0',sun:'#ffd9a0',ground:'#1b7f7a',f:['Flamingos get their pink colour from pigments in the food they eat.','A flamingo can doze while standing on one leg.']},
+{k:'parrot',n:'Parrot',h:'the Rainforest',bg:'#2d8f4e',sun:'#f9e07a',ground:'#1f6a38',f:['Parrots can copy human speech, and some seem to use words in context.','Most parrots have two toes pointing forward and two back, perfect for gripping.']},
+{k:'butterfly',n:'Butterfly',h:'the Flower Garden',bg:'#7a4fb0',sun:'#f9e6a0',ground:'#55338a',f:['Butterflies taste with their feet.','Monarch butterflies migrate thousands of kilometres to their winter homes.']},
+{k:'octopus',n:'Octopus',h:'the Sea Floor',bg:'#0f6f8a',sun:'#ffd98a',ground:'#0a4e66',f:['An octopus has three hearts and blue blood.','An octopus can squeeze through any gap larger than its beak.']},
+{k:'turtle',n:'Turtle',h:'the Coral Reef',bg:'#1d8fb0',sun:'#ffe9a8',ground:'#146f8f',f:['A turtle’s shell is part of its skeleton, grown from its ribs and spine.','Sea turtles return to the beaches where they hatched to lay their own eggs.']},
+{k:'frog',n:'Frog',h:'the Lily Pond',bg:'#f0c24a',sun:'#fff3b8',ground:'#c99a2a',f:['Frogs absorb water and breathe partly through their skin.','Frogs pull their eyeballs down into their throats to help swallow food.']},
+{k:'hippo',n:'Hippo',h:'the River',bg:'#2f7fb8',sun:'#ffe6a0',ground:'#1f5f8f',f:['Hippos ooze a reddish oily fluid that helps protect their skin from the sun.','Despite their bulk, hippos can outrun a person over short distances.']},
+{k:'crocodile',n:'Crocodile',h:'the Swamp',bg:'#b0503a',sun:'#f6c873',ground:'#7f3a2a',f:['Saltwater crocodiles have the strongest bite of any living animal measured.','A resting crocodile can stay underwater for an hour or more.']},
+{k:'pig',n:'Pig',h:'the Farm',bg:'#5aa0d0',sun:'#fff0c0',ground:'#7fb560',f:['Pigs are highly intelligent and can learn to respond to their names.','Pigs roll in mud to cool down because they can’t sweat much.']},
+{k:'cow',n:'Cow',h:'the Pasture',bg:'#3f8f5f',sun:'#fff1a8',ground:'#2d6e46',f:['Cows form close friendships and can get stressed when separated.','A cow’s stomach has four compartments.']},
+{k:'deer',n:'Deer',h:'the Forest',bg:'#2f6f5f',sun:'#f5d98a',ground:'#1f4f44',f:['Male deer regrow their antlers every year.','A young fawn’s spotted coat helps it hide in dappled light.']},
+{k:'hedgehog',n:'Hedgehog',h:'the Hedgerow',bg:'#7a9f3a',sun:'#fbe6a0',ground:'#55772a',f:['A hedgehog’s back is covered in thousands of spines.','Hedgehogs roll into a tight, spiky ball when they feel threatened.']},
+{k:'polarbear',n:'Polar bear',h:'the Arctic',bg:'#2f5f9f',sun:'#e8f4ff',ground:'#dff0fa',f:['A polar bear’s skin is black under its see-through fur.','A polar bear can swim for many hours, and some have been tracked swimming for days.']}
+].sort(function(a,b){return a.n.localeCompare(b.n);});
+
+/* ---------- helpers ---------- */
+function mk(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;return c;}
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function lum(h){var n=parseInt(h.slice(1),16);return(0.299*(n>>16&255)+0.587*(n>>8&255)+0.114*(n&255))/255;}
+function rng(seed){return function(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
+function paintArt(key,ctx,x,y,size){var prev=X;X=ctx;ctx.save();ctx.translate(x,y);ctx.scale(size/400,size/400);ART[key]();ctx.restore();X=prev;}
+function silhouette(key,color){var c=mk(400,400),g=c.getContext('2d');paintArt(key,g,0,0,400);g.globalCompositeOperation='source-in';g.fillStyle=color;g.fillRect(0,0,400,400);return c;}
+function wrap(c,text,maxW){var words=text.split(' '),lines=[],line='',t,i;for(i=0;i<words.length;i++){t=line?line+' '+words[i]:words[i];if(c.measureText(t).width>maxW&&line){lines.push(line);line=words[i];}else line=t;}if(line)lines.push(line);return lines;}
+function spacing(c,v){if('letterSpacing' in c)c.letterSpacing=v;}
+function dateStamp(){var d=new Date();return{day:String(d.getDate()).padStart(2,'0')+' '+d.toLocaleString('en-GB',{month:'short'}).toUpperCase(),year:String(d.getFullYear())};}
+var F_DISPLAY='"Bowlby One","Arial Black",Impact,sans-serif',F_MONO='"DM Mono",ui-monospace,Menlo,monospace',F_HAND='Caveat,"Segoe Print","Bradley Hand",cursive';
+
+function stampCanvas(a){
+  var w=176,h=216,s=mk(w,h),g=s.getContext('2d'),i,step=16;
+  g.fillStyle='#fffdf8';g.fillRect(0,0,w,h);
+  g.globalCompositeOperation='destination-out';
+  for(i=step/2;i<w;i+=step){g.beginPath();g.arc(i,0,5,0,7);g.fill();g.beginPath();g.arc(i,h,5,0,7);g.fill();}
+  for(i=step/2;i<h;i+=step){g.beginPath();g.arc(0,i,5,0,7);g.fill();g.beginPath();g.arc(w,i,5,0,7);g.fill();}
+  g.globalCompositeOperation='source-over';
+  var ink=lum(a.bg)>0.55?'#1a1410':'#fff3d6';
+  g.fillStyle=a.bg;g.fillRect(14,14,w-28,h-28);
+  g.strokeStyle=ink;g.globalAlpha=.55;g.lineWidth=2;g.strokeRect(20,20,w-40,h-40);g.globalAlpha=1;
+  g.drawImage(silhouette(a.k,ink),26,40,124,124);
+  g.fillStyle=ink;g.textAlign='center';
+  g.font='400 15px '+F_DISPLAY;g.fillText('POSTAPP',w/2,h-50);
+  g.font='500 11px '+F_MONO;spacing(g,'2px');g.fillText('AIR MAIL',w/2,h-32);spacing(g,'0px');
+  g.textAlign='left';g.font='400 22px '+F_DISPLAY;g.fillText('1',30,52);
+  return s;
+}
+
+function badge(c,a,x,y,r){
+  c.save();c.translate(x,y);
+  c.shadowColor='rgba(0,0,0,.35)';c.shadowBlur=14;c.shadowOffsetY=6;
+  c.beginPath();c.arc(0,0,r,0,Math.PI*2);c.fillStyle='#fffef9';c.fill();
+  c.shadowColor='transparent';
+  c.beginPath();c.arc(0,0,r-7,0,Math.PI*2);c.fillStyle=a.bg;c.fill();
+  c.save();c.beginPath();c.arc(0,0,r-8,0,Math.PI*2);c.clip();
+  c.beginPath();c.arc(0,0,r-8,0,Math.PI*2);c.fillStyle=a.sun;c.globalAlpha=.35;c.fill();c.globalAlpha=1;
+  paintArt(a.k,c,-(r-7)*1.02,-(r-7)*1.02,(r-7)*2.04);
+  c.restore();
+  c.setLineDash([3,5]);c.strokeStyle='rgba(255,255,255,.85)';c.lineWidth=2;c.beginPath();c.arc(0,0,r-12,0,Math.PI*2);c.stroke();c.setLineDash([]);
+  c.restore();
+}
+
+/* ---------- compose one postcard ---------- */
+var cv=document.getElementById('card'),ctx=cv.getContext('2d');
+function draw(a,fi){
+  var c=ctx,i,fact=a.f[fi%a.f.length];
+  c.save();c.clearRect(0,0,W,H);
+  c.fillStyle='#fbf9f4';rr(c,0,0,W,H,26);c.fill();
+  c.save();rr(c,36,36,1128,728,14);c.clip();
+  c.fillStyle=a.bg;c.fillRect(0,0,W,H);
+  /* sun, rings and sparkles */
+  c.fillStyle=a.sun;c.globalAlpha=.9;c.beginPath();c.arc(390,470,262,0,7);c.fill();c.globalAlpha=1;
+  c.strokeStyle='rgba(255,255,255,.22)';c.lineWidth=3;
+  c.beginPath();c.arc(390,470,300,0,7);c.stroke();c.beginPath();c.arc(390,470,336,0,7);c.stroke();
+  var r=rng(a.k.charCodeAt(0)*131+a.k.length*17);
+  for(i=0;i<16;i++){c.fillStyle='rgba(255,255,255,.4)';c.beginPath();c.arc(70+r()*620,250+r()*330,2+r()*4,0,7);c.fill();}
+  for(i=0;i<7;i++){c.save();c.translate(80+r()*600,240+r()*330);var sc=.7+r()*.9;c.scale(sc,sc);c.fillStyle='rgba(255,255,255,.55)';c.fill(new Path2D('M0 -12 Q0 0 12 0 Q0 0 0 12 Q0 0 -12 0 Q0 0 0 -12 Z'));c.restore();}
+  /* ground */
+  c.fillStyle=a.ground;c.fill(new Path2D('M36 660 Q200 624 380 654 T700 650 T1030 656 T1164 640 L1164 764 L36 764 Z'));
+  c.fillStyle='rgba(255,255,255,.12)';c.fill(new Path2D('M36 700 Q300 676 560 700 T1164 690 L1164 764 L36 764 Z'));
+  /* eyebrow + title (behind the animal) */
+  var dark=lum(a.bg)>0.55,tc=dark?'#1a1410':'#fffaf0';
+  c.fillStyle=tc;c.textBaseline='alphabetic';c.textAlign='left';
+  c.font='500 25px '+F_MONO;spacing(c,'4px');c.fillText(('GREETINGS FROM '+a.h).toUpperCase(),84,112);spacing(c,'0px');
+  var name=a.n.toUpperCase(),size=118;c.font='400 '+size+'px '+F_DISPLAY;
+  var tw=c.measureText(name).width;if(tw>800){size=Math.floor(size*800/tw);c.font='400 '+size+'px '+F_DISPLAY;}
+  c.fillStyle='rgba(0,0,0,.26)';c.fillText(name,88,222);
+  c.fillStyle=tc;c.fillText(name,84,217);
+  /* the animal */
+  paintArt(a.k,c,140,224,500);
+  c.restore();
+  c.strokeStyle='rgba(255,255,255,.5)';c.lineWidth=3;rr(c,50,50,1100,700,8);c.stroke();
+  c.fillStyle='rgba(255,255,255,.85)';c.font='500 17px '+F_MONO;spacing(c,'5px');c.textAlign='left';c.fillText('PAR AVION  ·  AIR MAIL',84,732);spacing(c,'0px');
+
+  /* stamp */
+  var st=stampCanvas(a);
+  c.save();c.translate(1042,172);c.rotate(.06);c.shadowColor='rgba(0,0,0,.3)';c.shadowBlur=12;c.shadowOffsetY=5;c.drawImage(st,-88,-108);c.restore();
+  /* postmark */
+  var ds=dateStamp();
+  c.save();c.strokeStyle='rgba(22,26,44,.62)';c.fillStyle='rgba(22,26,44,.62)';c.lineWidth=3.5;
+  c.beginPath();c.arc(962,268,56,0,7);c.stroke();c.lineWidth=2;c.beginPath();c.arc(962,268,46,0,7);c.stroke();
+  c.textAlign='center';c.font='500 14px '+F_MONO;c.fillText('POSTAPP',962,255);c.fillText(ds.day,962,274);c.fillText(ds.year,962,293);
+  c.lineWidth=3.5;
+  for(i=0;i<4;i++){var yy=240+i*17;c.beginPath();c.moveTo(1018,yy);c.bezierCurveTo(1044,yy-10,1062,yy+10,1088,yy);c.bezierCurveTo(1108,yy-8,1126,yy+8,1148,yy);c.stroke();}
+  c.restore();
+
+  /* fact card */
+  var cw=440,fsz=40,lines,lh;
+  do{c.font='700 '+fsz+'px '+F_HAND;lines=wrap(c,fact,cw-92);fsz-=2;}while(lines.length>5&&fsz>28);
+  lh=Math.round((fsz+2)*1.2);
+  var ch=74+lines.length*lh+78,cx=700,cy=708-ch;
+  c.save();c.translate(cx+cw/2,cy+ch/2);c.rotate(-.022);
+  c.shadowColor='rgba(0,0,0,.32)';c.shadowBlur=22;c.shadowOffsetY=10;
+  c.fillStyle='#fffef9';c.fillRect(-cw/2,-ch/2,cw,ch);
+  c.shadowColor='transparent';
+  c.strokeStyle='rgba(60,100,170,.22)';c.lineWidth=2;
+  for(i=0;i<lines.length;i++){var ly=-ch/2+74+i*lh+10;c.beginPath();c.moveTo(-cw/2+26,ly);c.lineTo(cw/2-26,ly);c.stroke();}
+  c.fillStyle='#6a7685';c.font='500 15px '+F_MONO;spacing(c,'3px');c.textAlign='left';c.fillText('DID YOU KNOW?',-cw/2+52,-ch/2+44);spacing(c,'0px');
+  c.fillStyle='#21408f';c.font='700 '+(fsz+2)+'px '+F_HAND;
+  for(i=0;i<lines.length;i++)c.fillText(lines[i],-cw/2+52,-ch/2+74+i*lh);
+  c.fillStyle='#c4283f';c.font='700 36px '+F_HAND;c.textAlign='right';c.fillText('Wish you were here!',cw/2-30,ch/2-26);
+  c.fillStyle='rgba(236,214,140,.82)';
+  c.save();c.translate(-cw/2+60,-ch/2+2);c.rotate(-.18);c.fillRect(-46,-14,92,28);c.restore();
+  c.save();c.translate(cw/2-60,-ch/2+2);c.rotate(.16);c.fillRect(-46,-14,92,28);c.restore();
+  c.restore();
+  /* badge pinned to the card corner */
+  badge(c,a,cx-28,cy+20,58);
+  c.restore();
+}
+
+/* ---------- app state and UI ---------- */
+var sel=document.getElementById('animal'),statusEl=document.getElementById('status');
+var cur=null,fi=0,blobP=null,i0;
+for(i0=0;i0<ANIMALS.length;i0++){var o=document.createElement('option');o.value=ANIMALS[i0].k;o.textContent=ANIMALS[i0].n;sel.appendChild(o);}
+function byKey(k){return ANIMALS.filter(function(a){return a.k===k;})[0];}
+function setStatus(t){statusEl.textContent=t||'';}
+function render(){
+  draw(cur,fi);
+  cv.setAttribute('aria-label','Postcard of a '+cur.n.toLowerCase()+'. '+cur.f[fi%cur.f.length]);
+  blobP=new Promise(function(res){cv.toBlob(res,'image/png');});
+}
+function pick(k,keepFact){
+  cur=byKey(k);sel.value=k;
+  if(!keepFact)fi=Math.floor(Math.random()*cur.f.length);
+  render();
+}
+sel.addEventListener('change',function(){setStatus('');pick(sel.value);});
+document.getElementById('fact').addEventListener('click',function(){setStatus('');fi=(fi+1)%cur.f.length;render();});
+document.getElementById('rand').addEventListener('click',function(){
+  var k;do{k=ANIMALS[Math.floor(Math.random()*ANIMALS.length)].k;}while(k===cur.k);
+  setStatus('');pick(k);
+});
+
+/* ---------- send ---------- */
+var sheet=document.getElementById('sheet'),sheetImg=document.getElementById('sheet-img'),sheetMsg=document.getElementById('sheet-msg'),sheetClose=document.getElementById('sheet-close'),lastFocus=null,sheetUrl=null;
+function showSheet(blob,copied,opened){
+  if(sheetUrl)URL.revokeObjectURL(sheetUrl);
+  sheetUrl=URL.createObjectURL(blob);sheetImg.src=sheetUrl;
+  if(copied&&opened)sheetMsg.textContent='The postcard is copied. In WhatsApp, choose a contact, then paste with Ctrl+V or ⌘V.';
+  else if(copied)sheetMsg.textContent='The postcard is copied. Open WhatsApp, choose a contact, then paste with Ctrl+V or ⌘V.';
+  else sheetMsg.textContent='Save the postcard (press and hold the image, or right-click it), then open WhatsApp, choose a contact and attach it.';
+  lastFocus=document.activeElement;sheet.hidden=false;sheetClose.focus();
+}
+function hideSheet(){sheet.hidden=true;if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+sheetClose.addEventListener('click',hideSheet);
+sheet.addEventListener('click',function(e){if(e.target===sheet)hideSheet();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!sheet.hidden)hideSheet();});
+
+document.getElementById('send').addEventListener('click',async function(){
+  var blob=await blobP;
+  if(!blob){setStatus('The image could not be created. Try again.');return;}
+  var file=new File([blob],'postapp-'+cur.k+'.png',{type:'image/png'});
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'Postcard from Postapp',text:'Greetings from '+cur.h+'!'});
+      setStatus('Postcard shared.');
+      return;
+    }
+  }catch(e){
+    if(e&&e.name==='AbortError'){setStatus('Share cancelled. Nothing was sent.');return;}
+  }
+  var copied=false,opened=false;
+  try{await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);copied=true;}catch(e){}
+  try{opened=!!window.open('https://wa.me/?text='+encodeURIComponent('Postcard from Postapp'),'_blank','noopener');}catch(e){}
+  setStatus('This browser cannot attach the image for you. Follow the steps shown on screen.');
+  showSheet(blob,copied,opened);
+});
+
+/* first paint, then repaint once the web fonts are ready */
+var fonts=[ '118px "Bowlby One"','500 25px "DM Mono"','700 40px Caveat' ];
+pick('fox');
+if(document.fonts&&document.fonts.load){Promise.all(fonts.map(function(f){return document.fonts.load(f);})).then(function(){render();},function(){});}
+window.Postapp={animals:ANIMALS,pick:pick,render:render,canvas:cv};
+})();
+</script>
+
+</html>
