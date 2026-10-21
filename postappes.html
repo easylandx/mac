@@ -18,9 +18,16 @@ header{padding:36px 0 22px;text-align:center}
 .elx.lang{right:auto;left:clamp(20px,5vw,48px)}
 .elx:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 #d9453d}
 .elx:focus-visible{outline:3px solid #fff;outline-offset:3px}
-.more{margin:20px auto 0;max-width:280px;text-align:left}
-.more label{color:#cdd6f0;font-size:13px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;text-align:center}
-.more select{border-color:#d9453d;box-shadow:3px 3px 0 #d9453d;cursor:pointer}
+.more{position:relative;margin:20px auto 0;max-width:280px;text-align:left}
+.more summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;font:800 16px Nunito,sans-serif;color:#26335f;background:#fff;border:2px solid #d9453d;border-radius:8px;box-shadow:3px 3px 0 #d9453d;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
+.more summary::-webkit-details-marker{display:none}
+.more summary::after{content:"";width:8px;height:8px;border-right:3px solid #26335f;border-bottom:3px solid #26335f;transform:rotate(45deg) translateY(-2px);transition:transform .15s}
+.more[open] summary::after{transform:rotate(225deg) translateY(-2px)}
+.more summary:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.more ul{position:absolute;left:0;right:0;top:calc(100% + 8px);z-index:20;list-style:none;padding:6px;margin:0;background:#fbf5e6;border:2px solid #d9453d;border-radius:8px;box-shadow:3px 3px 0 #d9453d;max-height:min(60vh,420px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.more li a,.more li span{display:block;padding:13px 12px;min-height:44px;font:700 16px Nunito,sans-serif;color:#26335f;text-decoration:none;border-radius:6px}
+.more li a:hover,.more li a:focus-visible{background:#e9dfc4;outline:none}
+.more li span{background:#26335f;color:#fbf5e6}
 h1{font:400 clamp(46px,9vw,76px)/1 Pacifico,cursive;color:#fff;text-shadow:4px 4px 0 #d9453d}
 header p{margin-top:14px;font-size:17px;color:#cdd6f0}
 .panel{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:end;background:#fbf5e6;color:#26335f;padding:18px;border-radius:6px;border:3px dashed #d9453d;outline:3px solid #fbf5e6;outline-offset:-9px}
@@ -45,7 +52,7 @@ canvas{display:block;width:100%;height:auto;border-radius:4px;box-shadow:0 22px 
 <div class="wrap">
 <a class="elx lang" href="https://easylandx.github.io/mac/postapp.html" hreflang="en" lang="en">English</a>
 <a class="elx" href="https://easylandx.github.io" target="_blank" rel="noopener">EasylandX <span aria-hidden="true">&#8599;</span></a>
-<header><h1>PostApp</h1><p>Elige un país, crea tu postal y envíala por WhatsApp.</p><nav class="more" aria-label="Más colecciones de postales"><label for="nav">Más postales</label><select id="nav"><option value="https://easylandx.github.io/mac/postapp.html">PostApp</option><option value="https://easylandx.github.io/mac/postappes.html" selected>PostAppES</option><option value="https://easylandx.github.io/mac/postelec.html">EVs</option><option value="https://easylandx.github.io/mac/postclass.html">Composers</option><option value="https://easylandx.github.io/mac/postclasses.html">ComposersES</option><option value="https://easylandx.github.io/mac/postthink.html">Thinkers</option><option value="https://easylandx.github.io/mac/postcomp.html">Computers</option><option value="https://easylandx.github.io/mac/postair.html">Airplanes</option><option value="https://easylandx.github.io/mac/postvision.html">Visionaries</option><option value="https://easylandx.github.io/mac/postlight.html">Lighthouses</option><option value="https://easylandx.github.io/mac/posttree.html">Trees</option><option value="https://easylandx.github.io/mac/postmount.html">Mountains</option><option value="https://easylandx.github.io/mac/poscity.html">Cities</option><option value="https://easylandx.github.io/mac/postanim.html">Animals</option></select></nav></header>
+<header><h1>PostApp</h1><p>Elige un país, crea tu postal y envíala por WhatsApp.</p><details class="more"><summary aria-label="Más colecciones de postales">Más postales</summary><ul><li><a href="https://easylandx.github.io/mac/postapp.html" target="_blank" rel="noopener">PostApp</a></li><li><span aria-current="page">PostAppES</span></li><li><a href="https://easylandx.github.io/mac/postelec.html" target="_blank" rel="noopener">EVs</a></li><li><a href="https://easylandx.github.io/mac/postclass.html" target="_blank" rel="noopener">Composers</a></li><li><a href="https://easylandx.github.io/mac/postclasses.html" target="_blank" rel="noopener">ComposersES</a></li><li><a href="https://easylandx.github.io/mac/postthink.html" target="_blank" rel="noopener">Thinkers</a></li><li><a href="https://easylandx.github.io/mac/postcomp.html" target="_blank" rel="noopener">Computers</a></li><li><a href="https://easylandx.github.io/mac/postair.html" target="_blank" rel="noopener">Airplanes</a></li><li><a href="https://easylandx.github.io/mac/postvision.html" target="_blank" rel="noopener">Visionaries</a></li><li><a href="https://easylandx.github.io/mac/postlight.html" target="_blank" rel="noopener">Lighthouses</a></li><li><a href="https://easylandx.github.io/mac/posttree.html" target="_blank" rel="noopener">Trees</a></li><li><a href="https://easylandx.github.io/mac/postmount.html" target="_blank" rel="noopener">Mountains</a></li><li><a href="https://easylandx.github.io/mac/poscity.html" target="_blank" rel="noopener">Cities</a></li><li><a href="https://easylandx.github.io/mac/postanim.html" target="_blank" rel="noopener">Animals</a></li></ul></details></header>
 <section class="panel">
 <div><label for="co">País</label><select id="co"></select></div>
 <button id="send" class="send">Enviar por WhatsApp</button>
@@ -370,8 +377,10 @@ let fy=194;g.font='600 '+fs+'px Caveat,cursive';ls.forEach(a=>{a.forEach(l=>{g.f
 /* ---------- ui ---------- */
 const sel=$('co');K.forEach((k,i)=>sel.add(new Option(k.n,i)));sel.value=K.indexOf(cur);
 sel.onchange=()=>{cur=K[sel.value];draw()};
-const nav=$('nav'),navIdx=nav.selectedIndex;nav.onchange=()=>{if(nav.value)window.open(nav.value,'_blank','noopener');nav.selectedIndex=navIdx};
-addEventListener('pageshow',()=>{nav.selectedIndex=navIdx});
+const more=document.querySelector('.more');
+document.addEventListener('click',e=>{if(more.open&&!more.contains(e.target))more.open=false});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')more.open=false});
+more.addEventListener('click',e=>{if(e.target.closest('a'))setTimeout(()=>{more.open=false},0)});
 let tt;const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),5200)};
 const blob=()=>new Promise(r=>$('cv').toBlob(r,'image/png'));
 const fname=()=>'postal-'+cur.n.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\W+/g,'-')+'.png';
