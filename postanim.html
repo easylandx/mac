@@ -40,6 +40,9 @@ body{margin:0;
   padding-right:max(16px,env(safe-area-inset-right,0px));
 }
 .app{max-width:1140px;margin:0 auto;display:grid;gap:22px;grid-template-columns:minmax(0,1fr)}
+.bar{display:flex;justify-content:flex-end}
+.elx{display:inline-flex;align-items:center;gap:6px;background:var(--surface);color:var(--fg);font:600 .9rem var(--body);text-decoration:none;padding:9px 15px;border-radius:999px;border:2px solid var(--red);box-shadow:3px 3px 0 var(--red);transition:transform .12s,box-shadow .12s}
+.elx:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--red)}
 .top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
 .word{margin:0;font:400 2.1rem/1 var(--display);letter-spacing:.01em}
 .tag{margin:0;color:var(--muted);min-width:0}
@@ -83,6 +86,7 @@ select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(
 .sheet-row a,.sheet-row button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 16px;border-radius:10px;font:600 .95rem var(--body);text-decoration:none}
 .sheet-row a{background:var(--go);color:var(--go-fg)}
 @media (min-width:920px){
+  .bar{grid-column:1/-1}
   .app{grid-template-columns:minmax(0,1fr) 300px;align-items:start;column-gap:28px}
   .top{grid-column:1/-1}
   .word{font-size:2.5rem}
@@ -92,6 +96,7 @@ select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(
 </style>
 
 <main class="app">
+  <div class="bar"><a class="elx" href="https://easylandx.github.io" target="_blank" rel="noopener">EasylandX <span aria-hidden="true">&#8599;</span></a></div>
   <header class="top">
     <h1 class="word">Postapp</h1>
     <p class="tag">Choose an animal, get a postcard, send it on WhatsApp.</p>
@@ -113,7 +118,7 @@ select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(
       </button>
     </div>
     <p id="status" class="status" role="status" aria-live="polite"></p>
-    <p class="hint">Send opens your phone's share sheet with the postcard image attached. Choose WhatsApp, then pick the person you want from your WhatsApp contacts.</p>
+    <p class="hint">On a phone, Send opens the share sheet with the postcard image attached: choose WhatsApp, then pick a contact. On a computer, it copies the postcard and opens WhatsApp Web: choose a contact, paste it in and press send.</p>
   </section>
 </main>
 
@@ -122,7 +127,7 @@ select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(
     <img id="sheet-img" alt="Your finished postcard">
     <p id="sheet-msg"></p>
     <div class="sheet-row">
-      <a id="sheet-wa" href="https://wa.me/?text=Postcard%20from%20Postapp" target="_blank" rel="noopener">Open WhatsApp</a>
+      <a id="sheet-wa" href="https://wa.me/?text=Postcard%20from%20Postapp" target="_blank" rel="noopener">Open WhatsApp Web</a>
       <button id="sheet-close" type="button">Close</button>
     </div>
   </div>
@@ -153,7 +158,27 @@ function bearHead(o){
   L('M200 236 L200 254 M200 254 Q184 270 170 258 M200 254 Q216 270 230 258',o.nose,4);
 }
 
-/* ---------- the 35 animals ---------- */
+function face(o){
+  var c=o.c,m=o.m||c,i2=o.i||m,es=o.es||30,ny=o.ny||236,nc=o.nose||'#2a1c18';
+  if(o.pre)o.pre();
+  sym(function(){
+    if(o.e==='point'){D('M108 168 L98 66 L172 118 Z',c);D('M116 150 L110 94 L152 120 Z',i2);}
+    else if(o.e==='long'){E(128,92,22,o.el||60,c,-.25);E(130,96,10,(o.el||60)*.68,i2,-.25);}
+    else if(o.e==='flop'){D('M110 150 C60 156 56 244 90 270 C118 252 128 204 130 154 Z',c);}
+    else if(o.e!=='none'){C(114,126,es,c);C(114,128,es/2,i2);}
+    if(o.h==='horn')D('M142 132 C108 92 118 46 150 40 C140 68 152 100 170 124 Z',o.hc||'#e8dcc0');
+    if(o.h==='ant')L('M150 124 C122 90 112 60 98 30 M126 84 L98 76 M118 60 L92 54',o.hc||'#6b4a2c',9);
+  });
+  E(200,212,o.rx||100,o.ry||90,c);
+  E(200,254,o.mw||52,o.mh||38,m);
+  if(o.x)o.x();
+  sym(function(){eye(o.ex||160,o.ey||194,o.er||9);});
+  if(!o.nn){E(200,ny,o.nw||20,o.nh||13,nc);C(194,ny-4,4,'rgba(255,255,255,.5)');
+    L('M200 '+(ny+12)+' L200 '+(ny+26)+' M200 '+(ny+26)+' Q186 '+(ny+42)+' 172 '+(ny+30)+' M200 '+(ny+26)+' Q214 '+(ny+42)+' 228 '+(ny+30),nc,4);}
+  if(o.post)o.post();
+}
+
+/* ---------- the 80 animals ---------- */
 var ART={
 dog:function(){
   E(200,356,92,56,'#d99a4a');
@@ -495,10 +520,55 @@ hedgehog:function(){
 },
 polarbear:function(){
   bearHead({body:'#f4f6f8',inner:'#cfd9e3',muz:'#e4ebf2',nose:'#1c1c22'});
-}
+},
+sheep:function(){face({pre:function(){for(var i=0;i<14;i++){var a=i/14*6.283;C(200+Math.cos(a)*104,196+Math.sin(a)*96,40,'#f6f2ea','#e2dccf',3);}},c:'#e9dccb',m:'#f6ece0',i:'#f2b3ad',e:'flop',rx:70,ry:88,mw:44,mh:34,ex:172,nose:'#6b4a4a'});},
+goat:function(){face({c:'#efe9df',m:'#fff',i:'#f2b3ad',e:'long',el:34,h:'horn',hc:'#b8a888',rx:80,ry:96,mw:42,x:function(){D('M184 286 Q200 346 216 286 Z','#efe9df','#d8cfc2',3);},nose:'#5a4a4a'});},
+camel:function(){face({c:'#c9a06a',m:'#e8cfa4',e:'round',es:18,i:'#8a6a3a',rx:82,ry:102,ny:244,mh:42,nose:'#4a3220',x:function(){sym(function(){E(158,184,22,8,'#a88050');});}});},
+llama:function(){face({c:'#f3ecdd',m:'#fff',i:'#f3b5b0',e:'long',el:56,rx:78,ry:96,mw:44,nose:'#8a6a5a'});},
+raccoon:function(){face({c:'#9a9aa2',m:'#f4f4f4',i:'#3a3a40',e:'round',x:function(){sym(function(){E(156,196,38,26,'#26262c',.2);C(160,196,13,'#f4f4f4');});L('M200 130 L200 176','#26262c',16);},nose:'#26262c'});},
+squirrel:function(){face({pre:function(){D('M286 214 C384 170 398 60 334 38 C344 90 322 134 290 152 Z','#c47a3a','#9a5a22',3);},c:'#c47a3a',m:'#f0dcc0',i:'#e8b78a',e:'point',rx:88,ry:84,nose:'#4a2a1a',nw:14,nh:10});},
+mouse:function(){face({c:'#b9b3ab',m:'#e6e0d8',i:'#f2b3ad',e:'round',es:42,rx:92,ry:86,ny:240,nose:'#e07a8a',nw:12,nh:9,x:function(){sym(function(){L('M150 252 L96 240 M150 262 L96 270','#6a625a',3);});}});},
+hamster:function(){face({c:'#e3b27a',m:'#fbf1e2',i:'#f2b3ad',e:'round',es:20,rx:110,ry:88,nose:'#e07a8a',nw:12,nh:9,x:function(){sym(function(){E(126,250,36,30,'#fbf1e2');});}});},
+chick:function(){face({c:'#f7d84a',e:'none',rx:96,ry:92,nn:true,x:function(){D('M180 226 L220 226 L200 256 Z','#f08a24');D('M180 226 L220 226 L200 236 Z','#d97a14');sym(function(){C(126,250,16,'rgba(240,140,100,.5)');});D('M190 124 Q200 92 210 124 Q220 98 228 126 Z','#e8c230');}});},
+duck:function(){face({c:'#2f8a55',e:'none',rx:92,ry:92,nn:true,x:function(){E(200,264,66,26,'#f2b630');E(200,254,56,12,'#f6c94a');L('M112 292 Q200 316 288 292','#fbfbf7',12);}});},
+seal:function(){face({c:'#8d97a5',m:'#cbd3dc',e:'none',rx:96,ry:92,er:12,ny:232,nw:26,nh:17,nose:'#1c1c22',x:function(){sym(function(){L('M170 262 L112 252 M170 272 L112 282 M172 282 L120 308','#e8eef4',3);});}});},
+walrus:function(){face({c:'#a9825f',m:'#c9a684',e:'none',rx:112,ry:88,ny:226,nose:'#3a2a20',nw:22,nh:14,x:function(){sym(function(){E(172,266,38,28,'#c9a684');D('M168 276 L160 362 L186 350 L188 280 Z','#f6efe0','#d8cfc2',2);});}});},
+otter:function(){face({c:'#7a5a3e',m:'#e0c9a6',i:'#4a3626',e:'round',es:18,rx:96,ry:84,nose:'#1c1c22',x:function(){sym(function(){L('M150 262 L104 252 M150 272 L106 280','#e0c9a6',3);});}});},
+beaver:function(){face({c:'#8a5a36',m:'#c9a06e',i:'#5a3a22',e:'round',es:22,nose:'#2a1a12',post:function(){D('M186 268 L214 268 L212 304 L188 304 Z','#fff','#d8cfc2',2);}});},
+sloth:function(){face({c:'#b8a58a',m:'#e6d9bf',e:'none',rx:104,ry:88,ex:158,ey:198,x:function(){sym(function(){E(158,198,36,26,'#6b5a44',.3);});},nose:'#3a2a20',nw:18,nh:11});},
+gorilla:function(){face({c:'#3a3a42',m:'#5a5a64',i:'#2a2a30',e:'round',es:20,rx:98,ry:98,ny:240,nw:26,nh:16,x:function(){sym(function(){C(160,196,14,'#e8e2d8');L('M130 174 Q160 160 190 174','#17171d',8);});},nose:'#17171d'});},
+chimpanzee:function(){face({c:'#3d2e26',m:'#e0b890',i:'#e0b890',e:'round',es:38,rx:88,ry:90,x:function(){E(200,224,68,70,'#e0b890');},nose:'#3a2a20',nw:16,nh:10});},
+orangutan:function(){face({c:'#c8561e',m:'#9a6a44',e:'none',rx:112,ry:98,x:function(){sym(function(){E(116,236,28,42,'#8a5a38');});E(200,232,66,62,'#d9a97e');},nose:'#5a3a24',nw:16,nh:10});},
+rhino:function(){face({c:'#9a9aa6',m:'#b4b4be',i:'#7a7a86',e:'round',es:24,rx:104,ny:250,nw:24,nh:14,nose:'#3a3a44',post:function(){D('M180 238 L200 138 L222 238 Z','#e8e2d0','#b8b2a0',3);}});},
+moose:function(){face({c:'#6b4a2c',m:'#8a6a44',i:'#c99a74',e:'long',el:44,h:'ant',hc:'#d9c9a0',rx:82,ry:104,ny:256,nw:30,nh:20,mh:44});},
+bison:function(){face({pre:function(){C(200,206,140,'#4a2f1c');sym(function(){C(110,150,34,'#3a2414');});},c:'#5a3a24',m:'#7a5236',e:'none',h:'horn',rx:84,ry:96,ny:250,nw:28,nh:18,nose:'#2a1a12',x:function(){sym(function(){C(160,194,12,'#e8dcc0');});}});},
+leopard:function(){face({c:'#e8b758',m:'#f8e6b8',i:'#2a2a2e',e:'round',nose:'#d97a7a',x:function(){[[150,148],[250,148],[116,216],[284,216],[200,140],[128,262],[272,262]].forEach(function(p){C(p[0],p[1],7,'#3a2a1a');});}});},
+cheetah:function(){face({c:'#e8c070',m:'#f8ecd0',i:'#2a1c14',e:'round',rx:92,ry:92,nose:'#2a1c14',x:function(){sym(function(){L('M162 204 L152 266','#2a1c14',8);C(130,160,5,'#2a1c14');C(126,232,5,'#2a1c14');});}});},
+lynx:function(){face({c:'#c9a882',m:'#f2e8d6',i:'#8a6a4a',e:'point',rx:96,x:function(){sym(function(){D('M98 72 L90 28 L110 66 Z','#17171d');D('M82 236 L58 276 L100 268 Z','#f2e8d6');});},nose:'#d97a7a'});},
+redpanda:function(){face({c:'#c4501f',m:'#f4ecde',i:'#f4ecde',e:'round',rx:98,ry:86,x:function(){sym(function(){L('M154 212 L150 256','#f4ecde',8);});},nose:'#17171d'});},
+meerkat:function(){face({c:'#d2a872',m:'#f0dcb8',i:'#6a4a2e',e:'round',es:16,rx:78,ry:92,x:function(){sym(function(){E(158,196,24,18,'#4a3424',.3);});},nose:'#2a1c18',nw:14,nh:10});},
+hyena:function(){face({c:'#b79a6a',m:'#6a5a44',i:'#6a5a44',e:'round',es:34,rx:98,ry:88,x:function(){D('M120 130 L138 86 L160 120 L182 80 L200 118 L220 80 L242 120 L262 86 L280 130 Z','#6a5a44');C(150,160,6,'#6a5a44');C(246,170,6,'#6a5a44');},nose:'#17171d',nw:22});},
+bat:function(){face({c:'#4a4256',m:'#6a5e78',i:'#c98aa8',e:'point',rx:86,ry:84,nose:'#e07a9a',post:function(){D('M188 270 L192 288 L198 270 Z M202 270 L208 288 L212 270 Z','#fff');}});},
+skunk:function(){face({c:'#26262c',i:'#f4f4f4',e:'round',es:20,mh:34,x:function(){D('M200 124 C186 172 186 204 200 226 C214 204 214 172 200 124 Z','#f4f4f4');sym(function(){C(160,196,14,'#f4f4f4');});},nose:'#e07a8a',nw:14,nh:10});},
+badger:function(){face({c:'#8a8a92',m:'#f4f4f4',i:'#f4f4f4',e:'round',es:20,x:function(){sym(function(){D('M180 124 C150 164 148 230 166 276 L188 276 C176 232 178 170 192 124 Z','#1c1c22');C(160,196,12,'#f4f4f4');});},nose:'#1c1c22'});},
+donkey:function(){face({c:'#9a8f86',m:'#e8dccb',i:'#e8c9c0',e:'long',el:80,rx:82,ry:104,ny:250,nw:28,nh:18,mh:44,nose:'#3a2f2a'});},
+toucan:function(){E(170,220,86,92,'#17171d');E(160,258,50,40,'#f6efe0');D('M210 182 C300 166 380 196 394 252 C340 266 270 262 214 246 Z','#f08a24');D('M214 224 C290 230 352 238 394 252 C340 266 270 262 214 246 Z','#f2c63a');C(174,198,22,'#2fa8d6');eye(174,198,10);},
+jellyfish:function(){for(var i=0;i<7;i++){var x=110+i*30;L('M'+x+' 244 q-20 40 0 80 t0 76','#e8b0ee',8);}D('M70 246 C70 70 330 70 330 246 Q300 226 270 246 Q240 226 200 246 Q170 226 140 246 Q110 226 70 246 Z','#d98ae0');L('M120 140 C150 112 190 108 214 116','rgba(255,255,255,.45)',8);sym(function(){eye(160,196,10);});L('M176 222 Q200 238 224 222','#7a3a86',5);},
+crab:function(){sym(function(){L('M120 292 L72 322 M126 304 L84 350 M134 314 L104 366','#c9361f',9);L('M130 240 L78 196','#e0452e',16);D('M34 170 C14 118 66 88 96 120 L82 154 L106 186 C76 208 50 198 34 170 Z','#c9361f');L('M160 214 L160 168','#e0452e',9);C(160,162,17,'#fff');C(162,164,8,'#17171d');});E(200,262,112,68,'#e0452e');L('M168 276 Q200 300 232 276','#7a1f10',5);},
+bee:function(){sym(function(){E(116,150,44,66,'rgba(200,228,255,.85)',-.5,'#8fb2d6',3);});E(200,250,90,104,'#f6c93a');L('M118 232 Q200 252 282 232','#1c1410',24);L('M112 282 Q200 304 288 282','#1c1410',24);C(200,150,60,'#f6c93a');sym(function(){L('M180 100 Q170 62 148 50','#1c1410',5);C(146,48,7,'#1c1410');eye(176,150,10);});L('M176 184 Q200 204 224 184','#1c1410',5);},
+ladybug:function(){L('M162 100 Q148 64 128 52','#17171d',5);L('M238 100 Q252 64 272 52','#17171d',5);E(200,128,60,44,'#17171d');C(176,122,10,'#fff');C(224,122,10,'#fff');C(178,124,5,'#17171d');C(222,124,5,'#17171d');C(200,262,120,'#d6283e');L('M200 144 L200 380','#17171d',6);[[150,230],[250,230],[140,300],[260,300],[200,330]].forEach(function(p){C(p[0],p[1],16,'#17171d');});},
+rooster:function(){D('M126 250 C130 340 270 340 274 250 Z','#e8913a');D('M158 138 C148 92 176 78 184 108 C190 70 222 70 218 112 C240 92 254 122 242 142 Z','#d6283e');C(196,206,78,'#fbf7ee');D('M258 196 L322 214 L258 234 Z','#f2b630');D('M232 246 Q250 300 218 286 Q210 262 224 244 Z','#d6283e');eye(220,192,10);},
+mole:function(){face({c:'#4a4452',e:'none',rx:96,ry:88,er:6,x:function(){E(200,250,48,42,'#f0b8b0');},nose:'#e07a8a',nw:22,nh:15,ny:238,post:function(){sym(function(){E(126,330,36,22,'#f0b8b0');L('M110 338 L104 350 M126 342 L124 356 M142 338 L146 352','#8a6a66',4);});}});},
+gazelle:function(){face({c:'#d9a066',m:'#f4e6d0',i:'#f1c4b0',e:'long',el:46,h:'horn',hc:'#3a2a20',rx:76,ry:100,ny:250,mh:42,x:function(){sym(function(){L('M154 200 L142 262','#3a2a20',9);});},nose:'#2a1c18'});},
+ostrich:function(){E(200,392,150,56,'#2a2a30');D('M168 400 L180 176 L220 176 L232 400 Z','#e8bfa0');E(200,150,50,42,'#e8bfa0');D('M232 138 L296 150 L232 166 Z','#f2b630');C(216,138,13,'#fff');C(218,138,6,'#17171d');L('M186 112 Q180 92 168 88 M196 106 Q196 84 188 76','#c9a080',4);},
+boar:function(){face({c:'#6b5a4a',m:'#9a8a76',i:'#3a2e24',e:'point',rx:100,mw:56,mh:44,ny:256,nose:'#2a1c18',nw:26,nh:18,post:function(){sym(function(){D('M164 276 L146 236 L174 258 Z','#f6efe0');});}});},
+wombat:function(){face({c:'#8a7a68',m:'#a8987e',i:'#6b5a46',e:'round',es:22,rx:106,ry:84,mw:56,ny:232,nose:'#17171d',nw:28,nh:18});},
+tapir:function(){face({c:'#4a4a52',e:'round',es:24,i:'#e8e4dc',rx:96,ry:92,nn:true,x:function(){D('M160 220 C150 296 176 340 204 340 C232 340 254 296 244 220 Z','#4a4a52');D('M174 316 C178 340 230 340 234 316 C224 326 184 326 174 316 Z','#e8e4dc');C(192,326,3,'#17171d');C(208,326,3,'#17171d');}});},
+lemur:function(){face({c:'#a8a8b0',m:'#f4f4f4',i:'#f4f4f4',e:'round',es:24,rx:88,ry:88,ex:158,ey:196,x:function(){sym(function(){E(158,196,28,22,'#2a2a30',.3);C(158,196,12,'#f6c93a');});},nose:'#2a2a30'});},
+capybara:function(){face({c:'#a8754a',m:'#c9955e',i:'#6b4a2e',e:'round',es:16,rx:104,ry:84,mw:60,mh:42,ny:224,er:7,nose:'#2a1a12',nw:32,nh:20});}
 };
 
-/* ---------- the 35 postcards: name, habitat, palette, two facts each ---------- */
+/* ---------- the 80 postcards: name, habitat, palette, two facts each ---------- */
 var ANIMALS=[
 {k:'dog',n:'Dog',h:'the Dog Park',bg:'#2f7f8f',sun:'#f2c14e',ground:'#1f5f6f',f:['A dog’s nose print is as unique as a human fingerprint.','Many dogs learn to understand around 150 words and gestures.']},
 {k:'cat',n:'Cat',h:'the Sunny Windowsill',bg:'#3b5aa8',sun:'#f4c95d',ground:'#2b4488',f:['Most cats sleep somewhere between 12 and 16 hours a day.','A cat’s whiskers help it sense whether it can squeeze through a gap.']},
@@ -534,8 +604,56 @@ var ANIMALS=[
 {k:'cow',n:'Cow',h:'the Pasture',bg:'#3f8f5f',sun:'#fff1a8',ground:'#2d6e46',f:['Cows form close friendships and can get stressed when separated.','A cow’s stomach has four compartments.']},
 {k:'deer',n:'Deer',h:'the Forest',bg:'#2f6f5f',sun:'#f5d98a',ground:'#1f4f44',f:['Male deer regrow their antlers every year.','A young fawn’s spotted coat helps it hide in dappled light.']},
 {k:'hedgehog',n:'Hedgehog',h:'the Hedgerow',bg:'#7a9f3a',sun:'#fbe6a0',ground:'#55772a',f:['A hedgehog’s back is covered in thousands of spines.','Hedgehogs roll into a tight, spiky ball when they feel threatened.']},
-{k:'polarbear',n:'Polar bear',h:'the Arctic',bg:'#2f5f9f',sun:'#e8f4ff',ground:'#dff0fa',f:['A polar bear’s skin is black under its see-through fur.','A polar bear can swim for many hours, and some have been tracked swimming for days.']}
+{k:'polarbear',n:'Polar bear',h:'the Arctic',bg:'#2f5f9f',sun:'#e8f4ff',ground:'#dff0fa',f:['A polar bear’s skin is black under its see-through fur.','A polar bear can swim for many hours, and some have been tracked swimming for days.']},
+{k:'sheep',n:'Sheep',h:'the Hillside',bg:'#5a7fb0',sun:'#f6e6b0',ground:'#3f6090',f:["Sheep can recognise dozens of other sheep faces and remember them for years.","A sheep’s rectangular pupils give it a very wide field of view."]},
+{k:'goat',n:'Goat',h:'the Mountain Pasture',bg:'#7a8f4a',sun:'#f9e6a0',ground:'#566a2e',f:["Goat kids can stand and walk within minutes of being born.","Goats climb steep cliffs, and even trees, thanks to their split hooves."]},
+{k:'camel',n:'Camel',h:'the Desert',bg:'#d8964a',sun:'#fbe3a0',ground:'#a8682a',f:["A camel’s hump stores fat, not water.","A thirsty camel can drink more than 100 litres of water in a few minutes."]},
+{k:'llama',n:'Llama',h:'the Andes',bg:'#3f8fa8',sun:'#f9e8b0',ground:'#2a6d84',f:["Llamas hum to each other and use alarm calls to warn the herd.","People in the Andes have used llamas as pack animals for thousands of years."]},
+{k:'raccoon',n:'Raccoon',h:'the Moonlit Woods',bg:'#4a5a8a',sun:'#e8ecf4',ground:'#33416a',f:["A raccoon’s front paws are so sensitive that it seems to see by touch.","Raccoons often dunk their food in water before eating it."]},
+{k:'squirrel',n:'Squirrel',h:'the Oak Tree',bg:'#b0653a',sun:'#f8d98a',ground:'#7f4425',f:["Squirrels forget where they bury some nuts, which helps new trees grow.","A squirrel’s front teeth never stop growing."]},
+{k:'mouse',n:'Mouse',h:'the Cornfield',bg:'#6f8fc4',sun:'#fdf0c0',ground:'#4f6fa0',f:["A mouse can squeeze through a gap about as wide as a pencil.","Mice sing ultrasonic songs that people cannot hear."]},
+{k:'hamster',n:'Hamster',h:'the Cosy Burrow',bg:'#d9748a',sun:'#fde8b8',ground:'#b04e66',f:["Hamsters carry food in stretchy cheek pouches.","Wild hamsters can run many kilometres in a single night."]},
+{k:'chick',n:'Chick',h:'the Farmyard',bg:'#3fa08f',sun:'#fff3b8',ground:'#7fb560',f:["Chicks start chirping to their mother while still inside the egg.","A chick cracks its shell with a tiny egg tooth that falls off soon after."]},
+{k:'duck',n:'Duck',h:'the Pond',bg:'#3a8fb0',sun:'#fff0b8',ground:'#2a6f8a',f:["A duck’s feathers stay waterproof thanks to oil from a gland near its tail.","Ducklings can swim within hours of hatching."]},
+{k:'seal',n:'Seal',h:'the Rocky Coast',bg:'#2a6f98',sun:'#cfe8f6',ground:'#1a5174',f:["Some seals can dive for more than an hour on a single breath.","A seal’s whiskers can sense the wake of a fish that swam by."]},
+{k:'walrus',n:'Walrus',h:'the Arctic Shore',bg:'#4a7fa8',sun:'#e8f4ff',ground:'#cfe6f2',f:["A walrus uses its tusks like ice picks to haul itself out of the water.","Walrus tusks can grow to about a metre long."]},
+{k:'otter',n:'Otter',h:'the Kelp Forest',bg:'#2a8a8f',sun:'#ffe6a0',ground:'#1a6a70',f:["Sea otters hold hands while they sleep so they don’t drift apart.","Sea otters have the densest fur of any animal."]},
+{k:'beaver',n:'Beaver',h:'the Riverbank',bg:'#4f8f4a',sun:'#f6e6a0',ground:'#357034',f:["A beaver’s teeth contain iron, which makes them orange and strong.","Beaver dams create wetlands that many other animals use."]},
+{k:'sloth',n:'Sloth',h:'the Rainforest Canopy',bg:'#4a9a5a',sun:'#e6f2b8',ground:'#2f7a42',f:["Sloths move so slowly that algae can grow on their fur.","A sloth climbs down from its tree only about once a week."]},
+{k:'gorilla',n:'Gorilla',h:'the Cloud Forest',bg:'#2f6f5a',sun:'#d8f0c8',ground:'#1f5040',f:["Gorillas build a fresh nest of leaves to sleep in every night.","Every gorilla has its own unique nose print."]},
+{k:'chimpanzee',n:'Chimpanzee',h:'the Jungle Clearing',bg:'#5a9a3a',sun:'#f6f0a8',ground:'#3f7a26',f:["Chimpanzees use sticks as tools to fish termites out of their mounds.","Chimpanzees share about 98 percent of their DNA with humans."]},
+{k:'orangutan',n:'Orangutan',h:'the Borneo Rainforest',bg:'#2f8a5a',sun:'#f6e08a',ground:'#1f6a40',f:["The word orangutan means “person of the forest” in Malay.","An orangutan builds a new sleeping nest in the trees almost every night."]},
+{k:'rhino',n:'Rhino',h:'the Savanna Waterhole',bg:'#c9783a',sun:'#f8d98a',ground:'#9a5420',f:["A rhino’s horn is made of keratin, the same material as your fingernails.","A group of rhinos is called a crash."]},
+{k:'moose',n:'Moose',h:'the Northern Lake',bg:'#3a6f8a',sun:'#e6f0f4',ground:'#27505f',f:["A moose can dive more than five metres to eat water plants.","Moose antlers can span nearly two metres."]},
+{k:'bison',n:'Bison',h:'the Prairie',bg:'#c98a3a',sun:'#f8d98a',ground:'#9a6420',f:["American bison can run at about 60 kilometres per hour.","Bison are the largest land mammals in North America."]},
+{k:'leopard',n:'Leopard',h:'the Tree Branches',bg:'#3a7a9a',sun:'#f6dc8a',ground:'#285a74',f:["Leopards often carry their prey up a tree to keep it safe.","A leopard’s spots are called rosettes."]},
+{k:'cheetah',n:'Cheetah',h:'the Open Plains',bg:'#d9893a',sun:'#fbe3a0',ground:'#a8601e',f:["A cheetah can go from standing still to 100 kilometres per hour in about three seconds.","Cheetahs chirp like birds instead of roaring."]},
+{k:'lynx',n:'Lynx',h:'the Snowy Forest',bg:'#3a5a8a',sun:'#e8f0fa',ground:'#dfe9f2',f:["A lynx’s wide, furry paws work like snowshoes.","Lynx hunt mostly at dusk and can spot prey from far away."]},
+{k:'redpanda',n:'Red panda',h:'the Misty Mountains',bg:'#4a8a5a',sun:'#f6dc9a',ground:'#33683f',f:["Red pandas wrap their bushy tails around themselves like blankets.","Red pandas are not closely related to giant pandas."]},
+{k:'meerkat',n:'Meerkat',h:'the Kalahari',bg:'#d89a4a',sun:'#fbe4a8',ground:'#a8702a',f:["Meerkats take turns standing guard and bark when a predator approaches.","A group of meerkats is called a mob."]},
+{k:'hyena',n:'Hyena',h:'the Dry Plains',bg:'#c87a3a',sun:'#f8d88a',ground:'#9a5420',f:["Spotted hyenas live in clans led by females.","A hyena’s “laugh” is a way of showing excitement or nervousness."]},
+{k:'bat',n:'Bat',h:'the Cave Mouth',bg:'#3a3a7a',sun:'#f0e6a8',ground:'#262655',f:["Bats are the only mammals that can truly fly.","Many bats find their way and catch insects using echolocation."]},
+{k:'skunk',n:'Skunk',h:'the Woodland Edge',bg:'#5a8a4a',sun:'#f4e6a0',ground:'#3f6a32',f:["A skunk can spray its scent up to about three metres.","Skunks usually stamp their feet and raise their tails to warn first."]},
+{k:'badger',n:'Badger',h:'the Woods at Dusk',bg:'#4a6f8a',sun:'#e6eef4',ground:'#33505f',f:["Badgers live in underground homes called setts that families use for generations.","Badgers are expert diggers and can tunnel through hard soil."]},
+{k:'donkey',n:'Donkey',h:'the Village Lane',bg:'#7a9a4a',sun:'#f8e6a8',ground:'#587030',f:["Donkeys have good memories and can recognise places they visited years ago.","A donkey’s bray can be heard from about three kilometres away."]},
+{k:'toucan',n:'Toucan',h:'the Amazon Canopy',bg:'#2f9a6a',sun:'#f6e48a',ground:'#1f7a50',f:["A toucan’s huge beak is light because it is mostly hollow.","A toucan’s beak helps it reach fruit on thin branches and release body heat."]},
+{k:'jellyfish',n:'Jellyfish',h:'the Midnight Sea',bg:'#2a4a9a',sun:'#9fdcf0',ground:'#1a336f',f:["Jellyfish have no brain, no heart and no bones.","Jellyfish have drifted through the oceans for more than 500 million years."]},
+{k:'crab',n:'Crab',h:'the Sandy Shore',bg:'#2a8aa8',sun:'#fbe6a8',ground:'#e8c88a',f:["Crabs wear their skeleton on the outside and shed it to grow.","Most crabs walk sideways because of how their legs bend."]},
+{k:'bee',n:'Bee',h:'the Wildflower Meadow',bg:'#7aa83a',sun:'#fbf0a8',ground:'#55801f',f:["Honeybees tell each other where flowers are by dancing.","A honeybee may visit hundreds of flowers on a single trip."]},
+{k:'ladybug',n:'Ladybug',h:'the Garden Leaf',bg:'#4a9a4a',sun:'#f6f0b0',ground:'#33753a',f:["A ladybug’s bright colours warn birds that it tastes bad.","Some ladybugs spend the winter huddled together in big groups."]},
+{k:'rooster',n:'Rooster',h:'the Barnyard',bg:'#3a6fb0',sun:'#fbe8a0',ground:'#285490',f:["Roosters crow at dawn thanks to an internal body clock.","A rooster calls the hens over when he finds food."]},
+{k:'mole',n:'Mole',h:'the Garden Soil',bg:'#6f8a4a',sun:'#f6e6b0',ground:'#4f6a30',f:["Moles see very little but have an excellent sense of touch.","A mole’s front paws are shaped like shovels."]},
+{k:'gazelle',n:'Gazelle',h:'the Serengeti',bg:'#d8884a',sun:'#fbe4a0',ground:'#a85f28',f:["Thomson’s gazelles can run at about 80 kilometres per hour.","Gazelles leap high in a bouncing move called stotting."]},
+{k:'ostrich',n:'Ostrich',h:'the African Plains',bg:'#c9743a',sun:'#f8dc90',ground:'#9a5020',f:["The ostrich is the largest bird, and each of its eyes is bigger than its brain.","An ostrich can run at about 70 kilometres per hour."]},
+{k:'boar',n:'Boar',h:'the Oak Forest',bg:'#5a7a4a',sun:'#f4e0a0',ground:'#3f5a30',f:["Wild boars can smell food buried underground.","Wild boar piglets have striped coats for camouflage."]},
+{k:'wombat',n:'Wombat',h:'the Bushland',bg:'#5a8aa8',sun:'#f6e8b8',ground:'#3f6a88',f:["Wombats produce cube-shaped droppings.","A wombat’s pouch opens backward so it doesn’t fill with dirt while digging."]},
+{k:'tapir',n:'Tapir',h:'the Jungle River',bg:'#2f8a6f',sun:'#e6f4c8',ground:'#1f6a52',f:["A tapir uses its flexible snout like a snorkel when swimming.","Tapir calves are born with stripes and spots."]},
+{k:'lemur',n:'Lemur',h:'Madagascar',bg:'#8a5aa8',sun:'#f6e6a8',ground:'#633a85',f:["Lemurs live naturally only on the island of Madagascar.","Ring-tailed lemurs sunbathe sitting upright with their arms open."]},
+{k:'capybara',n:'Capybara',h:'the Riverside Wetlands',bg:'#3a8f8a',sun:'#fbeab0',ground:'#2a6e6a',f:["Capybaras are the largest rodents in the world.","Capybaras are strong swimmers and can stay underwater for a few minutes."]}
 ].sort(function(a,b){return a.n.localeCompare(b.n);});
+
+var F3={dog:"Dogs and people have lived side by side for at least 14,000 years.",cat:"In ancient Egypt cats were honored, and harming one was a serious offense.",lion:"For thousands of years the lion has symbolized courage and royalty in many cultures.",tiger:"In Chinese tradition the tiger stands for strength, and the stripes on its forehead resemble the character for king.",elephant:"In Hindu tradition the god Ganesha has an elephant’s head, a symbol of wisdom.",giraffe:"The giraffe is the national animal of Tanzania.",panda:"China has lent giant pandas to zoos abroad as a sign of friendship, a custom called panda diplomacy.",penguin:"Huddling emperor penguins take turns moving to the warm middle so everyone gets a share.",dolphin:"Ancient Greek art often showed dolphins as friends and helpers of sailors.",horse:"Horses were first domesticated on the steppes of Central Asia about 5,500 years ago.",wolf:"Roman legend says Romulus and Remus, the founders of Rome, were raised by a she-wolf.",fox:"In Japanese folklore the fox, or kitsune, is a clever messenger of the god Inari.",bear:"Many Indigenous peoples of North America honor the bear as a symbol of strength and healing.",rabbit:"In East Asian folklore a rabbit lives on the moon, pounding rice cakes.",monkey:"The Monkey King is one of the best-loved heroes of Chinese literature.",owl:"In ancient Greece the owl was the companion of Athena, goddess of wisdom.",eagle:"The bald eagle has been the national bird of the United States since 1782.",shark:"In Hawaiian tradition some sharks are revered as family guardians called aumakua.",whale:"Coastal peoples around the world have honored whales in art and stories for thousands of years.",zebra:"In Swahili a zebra is called punda milia, which means striped donkey.",koala:"Koalas appear in Aboriginal Australian Dreaming stories.",kangaroo:"Australia’s coat of arms features a kangaroo and an emu.",flamingo:"The flamingo is the national bird of the Bahamas.",parrot:"People have kept parrots as companions for more than 2,000 years, since ancient Greece and India.",butterfly:"In many cultures the butterfly is a symbol of transformation.",octopus:"The Minoans painted octopuses on their pottery more than 3,000 years ago.",turtle:"In many Indigenous North American stories, the world rests on the back of a turtle.",frog:"In Japan frogs are lucky charms, because the word for frog sounds like the word for return.",hippo:"The word hippopotamus comes from Greek and means river horse.",crocodile:"Ancient Egyptians worshipped Sobek, a crocodile-headed god.",pig:"In Chinese astrology the pig is a sign of good fortune.",cow:"In Hinduism cows are revered as symbols of life and generosity.",deer:"In Nara, Japan, wild deer are protected as messengers of the gods.",hedgehog:"A hedgehog named Mrs Tiggy-Winkle stars in a classic Beatrix Potter tale.",polarbear:"In Inuit tradition the polar bear is treated with deep respect."};
+ANIMALS.forEach(function(a){if(F3[a.k])a.f.push(F3[a.k]);});
 
 /* ---------- helpers ---------- */
 function mk(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;return c;}
@@ -687,29 +805,37 @@ sheetClose.addEventListener('click',hideSheet);
 sheet.addEventListener('click',function(e){if(e.target===sheet)hideSheet();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!sheet.hidden)hideSheet();});
 
+var isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 document.getElementById('send').addEventListener('click',async function(){
   var blob=await blobP;
   if(!blob){setStatus('The image could not be created. Try again.');return;}
-  var file=new File([blob],'postapp-'+cur.k+'.png',{type:'image/png'});
-  try{
-    if(navigator.canShare&&navigator.canShare({files:[file]})){
-      await navigator.share({files:[file],title:'Postcard from Postapp',text:'Greetings from '+cur.h+'!'});
-      setStatus('Postcard shared.');
-      return;
+  var file=new File([blob],'postapp-'+cur.k+'.png',{type:'image/png'}),txt='Greetings from '+cur.h+'!';
+  if(isMobile){
+    try{
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'Postcard from Postapp',text:txt});
+        setStatus('Postcard shared.');
+        return;
+      }
+    }catch(e){
+      if(e&&e.name==='AbortError'){setStatus('Share cancelled. Nothing was sent.');return;}
     }
-  }catch(e){
-    if(e&&e.name==='AbortError'){setStatus('Share cancelled. Nothing was sent.');return;}
   }
-  var copied=false,opened=false;
-  try{await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);copied=true;}catch(e){}
-  try{opened=!!window.open('https://wa.me/?text='+encodeURIComponent('Postcard from Postapp'),'_blank','noopener');}catch(e){}
-  setStatus('This browser cannot attach the image for you. Follow the steps shown on screen.');
-  showSheet(blob,copied,opened);
+  /* computer: copy the postcard and open WhatsApp Web in the same click */
+  var url='https://web.whatsapp.com/send?text='+encodeURIComponent(txt),cp,w=null,copied=false;
+  try{cp=navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).then(function(){return true;},function(){return false;});}catch(e){cp=Promise.resolve(false);}
+  try{w=window.open(url,'_blank');}catch(e){}
+  if(!w){try{var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();w=true;}catch(e){}}
+  copied=await cp;
+  if(copied&&w){setStatus('Postcard copied. Choose a contact in WhatsApp Web, paste it and press send.');return;}
+  setStatus(w?'The postcard could not be copied. Follow the steps shown on screen.':'Your browser blocked the WhatsApp window. Allow pop-ups for this page, or use the button on screen.');
+  document.getElementById('sheet-wa').href=url;
+  showSheet(blob,copied,!!w);
 });
 
 /* first paint, then repaint once the web fonts are ready */
 var fonts=[ '118px "Bowlby One"','500 25px "DM Mono"','700 40px Caveat' ];
-pick('fox');
+pick(ANIMALS[Math.floor(Math.random()*ANIMALS.length)].k);
 if(document.fonts&&document.fonts.load){Promise.all(fonts.map(function(f){return document.fonts.load(f);})).then(function(){render();},function(){});}
 window.Postapp={animals:ANIMALS,pick:pick,render:render,canvas:cv};
 })();
