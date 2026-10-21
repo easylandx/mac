@@ -18,6 +18,9 @@ header{padding:36px 0 22px;text-align:center}
 .elx.lang{right:auto;left:clamp(20px,5vw,48px)}
 .elx:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 #d9453d}
 .elx:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.more{margin:20px auto 0;max-width:280px;text-align:left}
+.more label{color:#cdd6f0;font-size:13px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;text-align:center}
+.more select{border-color:#d9453d;box-shadow:3px 3px 0 #d9453d;cursor:pointer}
 h1{font:400 clamp(46px,9vw,76px)/1 Pacifico,cursive;color:#fff;text-shadow:4px 4px 0 #d9453d}
 header p{margin-top:14px;font-size:17px;color:#cdd6f0}
 .panel{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:end;background:#fbf5e6;color:#26335f;padding:18px;border-radius:6px;border:3px dashed #d9453d;outline:3px solid #fbf5e6;outline-offset:-9px}
@@ -42,7 +45,7 @@ canvas{display:block;width:100%;height:auto;border-radius:4px;box-shadow:0 22px 
 <div class="wrap">
 <a class="elx lang" href="https://easylandx.github.io/mac/postapp.html" hreflang="en" lang="en">English</a>
 <a class="elx" href="https://easylandx.github.io" target="_blank" rel="noopener">EasylandX <span aria-hidden="true">&#8599;</span></a>
-<header><h1>PostApp</h1><p>Elige un país, crea tu postal y envíala por WhatsApp.</p></header>
+<header><h1>PostApp</h1><p>Elige un país, crea tu postal y envíala por WhatsApp.</p><nav class="more" aria-label="Más colecciones de postales"><label for="nav">Más postales</label><select id="nav"><option value="https://easylandx.github.io/mac/postapp.html">PostApp</option><option value="https://easylandx.github.io/mac/postappes.html" selected>PostAppES</option><option value="https://easylandx.github.io/mac/postelec.html">EVs</option><option value="https://easylandx.github.io/mac/postclass.html">Composers</option><option value="https://easylandx.github.io/mac/postclasses.html">ComposersES</option><option value="https://easylandx.github.io/mac/postthink.html">Thinkers</option><option value="https://easylandx.github.io/mac/postcomp.html">Computers</option><option value="https://easylandx.github.io/mac/postair.html">Airplanes</option><option value="https://easylandx.github.io/mac/postvision.html">Visionaries</option><option value="https://easylandx.github.io/mac/postlight.html">Lighthouses</option><option value="https://easylandx.github.io/mac/posttree.html">Trees</option><option value="https://easylandx.github.io/mac/postmount.html">Mountains</option><option value="https://easylandx.github.io/mac/poscity.html">Cities</option><option value="https://easylandx.github.io/mac/postanim.html">Animals</option></select></nav></header>
 <section class="panel">
 <div><label for="co">País</label><select id="co"></select></div>
 <button id="send" class="send">Enviar por WhatsApp</button>
@@ -367,6 +370,8 @@ let fy=194;g.font='600 '+fs+'px Caveat,cursive';ls.forEach(a=>{a.forEach(l=>{g.f
 /* ---------- ui ---------- */
 const sel=$('co');K.forEach((k,i)=>sel.add(new Option(k.n,i)));sel.value=K.indexOf(cur);
 sel.onchange=()=>{cur=K[sel.value];draw()};
+const nav=$('nav'),navIdx=nav.selectedIndex;nav.onchange=()=>{if(nav.value)window.open(nav.value,'_blank','noopener');nav.selectedIndex=navIdx};
+addEventListener('pageshow',()=>{nav.selectedIndex=navIdx});
 let tt;const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),5200)};
 const blob=()=>new Promise(r=>$('cv').toBlob(r,'image/png'));
 const fname=()=>'postal-'+cur.n.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\W+/g,'-')+'.png';
