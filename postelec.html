@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PostApp</title>
+<meta name="description" content="Pick a pioneering electric or hybrid car, get an illustrated postcard with its release year and battery or range breakthrough, and send it on WhatsApp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Exo+2:wght@500;600;700&family=Share+Tech+Mono&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e9f1f4; --surface:#f7fbfc; --fg:#0e2330; --muted:#52707e; --line:#cddde4;
+  --cyan:#00a7c7; --lime:#7bc619; --paper:#ffffff;
+  --go:#0b4f66; --go-fg:#ffffff; --focus:#0b4f66;
+  --display:"Orbitron","Arial Black",Impact,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Share Tech Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#08141a; --surface:#0f212a; --fg:#e6f6fb; --muted:#8fb2bf; --line:#1f3a46;
+    --cyan:#3ee0ff; --lime:#b6f23a; --paper:#dcecf1;
+    --go:#3ee0ff; --go-fg:#04222b; --focus:#3ee0ff; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#08141a; --surface:#0f212a; --fg:#e6f6fb; --muted:#8fb2bf; --line:#1f3a46;
+  --cyan:#3ee0ff; --lime:#b6f23a; --paper:#dcecf1;
+  --go:#3ee0ff; --go-fg:#04222b; --focus:#3ee0ff; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 var(--body);
+  padding-block:28px 44px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));}
+.app{max-width:1140px;margin:0 auto;display:grid;gap:22px;grid-template-columns:minmax(0,1fr)}
+.bar{display:flex;justify-content:flex-end}
+.elx{display:inline-flex;align-items:center;gap:6px;background:var(--surface);color:var(--fg);font:600 .9rem var(--body);text-decoration:none;padding:9px 15px;border-radius:4px;border:2px solid var(--lime);box-shadow:3px 3px 0 var(--lime);transition:transform .12s,box-shadow .12s}
+.elx:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--lime)}
+.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
+.word{margin:0;font:900 1.9rem/1 var(--display);letter-spacing:.03em}
+.tag{margin:0;color:var(--muted);min-width:0}
+.frame{border:12px solid transparent;
+  border-image:repeating-linear-gradient(90deg,var(--cyan) 0 18px,var(--paper) 18px 24px,var(--lime) 24px 42px,var(--paper) 42px 48px) 12;
+  background:var(--paper);min-width:0}
+canvas{display:block;width:100%;max-width:100%;height:auto;aspect-ratio:3/2}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px;display:grid;gap:16px;min-width:0;align-content:start}
+.field{display:grid;gap:6px}
+label{font:400 .8rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+select{appearance:none;-webkit-appearance:none;width:100%;min-height:50px;padding:0 44px 0 14px;font:500 1.05rem var(--body);color:var(--fg);background-color:var(--bg);
+  border:1.5px solid var(--line);border-radius:4px;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--fg) 50%),linear-gradient(135deg,var(--fg) 50%,transparent 50%);
+  background-position:calc(100% - 22px) 50%,calc(100% - 16px) 50%;background-size:6px 6px;background-repeat:no-repeat}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+button{font:600 .95rem var(--body);min-height:50px;padding:0 10px;border-radius:4px;cursor:pointer;border:1.5px solid var(--line);background:transparent;color:var(--fg);transition:border-color .15s}
+button:hover{border-color:var(--fg)}
+.go{grid-column:1/-1;background:var(--go);color:var(--go-fg);border-color:var(--go);font-size:1.05rem;display:flex;align-items:center;justify-content:center;gap:10px}
+.go:hover{border-color:var(--go);filter:brightness(1.12)}
+.go svg{width:20px;height:20px;flex:none}
+select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.status{margin:0;min-height:2.6em;font:400 .85rem/1.45 var(--mono);color:var(--muted)}
+.hint{margin:0;font-size:.88rem;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+.sheet{position:fixed;inset:0;z-index:50;background:rgba(4,12,16,.78);display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet-in{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:grid;gap:12px;width:min(560px,100%);max-height:100%;overflow:auto}
+.sheet-in img{width:100%;height:auto;display:block;border:1px solid var(--line)}
+.sheet-in p{margin:0;font-size:.95rem}
+.sheet-row{display:flex;flex-wrap:wrap;gap:10px}
+.sheet-row a,.sheet-row button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 16px;border-radius:4px;font:600 .95rem var(--body);text-decoration:none}
+.sheet-row a{background:var(--go);color:var(--go-fg)}
+@media (min-width:920px){
+  .bar,.top{grid-column:1/-1}
+  .app{grid-template-columns:minmax(0,1fr) 300px;align-items:start;column-gap:28px}
+  .word{font-size:2.3rem}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="bar"><a class="elx" href="https://easylandx.github.io" target="_blank" rel="noopener">EasylandX <span aria-hidden="true">&#8599;</span></a></div>
+  <header class="top">
+    <h1 class="word">PostApp</h1>
+    <p class="tag">Choose an electric or hybrid pioneer, get a postcard, send it on WhatsApp.</p>
+  </header>
+  <div class="frame"><canvas id="card" width="1200" height="800" role="img" aria-label="Postcard"></canvas></div>
+  <section class="panel" aria-label="Postcard controls">
+    <div class="field">
+      <label for="sel">Car</label>
+      <select id="sel"></select>
+    </div>
+    <div class="row">
+      <button id="prev" type="button">&larr; Prev</button>
+      <button id="next" type="button">Next &rarr;</button>
+      <button id="rand" type="button">Surprise</button>
+      <button id="send" type="button" class="go">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
+        Send on WhatsApp
+      </button>
+    </div>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+    <p class="hint">On a phone, Send opens the share sheet with the postcard image attached: choose WhatsApp, then pick a contact. On a computer, it copies the postcard and opens WhatsApp Web: choose a contact, paste it in and press send.</p>
+  </section>
+</main>
+
+<div id="sheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-msg">
+  <div class="sheet-in">
+    <img id="sheet-img" alt="Your finished postcard">
+    <p id="sheet-msg"></p>
+    <div class="sheet-row">
+      <a id="sheet-wa" href="https://wa.me/?text=Postcard%20from%20PostApp" target="_blank" rel="noopener">Open WhatsApp Web</a>
+      <button id="sheet-close" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var W=1200,H=800,X;
+
+/* drawing kit: each car is drawn in a 400x400 box, wheels on the ground line at y=392, battery gauge above */
+function R(x,y,w,h,f){X.fillStyle=f;X.fillRect(x,y,w,h);}
+function C(x,y,r,f){X.beginPath();X.arc(x,y,r,0,7);X.fillStyle=f;X.fill();}
+function D(d,f){X.fillStyle=f;X.fill(new Path2D(d));}
+function L(d,s,lw){X.strokeStyle=s;X.lineWidth=lw||4;X.lineCap='round';X.lineJoin='round';X.stroke(new Path2D(d));}
+
+/* body path, glass path, wheel centres, wheel radius, headlight x */
+var KINDS={
+sedan:['M30 300 L30 262 Q40 244 92 240 L138 194 Q150 182 178 182 L256 182 Q286 184 300 200 L330 240 Q372 246 374 272 L374 300 Z','M148 236 L180 194 L238 194 L238 236 Z M246 236 L246 194 L262 194 Q276 196 286 210 L304 236 Z',[104,306],38,360],
+hatch:['M30 300 L30 264 Q40 246 90 240 L132 190 Q146 178 176 178 L290 178 Q334 182 344 236 L374 252 L374 300 Z','M144 236 L176 190 L228 190 L228 236 Z M236 236 L236 190 L286 190 Q318 194 326 236 Z',[104,306],38,360],
+coupe:['M16 300 L16 270 Q40 254 100 248 L160 208 Q176 198 212 198 L268 202 Q330 216 360 250 L386 264 L386 300 Z','M170 244 L192 214 L244 212 Q292 222 324 244 Z',[96,312],38,372],
+suv:['M30 300 L30 254 Q36 240 80 234 L112 176 L304 176 Q336 182 346 234 L374 244 L374 300 Z','M122 232 L142 188 L220 188 L220 232 Z M228 232 L228 188 L298 188 Q320 192 330 232 Z',[104,306],40,360],
+kei:['M56 300 L56 252 L116 202 L270 202 L336 256 L336 300 Z','M124 244 L150 212 L228 212 L228 244 Z M236 244 L236 212 L266 212 L304 244 Z',[110,286],34,322],
+old:['M60 304 L60 184 L84 152 L296 152 L322 184 L340 304 Z','M84 196 L84 164 L170 164 L170 196 Z M184 196 L184 164 L284 164 L300 196 Z',[110,294],46,330]
+};
+function car(a){
+  var s=KINDS[a.s],r=s[3],i,wy=332-r;
+  X.save();X.translate(0,60+(a.fly?-26:0));
+  if(a.s==='old'){R(48,138,288,14,'#2a2a2e');}
+  D(s[0],a.col);D(s[1],'#cdeaf5');R(s[4],258,14,10,'#ffe9a8');
+  if(a.wing){R(346,216,40,6,'#14141c');R(366,216,6,30,'#14141c');L('M10 270 L390 270','#7a5bff',4);}
+  for(i=0;i<2;i++){C(s[2][i],wy,r,'#16161a');C(s[2][i],wy,r*.52,'#d0d4da');if(a.s==='old'){L('M'+(s[2][i]-r)+' '+wy+' L'+(s[2][i]+r)+' '+wy+' M'+s[2][i]+' '+(wy-r)+' L'+s[2][i]+' '+(wy+r),'#8a7a5a',4);}}
+  if(a.fly){
+    var nx=[168,208,248],jj;
+    for(jj=0;jj<3;jj++){
+      R(nx[jj]-9,300,18,8,'#14141c');
+      D('M'+(nx[jj]-9)+' 308 L'+(nx[jj]+9)+' 308 L'+(nx[jj]+3)+' 352 L'+(nx[jj]-3)+' 352 Z','rgba(235,248,255,.92)');
+      D('M'+(nx[jj]-4)+' 308 L'+(nx[jj]+4)+' 308 L'+nx[jj]+' 336 Z','#8fe0ff');
+      C(nx[jj],358,10,'rgba(235,248,255,.5)');
+    }
+    C(150,362,14,'rgba(235,248,255,.35)');C(226,364,16,'rgba(235,248,255,.35)');C(268,360,12,'rgba(235,248,255,.3)');
+  }
+  X.restore();
+  /* battery gauge */
+  X.strokeStyle='#14202a';X.lineWidth=8;X.strokeRect(70,50,250,100);R(320,80,16,40,'#14202a');
+  for(i=0;i<5;i++)R(82+i*48,62,40,76,i<a.bat?'#27c26a':'rgba(20,32,42,.16)');
+  D('M214 64 L168 114 L196 114 L184 146 L236 92 L206 92 Z','#ffd23f');L('M214 64 L168 114 L196 114 L184 146 L236 92 L206 92 Z','#14202a',3);
+  if(a.hy)D('M366 66 Q346 98 366 116 Q386 98 366 66 Z','#ff9f2e');
+}
+
+/* the cars, by release year: release year, battery or range breakthrough, one more fact */
+var M=[
+{k:'lohner',n:'Lohner-Porsche Mixte',h:'Lohner-Porsche',y:1900,s:'old',col:'#6b4a2e',bat:1,hy:1,bg:'#6b4f2a',sun:'#f3dfb0',ground:'#3f2d14',
+ ms:'An early hybrid: a petrol engine ran a generator to charge the battery, with an electric motor in each front wheel hub.',
+ f:'Ferdinand Porsche designed it, and it was shown at the 1900 Paris World Fair.'},
+{k:'detroit',n:'Detroit Electric',h:'Anderson Electric Car Company',y:1907,s:'old',col:'#2f5d50',bat:1,bg:'#7a3f2c',sun:'#f6e3b0',ground:'#4a2418',
+ ms:'Its battery gave an advertised range of around 80 miles on a single charge.',
+ f:'Clara Ford, wife of Henry Ford, drove one.'},
+{k:'henney',n:'Henney Kilowatt',h:'Henney Coach and Eureka Williams',y:1959,s:'sedan',col:'#e8d9a8',bat:1,bg:'#2a6f8a',sun:'#fbe8c0',ground:'#164256',
+ ms:'It used a transistorised speed controller, making it the first modern electric car of its kind.',
+ f:'It was built on a Renault Dauphine body.'},
+{k:'citicar',n:'Sebring-Vanguard CitiCar',h:'Sebring-Vanguard',y:1974,s:'kei',col:'#f2c230',bat:1,bg:'#b5572a',sun:'#fde7b0',ground:'#7a3818',
+ ms:'Six lead-acid batteries gave it a range of about 40 miles.',
+ f:'Roughly 4,400 were built before production ended in 1977.'},
+{k:'ev1',n:'General Motors EV1',h:'General Motors',y:1996,s:'coupe',col:'#c9ced6',bat:2,bg:'#3a4f8a',sun:'#f6d98a',ground:'#222f56',
+ ms:'Its lead-acid pack gave about 55 to 95 miles, and the 1999 nickel-metal hydride pack stretched that to about 75 to 130.',
+ f:'Its drag coefficient of 0.19 was among the lowest of any production car.'},
+{k:'prius',n:'Toyota Prius',h:'Toyota',y:1997,s:'sedan',col:'#cfd6dc',bat:2,hy:1,bg:'#2e7d5a',sun:'#f4efc8',ground:'#1b523a',
+ ms:'The first mass-produced hybrid, pairing a petrol engine with a nickel-metal hydride battery and regenerative braking.',
+ f:'It launched in Japan in December 1997 and reached the world from 2000.'},
+{k:'insight',n:'Honda Insight',h:'Honda',y:1999,s:'coupe',col:'#eeeef0',bat:2,hy:1,bg:'#a8352f',sun:'#ffe9b0',ground:'#6a1f1b',
+ ms:'A lightweight aluminium body and Integrated Motor Assist hybrid system delivered about 70 mpg on the highway (EPA).',
+ f:'It was the first hybrid sold in the United States.'},
+{k:'roadster08',n:'Tesla Roadster',h:'Tesla',y:2008,s:'coupe',col:'#d9262c',bat:3,bg:'#1f2a44',sun:'#ff9f43',ground:'#111a2e',
+ ms:'The first production car to use lithium-ion cells and the first to top 200 miles (320 km) per charge.',
+ f:'About 2,400 to 2,500 were built before production ended in 2012.'},
+{k:'imiev',n:'Mitsubishi i-MiEV',h:'Mitsubishi',y:2009,s:'hatch',col:'#3a8fd9',bat:2,bg:'#5b8a2e',sun:'#f6f0c0',ground:'#3a5a1b',
+ ms:'A 16 kWh lithium-ion pack gave about 160 km on the Japanese test cycle.',
+ f:'It was also sold in Europe as the Peugeot iOn and Citroën C-Zero.'},
+{k:'leaf',n:'Nissan Leaf',h:'Nissan',y:2010,s:'hatch',col:'#eeeef0',bat:2,bg:'#16808a',sun:'#f4f0c0',ground:'#0c5159',
+ ms:'A 24 kWh lithium-ion pack gave an EPA-rated 73 miles in the first mass-market electric car.',
+ f:'It went on to sell more than half a million units.'},
+{k:'volt',n:'Chevrolet Volt',h:'General Motors',y:2010,s:'hatch',col:'#2d4a8a',bat:2,hy:1,bg:'#6a4fa0',sun:'#f6e8b0',ground:'#40306a',
+ ms:'About 35 miles on electricity alone from a 16 kWh pack, then a petrol generator extended the total to about 379 miles.',
+ f:'It was named North American Car of the Year for 2011.'},
+{k:'zoe',n:'Renault Zoe',h:'Renault',y:2012,s:'hatch',col:'#f2c230',bat:2,bg:'#3a4a8a',sun:'#fbe8a0',ground:'#232d56',
+ ms:'A 22 kWh battery and a Chameleon charger that could take AC power from home sockets up to 43 kW.',
+ f:'It was Europe’s best-selling electric car for several years.'},
+{k:'models',n:'Tesla Model S',h:'Tesla',y:2012,s:'sedan',col:'#eeeef0',bat:4,bg:'#7a1f2e',sun:'#ffb870',ground:'#4a121c',
+ ms:'An 85 kWh battery pack gave an EPA range of 265 miles.',
+ f:'Tesla opened its first Superchargers in 2012, the same year.'},
+{k:'i3',n:'BMW i3',h:'BMW',y:2013,s:'hatch',col:'#1d3a8a',bat:2,hy:1,bg:'#d6e0d0',sun:'#2e8a6a',ground:'#8fa88a',
+ ms:'A carbon-fibre body kept weight low, giving about 81 miles (EPA) from a 22 kWh pack, with an optional petrol range extender.',
+ f:'It was BMW’s first mass-produced electric car.'},
+{k:'bolt',n:'Chevrolet Bolt EV',h:'General Motors',y:2016,s:'hatch',col:'#e05a2a',bat:3,bg:'#2b3f5f',sun:'#ffd27a',ground:'#18253a',
+ ms:'A 60 kWh pack gave an EPA range of 238 miles at an affordable price.',
+ f:'It launched at about $37,500 before incentives.'},
+{k:'model3',n:'Tesla Model 3',h:'Tesla',y:2017,s:'sedan',col:'#2a2a30',bat:4,bg:'#d8e2f0',sun:'#e8412e',ground:'#8fa3c0',
+ ms:'The Long Range version reached 310 miles (EPA) in a car aimed at the mass market.',
+ f:'The first 30 cars were handed over in July 2017.'},
+{k:'taycan',n:'Porsche Taycan',h:'Porsche',y:2019,s:'coupe',col:'#4a8ad9',bat:4,bg:'#2a2a35',sun:'#c9a24a',ground:'#14141c',
+ ms:'An 800-volt system allowed charging at up to 270 kW, from 5 to 80 percent in about 22.5 minutes.',
+ f:'It was Porsche’s first fully electric car.'},
+{k:'han',n:'BYD Han EV',h:'BYD',y:2020,s:'sedan',col:'#1a1a22',bat:4,bg:'#a82a3a',sun:'#fbe0b0',ground:'#6a1722',
+ ms:'The Blade battery used long, thin lithium iron phosphate cells in a structural pack designed to resist fire.',
+ f:'BYD introduced the Blade battery in 2020.'},
+{k:'lucid',n:'Lucid Air',h:'Lucid Motors',y:2021,s:'sedan',col:'#cfd8e0',bat:5,bg:'#1f3d5a',sun:'#8fe0f2',ground:'#10263a',
+ ms:'An EPA-rated 520 miles of range, the longest of any production EV at the time.',
+ f:'Deliveries began in October 2021 from Lucid’s factory in Arizona.'},
+{k:'ioniq5',n:'Hyundai Ioniq 5',h:'Hyundai',y:2021,s:'suv',col:'#b8c4d0',bat:4,bg:'#3a6a6a',sun:'#f2e8c0',ground:'#234444',
+ ms:'An 800-volt platform can charge from 10 to 80 percent in about 18 minutes.',
+ f:'The same platform is shared with the Kia EV6.'},
+{k:'roadster26',n:'Tesla Roadster (next generation)',h:'Tesla',y:2017,yt:'ANNOUNCED',s:'coupe',col:'#c9d2e0',bat:5,wing:1,bg:'#0b1030',sun:'#7a5bff',ground:'#05081a',
+ ms:'A targeted 620-mile range from a 200 kWh battery pack, as claimed at the 2017 reveal.',
+ f:'Announced in 2017 with a claimed 1.9-second 0 to 60 mph, it took until October 2026 for the next-generation car to be unveiled.'},
+{k:'luce',n:'Ferrari Luce',h:'Ferrari',y:2026,yt:'UNVEILED',o:2026.4,s:'sedan',col:'#d3202a',bat:3,bg:'#efe4d0',sun:'#d9b45a',ground:'#6f5d3e',
+ ms:'A 122 kWh battery on an 800-volt system gives over 530 km (WLTP) and fast charging at up to 350 kW.',
+ f:'Unveiled in Rome on 25 May 2026, it is Ferrari’s first fully electric car and its first five-seater.'},
+{k:'roadsterfly',n:'Tesla Roadster (flying)',h:'Tesla',y:2026,yt:'UNVEILED',o:2026.79,s:'coupe',col:'#b8c3d6',bat:4,fly:1,bg:'#14213d',sun:'#ff7a3d',ground:'#0a1226',
+ ms:'Cold-gas thrusters developed with SpaceX let it leap and flip in midair, and it reached 60 mph in 0.81 seconds in the demo.',
+ f:'Unveiled on 15 October 2026 in McGregor, Texas, with production planned for 2028. Final battery and range figures are not confirmed.'}
+].sort(function(a,b){return (a.o||a.y)-(b.o||b.y);});
+var BY={};M.forEach(function(a){BY[a.k]=a;});
+
+/* helpers */
+function mk(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;return c;}
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function lum(h){var n=parseInt(h.slice(1),16);return(0.299*(n>>16&255)+0.587*(n>>8&255)+0.114*(n&255))/255;}
+function rng(s){return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+function paintArt(key,ctx,x,y,size){var p=X;X=ctx;ctx.save();ctx.translate(x,y);ctx.scale(size/400,size/400);car(BY[key]);ctx.restore();X=p;}
+function silhouette(key,color){var c=mk(400,400),g=c.getContext('2d');paintArt(key,g,0,0,400);g.globalCompositeOperation='source-in';g.fillStyle=color;g.fillRect(0,0,400,400);return c;}
+function wrap(c,text,maxW){var w=text.split(' '),lines=[],line='',t,i;for(i=0;i<w.length;i++){t=line?line+' '+w[i]:w[i];if(c.measureText(t).width>maxW&&line){lines.push(line);line=w[i];}else line=t;}if(line)lines.push(line);return lines;}
+function sp(c,v){if('letterSpacing' in c)c.letterSpacing=v;}
+function dateStamp(){var d=new Date();return{day:String(d.getDate()).padStart(2,'0')+' '+d.toLocaleString('en-GB',{month:'short'}).toUpperCase(),year:String(d.getFullYear())};}
+var F_D='"Orbitron","Arial Black",sans-serif',F_M='"Share Tech Mono",ui-monospace,Menlo,monospace',F_H='"Exo 2",system-ui,sans-serif';
+
+function stampCanvas(a){
+  var w=176,h=216,s=mk(w,h),g=s.getContext('2d'),i;
+  g.fillStyle='#fffdf8';g.fillRect(0,0,w,h);
+  g.globalCompositeOperation='destination-out';
+  for(i=8;i<w;i+=16){g.beginPath();g.arc(i,0,5,0,7);g.fill();g.beginPath();g.arc(i,h,5,0,7);g.fill();}
+  for(i=8;i<h;i+=16){g.beginPath();g.arc(0,i,5,0,7);g.fill();g.beginPath();g.arc(w,i,5,0,7);g.fill();}
+  g.globalCompositeOperation='source-over';
+  var ink=lum(a.bg)>0.55?'#14110e':'#f2fbff';
+  g.fillStyle=a.bg;g.fillRect(14,14,w-28,h-28);
+  g.strokeStyle=ink;g.globalAlpha=.55;g.lineWidth=2;g.strokeRect(20,20,w-40,h-40);g.globalAlpha=1;
+  g.drawImage(silhouette(a.k,ink),26,40,124,124);
+  g.fillStyle=ink;g.textAlign='center';
+  g.font='700 14px '+F_D;g.fillText('POSTAPP',w/2,h-50);
+  g.font='400 12px '+F_M;sp(g,'2px');g.fillText('AIR MAIL',w/2,h-32);sp(g,'0px');
+  g.textAlign='left';g.font='700 15px '+F_D;g.fillText(String(a.y),28,50);
+  return s;
+}
+
+function badge(c,a,x,y,r){
+  c.save();c.translate(x,y);
+  c.shadowColor='rgba(0,0,0,.35)';c.shadowBlur=14;c.shadowOffsetY=6;
+  c.beginPath();c.arc(0,0,r,0,7);c.fillStyle='#fbfeff';c.fill();c.shadowColor='transparent';
+  c.beginPath();c.arc(0,0,r-7,0,7);c.fillStyle=a.bg;c.fill();
+  c.save();c.beginPath();c.arc(0,0,r-8,0,7);c.clip();
+  c.beginPath();c.arc(0,0,r-8,0,7);c.fillStyle=a.sun;c.globalAlpha=.55;c.fill();c.globalAlpha=1;
+  paintArt(a.k,c,-(r-7)*1.02,-(r-7)*1.02,(r-7)*2.04);
+  c.restore();
+  c.setLineDash([3,5]);c.strokeStyle='rgba(255,255,255,.85)';c.lineWidth=2;c.beginPath();c.arc(0,0,r-12,0,7);c.stroke();c.setLineDash([]);
+  c.restore();
+}
+
+/* one postcard */
+var cv=document.getElementById('card'),ctx=cv.getContext('2d');
+function draw(a){
+  var c=ctx,i;
+  c.save();c.clearRect(0,0,W,H);
+  c.fillStyle='#f3f9fb';rr(c,0,0,W,H,16);c.fill();
+  c.save();rr(c,36,36,1128,728,8);c.clip();
+  c.fillStyle=a.bg;c.fillRect(0,0,W,H);
+  c.fillStyle=a.sun;c.globalAlpha=.9;c.beginPath();c.arc(390,470,262,0,7);c.fill();c.globalAlpha=1;
+  c.strokeStyle='rgba(255,255,255,.22)';c.lineWidth=3;
+  c.beginPath();c.arc(390,470,300,0,7);c.stroke();c.beginPath();c.arc(390,470,336,0,7);c.stroke();
+  var r=rng(a.k.charCodeAt(0)*131+a.k.length*17);
+  for(i=0;i<14;i++){c.fillStyle='rgba(255,255,255,.4)';c.fillRect(70+r()*560,250+r()*330,5,5);}
+  c.fillStyle=a.ground;c.fill(new Path2D('M36 660 Q200 630 380 654 T700 650 T1030 656 T1164 640 L1164 764 L36 764 Z'));
+  c.fillStyle='rgba(255,255,255,.12)';c.fill(new Path2D('M36 700 Q300 676 560 700 T1164 690 L1164 764 L36 764 Z'));
+  var tc=lum(a.bg)>0.55?'#0e1a22':'#f6fdff';
+  c.fillStyle=tc;c.textBaseline='alphabetic';c.textAlign='left';
+  c.font='400 22px '+F_M;sp(c,'4px');c.fillText('PIONEERING ELECTRIC & HYBRID CARS',84,110);sp(c,'0px');
+  var name=a.n.toUpperCase(),size=70;c.font='900 '+size+'px '+F_D;
+  var tw=c.measureText(name).width;if(tw>840){size=Math.floor(size*840/tw);c.font='900 '+size+'px '+F_D;}
+  c.fillStyle='rgba(0,0,0,.26)';c.fillText(name,88,196);
+  c.fillStyle=tc;c.fillText(name,84,191);
+  paintArt(a.k,c,130,224,500);
+  c.restore();
+  c.strokeStyle='rgba(255,255,255,.5)';c.lineWidth=3;rr(c,50,50,1100,700,6);c.stroke();
+  c.fillStyle='rgba(255,255,255,.85)';c.font='400 17px '+F_M;sp(c,'5px');c.fillText(('PAR AVION  ·  '+a.h).toUpperCase(),84,732);sp(c,'0px');
+
+  var st=stampCanvas(a);
+  c.save();c.translate(1042,172);c.rotate(.06);c.shadowColor='rgba(0,0,0,.3)';c.shadowBlur=12;c.shadowOffsetY=5;c.drawImage(st,-88,-108);c.restore();
+  var ds=dateStamp();
+  c.save();c.strokeStyle='rgba(10,24,32,.62)';c.fillStyle='rgba(10,24,32,.62)';c.lineWidth=3.5;
+  c.beginPath();c.arc(962,258,52,0,7);c.stroke();c.lineWidth=2;c.beginPath();c.arc(962,258,42,0,7);c.stroke();
+  c.textAlign='center';c.font='400 14px '+F_M;c.fillText('POSTAPP',962,246);c.fillText(ds.day,962,264);c.fillText(ds.year,962,282);
+  c.lineWidth=3.5;
+  for(i=0;i<4;i++){var yy=232+i*17;c.beginPath();c.moveTo(1018,yy);c.bezierCurveTo(1044,yy-10,1062,yy+10,1088,yy);c.bezierCurveTo(1108,yy-8,1126,yy+8,1148,yy);c.stroke();}
+  c.restore();
+
+  /* text card: release year, battery or range breakthrough, one more fact */
+  var cw=500,pad=34,tw2=cw-pad*2,fsz=28,secs=[['BATTERY / RANGE BREAKTHROUGH',a.ms],['ALSO',a.f]],ls,ch,lh,maxH=366,n;
+  do{
+    c.font='500 '+fsz+'px '+F_H;
+    ls=secs.map(function(s){return wrap(c,s[1],tw2);});
+    n=ls[0].length+ls[1].length;lh=fsz*1.2;
+    ch=96+2*30+n*lh+16+22;fsz--;
+  }while(ch>maxH&&fsz>14);
+  var cx=640,cy=708-ch;
+  c.save();c.translate(cx+cw/2,cy+ch/2);c.rotate(-.02);
+  c.shadowColor='rgba(0,0,0,.32)';c.shadowBlur=22;c.shadowOffsetY=10;
+  c.fillStyle='#fcfeff';c.fillRect(-cw/2,-ch/2,cw,ch);c.shadowColor='transparent';
+  c.fillStyle='#00a7c7';c.fillRect(-cw/2,-ch/2,9,ch);
+  var x0=-cw/2+pad,y=-ch/2+34,k,j;
+  c.fillStyle='#52707e';c.font='400 14px '+F_M;sp(c,'3px');c.fillText(a.yt||'RELEASE YEAR',x0,y);sp(c,'0px');
+  y+=56;c.fillStyle='#0b4f66';c.font='900 58px '+F_D;c.fillText(String(a.y),x0,y);
+  for(k=0;k<2;k++){
+    y+=30;c.fillStyle='#52707e';c.font='400 14px '+F_M;sp(c,'3px');c.fillText(secs[k][0],x0,y);sp(c,'0px');
+    c.fillStyle='#0e2330';c.font='500 '+(fsz+1)+'px '+F_H;
+    for(j=0;j<ls[k].length;j++){y+=lh;c.fillText(ls[k][j],x0,y);}
+    y+=8;
+  }
+  c.fillStyle='rgba(123,198,25,.85)';
+  c.save();c.translate(-cw/2+70,-ch/2+2);c.rotate(-.16);c.fillRect(-46,-13,92,26);c.restore();
+  c.save();c.translate(cw/2-60,-ch/2+2);c.rotate(.14);c.fillRect(-46,-13,92,26);c.restore();
+  c.restore();
+  badge(c,a,cx-26,cy+24,58);
+  c.restore();
+}
+
+/* app state and UI */
+var sel=document.getElementById('sel'),statusEl=document.getElementById('status'),idx=0,blobP=null,i0;
+for(i0=0;i0<M.length;i0++){var o=document.createElement('option');o.value=i0;o.textContent=M[i0].n+' ('+M[i0].y+')';sel.appendChild(o);}
+function setStatus(t){statusEl.textContent=t||'';}
+function render(){
+  var a=M[idx];draw(a);
+  cv.setAttribute('aria-label','Postcard of the '+a.n+', '+(a.yt?a.yt.toLowerCase():'released')+' '+a.y+'. Breakthrough: '+a.ms+' '+a.f);
+  blobP=new Promise(function(res){cv.toBlob(res,'image/png');});
+}
+function pick(i){idx=(i+M.length)%M.length;sel.value=idx;setStatus('');render();}
+sel.addEventListener('change',function(){pick(+sel.value);});
+document.getElementById('prev').addEventListener('click',function(){pick(idx-1);});
+document.getElementById('next').addEventListener('click',function(){pick(idx+1);});
+document.getElementById('rand').addEventListener('click',function(){var k;do{k=Math.floor(Math.random()*M.length);}while(k===idx);pick(k);});
+
+/* send */
+var sheet=document.getElementById('sheet'),sheetImg=document.getElementById('sheet-img'),sheetMsg=document.getElementById('sheet-msg'),sheetClose=document.getElementById('sheet-close'),lastFocus=null,sheetUrl=null;
+function showSheet(blob,copied,opened){
+  if(sheetUrl)URL.revokeObjectURL(sheetUrl);
+  sheetUrl=URL.createObjectURL(blob);sheetImg.src=sheetUrl;
+  if(copied&&opened)sheetMsg.textContent='The postcard is copied. In WhatsApp, choose a contact, then paste with Ctrl+V or ⌘V.';
+  else if(copied)sheetMsg.textContent='The postcard is copied. Open WhatsApp, choose a contact, then paste with Ctrl+V or ⌘V.';
+  else sheetMsg.textContent='Save the postcard (press and hold the image, or right-click it), then open WhatsApp, choose a contact and attach it.';
+  lastFocus=document.activeElement;sheet.hidden=false;sheetClose.focus();
+}
+function hideSheet(){sheet.hidden=true;if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+sheetClose.addEventListener('click',hideSheet);
+sheet.addEventListener('click',function(e){if(e.target===sheet)hideSheet();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!sheet.hidden)hideSheet();});
+
+var isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+document.getElementById('send').addEventListener('click',async function(){
+  var blob=await blobP;
+  if(!blob){setStatus('The image could not be created. Try again.');return;}
+  var a=M[idx],file=new File([blob],'postapp-'+a.k+'.png',{type:'image/png'}),txt='Postcard from the '+a.n+' ('+a.y+')!';
+  if(isMobile){
+    try{
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'Postcard from PostApp',text:txt});
+        setStatus('Postcard shared.');return;
+      }
+    }catch(e){if(e&&e.name==='AbortError'){setStatus('Share cancelled. Nothing was sent.');return;}}
+  }
+  var url='https://web.whatsapp.com/send?text='+encodeURIComponent(txt),cp,w=null,copied=false;
+  try{cp=navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).then(function(){return true;},function(){return false;});}catch(e){cp=Promise.resolve(false);}
+  try{w=window.open(url,'_blank');}catch(e){}
+  if(!w){try{var l=document.createElement('a');l.href=url;l.target='_blank';l.rel='noopener';document.body.appendChild(l);l.click();l.remove();w=true;}catch(e){}}
+  copied=await cp;
+  if(copied&&w){setStatus('Postcard copied. Choose a contact in WhatsApp Web, paste it and press send.');return;}
+  setStatus(w?'The postcard could not be copied. Follow the steps shown on screen.':'Your browser blocked the WhatsApp window. Allow pop-ups for this page, or use the button on screen.');
+  document.getElementById('sheet-wa').href=url;
+  showSheet(blob,copied,!!w);
+});
+
+pick(Math.floor(Math.random()*M.length));
+if(document.fonts&&document.fonts.load){Promise.all(['900 58px "Orbitron"','400 22px "Share Tech Mono"','500 28px "Exo 2"'].map(function(f){return document.fonts.load(f);})).then(render,function(){});}
+window.PostApp={cars:M,pick:pick,render:render,canvas:cv};
+})();
+</script>
+</body>
+</html>
