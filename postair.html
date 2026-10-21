@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PostApp</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Pick a legendary aircraft, get a postcard with its first flight year and breakthrough, and send it on WhatsApp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@600&family=IBM+Plex+Mono:wght@400;500;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: a navy night-sky page with a striped postcard preview and one control panel beside it (stacked on phones). The postcard itself is drawn on a canvas. */
+:root{
+  color-scheme:dark;
+  --bg:#0f2a43; --surface:#163a5f; --fg:#f4efe2; --muted:#a8bdd2; --line:#2f5d8a;
+  --orange:#ff7a2f; --sky:#4cc3ee; --cream:#f4efe2; --paper:#f7fbfd;
+  --go:#ff7a2f; --go-fg:#1a0f05; --focus:#ffd166;
+  --display:"Bebas Neue",Impact,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;
+  background:var(--bg); color:var(--fg); font:16px/1.5 var(--body);
+  padding-block:28px 44px;
+  padding-left:max(20px,env(safe-area-inset-left,0px));
+  padding-right:max(20px,env(safe-area-inset-right,0px));
+}
+.app{max-width:1140px;margin:0 auto;display:grid;gap:22px;grid-template-columns:minmax(0,1fr)}
+.bar{display:flex;justify-content:flex-end}
+.elx{display:inline-flex;align-items:center;gap:6px;background:var(--surface);color:var(--fg);font:600 .9rem var(--body);text-decoration:none;padding:9px 15px;border-radius:999px;border:2px solid var(--orange);box-shadow:3px 3px 0 var(--orange);transition:transform .12s,box-shadow .12s}
+.elx:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--orange)}
+.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
+.word{margin:0;font:400 3rem/1 var(--display);letter-spacing:.04em}
+.tag{margin:0;color:var(--muted);min-width:0}
+.frame{
+  border:12px solid transparent;
+  border-image:repeating-linear-gradient(135deg,var(--orange) 0 16px,var(--cream) 16px 32px,var(--sky) 32px 48px,var(--cream) 48px 64px) 12;
+  background:var(--paper);min-width:0;
+}
+canvas{display:block;width:100%;max-width:100%;height:auto;aspect-ratio:3/2}
+.panel{
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:18px;display:grid;gap:16px;min-width:0;align-content:start;
+}
+.field{display:grid;gap:6px}
+label{font:500 .75rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+select{
+  appearance:none;-webkit-appearance:none;width:100%;min-height:50px;padding:0 44px 0 14px;
+  font:500 1.05rem var(--body);color:var(--fg);background-color:var(--bg);
+  border:1.5px solid var(--line);border-radius:10px;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--fg) 50%),linear-gradient(135deg,var(--fg) 50%,transparent 50%);
+  background-position:calc(100% - 22px) 50%,calc(100% - 16px) 50%;background-size:6px 6px;background-repeat:no-repeat;
+}
+.row{display:grid;grid-template-columns:1fr;gap:10px}
+button{
+  font:600 1rem var(--body);min-height:50px;padding:0 16px;border-radius:10px;cursor:pointer;
+  border:1.5px solid var(--line);background:transparent;color:var(--fg);transition:background-color .15s,border-color .15s;
+}
+button:hover{border-color:var(--fg)}
+.go{grid-column:1/-1;background:var(--go);color:var(--go-fg);border-color:var(--go);font-size:1.05rem;display:flex;align-items:center;justify-content:center;gap:10px}
+.go:hover{border-color:var(--go);filter:brightness(1.08)}
+.go svg{width:20px;height:20px;flex:none}
+select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.status{margin:0;min-height:2.6em;font:400 .8rem/1.45 var(--mono);color:var(--muted)}
+.hint{margin:0;font-size:.88rem;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+.sheet{position:fixed;inset:0;z-index:50;background:rgba(5,15,28,.72);display:flex;align-items:center;justify-content:center;
+  padding:max(20px,env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) max(20px,env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
+.sheet-in{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;width:min(560px,100%);max-height:100%;overflow:auto}
+.sheet-in img{width:100%;height:auto;display:block;border:1px solid var(--line)}
+.sheet-in p{margin:0;font-size:.95rem}
+.sheet-row{display:flex;flex-wrap:wrap;gap:10px}
+.sheet-row a,.sheet-row button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 16px;border-radius:10px;font:600 .95rem var(--body);text-decoration:none}
+.sheet-row a{background:var(--go);color:var(--go-fg)}
+@media (min-width:920px){
+  .bar{grid-column:1/-1}
+  .app{grid-template-columns:minmax(0,1fr) 300px;align-items:start;column-gap:28px}
+  .top{grid-column:1/-1}
+  .word{font-size:3.4rem}
+}
+@media (max-width:420px){.row{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<main class="app">
+  <div class="bar"><a class="elx" href="https://easylandx.github.io" target="_blank" rel="noopener">EasylandX <span aria-hidden="true">&#8599;</span></a></div>
+  <header class="top">
+    <h1 class="word">PostApp</h1>
+    <p class="tag">Choose a legendary aircraft, get a blueprint postcard, send it on WhatsApp.</p>
+  </header>
+
+  <div class="frame"><canvas id="card" width="1200" height="800" role="img" aria-label="Postcard"></canvas></div>
+
+  <section class="panel" aria-label="Postcard controls">
+    <div class="field">
+      <label for="plane">Aircraft</label>
+      <select id="plane"></select>
+    </div>
+    <div class="row">
+      <button id="rand" type="button">Surprise me</button>
+      <button id="send" type="button" class="go">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
+        Send on WhatsApp
+      </button>
+    </div>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+    <p class="hint">On a phone, Send opens the share sheet with the postcard image attached: choose WhatsApp, then pick a contact. On a computer, it copies the postcard and opens WhatsApp Web: choose a contact, paste it in and press send.</p>
+  </section>
+</main>
+
+<div id="sheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-msg">
+  <div class="sheet-in">
+    <img id="sheet-img" alt="Your finished postcard">
+    <p id="sheet-msg"></p>
+    <div class="sheet-row">
+      <a id="sheet-wa" href="https://wa.me/?text=Postcard%20from%20PostApp" target="_blank" rel="noopener">Open WhatsApp Web</a>
+      <button id="sheet-close" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var W=1200,H=800;
+
+/* ---------- tiny drawing kit (all aircraft are drawn in a 400x400 box) ---------- */
+var X;
+function fs(f,s,lw){if(f){X.fillStyle=f;X.fill();}if(s){X.strokeStyle=s;X.lineWidth=lw||4;X.lineJoin='round';X.lineCap='round';X.stroke();}}
+function E(x,y,rx,ry,f,rot,s,lw){X.beginPath();X.ellipse(x,y,rx,ry,rot||0,0,Math.PI*2);fs(f,s,lw);}
+function C(x,y,r,f,s,lw){E(x,y,r,r,f,0,s,lw);}
+function D(d,f,s,lw){var p=new Path2D(d);if(f){X.fillStyle=f;X.fill(p);}if(s){X.strokeStyle=s;X.lineWidth=lw||4;X.lineJoin='round';X.lineCap='round';X.stroke(p);}}
+function L(d,s,lw){D(d,null,s,lw);}
+function sym(f){f();X.save();X.translate(400,0);X.scale(-1,1);f();X.restore();}
+var A='#333',B='#333',FILL='#f4f9ff',GLASS='#bfe3f2',INK='#10263b';
+function T(s,x,y,sz){X.fillStyle=A;X.font='400 '+sz+'px '+F_DISPLAY;X.textAlign='center';X.fillText(s,x,y);}
+function dim(x1,x2,y){L('M'+x1+' '+y+' L'+x2+' '+y+' M'+x1+' '+(y-12)+' L'+x1+' '+(y+12)+' M'+x2+' '+(y-12)+' L'+x2+' '+(y+12),B,2.5);}
+var ART={
+wright:function(){
+  var i;
+  D('M150 62 L250 62 L250 84 L150 84 Z',FILL,A,4);L('M172 84 L172 130 M228 84 L228 130',A,3);
+  D('M40 130 L360 130 L360 162 L40 162 Z',FILL,A,5);
+  D('M40 232 L360 232 L360 264 L40 264 Z',FILL,A,5);
+  for(i=1;i<8;i++){L('M'+(40+i*40)+' 130 L'+(40+i*40)+' 162 M'+(40+i*40)+' 232 L'+(40+i*40)+' 264',A,2);}
+  L('M40 162 L40 232 M120 162 L120 232 M280 162 L280 232 M360 162 L360 232',A,4);
+  L('M40 162 L120 232 M120 162 L40 232 M280 162 L360 232 M360 162 L280 232',B,2);
+  E(140,198,7,34,'#fff',0,A,3);E(260,198,7,34,'#fff',0,A,3);
+  E(200,247,30,9,'#fbd9a8',0,A,3);
+  L('M80 304 L320 304 M104 264 L98 304 M296 264 L302 304',A,5);
+  dim(40,360,346);
+},
+spitfire:function(){
+  sym(function(){
+    D('M192 170 C132 156 62 186 54 232 C84 254 150 244 192 232 Z',FILL,A,5);
+    C(104,214,13,B,A,3);C(104,214,6,'#fff');
+    D('M192 302 L152 316 L154 332 L192 324 Z',FILL,A,4);
+  });
+  D('M190 84 Q200 62 210 84 L214 300 L200 346 L186 300 Z',FILL,A,5);
+  D('M188 150 Q200 130 212 150 L212 180 L188 180 Z',GLASS,A,3);
+  L('M170 64 L230 64',B,7);D('M194 74 Q200 58 206 74 Z',B,A,3);
+  D('M200 310 L200 350',null,A,2);
+},
+dc3:function(){
+  D('M58 232 C66 202 130 194 200 194 L330 202 L378 182 L384 238 L330 238 L200 254 C130 254 66 260 58 232 Z',FILL,A,5);
+  D('M72 214 L112 206 L112 222 L74 226 Z',GLASS,A,3);
+  X.setLineDash([10,8]);L('M130 214 L318 218',A,4);X.setLineDash([]);
+  D('M170 238 L262 238 L272 254 L180 254 Z',FILL,A,4);
+  E(118,248,36,15,'#e3edf7',0,A,4);E(76,248,6,46,'#fff',0,A,3);
+  D('M334 202 L376 122 L392 126 L384 202 Z',FILL,A,4);D('M326 228 L388 218 L388 234 L326 238 Z',FILL,A,3);
+  L('M190 254 L184 288 M262 254 L268 288',A,5);C(184,296,17,'#fff',A,5);C(268,296,17,'#fff',A,5);C(184,296,5,B);C(268,296,5,B);
+  L('M30 322 L380 322',B,4);dim(58,384,350);
+},
+x1:function(){
+  X.setLineDash([10,9]);L('M20 190 L74 214 M20 276 L74 252 M44 150 L120 196',B,3);X.setLineDash([]);
+  D('M30 234 C70 196 200 190 330 206 L372 188 L378 252 L330 246 C210 270 70 270 30 234 Z',FILL,A,5);
+  D('M110 214 L150 198 L178 202 L172 226 Z',GLASS,A,3);L('M150 198 L146 220',A,2);
+  D('M200 238 L262 233 L270 244 L204 250 Z',FILL,A,4);
+  D('M330 206 L366 148 L378 152 L372 206 Z',FILL,A,4);D('M332 228 L386 214 L388 228 L332 240 Z',FILL,A,3);
+  L('M378 222 L394 216 M378 238 L394 244',B,4);
+  T('MACH 1.06',200,330,36);
+},
+comet:function(){
+  sym(function(){
+    D('M192 166 L54 206 L50 230 L192 218 Z',FILL,A,5);
+    D('M150 176 L174 170 L174 212 L150 218 Z',B,A,3);
+    D('M192 300 L148 312 L150 334 L192 326 Z',FILL,A,4);
+    L('M60 208 L190 180',A,2);
+  });
+  D('M190 80 Q200 54 210 80 L214 304 L200 352 L186 304 Z',FILL,A,5);
+  D('M190 100 Q200 88 210 100 L208 122 L192 122 Z',GLASS,A,3);
+  for(var i=0;i<9;i++)C(200,150+i*16,3,B);
+  D('M196 300 L204 300 L206 330 L194 330 Z',B,A,2);
+},
+b747:function(){
+  D('M28 254 C34 228 70 216 112 212 C124 190 150 178 184 178 L228 184 L248 210 L330 216 L372 148 L388 150 L384 244 L332 250 L112 264 C60 266 30 264 28 254 Z',FILL,A,5);
+  D('M118 206 C128 192 150 186 178 186 L190 204 Z',GLASS,A,3);
+  X.setLineDash([9,8]);L('M62 236 L330 232',A,4);X.setLineDash([]);
+  D('M190 252 L304 250 L336 292 L304 296 Z',FILL,A,5);
+  E(214,288,23,13,'#e3edf7',0,A,4);E(262,293,23,13,'#e3edf7',0,A,4);
+  D('M336 224 L388 212 L388 230 L336 240 Z',FILL,A,3);
+  L('M130 264 L126 296 M312 262 L316 296',A,5);C(126,304,14,'#fff',A,5);C(316,304,14,'#fff',A,5);C(340,304,14,'#fff',A,5);
+  L('M30 326 L380 326',B,4);dim(28,388,352);
+},
+concorde:function(){
+  sym(function(){
+    D('M198 36 L198 110 L52 316 L64 338 L198 322 Z',FILL,A,5);
+    D('M110 232 L128 232 L128 322 L110 322 Z',B,A,3);D('M134 220 L152 220 L152 316 L134 316 Z',B,A,3);
+    L('M198 110 L98 332',A,2);
+  });
+  D('M194 64 Q200 26 206 64 L208 300 L200 340 L192 300 Z',FILL,A,5);
+  D('M194 62 Q200 36 206 62 Z',B,A,3);
+  D('M200 276 L200 336 M196 300 L172 330 M204 300 L228 330',A,2);
+  D('M192 296 L200 262 L208 296 Z',B,A,3);
+},
+sr71:function(){
+  sym(function(){
+    D('M197 130 L116 286 L116 306 L197 292 Z','#cfd7e0',A,5);
+    D('M128 188 L152 188 L152 316 L128 316 Z','#aeb9c6',A,4);
+    D('M152 190 L152 316',null,A,2);
+    D('M197 296 L170 314 L172 328 L197 322 Z','#cfd7e0',A,4);
+    D('M188 130 L170 132 L168 142 L188 150 Z','#cfd7e0',A,3);
+  });
+  D('M200 16 L207 120 L210 290 L200 330 L190 290 L193 120 Z','#cfd7e0',A,5);
+  D('M197 70 L203 70 L205 100 L195 100 Z',B,A,3);
+  L('M196 40 L190 128 M204 40 L210 128',A,2);
+  L('M150 332 L250 332',B,3);
+},
+a380:function(){
+  var i;
+  D('M190 128 L200 36 L210 128 Z',FILL,A,4);
+  sym(function(){
+    D('M168 222 L26 244 L22 262 L168 250 Z',FILL,A,5);
+    C(80,282,17,'#e3edf7',A,5);C(80,282,7,B);C(128,276,15,'#e3edf7',A,5);C(128,276,6,B);
+  });
+  E(200,206,50,82,FILL,0,A,5);
+  L('M154 176 L246 176',A,4);
+  D('M168 112 Q200 94 232 112 L226 126 L174 126 Z',GLASS,A,3);
+  for(i=0;i<5;i++){C(172+i*14,150,3.5,B);C(172+i*14,198,3.5,B);}
+  L('M200 288 L200 336',A,5);C(176,336,12,'#fff',A,4);C(224,336,12,'#fff',A,4);
+  L('M20 352 L380 352',B,4);
+},
+spirit:function(){
+  D('M62 258 L62 214 C100 198 170 198 236 216 L334 232 L334 246 L236 262 C170 276 102 274 62 258 Z',FILL,A,5);
+  D('M54 214 L90 208 L90 266 L54 262 Z',FILL,A,4);
+  D('M176 204 L216 202 L222 224 L176 224 Z',GLASS,A,3);
+  D('M104 168 L306 168 L306 184 L104 188 Z',FILL,A,5);
+  L('M152 188 L174 228 M258 184 L228 238',A,4);
+  E(56,238,6,52,'#fff',0,A,3);
+  D('M326 238 L350 186 L362 190 L352 242 Z',FILL,A,4);D('M326 244 L384 236 L384 250 L328 254 Z',FILL,A,3);
+  L('M140 268 L150 300 M196 270 L176 300',A,5);C(158,306,24,'#fff',A,6);C(158,306,8,B);C(346,264,6,'#fff',A,3);
+  T('NX-211',250,252,22);
+  L('M30 346 L380 346',B,3);
+}
+};
+var PLANES=[
+{k:'wright',n:'Wright Flyer',h:'Kitty Hawk',bg:'#f1e2c0',ac:'#7a4b12',ac2:'#1f6f8a',role:'Pioneer biplane · Wright brothers',kind:'FRONT ELEVATION',cap:'Wing-warping biplane, front view',
+ yr:'1903',fl:'December 17, 1903 · Kitty Hawk, North Carolina',
+ br:'Three-axis control (wing warping, rudder and elevator) made steady, piloted powered flight possible.',
+ f:['The first flight lasted 12 seconds and covered 120 feet.','The longest of four flights that day lasted 59 seconds.','A 12 hp engine built in their bicycle shop turned two propellers.']},
+{k:'spitfire',n:'Supermarine Spitfire',h:'Southampton',bg:'#cfe6d8',ac:'#2d5a3a',ac2:'#c0392b',role:'Fighter · Supermarine, designed by R. J. Mitchell',kind:'PLAN VIEW',cap:'Elliptical wing, top view',
+ yr:'1936',fl:'March 5, 1936 · Eastleigh, England',
+ br:'A thin elliptical wing and the Rolls-Royce Merlin engine gave a fast, nimble fighter.',
+ f:['R. J. Mitchell led the design at Supermarine.','More than 20,000 were built.','It flew in the Battle of Britain in 1940.']},
+{k:'dc3',n:'Douglas DC-3',h:'Santa Monica',bg:'#d6e0ee',ac:'#2b4a7a',ac2:'#c56a1a',role:'Airliner · Douglas Aircraft Company',kind:'SIDE ELEVATION',cap:'Twin-engine all-metal airliner',
+ yr:'1935',fl:'December 17, 1935 · Santa Monica, California',
+ br:'An all-metal airliner that could earn a profit from passengers alone, without airmail subsidies.',
+ f:['More than 16,000 were built, counting military C-47 versions.','It carried roughly 21 to 32 passengers.','Some are still flying today.']},
+{k:'x1',n:'Bell X-1',h:'Muroc Dry Lake',bg:'#fbd9c4',ac:'#c2410c',ac2:'#1e5a7a',role:'Rocket plane · Bell Aircraft',kind:'SIDE ELEVATION',cap:'Bullet-shaped rocket plane',
+ yr:'1946',fl:'January 1946 · unpowered glide test flights',
+ br:'The first piloted aircraft to fly faster than sound: Chuck Yeager reached about Mach 1.06 on October 14, 1947.',
+ f:['It was rocket-powered and air-launched from a B-29 bomber.','Yeager named it Glamorous Glennis after his wife.','Its fuselage was shaped like a bullet.']},
+{k:'comet',n:'de Havilland Comet',h:'Hatfield',bg:'#d9e8f7',ac:'#1d5c8f',ac2:'#b4452d',role:'Jet airliner · de Havilland',kind:'PLAN VIEW',cap:'Swept wing, engines in the roots',
+ yr:'1949',fl:'July 27, 1949 · Hatfield, England',
+ br:'The first jet airliner, flying high and fast in a pressurized cabin.',
+ f:['It entered passenger service in 1952 with BOAC.','Early square windows led to metal-fatigue failures.','The crash investigations reshaped fatigue testing and window design.']},
+{k:'b747',n:'Boeing 747',h:'Everett',bg:'#dcecf2',ac:'#0e5a73',ac2:'#c2410c',role:'Jumbo jet · Boeing Commercial Airplanes',kind:'SIDE ELEVATION',cap:'Wide-body with upper-deck hump',
+ yr:'1969',fl:'February 9, 1969 · Everett, Washington',
+ br:'The first wide-body jetliner, with two aisles and high-bypass turbofan engines.',
+ f:['It entered service with Pan Am in 1970.','It was the largest passenger jet for about 37 years.','The upper-deck hump housed the cockpit so the nose could open for freight.']},
+{k:'concorde',n:'Concorde',h:'Toulouse',bg:'#e4dcf0',ac:'#4a3a8c',ac2:'#b8862b',role:'Supersonic airliner · British Aircraft Corporation and Aérospatiale',kind:'PLAN VIEW',cap:'Slender delta wing, top view',
+ yr:'1969',fl:'March 2, 1969 · Toulouse, France',
+ br:'It cruised at about Mach 2 on a slender delta wing, crossing the Atlantic in roughly three and a half hours.',
+ f:['It entered service in 1976 and retired in 2003.','Only 20 were built.','Its droop nose lowered for takeoff and landing visibility.']},
+{k:'sr71',n:'Lockheed SR-71 Blackbird',h:'Palmdale',bg:'#d3d9e0',ac:'#2a3441',ac2:'#c0392b',role:'Reconnaissance jet · Lockheed Skunk Works',kind:'PLAN VIEW',cap:'Chined titanium airframe',
+ yr:'1964',fl:'December 22, 1964 · Palmdale, California',
+ br:'Sustained cruise above Mach 3 at around 80,000 feet on a titanium airframe.',
+ f:['Kelly Johnson’s Skunk Works team designed it.','It flew from New York to London in under two hours in 1974.','Only 32 were built.']},
+{k:'a380',n:'Airbus A380',h:'Toulouse',bg:'#d6f0ee',ac:'#0f6b66',ac2:'#a63d7a',role:'Double-deck airliner · Airbus',kind:'FRONT ELEVATION',cap:'Full-length double deck, head-on',
+ yr:'2005',fl:'April 27, 2005 · Toulouse, France',
+ br:'The first full-length double-deck airliner and the largest passenger jet ever built.',
+ f:['It entered service with Singapore Airlines in 2007.','It is certified for up to 853 passengers in one class.','Four engines power a wingspan of nearly 80 meters.']},
+{k:'spirit',n:'Spirit of St. Louis',h:'San Diego',bg:'#f9e8c8',ac:'#8a3a1a',ac2:'#2d6a8a',role:'Long-range monoplane · Ryan Airlines, flown by Charles Lindbergh',kind:'SIDE ELEVATION',cap:'Single-engine transatlantic monoplane',
+ yr:'1927',fl:'April 28, 1927 · San Diego, California',
+ br:'A lightweight single-engine design carrying a huge fuel load let Lindbergh fly solo nonstop from New York to Paris.',
+ f:['The May 1927 crossing took about 33.5 hours.','A fuel tank in front blocked the view, so Lindbergh used a periscope.','Ryan Airlines built it in about two months.']}
+];
+
+/* ---------- helpers ---------- */
+function mk(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;return c;}
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function lum(h){var n=parseInt(h.slice(1),16);return(0.299*(n>>16&255)+0.587*(n>>8&255)+0.114*(n&255))/255;}
+function paintArt(key,ctx,x,y,size){var prev=X;X=ctx;ctx.save();ctx.translate(x,y);ctx.scale(size/400,size/400);ART[key]();ctx.restore();X=prev;}
+function silhouette(key,color){var c=mk(400,400),g=c.getContext('2d');paintArt(key,g,0,0,400);g.globalCompositeOperation='source-in';g.fillStyle=color;g.fillRect(0,0,400,400);return c;}
+function wrap(c,text,maxW){var words=text.split(' '),lines=[],line='',t,i;for(i=0;i<words.length;i++){t=line?line+' '+words[i]:words[i];if(c.measureText(t).width>maxW&&line){lines.push(line);line=words[i];}else line=t;}if(line)lines.push(line);return lines;}
+function spacing(c,v){if('letterSpacing' in c)c.letterSpacing=v;}
+function dateStamp(){var d=new Date();return{day:String(d.getDate()).padStart(2,'0')+' '+d.toLocaleString('en-GB',{month:'short'}).toUpperCase(),year:String(d.getFullYear())};}
+
+var F_DISPLAY='"Bebas Neue",Impact,sans-serif',F_MONO='"IBM Plex Mono","Courier New",monospace',F_BODY='"Barlow",system-ui,sans-serif',F_HAND='"Caveat","Segoe Print",cursive';
+
+function stampCanvas(a){
+  var w=176,h=216,s=mk(w,h),g=s.getContext('2d'),i,step=16;
+  g.fillStyle='#fffdf8';g.fillRect(0,0,w,h);
+  g.globalCompositeOperation='destination-out';
+  for(i=step/2;i<w;i+=step){g.beginPath();g.arc(i,0,5,0,7);g.fill();g.beginPath();g.arc(i,h,5,0,7);g.fill();}
+  for(i=step/2;i<h;i+=step){g.beginPath();g.arc(0,i,5,0,7);g.fill();g.beginPath();g.arc(w,i,5,0,7);g.fill();}
+  g.globalCompositeOperation='source-over';
+  var ink=lum(a.bg)>0.55?'#0e1c2b':'#f4efe2';
+  g.fillStyle=a.bg;g.fillRect(14,14,w-28,h-28);
+  g.strokeStyle=ink;g.globalAlpha=.55;g.lineWidth=2;g.strokeRect(20,20,w-40,h-40);g.globalAlpha=1;
+  g.fillStyle=ink;g.textAlign='center';
+  g.font='400 34px '+F_DISPLAY;g.fillText(a.yr,w/2,58);
+  g.drawImage(silhouette(a.k,ink),34,62,108,108);
+  g.font='400 20px '+F_DISPLAY;spacing(g,'2px');g.fillText('POSTAPP',w/2,h-38);
+  g.font='500 11px '+F_MONO;spacing(g,'2px');g.fillText('AIR MAIL',w/2,h-24);spacing(g,'0px');
+  return s;
+}
+
+/* ---------- compose one postcard ---------- */
+var cv=document.getElementById('card'),ctx=cv.getContext('2d');
+function draw(a){
+  var c=ctx,i,g,y,lh,tot,fsz=23,cw=588,ch=400,cx=530,cy=336;
+  var bl=[['FIRST FLIGHT',a.yr+' · '+a.fl],['BREAKTHROUGH',a.br]];
+  A=a.ac;B=a.ac2;
+  c.save();c.clearRect(0,0,W,H);
+  c.fillStyle='#f7fbfd';rr(c,0,0,W,H,26);c.fill();
+  c.save();rr(c,36,36,1128,728,14);c.clip();
+  g=c.createLinearGradient(0,36,0,764);g.addColorStop(0,a.bg);g.addColorStop(1,'#f4f9fc');c.fillStyle=g;c.fillRect(0,0,W,H);
+  c.fillStyle='rgba(255,255,255,.5)';c.beginPath();c.arc(1010,700,300,0,7);c.fill();
+  c.strokeStyle=a.ac2;c.globalAlpha=.25;c.lineWidth=3;c.beginPath();c.arc(1010,700,340,0,7);c.stroke();c.globalAlpha=1;
+  c.restore();
+  c.strokeStyle='#ff7a2f';c.lineWidth=3;rr(c,50,50,1100,700,8);c.stroke();
+  /* eyebrow, name, role */
+  c.textBaseline='alphabetic';c.textAlign='left';c.fillStyle=a.ac;
+  c.font='700 22px '+F_MONO;spacing(c,'4px');c.fillText(('Greetings from '+a.h).toUpperCase(),84,108);spacing(c,'0px');
+  var name=a.n.toUpperCase(),size=132,tw;c.font='400 '+size+'px '+F_DISPLAY;spacing(c,'2px');tw=c.measureText(name).width;
+  if(tw>780){size=Math.floor(size*780/tw);c.font='400 '+size+'px '+F_DISPLAY;}
+  c.fillStyle='rgba(255,122,47,.55)';c.fillText(name,88,222);c.fillStyle=a.ac;c.fillText(name,84,218);spacing(c,'0px');
+  var rsz=19;c.font='700 '+rsz+'px '+F_MONO;while(c.measureText(a.role).width>780&&rsz>12){rsz--;c.font='700 '+rsz+'px '+F_MONO;}
+  c.fillStyle=INK;c.fillText(a.role,86,252);
+  /* blueprint panel */
+  c.save();rr(c,84,270,420,430,12);c.fillStyle='#fbfeff';c.fill();c.clip();
+  c.strokeStyle=a.ac;c.globalAlpha=.12;c.lineWidth=1.5;
+  for(i=84;i<=504;i+=21){c.beginPath();c.moveTo(i,270);c.lineTo(i,700);c.stroke();}
+  for(i=270;i<=700;i+=21){c.beginPath();c.moveTo(84,i);c.lineTo(504,i);c.stroke();}
+  c.globalAlpha=1;paintArt(a.k,c,110,306,368);c.restore();
+  c.strokeStyle=a.ac;c.lineWidth=3;rr(c,84,270,420,430,12);c.stroke();
+  c.fillStyle=a.ac;c.font='700 14px '+F_MONO;spacing(c,'3px');c.fillText(a.kind,104,298);
+  c.font='400 14px '+F_MONO;spacing(c,'1px');c.fillText(a.cap,104,686);spacing(c,'0px');
+  /* text card: first flight, breakthrough and every fact */
+  a.f.forEach(function(t,k){bl.push([k?'':'KEY FACTS','• '+t]);});
+  do{c.font='500 '+fsz+'px '+F_BODY;lh=Math.round(fsz*1.26);tot=0;
+    bl.forEach(function(b){b[2]=wrap(c,b[1],cw-64);tot+=(b[0]?22:0)+b[2].length*lh+6;});fsz--;}while(tot>ch-76&&fsz>12);
+  fsz++;
+  c.save();c.translate(cx+cw/2,cy+ch/2);c.rotate(-.012);
+  c.shadowColor='rgba(15,42,67,.3)';c.shadowBlur=20;c.shadowOffsetY=8;c.fillStyle='#ffffff';c.fillRect(-cw/2,-ch/2,cw,ch);c.shadowColor='transparent';
+  c.fillStyle=a.ac2;c.fillRect(-cw/2,-ch/2,8,ch);
+  y=-ch/2+38;c.textAlign='left';
+  bl.forEach(function(b){
+    if(b[0]){c.fillStyle=a.ac;c.font='700 14px '+F_MONO;spacing(c,'3px');c.fillText(b[0],-cw/2+32,y);spacing(c,'0px');y+=22;}
+    c.fillStyle=INK;c.font='500 '+fsz+'px '+F_BODY;
+    b[2].forEach(function(l){c.fillText(l,-cw/2+32,y);y+=lh;});y+=6;
+  });
+  c.fillStyle=a.ac;c.font='600 30px '+F_HAND;c.textAlign='right';c.fillText('Happy landings!',cw/2-28,ch/2-16);
+  c.fillStyle='rgba(255,122,47,.55)';
+  c.save();c.translate(-cw/2+70,-ch/2+2);c.rotate(-.18);c.fillRect(-46,-14,92,28);c.restore();
+  c.save();c.translate(cw/2-60,-ch/2+2);c.rotate(.16);c.fillRect(-46,-14,92,28);c.restore();
+  c.restore();
+  /* stamp and postmark */
+  var st=stampCanvas(a);
+  c.save();c.translate(1042,172);c.rotate(.06);c.shadowColor='rgba(15,42,67,.3)';c.shadowBlur=12;c.shadowOffsetY=5;c.drawImage(st,-88,-108);c.restore();
+  var ds=dateStamp();
+  c.save();c.strokeStyle='rgba(16,38,59,.6)';c.fillStyle='rgba(16,38,59,.6)';c.lineWidth=3.5;
+  c.beginPath();c.arc(962,268,56,0,7);c.stroke();c.lineWidth=2;c.beginPath();c.arc(962,268,46,0,7);c.stroke();
+  c.textAlign='center';c.font='700 14px '+F_MONO;c.fillText('POSTAPP',962,255);c.fillText(ds.day,962,274);c.fillText('AIR MAIL',962,293);
+  c.lineWidth=3.5;
+  for(i=0;i<4;i++){var yy=240+i*17;c.beginPath();c.moveTo(1018,yy);c.bezierCurveTo(1044,yy-10,1062,yy+10,1088,yy);c.bezierCurveTo(1108,yy-8,1126,yy+8,1148,yy);c.stroke();}
+  c.restore();
+  c.fillStyle='rgba(16,38,59,.65)';c.font='700 16px '+F_MONO;spacing(c,'5px');c.textAlign='left';c.fillText('PAR AVION  ·  AIR MAIL',84,734);spacing(c,'0px');
+  c.restore();
+}
+
+/* ---------- app state and UI ---------- */
+var sel=document.getElementById('plane'),statusEl=document.getElementById('status');
+var cur=null,blobP=null,i0;
+for(i0=0;i0<PLANES.length;i0++){var o=document.createElement('option');o.value=PLANES[i0].k;o.textContent=PLANES[i0].n;sel.appendChild(o);}
+function byKey(k){return PLANES.filter(function(a){return a.k===k;})[0];}
+function setStatus(t){statusEl.textContent=t||'';}
+function render(){
+  draw(cur);
+  cv.setAttribute('aria-label','Postcard of the '+cur.n+'. First flight '+cur.yr+'. '+cur.br+' '+cur.f.join(' '));
+  blobP=new Promise(function(res){cv.toBlob(res,'image/png');});
+}
+function pick(k){cur=byKey(k);sel.value=k;render();}
+sel.addEventListener('change',function(){setStatus('');pick(sel.value);});
+document.getElementById('rand').addEventListener('click',function(){
+  var k;do{k=PLANES[Math.floor(Math.random()*PLANES.length)].k;}while(k===cur.k);
+  setStatus('');pick(k);
+});
+
+/* ---------- send ---------- */
+var sheet=document.getElementById('sheet'),sheetImg=document.getElementById('sheet-img'),sheetMsg=document.getElementById('sheet-msg'),sheetClose=document.getElementById('sheet-close'),lastFocus=null,sheetUrl=null;
+function showSheet(blob,copied,opened){
+  if(sheetUrl)URL.revokeObjectURL(sheetUrl);
+  sheetUrl=URL.createObjectURL(blob);sheetImg.src=sheetUrl;
+  if(copied&&opened)sheetMsg.textContent='The postcard is copied. In WhatsApp, choose a contact, then paste with Ctrl+V or ⌘V.';
+  else if(copied)sheetMsg.textContent='The postcard is copied. Open WhatsApp, choose a contact, then paste with Ctrl+V or ⌘V.';
+  else sheetMsg.textContent='Save the postcard (press and hold the image, or right-click it), then open WhatsApp, choose a contact and attach it.';
+  lastFocus=document.activeElement;sheet.hidden=false;sheetClose.focus();
+}
+function hideSheet(){sheet.hidden=true;if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+sheetClose.addEventListener('click',hideSheet);
+sheet.addEventListener('click',function(e){if(e.target===sheet)hideSheet();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!sheet.hidden)hideSheet();});
+
+var isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+document.getElementById('send').addEventListener('click',async function(){
+  var blob=await blobP;
+  if(!blob){setStatus('The image could not be created. Try again.');return;}
+  var file=new File([blob],'postapp-'+cur.k+'.png',{type:'image/png'}),txt='Greetings from '+cur.h+'!';
+  if(isMobile){
+    try{
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'Postcard from PostApp',text:txt});
+        setStatus('Postcard shared.');
+        return;
+      }
+    }catch(e){
+      if(e&&e.name==='AbortError'){setStatus('Share cancelled. Nothing was sent.');return;}
+    }
+  }
+  /* computer: copy the postcard and open WhatsApp Web in the same click */
+  var url='https://web.whatsapp.com/send?text='+encodeURIComponent(txt),cp,w=null,copied=false;
+  try{cp=navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).then(function(){return true;},function(){return false;});}catch(e){cp=Promise.resolve(false);}
+  try{w=window.open(url,'_blank');}catch(e){}
+  if(!w){try{var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();w=true;}catch(e){}}
+  copied=await cp;
+  if(copied&&w){setStatus('Postcard copied. Choose a contact in WhatsApp Web, paste it and press send.');return;}
+  setStatus(w?'The postcard could not be copied. Follow the steps shown on screen.':'Your browser blocked the WhatsApp window. Allow pop-ups for this page, or use the button on screen.');
+  document.getElementById('sheet-wa').href=url;
+  showSheet(blob,copied,!!w);
+});
+
+/* first paint, then repaint once the web fonts are ready */
+var fonts=['132px "Bebas Neue"','700 22px "IBM Plex Mono"','500 24px "Barlow"','600 30px "Caveat"'];
+pick(PLANES[Math.floor(Math.random()*PLANES.length)].k);
+if(document.fonts&&document.fonts.load){Promise.all(fonts.map(function(f){return document.fonts.load(f);})).then(function(){render();},function(){});}
+window.Postapp={planes:PLANES,pick:pick,render:render,canvas:cv};
+})();
+</script>
+
+</html>

@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PostApp</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Pick a visionary entrepreneur, get a postcard with a blueprint or product sketch, and send it on WhatsApp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Architects+Daughter&family=Courier+Prime:wght@400;700&family=Libre+Franklin:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: an airmail-striped postcard preview with one control panel beside it (stacked on phones). The postcard itself is drawn on a canvas. */
+:root{
+  color-scheme:light;
+  --bg:#fbf1da; --surface:#fffaf0; --fg:#3a2a1f; --muted:#6f5a48; --line:#e6d3ab;
+  --red:#c8553d; --blue:#1f8a8a; --gold:#e0a82e; --paper:#fffaf0;
+  --go:#17795a; --go-fg:#ffffff; --focus:#1f6f8a;
+  --display:"Abril Fatface",Georgia,serif;
+  --body:"Libre Franklin",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Courier Prime",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;
+  background:var(--bg); color:var(--fg); font:16px/1.5 var(--body);
+  padding-block:28px 44px;
+  padding-left:max(20px,env(safe-area-inset-left,0px));
+  padding-right:max(20px,env(safe-area-inset-right,0px));
+}
+.app{max-width:1140px;margin:0 auto;display:grid;gap:22px;grid-template-columns:minmax(0,1fr)}
+.bar{display:flex;justify-content:flex-end}
+.elx{display:inline-flex;align-items:center;gap:6px;background:var(--surface);color:var(--fg);font:600 .9rem var(--body);text-decoration:none;padding:9px 15px;border-radius:999px;border:2px solid var(--red);box-shadow:3px 3px 0 var(--red);transition:transform .12s,box-shadow .12s}
+.elx:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--red)}
+.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
+.word{margin:0;font:400 2.1rem/1 var(--display);letter-spacing:.01em}
+.tag{margin:0;color:var(--muted);min-width:0}
+.frame{
+  border:12px solid transparent;
+  border-image:repeating-linear-gradient(135deg,var(--red) 0 16px,var(--gold) 16px 32px,var(--blue) 32px 48px,var(--gold) 48px 64px) 12;
+  background:var(--paper);min-width:0;
+}
+canvas{display:block;width:100%;max-width:100%;height:auto;aspect-ratio:3/2}
+.panel{
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:18px;display:grid;gap:16px;min-width:0;align-content:start;
+}
+.field{display:grid;gap:6px}
+label{font:500 .75rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+select{
+  appearance:none;-webkit-appearance:none;width:100%;min-height:50px;padding:0 44px 0 14px;
+  font:500 1.05rem var(--body);color:var(--fg);background-color:var(--bg);
+  border:1.5px solid var(--line);border-radius:10px;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--fg) 50%),linear-gradient(135deg,var(--fg) 50%,transparent 50%);
+  background-position:calc(100% - 22px) 50%,calc(100% - 16px) 50%;background-size:6px 6px;background-repeat:no-repeat;
+}
+.row{display:grid;grid-template-columns:1fr;gap:10px}
+button{
+  font:600 1rem var(--body);min-height:50px;padding:0 16px;border-radius:10px;cursor:pointer;
+  border:1.5px solid var(--line);background:transparent;color:var(--fg);transition:background-color .15s,border-color .15s;
+}
+button:hover{border-color:var(--fg)}
+.go{grid-column:1/-1;background:var(--go);color:var(--go-fg);border-color:var(--go);font-size:1.05rem;display:flex;align-items:center;justify-content:center;gap:10px}
+.go:hover{border-color:var(--go);filter:brightness(1.08)}
+.go svg{width:20px;height:20px;flex:none}
+select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.status{margin:0;min-height:2.6em;font:400 .8rem/1.45 var(--mono);color:var(--muted)}
+.hint{margin:0;font-size:.88rem;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+.sheet{position:fixed;inset:0;z-index:50;background:rgba(58,42,31,.5);display:flex;align-items:center;justify-content:center;
+  padding:max(20px,env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) max(20px,env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
+.sheet-in{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;width:min(560px,100%);max-height:100%;overflow:auto}
+.sheet-in img{width:100%;height:auto;display:block;border:1px solid var(--line)}
+.sheet-in p{margin:0;font-size:.95rem}
+.sheet-row{display:flex;flex-wrap:wrap;gap:10px}
+.sheet-row a,.sheet-row button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 16px;border-radius:10px;font:600 .95rem var(--body);text-decoration:none}
+.sheet-row a{background:var(--go);color:var(--go-fg)}
+@media (min-width:920px){
+  .bar{grid-column:1/-1}
+  .app{grid-template-columns:minmax(0,1fr) 300px;align-items:start;column-gap:28px}
+  .top{grid-column:1/-1}
+  .word{font-size:2.5rem}
+}
+@media (max-width:420px){.row{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<main class="app">
+  <div class="bar"><a class="elx" href="https://easylandx.github.io" target="_blank" rel="noopener">EasylandX <span aria-hidden="true">&#8599;</span></a></div>
+  <header class="top">
+    <h1 class="word">PostApp</h1>
+    <p class="tag">Choose a visionary, get a blueprint postcard, send it on WhatsApp.</p>
+  </header>
+
+  <div class="frame"><canvas id="card" width="1200" height="800" role="img" aria-label="Postcard"></canvas></div>
+
+  <section class="panel" aria-label="Postcard controls">
+    <div class="field">
+      <label for="animal">Visionary</label>
+      <select id="animal"></select>
+    </div>
+    <div class="row">
+      <button id="rand" type="button">Surprise me</button>
+      <button id="send" type="button" class="go">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
+        Send on WhatsApp
+      </button>
+    </div>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+    <p class="hint">On a phone, Send opens the share sheet with the postcard image attached: choose WhatsApp, then pick a contact. On a computer, it copies the postcard and opens WhatsApp Web: choose a contact, paste it in and press send.</p>
+  </section>
+</main>
+
+<div id="sheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-msg">
+  <div class="sheet-in">
+    <img id="sheet-img" alt="Your finished postcard">
+    <p id="sheet-msg"></p>
+    <div class="sheet-row">
+      <a id="sheet-wa" href="https://wa.me/?text=Postcard%20from%20PostApp" target="_blank" rel="noopener">Open WhatsApp Web</a>
+      <button id="sheet-close" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var W=1200,H=800;
+
+/* ---------- tiny drawing kit (all animals are drawn in a 400x400 box) ---------- */
+var X;
+function fs(f,s,lw){if(f){X.fillStyle=f;X.fill();}if(s){X.strokeStyle=s;X.lineWidth=lw||4;X.lineJoin='round';X.lineCap='round';X.stroke();}}
+function E(x,y,rx,ry,f,rot,s,lw){X.beginPath();X.ellipse(x,y,rx,ry,rot||0,0,Math.PI*2);fs(f,s,lw);}
+function C(x,y,r,f,s,lw){E(x,y,r,r,f,0,s,lw);}
+function D(d,f,s,lw){var p=new Path2D(d);if(f){X.fillStyle=f;X.fill(p);}if(s){X.strokeStyle=s;X.lineWidth=lw||4;X.lineJoin='round';X.lineCap='round';X.stroke(p);}}
+function L(d,s,lw){D(d,null,s,lw);}
+function eye(x,y,r){C(x,y,r,'#17171d');C(x+r*.32,y-r*.32,r*.36,'#fff');}
+function sym(f){f();X.save();X.translate(400,0);X.scale(-1,1);f();X.restore();}
+function clipD(d,f){X.save();X.clip(new Path2D(d));f();X.restore();}
+var A='#333',B='#333',FILL='#fffaf0',INK='#3a2a1f';
+function T(s,x,y,sz){X.fillStyle=A;X.font='400 '+sz+'px '+F_DISPLAY;X.textAlign='center';X.fillText(s,x,y);}
+var ART={
+ford:function(){
+  D('M36 262 L62 262 L74 206 L128 206 L142 160 L268 160 L282 206 L346 212 L360 262 L370 262 L370 280 L36 280 Z',FILL,A,5);
+  D('M150 170 L262 170 L272 206 L146 206 Z','#cfe9ec',A,4);L('M206 170 L206 206',A,4);
+  C(112,284,36,'#fff',A,6);C(112,284,13,B,A,3);C(296,284,36,'#fff',A,6);C(296,284,13,B,A,3);
+  L('M112 248 L112 320 M76 284 L148 284 M296 248 L296 320 M260 284 L332 284',A,2.5);
+  L('M30 340 L380 340 M30 356 L380 356',B,4);for(var i=0;i<8;i++)C(52+i*44,348,6,'#fff',B,3);
+  L('M60 120 L346 120 M60 108 L60 132 M346 108 L346 132',B,2.5);
+},
+chanel:function(){
+  D('M120 150 L280 150 L280 340 L120 340 Z','#fff8ee',A,5);D('M136 166 L264 166 L264 324 L136 324 Z','#f9e6cf',A,2.5);
+  D('M172 112 L228 112 L228 150 L172 150 Z',B,A,4);D('M184 84 L216 84 L216 112 L184 112 Z','#fff',A,4);
+  D('M156 212 L244 212 L244 284 L156 284 Z','#fff',A,3);T('N°5',200,262,34);
+  L('M310 110 L310 150 M290 130 L330 130 M74 200 L74 232 M58 216 L90 216',B,4);
+},
+carnegie:function(){
+  L('M70 374 L120 334 M330 374 L280 334 M60 374 L340 374',A,6);
+  D('M120 334 L280 334 L300 254 C310 198 262 170 200 170 C138 170 90 198 100 254 Z','#fff1e4',A,5);
+  D('M168 170 L232 170 L240 120 L160 120 Z','#fff1e4',A,5);
+  L('M104 232 L296 232 M110 284 L290 284',A,2.5);C(200,258,16,B,A,4);
+  D('M200 110 C170 78 214 64 198 22 C250 54 240 86 200 110 Z','#f6b244',A,4);D('M200 102 C190 86 206 76 200 58 C222 72 218 90 200 102 Z','#fde29a',A,2.5);
+},
+edison:function(){
+  var i,a;
+  D('M200 40 C120 40 98 118 128 174 C146 206 150 226 150 252 L250 252 C250 226 254 206 272 174 C302 118 280 40 200 40 Z','#fff7cc',A,5);
+  D('M150 252 L250 252 L250 334 L150 334 Z','#e9d3a0',A,5);L('M150 276 L250 276 M150 298 L250 298 M150 320 L250 320',A,3);
+  L('M182 252 L182 168 M218 252 L218 168 M182 168 C186 130 214 130 218 168',B,5);
+  for(i=0;i<9;i++){a=-3.1+i*.38;L('M'+(200+Math.cos(a)*112)+' '+(116+Math.sin(a)*96)+' L'+(200+Math.cos(a)*142)+' '+(116+Math.sin(a)*122),B,4);}
+},
+rockefeller:function(){
+  var i;
+  D('M156 70 L244 70 L244 340 L156 340 Z','#e9f5ec',A,5);D('M176 40 L224 40 L224 70 L176 70 Z','#e9f5ec',A,4);
+  for(i=1;i<6;i++)L('M156 '+(70+i*45)+' L244 '+(70+i*45),A,3);
+  D('M30 270 L110 270 L110 340 L30 340 Z','#fbe3bd',A,4);D('M290 250 L370 250 L370 340 L290 340 Z','#fbe3bd',A,4);
+  L('M156 160 L70 160 L70 270 M244 205 L330 205 L330 250 M156 250 L130 250 L130 300 L110 300',B,5);
+  L('M20 352 L380 352',A,5);C(200,26,10,'#fff',A,3);
+},
+walker:function(){
+  var i;
+  D('M104 226 L104 322 Q200 358 296 322 L296 226 Z','#f5e6ff',A,5);E(200,226,96,26,'#fff',0,A,5);E(200,226,70,17,'#e6d0f5',0,A,3);
+  D('M128 262 L272 262 L272 312 Q200 334 128 312 Z','#fff',A,3);T('WALKER’S',200,296,24);
+  D('M250 74 L352 112 L342 138 L240 100 Z',B,A,4);
+  for(i=0;i<7;i++)L('M'+(262+i*13)+' '+(110+i*4.8)+' L'+(256+i*13)+' '+(138+i*4.8),A,4);
+},
+strauss:function(){
+  D('M118 60 L282 60 L304 344 L220 344 L200 170 L180 344 L96 344 Z','#e2eefb',A,5);L('M118 96 L282 96',A,4);
+  L('M130 100 C132 156 176 164 192 104 M270 100 C268 156 224 164 208 104',B,4);
+  X.setLineDash([9,7]);L('M200 96 L200 170 M108 330 L184 330 M216 330 L292 330',A,2.5);X.setLineDash([]);
+  C(138,108,8,'#f2b45c',A,3);C(262,108,8,'#f2b45c',A,3);D('M228 66 L266 66 L266 88 L228 88 Z','#efd29c',A,3);
+},
+eastman:function(){
+  L('M92 168 C40 190 40 290 96 312',A,7);
+  D('M92 130 L308 130 L308 330 L92 330 Z','#ffeed6',A,5);D('M120 96 L176 96 L176 130 L120 130 Z','#fff',A,4);
+  D('M262 108 L288 108 L288 130 L262 130 Z',B,A,3);L('M92 160 L308 160 M92 300 L308 300',A,2.5);
+  C(200,230,56,'#fff',A,5);C(200,230,38,B,A,4);C(200,230,16,'#fff',A,3);
+},
+honda:function(){
+  C(96,292,52,'#fff',A,6);C(96,292,16,B,A,3);C(304,292,52,'#fff',A,6);C(304,292,16,B,A,3);
+  L('M96 292 L170 214 L248 214 L304 292',A,6);
+  D('M128 130 C150 116 170 124 176 140 L196 258 L160 278 Z','#fbd4cd',A,5);
+  D('M180 204 L276 196 Q298 196 296 214 L284 236 L192 240 Z','#fff',A,5);D('M196 242 L262 242 L270 288 L204 288 Z',B,A,4);
+  L('M118 132 L96 292 M104 116 L150 112 M276 196 L352 168',A,6);C(106,146,14,'#fff4c2',A,3);
+},
+kamprad:function(){
+  D('M50 150 L350 150 L350 330 L50 330 Z','#fff6d0',A,5);L('M50 190 L350 190',A,3);
+  D('M80 236 L180 236 L180 250 L80 250 Z',B,A,3);L('M92 250 L92 304 M168 250 L168 304',A,6);
+  T('FLAT',268,268,32);T('PACK',268,306,32);
+  L('M300 122 L300 60 L360 60',B,10);L('M50 362 L350 362 M50 350 L50 374 M350 350 L350 374',A,2.5);
+}
+};
+var ANIMALS=[
+{k:'ford',n:'Henry Ford',h:'Highland Park',bg:'#f6d9a8',ac:'#b5452c',ac2:'#2a6f8f',role:'Automobile pioneer · Ford Motor Company',kind:'FACTORY BLUEPRINT',cap:'Model T and the moving assembly rail',
+ era:'Early 20th century · The Assembly-Line Age',imp:'The moving assembly line cut Model T build time from over 12 hours to about 90 minutes and made cars affordable.',
+ f:['The $5 workday roughly doubled typical factory pay.','More than 15 million Model Ts were built.','The Highland Park plant pioneered the moving line.']},
+{k:'chanel',n:'Coco Chanel',h:'Rue Cambon, Paris',bg:'#f7d6d9',ac:'#8b2f45',ac2:'#b8861f',role:'Fashion designer · Maison Chanel',kind:'PRODUCT SKETCH',cap:'No. 5 flacon, front elevation',
+ era:'Early to mid 20th century · The Modern Fashion Age',imp:'Turned simple, comfortable design into global luxury and freed women’s wardrobes from corsets.',
+ f:['Chanel No. 5 arrived in a plain rectangular bottle, not an ornate flask.','Brought soft jersey fabric from menswear into women’s fashion.','Popularized the little black dress and the quilted 2.55 handbag.']},
+{k:'carnegie',n:'Andrew Carnegie',h:'Pittsburgh',bg:'#f3c9a6',ac:'#9a3d1a',ac2:'#2f7a8c',role:'Steel magnate · Carnegie Steel Company',kind:'FACTORY BLUEPRINT',cap:'Bessemer converter, section view',
+ era:'Gilded Age · The Age of Steel',imp:'Cheaper steel from Carnegie’s mills fed railways and skyscrapers; the firm became the core of U.S. Steel.',
+ f:['Pioneered vertical integration: ore, coke, rail and mills under one roof.','Scaled up the Bessemer process for American steelmaking.','Gave away most of his fortune, funding over 2,500 public libraries.']},
+{k:'edison',n:'Thomas Edison',h:'Menlo Park',bg:'#fbe8a0',ac:'#8f5a00',ac2:'#2e7d8c',role:'Inventor and industrialist · Edison companies',kind:'PRODUCT SKETCH',cap:'Incandescent bulb with looped filament',
+ era:'Late 19th century · The Age of Electricity',imp:'Menlo Park made invention a team business and helped launch electric power; his firms grew into General Electric.',
+ f:['Held over 1,000 U.S. patents.','Menlo Park is often called the first industrial research laboratory.','Paired a long-lasting bulb with the power system to light it.']},
+{k:'rockefeller',n:'John D. Rockefeller',h:'Cleveland',bg:'#cfe8d6',ac:'#1d6b4b',ac2:'#b87618',role:'Oil titan · Standard Oil',kind:'FACTORY BLUEPRINT',cap:'Distillation column and storage tanks',
+ era:'Gilded Age · The Age of Oil',imp:'Standard Oil refined and shipped oil at huge scale, making kerosene cheap before a court order split it up.',
+ f:['At its peak it handled roughly 90% of U.S. refining.','Made its own barrels and sold refining by-products to cut waste.','Gave away much of his wealth, backing the University of Chicago.']},
+{k:'walker',n:'Madam C.J. Walker',h:'Indianapolis',bg:'#e8d4f2',ac:'#6d3a8f',ac2:'#b87a12',role:'Hair-care entrepreneur · Walker Manufacturing',kind:'PRODUCT SKETCH',cap:'Hair grower tin and pressing comb',
+ era:'Early 20th century · The Progressive Era',imp:'Built a hair-care company and a national network of women sales agents, opening paths to independence.',
+ f:['Born Sarah Breedlove, the first in her family born free.','Widely regarded as among America’s first self-made female millionaires.','Ran training for her agents in sales, bookkeeping and hair care.']},
+{k:'strauss',n:'Levi Strauss',h:'San Francisco',bg:'#cfe3f4',ac:'#2a5d9a',ac2:'#b8681a',role:'Apparel pioneer · Levi Strauss & Co.',kind:'PRODUCT SKETCH',cap:'Riveted waist overalls, front view',
+ era:'Mid 19th century · The California Gold Rush',imp:'Riveted work pants became a durable uniform for laborers and later a worldwide fashion staple.',
+ f:['The copper-rivet design was patented with tailor Jacob Davis.','Levi Strauss & Co. is among the oldest apparel brands still operating.','Early pairs used sturdy cotton duck before denim took over.']},
+{k:'eastman',n:'George Eastman',h:'Rochester',bg:'#fde0c2',ac:'#b8401f',ac2:'#2d6f86',role:'Photography pioneer · Eastman Kodak',kind:'PRODUCT SKETCH',cap:'Box camera with roll-film body',
+ era:'Late 19th century · The Dawn of Popular Photography',imp:'Made photography cheap and simple, creating a mass market for cameras and film.',
+ f:['The first Kodak came pre-loaded; owners mailed it back for processing.','Roll film replaced bulky, fragile glass plates.','Eastman coined the short name Kodak himself.']},
+{k:'honda',n:'Soichiro Honda',h:'Hamamatsu',bg:'#f9d0c8',ac:'#b02a22',ac2:'#2f7686',role:'Engineer and founder · Honda Motor Company',kind:'PRODUCT SKETCH',cap:'Super Cub, side elevation',
+ era:'Mid 20th century · The Post-war Mobility Boom',imp:'Lightweight, reliable motorcycles gave millions affordable transport and built a global company.',
+ f:['The Super Cub is the best-selling motor vehicle ever, at over 100 million units.','Began by fitting small engines to bicycles after the war.','Started out as an apprentice mechanic.']},
+{k:'kamprad',n:'Ingvar Kamprad',h:'Småland',bg:'#fff0a8',ac:'#1d5aa6',ac2:'#c98a14',role:'Retail founder · IKEA',kind:'PRODUCT SKETCH',cap:'Flat-pack carton with hex key',
+ era:'Mid to late 20th century · The Age of Global Retail',imp:'Flat-pack furniture and low prices put good design in ordinary homes and reshaped global retail.',
+ f:['IKEA blends his initials with Elmtaryd, the family farm, and Agunnaryd, the village.','Flat-packing reportedly began when a designer unscrewed a table’s legs to fit a car.','He founded the company as a teenager.']}
+];
+
+/* ---------- helpers ---------- */
+function mk(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;return c;}
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function lum(h){var n=parseInt(h.slice(1),16);return(0.299*(n>>16&255)+0.587*(n>>8&255)+0.114*(n&255))/255;}
+function rng(seed){return function(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
+function paintArt(key,ctx,x,y,size){var prev=X;X=ctx;ctx.save();ctx.translate(x,y);ctx.scale(size/400,size/400);ART[key]();ctx.restore();X=prev;}
+function silhouette(key,color){var c=mk(400,400),g=c.getContext('2d');paintArt(key,g,0,0,400);g.globalCompositeOperation='source-in';g.fillStyle=color;g.fillRect(0,0,400,400);return c;}
+function wrap(c,text,maxW){var words=text.split(' '),lines=[],line='',t,i;for(i=0;i<words.length;i++){t=line?line+' '+words[i]:words[i];if(c.measureText(t).width>maxW&&line){lines.push(line);line=words[i];}else line=t;}if(line)lines.push(line);return lines;}
+function spacing(c,v){if('letterSpacing' in c)c.letterSpacing=v;}
+function dateStamp(){var d=new Date();return{day:String(d.getDate()).padStart(2,'0')+' '+d.toLocaleString('en-GB',{month:'short'}).toUpperCase(),year:String(d.getFullYear())};}
+
+var F_DISPLAY='"Abril Fatface",Georgia,serif',F_MONO='"Courier Prime","Courier New",monospace',F_BODY='"Libre Franklin",system-ui,sans-serif',F_HAND='"Architects Daughter","Segoe Print",cursive';
+
+function stampCanvas(a){
+  var w=176,h=216,s=mk(w,h),g=s.getContext('2d'),i,step=16;
+  g.fillStyle='#fffdf8';g.fillRect(0,0,w,h);
+  g.globalCompositeOperation='destination-out';
+  for(i=step/2;i<w;i+=step){g.beginPath();g.arc(i,0,5,0,7);g.fill();g.beginPath();g.arc(i,h,5,0,7);g.fill();}
+  for(i=step/2;i<h;i+=step){g.beginPath();g.arc(0,i,5,0,7);g.fill();g.beginPath();g.arc(w,i,5,0,7);g.fill();}
+  g.globalCompositeOperation='source-over';
+  var ink=lum(a.bg)>0.55?'#1a1410':'#fff3d6';
+  g.fillStyle=a.bg;g.fillRect(14,14,w-28,h-28);
+  g.strokeStyle=ink;g.globalAlpha=.55;g.lineWidth=2;g.strokeRect(20,20,w-40,h-40);g.globalAlpha=1;
+  g.drawImage(silhouette(a.k,ink),26,40,124,124);
+  g.fillStyle=ink;g.textAlign='center';
+  g.font='400 15px '+F_DISPLAY;g.fillText('POSTAPP',w/2,h-50);
+  g.font='500 11px '+F_MONO;spacing(g,'2px');g.fillText('AIR MAIL',w/2,h-32);spacing(g,'0px');
+  g.textAlign='left';g.font='400 22px '+F_DISPLAY;g.fillText('1',30,52);
+  return s;
+}
+
+
+/* ---------- compose one postcard ---------- */
+var cv=document.getElementById('card'),ctx=cv.getContext('2d');
+function draw(a){
+  var c=ctx,i,g,y,lh,tot,fsz=23,cw=588,ch=388,cx=530,cy=334,bl=[['ERA',a.era],['BUSINESS IMPACT',a.imp]];
+  A=a.ac;B=a.ac2;
+  c.save();c.clearRect(0,0,W,H);
+  c.fillStyle='#fffaf0';rr(c,0,0,W,H,26);c.fill();
+  c.save();rr(c,36,36,1128,728,14);c.clip();
+  g=c.createLinearGradient(0,36,0,764);g.addColorStop(0,a.bg);g.addColorStop(1,'#fff3d9');c.fillStyle=g;c.fillRect(0,0,W,H);
+  c.fillStyle='rgba(255,255,255,.5)';c.beginPath();c.arc(1010,700,300,0,7);c.fill();
+  c.strokeStyle=a.ac2;c.globalAlpha=.25;c.lineWidth=3;c.beginPath();c.arc(1010,700,340,0,7);c.stroke();c.globalAlpha=1;
+  c.restore();
+  c.strokeStyle='#e0a82e';c.lineWidth=3;rr(c,50,50,1100,700,8);c.stroke();
+  /* eyebrow, name, role */
+  c.textBaseline='alphabetic';c.textAlign='left';c.fillStyle=a.ac;
+  c.font='700 22px '+F_MONO;spacing(c,'4px');c.fillText(('Greetings from '+a.h).toUpperCase(),84,108);spacing(c,'0px');
+  var name=a.n.toUpperCase(),size=118,tw;c.font='400 '+size+'px '+F_DISPLAY;tw=c.measureText(name).width;
+  if(tw>780){size=Math.floor(size*780/tw);c.font='400 '+size+'px '+F_DISPLAY;}
+  c.fillStyle='rgba(224,168,46,.65)';c.fillText(name,88,222);c.fillStyle=a.ac;c.fillText(name,84,218);
+  c.fillStyle=INK;c.font='700 19px '+F_MONO;spacing(c,'1px');c.fillText(a.role,86,252);spacing(c,'0px');
+  /* blueprint / sketch panel */
+  c.save();rr(c,84,270,420,430,12);c.fillStyle='#fffdf6';c.fill();c.clip();
+  c.strokeStyle=a.ac;c.globalAlpha=.12;c.lineWidth=1.5;
+  for(i=84;i<=504;i+=21){c.beginPath();c.moveTo(i,270);c.lineTo(i,700);c.stroke();}
+  for(i=270;i<=700;i+=21){c.beginPath();c.moveTo(84,i);c.lineTo(504,i);c.stroke();}
+  c.globalAlpha=1;paintArt(a.k,c,110,306,368);c.restore();
+  c.strokeStyle=a.ac;c.lineWidth=3;rr(c,84,270,420,430,12);c.stroke();
+  c.fillStyle=a.ac;c.font='700 14px '+F_MONO;spacing(c,'3px');c.fillText(a.kind,104,298);
+  c.font='400 15px '+F_MONO;spacing(c,'1px');c.fillText(a.cap,104,686);spacing(c,'0px');
+  /* text card: era, impact and every fact */
+  a.f.forEach(function(t,k){bl.push([k?'':'KEY FACTS','• '+t]);});
+  do{c.font='500 '+fsz+'px '+F_BODY;lh=Math.round(fsz*1.28);tot=0;
+    bl.forEach(function(b){b[2]=wrap(c,b[1],cw-64);tot+=(b[0]?24:0)+b[2].length*lh+6;});fsz--;}while(tot>ch-90&&fsz>13);
+  fsz++;
+  c.save();c.translate(cx+cw/2,cy+ch/2);c.rotate(-.012);
+  c.shadowColor='rgba(90,60,20,.28)';c.shadowBlur=20;c.shadowOffsetY=8;c.fillStyle='#fffef7';c.fillRect(-cw/2,-ch/2,cw,ch);c.shadowColor='transparent';
+  c.fillStyle=a.ac2;c.fillRect(-cw/2,-ch/2,8,ch);
+  y=-ch/2+40;c.textAlign='left';
+  bl.forEach(function(b){
+    if(b[0]){c.fillStyle=a.ac;c.font='700 14px '+F_MONO;spacing(c,'3px');c.fillText(b[0],-cw/2+32,y);spacing(c,'0px');y+=24;}
+    c.fillStyle=INK;c.font='500 '+fsz+'px '+F_BODY;
+    b[2].forEach(function(l){c.fillText(l,-cw/2+32,y);y+=lh;});y+=6;
+  });
+  c.fillStyle=a.ac;c.font='400 30px '+F_HAND;c.textAlign='right';c.fillText('Wish you were here!',cw/2-28,ch/2-20);
+  c.fillStyle='rgba(224,168,46,.65)';
+  c.save();c.translate(-cw/2+70,-ch/2+2);c.rotate(-.18);c.fillRect(-46,-14,92,28);c.restore();
+  c.save();c.translate(cw/2-60,-ch/2+2);c.rotate(.16);c.fillRect(-46,-14,92,28);c.restore();
+  c.restore();
+  /* stamp and postmark */
+  var st=stampCanvas(a);
+  c.save();c.translate(1042,172);c.rotate(.06);c.shadowColor='rgba(90,60,20,.3)';c.shadowBlur=12;c.shadowOffsetY=5;c.drawImage(st,-88,-108);c.restore();
+  var ds=dateStamp();
+  c.save();c.strokeStyle='rgba(58,42,31,.6)';c.fillStyle='rgba(58,42,31,.6)';c.lineWidth=3.5;
+  c.beginPath();c.arc(962,268,56,0,7);c.stroke();c.lineWidth=2;c.beginPath();c.arc(962,268,46,0,7);c.stroke();
+  c.textAlign='center';c.font='700 14px '+F_MONO;c.fillText('POSTAPP',962,255);c.fillText(ds.day,962,274);c.fillText('AIR MAIL',962,293);
+  c.lineWidth=3.5;
+  for(i=0;i<4;i++){var yy=240+i*17;c.beginPath();c.moveTo(1018,yy);c.bezierCurveTo(1044,yy-10,1062,yy+10,1088,yy);c.bezierCurveTo(1108,yy-8,1126,yy+8,1148,yy);c.stroke();}
+  c.restore();
+  c.fillStyle='rgba(58,42,31,.65)';c.font='700 16px '+F_MONO;spacing(c,'5px');c.textAlign='left';c.fillText('PAR AVION  ·  AIR MAIL',84,734);spacing(c,'0px');
+  c.restore();
+}
+
+/* ---------- app state and UI ---------- */
+var sel=document.getElementById('animal'),statusEl=document.getElementById('status');
+var cur=null,fi=0,blobP=null,i0;
+for(i0=0;i0<ANIMALS.length;i0++){var o=document.createElement('option');o.value=ANIMALS[i0].k;o.textContent=ANIMALS[i0].n;sel.appendChild(o);}
+function byKey(k){return ANIMALS.filter(function(a){return a.k===k;})[0];}
+function setStatus(t){statusEl.textContent=t||'';}
+function render(){
+  draw(cur,fi);
+  cv.setAttribute('aria-label','Postcard of '+cur.n+'. '+cur.era+'. '+cur.imp+' '+cur.f.join(' '));
+  blobP=new Promise(function(res){cv.toBlob(res,'image/png');});
+}
+function pick(k,keepFact){
+  cur=byKey(k);sel.value=k;
+  if(!keepFact)fi=Math.floor(Math.random()*cur.f.length);
+  render();
+}
+sel.addEventListener('change',function(){setStatus('');pick(sel.value);});
+document.getElementById('rand').addEventListener('click',function(){
+  var k;do{k=ANIMALS[Math.floor(Math.random()*ANIMALS.length)].k;}while(k===cur.k);
+  setStatus('');pick(k);
+});
+
+/* ---------- send ---------- */
+var sheet=document.getElementById('sheet'),sheetImg=document.getElementById('sheet-img'),sheetMsg=document.getElementById('sheet-msg'),sheetClose=document.getElementById('sheet-close'),lastFocus=null,sheetUrl=null;
+function showSheet(blob,copied,opened){
+  if(sheetUrl)URL.revokeObjectURL(sheetUrl);
+  sheetUrl=URL.createObjectURL(blob);sheetImg.src=sheetUrl;
+  if(copied&&opened)sheetMsg.textContent='The postcard is copied. In WhatsApp, choose a contact, then paste with Ctrl+V or ⌘V.';
+  else if(copied)sheetMsg.textContent='The postcard is copied. Open WhatsApp, choose a contact, then paste with Ctrl+V or ⌘V.';
+  else sheetMsg.textContent='Save the postcard (press and hold the image, or right-click it), then open WhatsApp, choose a contact and attach it.';
+  lastFocus=document.activeElement;sheet.hidden=false;sheetClose.focus();
+}
+function hideSheet(){sheet.hidden=true;if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+sheetClose.addEventListener('click',hideSheet);
+sheet.addEventListener('click',function(e){if(e.target===sheet)hideSheet();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!sheet.hidden)hideSheet();});
+
+var isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+document.getElementById('send').addEventListener('click',async function(){
+  var blob=await blobP;
+  if(!blob){setStatus('The image could not be created. Try again.');return;}
+  var file=new File([blob],'postapp-'+cur.k+'.png',{type:'image/png'}),txt='Greetings from '+cur.h+'!';
+  if(isMobile){
+    try{
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'Postcard from Postapp',text:txt});
+        setStatus('Postcard shared.');
+        return;
+      }
+    }catch(e){
+      if(e&&e.name==='AbortError'){setStatus('Share cancelled. Nothing was sent.');return;}
+    }
+  }
+  /* computer: copy the postcard and open WhatsApp Web in the same click */
+  var url='https://web.whatsapp.com/send?text='+encodeURIComponent(txt),cp,w=null,copied=false;
+  try{cp=navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).then(function(){return true;},function(){return false;});}catch(e){cp=Promise.resolve(false);}
+  try{w=window.open(url,'_blank');}catch(e){}
+  if(!w){try{var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();w=true;}catch(e){}}
+  copied=await cp;
+  if(copied&&w){setStatus('Postcard copied. Choose a contact in WhatsApp Web, paste it and press send.');return;}
+  setStatus(w?'The postcard could not be copied. Follow the steps shown on screen.':'Your browser blocked the WhatsApp window. Allow pop-ups for this page, or use the button on screen.');
+  document.getElementById('sheet-wa').href=url;
+  showSheet(blob,copied,!!w);
+});
+
+/* first paint, then repaint once the web fonts are ready */
+var fonts=['118px "Abril Fatface"','700 22px "Courier Prime"','500 24px "Libre Franklin"','30px "Architects Daughter"'];
+pick(ANIMALS[Math.floor(Math.random()*ANIMALS.length)].k);
+if(document.fonts&&document.fonts.load){Promise.all(fonts.map(function(f){return document.fonts.load(f);})).then(function(){render();},function(){});}
+window.Postapp={animals:ANIMALS,pick:pick,render:render,canvas:cv};
+})();
+</script>
+
+</html>

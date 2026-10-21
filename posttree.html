@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PostApp</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Pick a tree, get an illustrated postcard with its height, lifespan and facts, and send it on WhatsApp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;900&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fbf0ec; --surface:#fffaf7; --fg:#1e2b22; --muted:#6a5c60; --line:#ecd5cf;
+  --a:#d6336c; --b:#2b7a4b; --paper:#ffffff;
+  --go:#2b6a45; --go-fg:#ffffff; --focus:#2b6a45;
+  --display:"Fraunces",Georgia,"Times New Roman",serif;
+  --body:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"DM Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141c17; --surface:#1d2922; --fg:#eef4ef; --muted:#a9bcae; --line:#2f4237;
+    --a:#ff7aa5; --b:#6ed39a; --paper:#e8efe9;
+    --go:#8fe0b0; --go-fg:#0c2416; --focus:#b6efcd; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141c17; --surface:#1d2922; --fg:#eef4ef; --muted:#a9bcae; --line:#2f4237;
+  --a:#ff7aa5; --b:#6ed39a; --paper:#e8efe9;
+  --go:#8fe0b0; --go-fg:#0c2416; --focus:#b6efcd; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 var(--body);
+  padding-block:28px 44px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.app{max-width:1140px;margin:0 auto;display:grid;gap:22px;grid-template-columns:minmax(0,1fr)}
+.bar{display:flex;justify-content:flex-end}
+.elx{display:inline-flex;align-items:center;gap:6px;background:var(--surface);color:var(--fg);font:700 .9rem var(--body);text-decoration:none;padding:9px 15px;border-radius:999px;border:2px solid var(--a);box-shadow:3px 3px 0 var(--a);transition:transform .12s,box-shadow .12s}
+.elx:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--a)}
+.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
+.word{margin:0;font:900 2.4rem/1 var(--display);letter-spacing:-.01em}
+.tag{margin:0;color:var(--muted);min-width:0}
+.frame{border:12px solid transparent;
+  border-image:repeating-linear-gradient(135deg,var(--a) 0 16px,var(--paper) 16px 32px,var(--b) 32px 48px,var(--paper) 48px 64px) 12;
+  background:var(--paper);min-width:0}
+canvas{display:block;width:100%;max-width:100%;height:auto;aspect-ratio:3/2}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:16px;min-width:0;align-content:start}
+.field{display:grid;gap:6px}
+label{font:500 .75rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+select{appearance:none;-webkit-appearance:none;width:100%;min-height:50px;padding:0 44px 0 14px;
+  font:600 1.05rem var(--body);color:var(--fg);background-color:var(--bg);
+  border:1.5px solid var(--line);border-radius:10px;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--fg) 50%),linear-gradient(135deg,var(--fg) 50%,transparent 50%);
+  background-position:calc(100% - 22px) 50%,calc(100% - 16px) 50%;background-size:6px 6px;background-repeat:no-repeat}
+.row{display:grid;gap:10px}
+button{font:700 1rem var(--body);min-height:50px;padding:0 16px;border-radius:10px;cursor:pointer;
+  border:1.5px solid var(--line);background:transparent;color:var(--fg);transition:background-color .15s,border-color .15s}
+button:hover{border-color:var(--fg)}
+.go{background:var(--go);color:var(--go-fg);border-color:var(--go);font-size:1.05rem;display:flex;align-items:center;justify-content:center;gap:10px}
+.go:hover{border-color:var(--go);filter:brightness(1.08)}
+.go svg{width:20px;height:20px;flex:none}
+select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.status{margin:0;min-height:2.6em;font:400 .8rem/1.45 var(--mono);color:var(--muted)}
+.hint{margin:0;font-size:.88rem;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+.sheet{position:fixed;inset:0;z-index:50;background:rgba(8,16,11,.74);display:flex;align-items:center;justify-content:center;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet-in{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;width:min(560px,100%);max-height:100%;overflow:auto}
+.sheet-in img{width:100%;height:auto;display:block;border:1px solid var(--line)}
+.sheet-in p{margin:0;font-size:.95rem}
+.sheet-row{display:flex;flex-wrap:wrap;gap:10px}
+.sheet-row a,.sheet-row button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 16px;border-radius:10px;font:700 .95rem var(--body);text-decoration:none}
+.sheet-row a{background:var(--go);color:var(--go-fg)}
+@media (min-width:920px){
+  .bar,.top{grid-column:1/-1}
+  .app{grid-template-columns:minmax(0,1fr) 300px;align-items:start;column-gap:28px}
+  .word{font-size:2.9rem}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<main class="app">
+  <div class="bar"><a class="elx" href="https://easylandx.github.io" target="_blank" rel="noopener">EasylandX <span aria-hidden="true">&#8599;</span></a></div>
+  <header class="top">
+    <h1 class="word">PostApp</h1>
+    <p class="tag">Choose a tree, get a postcard, send it on WhatsApp.</p>
+  </header>
+
+  <div class="frame"><canvas id="card" width="1200" height="800" role="img" aria-label="Postcard"></canvas></div>
+
+  <section class="panel" aria-label="Postcard controls">
+    <div class="field">
+      <label for="pk">Tree</label>
+      <select id="pk"></select>
+    </div>
+    <div class="row">
+      <button id="rand" type="button">Surprise me</button>
+      <button id="send" type="button" class="go">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
+        Send on WhatsApp
+      </button>
+    </div>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+    <p class="hint">On a phone, Send opens the share sheet with the postcard image attached: choose WhatsApp, then pick a contact. On a computer, it copies the postcard and opens WhatsApp Web: choose a contact, paste it in and press send.</p>
+  </section>
+</main>
+
+<div id="sheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-msg">
+  <div class="sheet-in">
+    <img id="sheet-img" alt="Your finished postcard">
+    <p id="sheet-msg"></p>
+    <div class="sheet-row">
+      <a id="sheet-wa" href="https://wa.me/?text=Postcard%20from%20PostApp" target="_blank" rel="noopener">Open WhatsApp Web</a>
+      <button id="sheet-close" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var W=1200,H=800,X;
+var FD='Fraunces,Georgia,serif',FM='"DM Mono",ui-monospace,Menlo,monospace',FH='"Patrick Hand","Segoe Print","Bradley Hand",cursive';
+
+/* ---------- drawing kit (each tree is drawn in a 400x400 box, base at y=392) ---------- */
+function D(d,f,s,lw){var p=new Path2D(d);if(f){X.fillStyle=f;X.fill(p);}if(s){X.strokeStyle=s;X.lineWidth=lw||4;X.lineJoin='round';X.lineCap='round';X.stroke(p);}}
+function E(x,y,rx,ry,f){X.beginPath();X.ellipse(x,y,rx,ry,0,0,7);X.fillStyle=f;X.fill();}
+function trunk(w,h,f){D('M'+(200-w)+' 392Q'+(200-w*.4)+' '+(392-h*.5)+' '+(200-w*.35)+' '+(392-h)+'L'+(200+w*.35)+' '+(392-h)+'Q'+(200+w*.4)+' '+(392-h*.5)+' '+(200+w)+' 392Z',f);}
+function tuft(x,y,r,f){var i,a;for(i=0;i<11;i++){a=-3.14+i*.314;D('M'+x+' '+y+'L'+(x+Math.cos(a)*r)+' '+(y+Math.sin(a)*r*.8),null,f,6);}E(x,y,r*.28,r*.28,f);}
+function blobs(a,f){a.forEach(function(q){E(q[0],q[1],q[2],q[2]*.9,f);});}
+function art(m){
+  var k=m.k,c=m.c,s=m.s,i,hl='rgba(255,255,255,.14)',sh='rgba(8,18,10,.22)';
+  if(s==='conifer'){
+    var cw=m.cw;trunk(26*cw,150,k);
+    for(i=0;i<7;i++){var y=24+i*40,w=(36+i*22)*cw;D('M200 '+y+'L'+(200+w)+' '+(y+92)+'L'+(200-w)+' '+(y+92)+'Z',c);D('M200 '+y+'L'+(200+w)+' '+(y+92)+'L200 '+(y+92)+'Z',sh);}
+  }else if(s==='round'){
+    X.save();X.translate(200,392);X.scale(m.sc,m.sc);X.translate(-200,-392);
+    trunk(34,170,k);
+    blobs([[200,140,100],[118,205,72],[282,205,72],[150,100,70],[250,100,70],[200,60,56]],c);
+    blobs([[170,110,60],[120,190,40],[230,70,34]],hl);
+    X.restore();
+  }else if(s==='umbrella'){
+    var ty=m.ty,rx=m.rx;
+    if(m.roots)[90,130,270,310].forEach(function(x){D('M'+x+' '+(ty+30)+'L'+(x+(x<200?6:-6))+' 392',null,k,6);});
+    trunk(m.tw,392-ty,k);
+    E(200,ty,rx,m.ry,c);E(200-rx*.45,ty+22,rx*.5,34,c);E(200+rx*.45,ty+22,rx*.5,34,c);E(200-rx*.2,ty-16,rx*.55,m.ry*.5,hl);
+  }else if(s==='dragon'){
+    trunk(30,170,k);D('M200 240L140 170M200 230L262 168M200 220L200 120M140 170L100 112M262 168L304 112',null,k,13);
+    tuft(100,110,46,c);tuft(140,166,46,c);tuft(200,116,52,c);tuft(262,164,46,c);tuft(304,110,46,c);
+  }else if(s==='baobab'){
+    D('M118 392Q152 330 150 250Q150 200 138 168L262 168Q250 200 250 250Q250 330 282 392Z',k);
+    D('M156 392Q166 330 172 250',null,'rgba(0,0,0,.15)',8);
+    D('M150 170L92 112M200 166L200 84M250 170L308 112M175 168L142 70M225 168L260 70',null,k,10);
+    [[92,104,22],[200,76,24],[308,104,22],[142,62,22],[260,62,22]].forEach(function(q){E(q[0],q[1],q[2],q[2]*.8,c);});
+  }else if(s==='cherry'){
+    D('M205 392Q188 300 208 240Q220 205 192 172',null,k,24);
+    D('M208 240Q260 205 300 172M194 186Q142 164 100 142M206 228Q170 205 130 214',null,k,13);
+    blobs([[190,118,68],[108,150,54],[292,150,58],[250,84,54],[150,78,48],[338,196,38],[70,204,34],[200,196,40]],c);
+    blobs([[170,98,40],[96,138,28],[270,70,30],[140,66,26]],'#fbd0e0');
+    for(i=0;i<9;i++)E(40+i*40,372+(i%3)*7,6,3,'#fbd0e0');
+  }else if(s==='twisted'){
+    D('M205 392Q150 330 190 272Q140 222 168 164Q150 124 128 104M190 272Q252 244 272 182M174 204Q222 182 252 122',null,k,20);
+    D('M205 392Q150 330 190 272',null,'#8a7658',8);
+    tuft(124,100,34,c);tuft(272,176,36,c);tuft(254,116,32,c);tuft(168,158,30,c);
+  }else if(s==='palm'){
+    D('M188 392Q216 300 200 200Q190 150 205 112',null,k,22);
+    [[150,62,70,126],[140,30,104,62],[190,14,170,40],[230,20,262,46],[272,50,318,84],[290,96,340,140],[250,110,290,160],[160,100,100,170]].forEach(function(q){D('M205 112Q'+q[0]+' '+q[1]+' '+q[2]+' '+q[3],null,c,13);});
+    E(196,126,9,9,'#5a3a1e');E(214,128,9,9,'#5a3a1e');
+  }else if(s==='joshua'){
+    trunk(24,150,k);D('M200 250L128 214L128 148M200 224L274 190L278 118M200 188L200 94',null,k,20);
+    tuft(128,142,36,c);tuft(278,112,36,c);tuft(200,88,40,c);
+  }else if(s==='tall'){
+    trunk(17,300,k);D('M196 392L196 140M206 392L206 160',null,'rgba(0,0,0,.14)',3);
+    blobs([[200,70,56],[156,104,38],[246,100,42],[200,126,34]],c);E(176,56,32,22,hl);
+  }else{
+    trunk(34,250,k);
+    [[200,86,84],[218,150,120],[182,214,150],[205,278,178]].forEach(function(q){E(q[0],q[1],q[2],26,c);E(q[0]-q[2]*.2,q[1]-12,q[2]*.55,12,hl);});
+  }
+}
+
+/* ---------- the 16 postcards: name, place, region, height, lifespan, type, facts, palette, shape ---------- */
+var PAL=[['#7a4a8a','#ffcf9a'],['#3b4a7a','#f6c88a'],['#2a7f8a','#fbe3b0'],['#d95f4a','#ffe7a8'],['#e0a24a','#fff1c9'],['#1f6a5a','#cfeab0']];
+var MT=[
+{n:'Coast Redwood',pl:'California',r:'USA · California coast',g:['up to','116 m'],l:['up to','2,000 years'],t:'EVERGREEN CONIFER',p:3,s:'conifer',cw:.75,k:'#7a3f26',c:'#2d6b3d',f:['Hyperion, the tallest known tree, stands about 116 metres tall.','Thick bark protects it from fire, and coastal fog gives it much of its water.']},
+{n:'Giant Sequoia',pl:'the Sierra Nevada',r:'USA · Sierra Nevada, California',g:['up to','95 m'],l:['over','3,000 years'],t:'EVERGREEN CONIFER',p:1,s:'conifer',cw:1.15,k:'#8a4a2a',c:'#3a7a45',f:['General Sherman is the largest known tree on Earth by volume.','Fire helps its cones open and release their seeds.']},
+{n:'Baobab',pl:'Africa',r:'Africa · dry savanna',g:['up to','25 m'],l:['over','1,000 years'],t:'DECIDUOUS',p:2,s:'baobab',k:'#8b6a4a',c:'#4f9a52',f:['Its swollen trunk stores water, which helps it survive long dry seasons.','It is nicknamed the “upside-down tree” because its bare branches look like roots.']},
+{n:'Cherry Blossom',pl:'Japan',r:'Japan · and parks worldwide',g:['about','10–12 m'],l:['about','60 years'],t:'FLOWERING TREE',p:1,s:'cherry',k:'#4a3228',c:'#f4a9c3',f:['Japan celebrates hanami, the tradition of picnicking under the blossoms every spring.','Yoshino cherries live about 60 years, but a few ancient trees in Japan top 1,000.']},
+{n:'English Oak',pl:'Europe',r:'Europe · woodlands, parks',g:['up to','40 m'],l:['up to','1,000 years'],t:'DECIDUOUS',p:3,s:'round',sc:1,k:'#5a3f2a',c:'#3f8a45',f:['The Major Oak in Sherwood Forest is said to be 800 to 1,000 years old.','Oaks host hundreds of insect species, more than most native trees in Britain.']},
+{n:'Bristlecone Pine',pl:'California',r:'USA · California, Nevada, Utah',g:['about','5–15 m'],l:['over','4,800 years'],t:'ANCIENT CONIFER',p:0,s:'twisted',k:'#b8a688',c:'#2f6a45',f:['Methuselah, a bristlecone in California, is over 4,800 years old.','It grows very slowly in dry, rocky, windy soil, and its wood resists decay.']},
+{n:'Ginkgo',pl:'China',r:'China · planted worldwide',g:['up to','40 m'],l:['over','1,000 years'],t:'DECIDUOUS',p:1,s:'round',sc:.95,k:'#6b4a2f',c:'#e6c02e',f:['Ginkgo is a living fossil whose relatives date back over 200 million years.','Six ginkgo trees close to the blast survived the 1945 bombing of Hiroshima.']},
+{n:'Mountain Ash',pl:'Tasmania',r:'Australia · Tasmania, Victoria',g:['up to','100 m'],l:['roughly','400 years'],t:'EVERGREEN',p:0,s:'tall',k:'#d7cbb4',c:'#3d8a50',f:['It is the tallest flowering plant in the world.','Centurion, a tree in Tasmania, measures about 100 metres.']},
+{n:'Banyan',pl:'India',r:'India · South Asia',g:['up to','30 m'],l:['hundreds of','years'],t:'FIG TREE',p:2,s:'umbrella',ty:150,rx:185,ry:60,tw:40,roots:1,k:'#6a4a30',c:'#2f7a45',f:['Aerial roots drop from its branches and grow into new trunks.','The Great Banyan near Kolkata is over 250 years old and covers about 1.4 hectares.']},
+{n:'Olive',pl:'the Mediterranean',r:'Mediterranean · Spain to Greece',g:['about','8–15 m'],l:['often over','500 years'],t:'EVERGREEN',p:3,s:'round',sc:.78,k:'#7a6a52',c:'#8da676',f:['Some Mediterranean olive trees are believed to be well over 1,000 years old.','Spain is the world’s biggest producer of olive oil.']},
+{n:'Dragon Tree',pl:'the Canary Islands',r:'Spain · Canary Islands',g:['about','10–15 m'],l:['hundreds of','years'],t:'EVERGREEN',p:1,s:'dragon',k:'#8a7a68',c:'#4a8f58',f:['It bleeds a deep red resin, which is where the name “dragon tree” comes from.','The famous Drago Milenario in Icod de los Vinos, Tenerife, is hundreds of years old.']},
+{n:'Sugar Maple',pl:'Canada',r:'Canada / USA · eastern forests',g:['up to','35 m'],l:['up to','400 years'],t:'DECIDUOUS',p:5,s:'round',sc:1,k:'#5a3f2a',c:'#d9541e',f:['It takes about 40 litres of sap to boil down to 1 litre of maple syrup.','Its leaves turn brilliant red, orange and gold in autumn.']},
+{n:'Coconut Palm',pl:'the tropics',r:'Tropics · coasts worldwide',g:['up to','30 m'],l:['about','70 years'],t:'PALM',p:3,s:'palm',k:'#8a6a48',c:'#3f9a4f',f:['A coconut can float for months at sea and sprout on distant shores.','It is called the “tree of life” because nearly every part of it is used.']},
+{n:'Joshua Tree',pl:'the Mojave Desert',r:'USA · Mojave Desert',g:['up to','12 m'],l:['about','150 years'],t:'DESERT YUCCA',p:4,s:'joshua',k:'#7a5a3a',c:'#6a8f3a',f:['It is not a true tree but a giant yucca, a relative of the agave.','Its name is said to come from settlers who thought its arms looked like Joshua praying.']},
+{n:'Monkey Puzzle',pl:'Chile',r:'Chile / Argentina · Andes',g:['up to','40 m'],l:['up to','1,000 years'],t:'EVERGREEN CONIFER',p:0,s:'umbrella',ty:110,rx:104,ry:40,tw:13,k:'#4a3a2e',c:'#2f6a4a',f:['It belongs to an ancient family of trees that grew alongside the dinosaurs.','It is the national tree of Chile.']},
+{n:'Cedar of Lebanon',pl:'Lebanon',r:'Lebanon · Mount Lebanon',g:['up to','40 m'],l:['over','1,000 years'],t:'EVERGREEN CONIFER',p:5,s:'layers',k:'#5a3f2a',c:'#2e6b45',f:['The cedar appears on the flag of Lebanon.','Phoenicians and ancient Egyptians prized its wood for building ships and temples.']}
+].sort(function(a,b){return a.n.localeCompare(b.n);});
+
+/* ---------- helpers ---------- */
+function mk(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;return c;}
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function lum(h){var n=parseInt(h.slice(1),16);return(0.299*(n>>16&255)+0.587*(n>>8&255)+0.114*(n&255))/255;}
+function shade(h,f){var n=parseInt(h.slice(1),16);function q(v){return Math.round(f<0?v*(1+f):v+(255-v)*f);}return'rgb('+q(n>>16&255)+','+q(n>>8&255)+','+q(n&255)+')';}
+function rng(seed){return function(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
+function wrap(c,text,maxW){var w=text.split(' '),lines=[],line='',t,i;for(i=0;i<w.length;i++){t=line?line+' '+w[i]:w[i];if(c.measureText(t).width>maxW&&line){lines.push(line);line=w[i];}else line=t;}if(line)lines.push(line);return lines;}
+function spacing(c,v){if('letterSpacing' in c)c.letterSpacing=v;}
+function paint(m,c,x,y,s){var p=X;X=c;c.save();c.translate(x,y);c.scale(s/400,s/400);art(m);c.restore();X=p;}
+function sil(m,col){var c=mk(400,400),g=c.getContext('2d');paint(m,g,0,0,400);g.globalCompositeOperation='source-in';g.fillStyle=col;g.fillRect(0,0,400,400);return c;}
+
+function stampC(m,pl){
+  var w=176,h=216,s=mk(w,h),g=s.getContext('2d'),i,ink=lum(pl[0])>.55?'#14120e':'#fff3d6';
+  g.fillStyle='#fffdf8';g.fillRect(0,0,w,h);
+  g.globalCompositeOperation='destination-out';
+  for(i=8;i<w;i+=16){g.beginPath();g.arc(i,0,5,0,7);g.fill();g.beginPath();g.arc(i,h,5,0,7);g.fill();}
+  for(i=8;i<h;i+=16){g.beginPath();g.arc(0,i,5,0,7);g.fill();g.beginPath();g.arc(w,i,5,0,7);g.fill();}
+  g.globalCompositeOperation='source-over';
+  g.fillStyle=pl[0];g.fillRect(14,14,w-28,h-28);
+  g.strokeStyle=ink;g.globalAlpha=.55;g.lineWidth=2;g.strokeRect(20,20,w-40,h-40);g.globalAlpha=1;
+  g.drawImage(sil(m,ink),26,34,124,124);
+  g.fillStyle=ink;g.textAlign='center';g.font='600 22px '+FD;g.fillText(m.g[1].toUpperCase(),w/2,h-46);
+  g.font='500 11px '+FM;spacing(g,'2px');g.fillText('AIR MAIL',w/2,h-28);spacing(g,'0px');
+  return s;
+}
+
+/* ---------- compose one postcard ---------- */
+var cv=document.getElementById('card'),ctx=cv.getContext('2d');
+function draw(m){
+  var c=ctx,i,pl=PAL[m.p],bg=pl[0],tc=lum(bg)>.55?'#14120e':'#fffaf0',r=rng(m.n.length*97+m.p*13);
+  c.save();c.clearRect(0,0,W,H);
+  c.fillStyle='#fbf4ea';rr(c,0,0,W,H,26);c.fill();
+  c.save();rr(c,36,36,1128,728,14);c.clip();
+  var g=c.createLinearGradient(0,36,0,764);g.addColorStop(0,bg);g.addColorStop(1,shade(bg,.3));c.fillStyle=g;c.fillRect(0,0,W,H);
+  c.fillStyle=pl[1];c.globalAlpha=.9;c.beginPath();c.arc(310,480,250,0,7);c.fill();c.globalAlpha=1;
+  c.strokeStyle='rgba(255,255,255,.22)';c.lineWidth=3;
+  [290,326].forEach(function(q){c.beginPath();c.arc(310,480,q,0,7);c.stroke();});
+  for(i=0;i<18;i++){c.fillStyle='rgba(255,255,255,.45)';c.beginPath();c.arc(70+r()*520,250+r()*200,2+r()*3,0,7);c.fill();}
+  /* title */
+  c.fillStyle=tc;c.textBaseline='alphabetic';c.textAlign='left';
+  c.font='500 24px '+FM;spacing(c,'4px');c.fillText(('Greetings from '+m.pl).toUpperCase(),84,104);spacing(c,'0px');
+  var name=m.n,size=128;c.font='900 '+size+'px '+FD;
+  var tw=c.measureText(name).width;if(tw>780){size=Math.floor(size*780/tw);c.font='900 '+size+'px '+FD;}
+  c.fillStyle='rgba(0,0,0,.26)';c.fillText(name,88,228);c.fillStyle=tc;c.fillText(name,84,224);
+  /* the tree, then the ground */
+  paint(m,c,60,224,500);
+  c.fillStyle=shade(bg,-.55);c.fill(new Path2D('M36 690Q200 660 380 684T700 680T1030 686T1164 670L1164 764L36 764Z'));
+  c.restore();
+  c.strokeStyle='rgba(255,255,255,.5)';c.lineWidth=3;rr(c,50,50,1100,700,8);c.stroke();
+  c.fillStyle='rgba(255,255,255,.85)';c.font='500 16px '+FM;spacing(c,'3px');c.textAlign='left';c.fillText('PAR AVION  ·  TREES OF THE WORLD',84,732);spacing(c,'0px');
+  /* stamp and postmark */
+  c.save();c.translate(1062,160);c.rotate(.06);c.shadowColor='rgba(0,0,0,.3)';c.shadowBlur=12;c.shadowOffsetY=5;c.drawImage(stampC(m,pl),-66,-81,132,162);c.restore();
+  var d=new Date();
+  c.save();c.strokeStyle='rgba(22,26,44,.62)';c.fillStyle='rgba(22,26,44,.62)';c.lineWidth=3.5;
+  c.beginPath();c.arc(962,176,50,0,7);c.stroke();c.lineWidth=2;c.beginPath();c.arc(962,176,41,0,7);c.stroke();
+  c.textAlign='center';c.font='500 13px '+FM;c.fillText('POSTAPP',962,164);c.fillText(String(d.getDate()).padStart(2,'0')+' '+d.toLocaleString('en-GB',{month:'short'}).toUpperCase(),962,181);c.fillText(String(d.getFullYear()),962,198);
+  c.lineWidth=3.5;
+  for(i=0;i<3;i++){var yy=150+i*18;c.beginPath();c.moveTo(1016,yy);c.bezierCurveTo(1040,yy-10,1056,yy+10,1080,yy);c.bezierCurveTo(1100,yy-8,1116,yy+8,1140,yy);c.stroke();}
+  c.restore();
+
+  /* info card: height, lifespan, region and every fact */
+  var cw=510,ch=486,L=-cw/2,T0=-ch/2,ink='#1e2b22',ac='#d6336c',mu='#7a6b70',fsz,lines,lh,rs,cwid;
+  function t(s,x,y,f,col,al,sp){c.font=f;c.fillStyle=col;c.textAlign=al||'left';spacing(c,sp||'0px');c.fillText(s,L+x,T0+y);spacing(c,'0px');}
+  function stat(a,lab,x){
+    var z;t(lab,x,40,'500 15px '+FM,mu,'left','3px');t(a[0].toUpperCase(),x,64,'500 13px '+FM,ac,'left','2px');
+    for(z=56;z>22;z-=2){c.font='600 '+z+'px '+FD;if(c.measureText(a[1]).width<=200)break;}
+    t(a[1],x,120,'600 '+z+'px '+FD,ink);
+  }
+  c.save();c.translate(620+cw/2,246+ch/2);c.rotate(-.02);
+  c.shadowColor='rgba(0,0,0,.32)';c.shadowBlur=22;c.shadowOffsetY=10;c.fillStyle='#fffdf8';c.fillRect(L,T0,cw,ch);c.shadowColor='transparent';
+  stat(m.g,'HEIGHT',40);stat(m.l,'LIFESPAN',275);
+  t('REGION',40,164,'500 15px '+FM,mu,'left','3px');
+  c.font='500 14px '+FM;spacing(c,'2px');cwid=c.measureText(m.t).width+28;spacing(c,'0px');
+  c.fillStyle='#2b6a45';rr(c,L+cw-40-cwid,T0+144,cwid,30,15);c.fill();
+  t(m.t,cw-40-cwid/2,164,'500 14px '+FM,'#ffffff','center','2px');
+  for(rs=34;rs>22;rs-=2){c.font='400 '+rs+'px '+FH;if(c.measureText(m.r).width<=cw-80)break;}
+  t(m.r,40,206,'400 '+rs+'px '+FH,ink);
+  t('DID YOU KNOW?',40,248,'500 15px '+FM,mu,'left','3px');
+  for(fsz=32;fsz>=22;fsz-=2){
+    c.font='400 '+fsz+'px '+FH;lines=[];
+    m.f.forEach(function(s){wrap(c,'• '+s,cw-96).forEach(function(l,j){lines.push(j?'   '+l:l);});});
+    if(lines.length*(fsz+5)<=176)break;
+  }
+  lh=fsz+5;
+  c.strokeStyle='rgba(43,122,75,.22)';c.lineWidth=2;
+  for(i=0;i<lines.length;i++){var ly=T0+284+i*lh+9;c.beginPath();c.moveTo(L+26,ly);c.lineTo(L+cw-26,ly);c.stroke();}
+  for(i=0;i<lines.length;i++)t(lines[i],40,284+i*lh,'400 '+fsz+'px '+FH,ink);
+  t('Wish you were here!',cw-34,ch-16,'400 32px '+FH,ac,'right');
+  c.fillStyle='rgba(240,180,110,.8)';
+  c.save();c.translate(L+60,T0+2);c.rotate(-.18);c.fillRect(-46,-14,92,28);c.restore();
+  c.save();c.translate(L+cw-60,T0+2);c.rotate(.16);c.fillRect(-46,-14,92,28);c.restore();
+  c.restore();
+  c.restore();
+}
+
+/* ---------- app state and UI ---------- */
+var sel=document.getElementById('pk'),statusEl=document.getElementById('status'),cur=null,blobP=null;
+MT.forEach(function(m,i){var o=document.createElement('option');o.value=i;o.textContent=m.n;sel.appendChild(o);});
+function setStatus(t){statusEl.textContent=t||'';}
+function render(){
+  draw(cur);
+  cv.setAttribute('aria-label','Postcard of the '+cur.n+'. Height '+cur.g.join(' ')+', lifespan '+cur.l.join(' ')+'. '+cur.r+'. '+cur.f.join(' '));
+  blobP=new Promise(function(res){cv.toBlob(res,'image/png');});
+}
+function pick(i){cur=MT[i];sel.value=i;render();}
+sel.addEventListener('change',function(){setStatus('');pick(+sel.value);});
+document.getElementById('rand').addEventListener('click',function(){
+  var i;do{i=Math.floor(Math.random()*MT.length);}while(MT[i]===cur);
+  setStatus('');pick(i);
+});
+
+/* ---------- send ---------- */
+var sheet=document.getElementById('sheet'),sheetImg=document.getElementById('sheet-img'),sheetMsg=document.getElementById('sheet-msg'),sheetClose=document.getElementById('sheet-close'),lastFocus=null,sheetUrl=null;
+function showSheet(blob,copied,opened){
+  if(sheetUrl)URL.revokeObjectURL(sheetUrl);
+  sheetUrl=URL.createObjectURL(blob);sheetImg.src=sheetUrl;
+  if(copied&&opened)sheetMsg.textContent='The postcard is copied. In WhatsApp, choose a contact, then paste with Ctrl+V or ⌘V.';
+  else if(copied)sheetMsg.textContent='The postcard is copied. Open WhatsApp, choose a contact, then paste with Ctrl+V or ⌘V.';
+  else sheetMsg.textContent='Save the postcard (press and hold the image, or right-click it), then open WhatsApp, choose a contact and attach it.';
+  lastFocus=document.activeElement;sheet.hidden=false;sheetClose.focus();
+}
+function hideSheet(){sheet.hidden=true;if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+sheetClose.addEventListener('click',hideSheet);
+sheet.addEventListener('click',function(e){if(e.target===sheet)hideSheet();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!sheet.hidden)hideSheet();});
+
+var isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+document.getElementById('send').addEventListener('click',async function(){
+  var blob=await blobP;
+  if(!blob){setStatus('The image could not be created. Try again.');return;}
+  var file=new File([blob],'postapp-'+cur.n.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'.png',{type:'image/png'}),txt='Greetings from the '+cur.n+'!';
+  if(isMobile){
+    try{
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'Postcard from PostApp',text:txt});
+        setStatus('Postcard shared.');return;
+      }
+    }catch(e){
+      if(e&&e.name==='AbortError'){setStatus('Share cancelled. Nothing was sent.');return;}
+    }
+  }
+  var url='https://web.whatsapp.com/send?text='+encodeURIComponent(txt),cp,w=null,copied=false;
+  try{cp=navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).then(function(){return true;},function(){return false;});}catch(e){cp=Promise.resolve(false);}
+  try{w=window.open(url,'_blank');}catch(e){}
+  if(!w){try{var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();w=true;}catch(e){}}
+  copied=await cp;
+  if(copied&&w){setStatus('Postcard copied. Choose a contact in WhatsApp Web, paste it and press send.');return;}
+  setStatus(w?'The postcard could not be copied. Follow the steps shown on screen.':'Your browser blocked the WhatsApp window. Allow pop-ups for this page, or use the button on screen.');
+  document.getElementById('sheet-wa').href=url;
+  showSheet(blob,copied,!!w);
+});
+
+/* first paint, then repaint once the web fonts are ready */
+pick(Math.floor(Math.random()*MT.length));
+if(document.fonts&&document.fonts.load){Promise.all(['900 100px Fraunces','600 40px Fraunces','500 20px "DM Mono"','400 30px "Patrick Hand"'].map(function(f){return document.fonts.load(f);})).then(render,function(){});}
+})();
+</script>
+
+</html>

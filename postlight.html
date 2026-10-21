@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PostApp</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Pick a lighthouse, get an illustrated postcard with the coast it guards, the year it was lit and facts, and send it on WhatsApp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Gaegu:wght@400;700&family=Courier+Prime:wght@400;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff2cf; --surface:#fffaea; --fg:#0b2a4a; --muted:#5b6b80; --line:#ecd9a6;
+  --a:#c8102e; --b:#0b2a4a; --paper:#ffffff;
+  --go:#0b2a4a; --go-fg:#ffffff; --focus:#c8102e;
+  --display:"Alfa Slab One",Georgia,"Times New Roman",serif;
+  --body:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Courier Prime",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a1626; --surface:#112238; --fg:#f2f6fb; --muted:#9fb2c8; --line:#223a58;
+    --a:#ff5c6c; --b:#ffd34d; --paper:#e8eef6;
+    --go:#ffd34d; --go-fg:#1a1400; --focus:#ffe58a; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a1626; --surface:#112238; --fg:#f2f6fb; --muted:#9fb2c8; --line:#223a58;
+  --a:#ff5c6c; --b:#ffd34d; --paper:#e8eef6;
+  --go:#ffd34d; --go-fg:#1a1400; --focus:#ffe58a; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 var(--body);
+  padding-block:28px 44px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.app{max-width:1140px;margin:0 auto;display:grid;gap:22px;grid-template-columns:minmax(0,1fr)}
+.bar{display:flex;justify-content:flex-end}
+.elx{display:inline-flex;align-items:center;gap:6px;background:var(--surface);color:var(--fg);font:700 .9rem var(--body);text-decoration:none;padding:9px 15px;border-radius:999px;border:2px solid var(--a);box-shadow:3px 3px 0 var(--a);transition:transform .12s,box-shadow .12s}
+.elx:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--a)}
+.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
+.word{margin:0;font:400 2.3rem/1 var(--display);letter-spacing:.01em}
+.tag{margin:0;color:var(--muted);min-width:0}
+.frame{border:12px solid transparent;
+  border-image:repeating-linear-gradient(135deg,var(--a) 0 16px,var(--paper) 16px 32px,var(--b) 32px 48px,var(--paper) 48px 64px) 12;
+  background:var(--paper);min-width:0}
+canvas{display:block;width:100%;max-width:100%;height:auto;aspect-ratio:3/2}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:16px;min-width:0;align-content:start}
+.field{display:grid;gap:6px}
+label{font:700 .75rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+select{appearance:none;-webkit-appearance:none;width:100%;min-height:50px;padding:0 44px 0 14px;
+  font:600 1.05rem var(--body);color:var(--fg);background-color:var(--bg);
+  border:1.5px solid var(--line);border-radius:10px;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--fg) 50%),linear-gradient(135deg,var(--fg) 50%,transparent 50%);
+  background-position:calc(100% - 22px) 50%,calc(100% - 16px) 50%;background-size:6px 6px;background-repeat:no-repeat}
+.row{display:grid;gap:10px}
+button{font:700 1rem var(--body);min-height:50px;padding:0 16px;border-radius:10px;cursor:pointer;
+  border:1.5px solid var(--line);background:transparent;color:var(--fg);transition:background-color .15s,border-color .15s}
+button:hover{border-color:var(--fg)}
+.go{background:var(--go);color:var(--go-fg);border-color:var(--go);font-size:1.05rem;display:flex;align-items:center;justify-content:center;gap:10px}
+.go:hover{border-color:var(--go);filter:brightness(1.12)}
+.go svg{width:20px;height:20px;flex:none}
+select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.status{margin:0;min-height:2.6em;font:400 .8rem/1.45 var(--mono);color:var(--muted)}
+.hint{margin:0;font-size:.88rem;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+.sheet{position:fixed;inset:0;z-index:50;background:rgba(4,10,20,.76);display:flex;align-items:center;justify-content:center;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet-in{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;width:min(560px,100%);max-height:100%;overflow:auto}
+.sheet-in img{width:100%;height:auto;display:block;border:1px solid var(--line)}
+.sheet-in p{margin:0;font-size:.95rem}
+.sheet-row{display:flex;flex-wrap:wrap;gap:10px}
+.sheet-row a,.sheet-row button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 16px;border-radius:10px;font:700 .95rem var(--body);text-decoration:none}
+.sheet-row a{background:var(--go);color:var(--go-fg)}
+@media (min-width:920px){
+  .bar,.top{grid-column:1/-1}
+  .app{grid-template-columns:minmax(0,1fr) 300px;align-items:start;column-gap:28px}
+  .word{font-size:2.8rem}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<main class="app">
+  <div class="bar"><a class="elx" href="https://easylandx.github.io" target="_blank" rel="noopener">EasylandX <span aria-hidden="true">&#8599;</span></a></div>
+  <header class="top">
+    <h1 class="word">PostApp</h1>
+    <p class="tag">Choose a lighthouse, get a postcard, send it on WhatsApp.</p>
+  </header>
+
+  <div class="frame"><canvas id="card" width="1200" height="800" role="img" aria-label="Postcard"></canvas></div>
+
+  <section class="panel" aria-label="Postcard controls">
+    <div class="field">
+      <label for="pk">Lighthouse</label>
+      <select id="pk"></select>
+    </div>
+    <div class="row">
+      <button id="rand" type="button">Surprise me</button>
+      <button id="send" type="button" class="go">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
+        Send on WhatsApp
+      </button>
+    </div>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+    <p class="hint">On a phone, Send opens the share sheet with the postcard image attached: choose WhatsApp, then pick a contact. On a computer, it copies the postcard and opens WhatsApp Web: choose a contact, paste it in and press send.</p>
+  </section>
+</main>
+
+<div id="sheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-msg">
+  <div class="sheet-in">
+    <img id="sheet-img" alt="Your finished postcard">
+    <p id="sheet-msg"></p>
+    <div class="sheet-row">
+      <a id="sheet-wa" href="https://wa.me/?text=Postcard%20from%20PostApp" target="_blank" rel="noopener">Open WhatsApp Web</a>
+      <button id="sheet-close" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var W=1200,H=800,X;
+var FD='"Alfa Slab One",Georgia,serif',FM='"Courier Prime",ui-monospace,Menlo,monospace',FH='Gaegu,"Segoe Print","Bradley Hand",cursive';
+
+/* ---------- drawing kit (each lighthouse is drawn in a 400x400 box, base at y=392) ---------- */
+function D(d,f,s,lw){var p=new Path2D(d);if(f){X.fillStyle=f;X.fill(p);}if(s){X.strokeStyle=s;X.lineWidth=lw||4;X.lineJoin='round';X.lineCap='round';X.stroke(p);}}
+function E(x,y,rx,ry,f){X.beginPath();X.ellipse(x,y,rx,ry,0,0,7);X.fillStyle=f;X.fill();}
+function R(x,y,w,h,f){X.fillStyle=f;X.fillRect(x,y,w,h);}
+function art(m){
+  var yb=m.rock?330:392,top=m.th,bw=m.bw,tw=m.tw,c1=m.c1,c2=m.c2||'#c63b2f',sh='rgba(6,14,30,.25)',rf=m.rf||'#2a2a30',d;
+  /* light beams */
+  X.save();X.globalAlpha=.28;
+  D('M200 '+(top-24)+'L-260 '+(top-80)+'L-260 '+(top+40)+'Z','#fff3b0');D('M200 '+(top-24)+'L660 '+(top-80)+'L660 '+(top+40)+'Z','#fff3b0');
+  X.restore();
+  if(m.rock){D('M40 392Q70 350 120 336L280 336Q330 350 360 392Z','#4f5560');D('M120 336Q200 322 280 336',null,'rgba(255,255,255,.25)',4);D('M0 392Q50 380 100 392T200 392T300 392T400 392',null,'rgba(255,255,255,.4)',4);}
+  if(m.house){R(104,yb-44,86,44,m.hc||'#f3f0e8');D('M98 '+(yb-44)+'L147 '+(yb-76)+'L196 '+(yb-44)+'Z',m.hr||'#8c3b34');R(124,yb-30,14,18,'#2a2a30');R(152,yb-30,14,18,'#2a2a30');}
+  if(m.sq){
+    m.sq.forEach(function(q){R(q[0],q[1],q[2],392-q[1],c1);R(q[0]+q[2]/2,q[1],q[2]/2,392-q[1],sh);R(q[0]-5,q[1],q[2]+10,6,'rgba(0,0,0,.2)');R(q[0]+q[2]/2-4,q[1]+18,8,22,rf);});
+  }else{
+    d='M'+(200-bw)+' '+yb+'L'+(200-tw)+' '+top+'L'+(200+tw)+' '+top+'L'+(200+bw)+' '+yb+'Z';
+    D(d,c1);X.save();X.clip(new Path2D(d));
+    (m.bd||[]).forEach(function(b){var y0=top+(yb-top)*b[0],bh=(yb-top)*(b[1]-b[0]);if(m.sp)D('M0 '+(y0+50)+'L400 '+(y0-50)+'L400 '+(y0-50+bh)+'L0 '+(y0+50+bh)+'Z',c2);else R(0,y0,400,bh,c2);});
+    X.fillStyle=sh;X.fillRect(200,0,200,400);X.restore();
+    R(194,yb-34,12,34,rf);R(197,top+(yb-top)*.4,6,14,rf);
+  }
+  /* gallery, lantern, roof */
+  R(200-tw-12,top-6,tw*2+24,9,rf);
+  R(200-tw*.72,top-46,tw*1.44,40,'#ffd24a');
+  [-.36,0,.36].forEach(function(f){R(200+tw*f-1.5,top-46,3,40,rf);});
+  D('M'+(200-tw*.9)+' '+(top-46)+'L200 '+(top-76)+'L'+(200+tw*.9)+' '+(top-46)+'Z',m.rr||rf);
+  E(200,top-80,4,4,m.rr||rf);E(200,top-26,tw*.55,13,'rgba(255,250,200,.85)');
+}
+
+/* ---------- the 16 postcards: name, place, coast guarded, year lit, tower type, facts, palette, shape ---------- */
+var PAL=[['#10294a','#f6c453'],['#2b3f7a','#ffd7a0'],['#0f4c5c','#fbe3b0'],['#5a2a52','#ffb870'],['#1d3b5c','#ffe39b'],['#8a2f3f','#ffd48a']];
+var MT=[
+{n:'Tower of Hercules',pl:'A Coruña',co:'Galician coast',loc:'A Coruña, Galicia, Spain',y:['around','AD 100'],t:'ROMAN STONE TOWER',p:0,sq:[[140,290,120],[156,200,88],[168,140,64]],th:140,tw:32,c1:'#c9b99a',f:['It is the oldest Roman lighthouse still in use and a UNESCO World Heritage Site since 2009.','After an 18th-century restoration, the tower stands 55 metres tall.']},
+{n:'Cape Hatteras',pl:'North Carolina',co:'Outer Banks',loc:'North Carolina, USA',y:['','1870'],t:'SPIRAL STRIPES',p:1,th:90,bw:52,tw:30,c1:'#f3f0e8',c2:'#1d1d22',bd:[[0,.17],[.33,.5],[.67,.83]],sp:1,f:['At about 60 metres it is the tallest brick lighthouse in the United States.','In 1999 the whole tower was moved around 880 metres inland to save it from the sea.']},
+{n:'Eddystone',pl:'Plymouth',co:'English Channel',loc:'Off Plymouth, Devon, England',y:['','1882'],t:'GRANITE ROCK TOWER',p:2,rock:1,th:110,bw:40,tw:28,c1:'#d9d4c8',bd:[[.3,.42]],rf:'#c63b2f',f:['It is the fourth tower built on the Eddystone rocks, about 20 kilometres out to sea.','The top of Smeaton’s earlier tower of 1759 now stands on Plymouth Hoe.']},
+{n:'Bell Rock',pl:'Scotland',co:'North Sea',loc:'Off Angus, Scotland',y:['','1810'],t:'STONE ROCK TOWER',p:3,rock:1,th:120,bw:42,tw:26,c1:'#e8e2d2',f:['It is the oldest surviving sea-washed lighthouse in the world.','Robert Stevenson built it on a reef that the sea covers at high tide.']},
+{n:'Maspalomas',pl:'Gran Canaria',co:'Gran Canaria',loc:'Canary Islands, Spain',y:['','1890'],t:'STONE TOWER',p:4,th:90,bw:40,tw:24,c1:'#ece3d0',f:['At 56 metres it is the tallest lighthouse in the Canary Islands.','It stands next to the Maspalomas dunes in the south of Gran Canaria.']},
+{n:'Cabo Vilán',pl:'Galicia',co:'Costa da Morte',loc:'Camariñas, Galicia, Spain',y:['','1896'],t:'STONE TOWER',p:5,house:1,th:140,bw:34,tw:24,c1:'#bfae8e',f:['It was the first electric lighthouse in Spain.','The Costa da Morte, the Coast of Death, is named for its many shipwrecks.']},
+{n:'Cape Byron',pl:'Byron Bay',co:'New South Wales',loc:'Byron Bay, Australia',y:['','1901'],t:'WHITE TOWER',p:2,house:1,hr:'#2f7a8c',th:190,bw:40,tw:28,c1:'#f5f2ea',f:['It is the most easterly lighthouse on mainland Australia.','Its white tower is about 22 metres tall and stands on a headland above the sea.']},
+{n:'Cape Point',pl:'Cape Town',co:'Cape Peninsula',loc:'Cape Town, South Africa',y:['','1919'],t:'WHITE TOWER',p:1,th:150,bw:40,tw:28,c1:'#efe9dc',f:['The first Cape Point tower was lit in 1860, but clouds often hid its light.','This newer lighthouse sits lower after the Portuguese liner Lusitania was wrecked nearby in 1911.']},
+{n:'Portland Head',pl:'Maine',co:'Maine coast',loc:'Cape Elizabeth, Maine, USA',y:['','1791'],t:'WHITE TOWER',p:3,house:1,th:140,bw:38,tw:26,c1:'#f4f1e8',f:['It was completed under President George Washington and is the oldest lighthouse in Maine.','It guards the entrance to Portland Harbor, and its keeper’s house is now a museum.']},
+{n:'Hook Head',pl:'County Wexford',co:'Wexford coast',loc:'County Wexford, Ireland',y:['in the','13th century'],t:'BLACK & WHITE BANDS',p:4,th:120,bw:54,tw:42,c1:'#f1efe6',c2:'#1d1d22',bd:[[.3,.5],[.75,1]],f:['It is one of the oldest operating lighthouses in the world.','Monks are said to have kept a warning fire on this headland as early as the 5th century.']},
+{n:'Cordouan',pl:'France',co:'Bay of Biscay',loc:'Gironde estuary, France',y:['','1611'],t:'ORNATE STONE TOWER',p:5,rock:1,th:100,bw:50,tw:32,c1:'#d7cdb4',f:['It is the oldest lighthouse in France still in use and a UNESCO site since 2021.','Its ornate design earned it the nickname “the Versailles of the sea”.']},
+{n:'Fastnet',pl:'County Cork',co:'Southwest Ireland',loc:'Off County Cork, Ireland',y:['','1904'],t:'GRANITE ROCK TOWER',p:0,rock:1,th:110,bw:42,tw:28,c1:'#cfc9b9',f:['It is called Ireland’s Teardrop because emigrants saw it as their last glimpse of home.','The 1904 granite tower is the tallest rock lighthouse in Britain and Ireland.']},
+{n:'Peggy’s Cove',pl:'Nova Scotia',co:'Nova Scotia',loc:'Peggy’s Cove, Nova Scotia, Canada',y:['','1915'],t:'RED-LANTERN TOWER',p:3,rock:1,th:220,bw:38,tw:26,c1:'#f6f3ea',rf:'#c63b2f',rr:'#c63b2f',f:['It stands on smooth granite rocks beside a small fishing village.','It is one of the most photographed lighthouses in Canada.']},
+{n:'La Lanterna',pl:'Genoa',co:'Ligurian coast',loc:'Genoa, Italy',y:['','1543'],t:'STONE TOWER',p:1,sq:[[150,230,100],[166,130,68]],th:130,tw:34,c1:'#cfc3a8',f:['At 77 metres it is among the tallest traditional lighthouses in the world.','Its two stacked towers have guided ships into Genoa’s port for centuries and are the city’s symbol.']},
+{n:'Cape Spear',pl:'Newfoundland',co:'Newfoundland',loc:'St. John’s, Newfoundland, Canada',y:['','1836'],t:'WHITE & RED',p:0,house:1,hr:'#c63b2f',th:240,bw:40,tw:36,c1:'#f7f4ec',rr:'#c63b2f',hc:'#f7f4ec',f:['It stands at the most easterly point of North America, apart from Greenland.','It is the oldest surviving lighthouse in Newfoundland and Labrador.']},
+{n:'Longstone',pl:'Northumberland',co:'Northumberland',loc:'Farne Islands, England',y:['','1826'],t:'RED & WHITE BANDS',p:3,rock:1,th:100,bw:40,tw:28,c1:'#f3f0e8',c2:'#c63b2f',bd:[[.25,.5],[.75,1]],f:['In 1838 Grace Darling and her father rowed through a storm to rescue nine shipwreck survivors.','It stands on a small island in the Farne Islands.']}
+].sort(function(a,b){return a.n.localeCompare(b.n);});
+
+/* ---------- helpers ---------- */
+function mk(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;return c;}
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function lum(h){var n=parseInt(h.slice(1),16);return(0.299*(n>>16&255)+0.587*(n>>8&255)+0.114*(n&255))/255;}
+function shade(h,f){var n=parseInt(h.slice(1),16);function q(v){return Math.round(f<0?v*(1+f):v+(255-v)*f);}return'rgb('+q(n>>16&255)+','+q(n>>8&255)+','+q(n&255)+')';}
+function rng(seed){return function(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
+function wrap(c,text,maxW){var w=text.split(' '),lines=[],line='',t,i;for(i=0;i<w.length;i++){t=line?line+' '+w[i]:w[i];if(c.measureText(t).width>maxW&&line){lines.push(line);line=w[i];}else line=t;}if(line)lines.push(line);return lines;}
+function spacing(c,v){if('letterSpacing' in c)c.letterSpacing=v;}
+function paint(m,c,x,y,s){var p=X;X=c;c.save();c.translate(x,y);c.scale(s/400,s/400);art(m);c.restore();X=p;}
+function sil(m,col){var c=mk(400,400),g=c.getContext('2d');paint(m,g,0,0,400);g.globalCompositeOperation='source-in';g.fillStyle=col;g.fillRect(0,0,400,400);return c;}
+
+function stampC(m,pl){
+  var w=176,h=216,s=mk(w,h),g=s.getContext('2d'),i,z,ink=lum(pl[0])>.55?'#14120e':'#fff3d6',yr=m.y[1].toUpperCase();
+  g.fillStyle='#fffdf8';g.fillRect(0,0,w,h);
+  g.globalCompositeOperation='destination-out';
+  for(i=8;i<w;i+=16){g.beginPath();g.arc(i,0,5,0,7);g.fill();g.beginPath();g.arc(i,h,5,0,7);g.fill();}
+  for(i=8;i<h;i+=16){g.beginPath();g.arc(0,i,5,0,7);g.fill();g.beginPath();g.arc(w,i,5,0,7);g.fill();}
+  g.globalCompositeOperation='source-over';
+  g.fillStyle=pl[0];g.fillRect(14,14,w-28,h-28);
+  g.strokeStyle=ink;g.globalAlpha=.55;g.lineWidth=2;g.strokeRect(20,20,w-40,h-40);g.globalAlpha=1;
+  g.drawImage(sil(m,ink),26,34,124,124);
+  g.fillStyle=ink;g.textAlign='center';
+  for(z=24;z>12;z-=2){g.font=z+'px '+FD;if(g.measureText(yr).width<=136)break;}
+  g.fillText(yr,w/2,h-46);
+  g.font='700 11px '+FM;spacing(g,'2px');g.fillText('AIR MAIL',w/2,h-28);spacing(g,'0px');
+  return s;
+}
+
+/* ---------- compose one postcard ---------- */
+var cv=document.getElementById('card'),ctx=cv.getContext('2d');
+function draw(m){
+  var c=ctx,i,pl=PAL[m.p],bg=pl[0],tc=lum(bg)>.55?'#14120e':'#fffaf0',r=rng(m.n.length*97+m.p*13);
+  c.save();c.clearRect(0,0,W,H);
+  c.fillStyle='#fbf4ea';rr(c,0,0,W,H,26);c.fill();
+  c.save();rr(c,36,36,1128,728,14);c.clip();
+  var g=c.createLinearGradient(0,36,0,764);g.addColorStop(0,bg);g.addColorStop(1,shade(bg,.3));c.fillStyle=g;c.fillRect(0,0,W,H);
+  c.fillStyle=pl[1];c.globalAlpha=.9;c.beginPath();c.arc(310,480,250,0,7);c.fill();c.globalAlpha=1;
+  c.strokeStyle='rgba(255,255,255,.22)';c.lineWidth=3;
+  [290,326].forEach(function(q){c.beginPath();c.arc(310,480,q,0,7);c.stroke();});
+  for(i=0;i<18;i++){c.fillStyle='rgba(255,255,255,.5)';c.beginPath();c.arc(70+r()*520,250+r()*200,2+r()*3,0,7);c.fill();}
+  /* title */
+  c.fillStyle=tc;c.textBaseline='alphabetic';c.textAlign='left';
+  c.font='700 24px '+FM;spacing(c,'4px');c.fillText(('Greetings from '+m.pl).toUpperCase(),84,104);spacing(c,'0px');
+  var name=m.n,size=118;c.font=size+'px '+FD;
+  var tw=c.measureText(name).width;if(tw>780){size=Math.floor(size*780/tw);c.font=size+'px '+FD;}
+  c.fillStyle='rgba(0,0,0,.26)';c.fillText(name,88,226);c.fillStyle=tc;c.fillText(name,84,222);
+  /* the lighthouse, then the ground */
+  paint(m,c,60,224,500);
+  c.fillStyle=shade(bg,-.55);c.fill(new Path2D('M36 690Q200 660 380 684T700 680T1030 686T1164 670L1164 764L36 764Z'));
+  c.restore();
+  c.strokeStyle='rgba(255,255,255,.5)';c.lineWidth=3;rr(c,50,50,1100,700,8);c.stroke();
+  c.fillStyle='rgba(255,255,255,.85)';c.font='700 15px '+FM;spacing(c,'3px');c.textAlign='left';c.fillText('PAR AVION  ·  LIGHTHOUSES OF THE WORLD',84,732);spacing(c,'0px');
+  /* stamp and postmark */
+  c.save();c.translate(1062,160);c.rotate(.06);c.shadowColor='rgba(0,0,0,.3)';c.shadowBlur=12;c.shadowOffsetY=5;c.drawImage(stampC(m,pl),-66,-81,132,162);c.restore();
+  var d=new Date();
+  c.save();c.strokeStyle='rgba(22,26,44,.62)';c.fillStyle='rgba(22,26,44,.62)';c.lineWidth=3.5;
+  c.beginPath();c.arc(962,176,50,0,7);c.stroke();c.lineWidth=2;c.beginPath();c.arc(962,176,41,0,7);c.stroke();
+  c.textAlign='center';c.font='700 12px '+FM;c.fillText('POSTAPP',962,164);c.fillText(String(d.getDate()).padStart(2,'0')+' '+d.toLocaleString('en-GB',{month:'short'}).toUpperCase(),962,181);c.fillText(String(d.getFullYear()),962,198);
+  c.lineWidth=3.5;
+  for(i=0;i<3;i++){var yy=150+i*18;c.beginPath();c.moveTo(1016,yy);c.bezierCurveTo(1040,yy-10,1056,yy+10,1080,yy);c.bezierCurveTo(1100,yy-8,1116,yy+8,1140,yy);c.stroke();}
+  c.restore();
+
+  /* info card: year lit, coast guarded, location and every fact */
+  var cw=510,ch=486,L=-cw/2,T0=-ch/2,ink='#0b2a4a',ac='#c8102e',mu='#6b7a8f',fsz,lines,lh,rs,cwid;
+  function t(s,x,y,f,col,al,sp){c.font=f;c.fillStyle=col;c.textAlign=al||'left';spacing(c,sp||'0px');c.fillText(s,L+x,T0+y);spacing(c,'0px');}
+  function stat(lab,q,v,x,mw){
+    var z;t(lab,x,40,'400 15px '+FM,mu,'left','3px');t(q.toUpperCase(),x,64,'700 13px '+FM,ac,'left','2px');
+    for(z=52;z>20;z-=2){c.font=z+'px '+FD;if(c.measureText(v).width<=mw)break;}
+    t(v,x,120,z+'px '+FD,ink);
+  }
+  c.save();c.translate(620+cw/2,246+ch/2);c.rotate(-.02);
+  c.shadowColor='rgba(0,0,0,.32)';c.shadowBlur=22;c.shadowOffsetY=10;c.fillStyle='#fffdf8';c.fillRect(L,T0,cw,ch);c.shadowColor='transparent';
+  stat('LIT IN',m.y[0],m.y[1],40,180);stat('COAST GUARDED','',m.co,240,230);
+  t('LOCATION',40,164,'400 15px '+FM,mu,'left','3px');
+  c.font='700 14px '+FM;spacing(c,'2px');cwid=c.measureText(m.t).width+28;spacing(c,'0px');
+  c.fillStyle='#0b2a4a';rr(c,L+cw-40-cwid,T0+144,cwid,30,15);c.fill();
+  t(m.t,cw-40-cwid/2,164,'700 14px '+FM,'#ffffff','center','2px');
+  for(rs=34;rs>22;rs-=2){c.font='700 '+rs+'px '+FH;if(c.measureText(m.loc).width<=cw-80)break;}
+  t(m.loc,40,206,'700 '+rs+'px '+FH,ink);
+  t('DID YOU KNOW?',40,248,'400 15px '+FM,mu,'left','3px');
+  for(fsz=32;fsz>=22;fsz-=2){
+    c.font='700 '+fsz+'px '+FH;lines=[];
+    m.f.forEach(function(s){wrap(c,'• '+s,cw-96).forEach(function(l,j){lines.push(j?'   '+l:l);});});
+    if(lines.length*(fsz+5)<=176)break;
+  }
+  lh=fsz+5;
+  c.strokeStyle='rgba(11,42,74,.2)';c.lineWidth=2;
+  for(i=0;i<lines.length;i++){var ly=T0+284+i*lh+9;c.beginPath();c.moveTo(L+26,ly);c.lineTo(L+cw-26,ly);c.stroke();}
+  for(i=0;i<lines.length;i++)t(lines[i],40,284+i*lh,'700 '+fsz+'px '+FH,ink);
+  t('Wish you were here!',cw-34,ch-16,'700 32px '+FH,ac,'right');
+  c.fillStyle='rgba(240,200,110,.8)';
+  c.save();c.translate(L+60,T0+2);c.rotate(-.18);c.fillRect(-46,-14,92,28);c.restore();
+  c.save();c.translate(L+cw-60,T0+2);c.rotate(.16);c.fillRect(-46,-14,92,28);c.restore();
+  c.restore();
+  c.restore();
+}
+
+/* ---------- app state and UI ---------- */
+var sel=document.getElementById('pk'),statusEl=document.getElementById('status'),cur=null,blobP=null;
+MT.forEach(function(m,i){var o=document.createElement('option');o.value=i;o.textContent=m.n;sel.appendChild(o);});
+function setStatus(t){statusEl.textContent=t||'';}
+function render(){
+  draw(cur);
+  cv.setAttribute('aria-label','Postcard of '+cur.n+' lighthouse, lit '+(cur.y[0]?cur.y[0]+' ':'')+cur.y[1]+', guarding the '+cur.co+'. '+cur.loc+'. '+cur.f.join(' '));
+  blobP=new Promise(function(res){cv.toBlob(res,'image/png');});
+}
+function pick(i){cur=MT[i];sel.value=i;render();}
+sel.addEventListener('change',function(){setStatus('');pick(+sel.value);});
+document.getElementById('rand').addEventListener('click',function(){
+  var i;do{i=Math.floor(Math.random()*MT.length);}while(MT[i]===cur);
+  setStatus('');pick(i);
+});
+
+/* ---------- send ---------- */
+var sheet=document.getElementById('sheet'),sheetImg=document.getElementById('sheet-img'),sheetMsg=document.getElementById('sheet-msg'),sheetClose=document.getElementById('sheet-close'),lastFocus=null,sheetUrl=null;
+function showSheet(blob,copied,opened){
+  if(sheetUrl)URL.revokeObjectURL(sheetUrl);
+  sheetUrl=URL.createObjectURL(blob);sheetImg.src=sheetUrl;
+  if(copied&&opened)sheetMsg.textContent='The postcard is copied. In WhatsApp, choose a contact, then paste with Ctrl+V or ⌘V.';
+  else if(copied)sheetMsg.textContent='The postcard is copied. Open WhatsApp, choose a contact, then paste with Ctrl+V or ⌘V.';
+  else sheetMsg.textContent='Save the postcard (press and hold the image, or right-click it), then open WhatsApp, choose a contact and attach it.';
+  lastFocus=document.activeElement;sheet.hidden=false;sheetClose.focus();
+}
+function hideSheet(){sheet.hidden=true;if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+sheetClose.addEventListener('click',hideSheet);
+sheet.addEventListener('click',function(e){if(e.target===sheet)hideSheet();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!sheet.hidden)hideSheet();});
+
+var isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+document.getElementById('send').addEventListener('click',async function(){
+  var blob=await blobP;
+  if(!blob){setStatus('The image could not be created. Try again.');return;}
+  var file=new File([blob],'postapp-'+cur.n.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'.png',{type:'image/png'}),txt='Greetings from '+cur.n+'!';
+  if(isMobile){
+    try{
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'Postcard from PostApp',text:txt});
+        setStatus('Postcard shared.');return;
+      }
+    }catch(e){
+      if(e&&e.name==='AbortError'){setStatus('Share cancelled. Nothing was sent.');return;}
+    }
+  }
+  var url='https://web.whatsapp.com/send?text='+encodeURIComponent(txt),cp,w=null,copied=false;
+  try{cp=navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).then(function(){return true;},function(){return false;});}catch(e){cp=Promise.resolve(false);}
+  try{w=window.open(url,'_blank');}catch(e){}
+  if(!w){try{var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();w=true;}catch(e){}}
+  copied=await cp;
+  if(copied&&w){setStatus('Postcard copied. Choose a contact in WhatsApp Web, paste it and press send.');return;}
+  setStatus(w?'The postcard could not be copied. Follow the steps shown on screen.':'Your browser blocked the WhatsApp window. Allow pop-ups for this page, or use the button on screen.');
+  document.getElementById('sheet-wa').href=url;
+  showSheet(blob,copied,!!w);
+});
+
+/* first paint, then repaint once the web fonts are ready */
+pick(Math.floor(Math.random()*MT.length));
+if(document.fonts&&document.fonts.load){Promise.all(['100px "Alfa Slab One"','700 20px "Courier Prime"','400 15px "Courier Prime"','700 30px Gaegu'].map(function(f){return document.fonts.load(f);})).then(render,function(){});}
+})();
+</script>
+
+</html>

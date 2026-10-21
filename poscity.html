@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Postapp</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Pick a city, get an illustrated postcard of its landmark, and send it on WhatsApp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Kalam:wght@400;700&family=Space+Mono:wght@400;700&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: an airmail-striped postcard preview with one control panel beside it (stacked on phones). The postcard itself is drawn on a canvas. */
+:root{
+  --bg:#f6eee2; --surface:#fffaf2; --fg:#2b1f33; --muted:#6a5a6e; --line:#e0d2bf;
+  --red:#e4572e; --blue:#2a9d8f; --paper:#ffffff;
+  --go:#7a3b8f; --go-fg:#ffffff; --focus:#7a3b8f;
+  --display:"Abril Fatface",Georgia,"Times New Roman",serif;
+  --body:"Outfit",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"Space Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1a1220; --surface:#251a2d; --fg:#f4e9f0; --muted:#b9a5bf; --line:#3d2d47;
+    --red:#ff7a4d; --blue:#4fc4b5; --paper:#e9dfe6;
+    --go:#c58be0; --go-fg:#25102e; --focus:#d9a8ef; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1a1220; --surface:#251a2d; --fg:#f4e9f0; --muted:#b9a5bf; --line:#3d2d47;
+  --red:#ff7a4d; --blue:#4fc4b5; --paper:#e9dfe6;
+  --go:#c58be0; --go-fg:#25102e; --focus:#d9a8ef; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;
+  background:var(--bg); color:var(--fg); font:16px/1.5 var(--body);
+  padding-block:28px 44px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.app{max-width:1140px;margin:0 auto;display:grid;gap:22px;grid-template-columns:minmax(0,1fr)}
+.bar{display:flex;justify-content:flex-end}
+.elx{display:inline-flex;align-items:center;gap:6px;background:var(--surface);color:var(--fg);font:600 .9rem var(--body);text-decoration:none;padding:9px 15px;border-radius:999px;border:2px solid var(--red);box-shadow:3px 3px 0 var(--red);transition:transform .12s,box-shadow .12s}
+.elx:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--red)}
+.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
+.word{margin:0;font:400 2.1rem/1 var(--display);letter-spacing:.01em}
+.tag{margin:0;color:var(--muted);min-width:0}
+.frame{
+  border:12px solid transparent;
+  border-image:repeating-linear-gradient(135deg,var(--red) 0 16px,var(--paper) 16px 32px,var(--blue) 32px 48px,var(--paper) 48px 64px) 12;
+  background:var(--paper);min-width:0;
+}
+canvas{display:block;width:100%;max-width:100%;height:auto;aspect-ratio:3/2}
+.panel{
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:18px;display:grid;gap:16px;min-width:0;align-content:start;
+}
+.field{display:grid;gap:6px}
+label{font:500 .75rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+select{
+  appearance:none;-webkit-appearance:none;width:100%;min-height:50px;padding:0 44px 0 14px;
+  font:500 1.05rem var(--body);color:var(--fg);background-color:var(--bg);
+  border:1.5px solid var(--line);border-radius:10px;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,var(--fg) 50%),linear-gradient(135deg,var(--fg) 50%,transparent 50%);
+  background-position:calc(100% - 22px) 50%,calc(100% - 16px) 50%;background-size:6px 6px;background-repeat:no-repeat;
+}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{
+  font:600 1rem var(--body);min-height:50px;padding:0 16px;border-radius:10px;cursor:pointer;
+  border:1.5px solid var(--line);background:transparent;color:var(--fg);transition:background-color .15s,border-color .15s;
+}
+button:hover{border-color:var(--fg)}
+.go{grid-column:1/-1;background:var(--go);color:var(--go-fg);border-color:var(--go);font-size:1.05rem;display:flex;align-items:center;justify-content:center;gap:10px}
+.go:hover{border-color:var(--go);filter:brightness(1.08)}
+.go svg{width:20px;height:20px;flex:none}
+select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.status{margin:0;min-height:2.6em;font:400 .8rem/1.45 var(--mono);color:var(--muted)}
+.hint{margin:0;font-size:.88rem;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+.sheet{position:fixed;inset:0;z-index:50;background:rgba(8,12,18,.72);display:flex;align-items:center;justify-content:center;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet-in{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;width:min(560px,100%);max-height:100%;overflow:auto}
+.sheet-in img{width:100%;height:auto;display:block;border:1px solid var(--line)}
+.sheet-in p{margin:0;font-size:.95rem}
+.sheet-row{display:flex;flex-wrap:wrap;gap:10px}
+.sheet-row a,.sheet-row button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 16px;border-radius:10px;font:600 .95rem var(--body);text-decoration:none}
+.sheet-row a{background:var(--go);color:var(--go-fg)}
+@media (min-width:920px){
+  .bar{grid-column:1/-1}
+  .app{grid-template-columns:minmax(0,1fr) 300px;align-items:start;column-gap:28px}
+  .top{grid-column:1/-1}
+  .word{font-size:2.5rem}
+}
+@media (max-width:420px){.row{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<main class="app">
+  <div class="bar"><a class="elx" href="https://easylandx.github.io" target="_blank" rel="noopener">EasylandX <span aria-hidden="true">&#8599;</span></a></div>
+  <header class="top">
+    <h1 class="word">Postapp</h1>
+    <p class="tag">Choose a city, get a postcard, send it on WhatsApp.</p>
+  </header>
+
+  <div class="frame"><canvas id="card" width="1200" height="800" role="img" aria-label="Postcard"></canvas></div>
+
+  <section class="panel" aria-label="Postcard controls">
+    <div class="field">
+      <label for="city">City</label>
+      <select id="city"></select>
+    </div>
+    <div class="row">
+      <button id="fact" type="button">Another fact</button>
+      <button id="rand" type="button">Surprise me</button>
+      <button id="send" type="button" class="go">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
+        Send on WhatsApp
+      </button>
+    </div>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+    <p class="hint">On a phone, Send opens the share sheet with the postcard image attached: choose WhatsApp, then pick a contact. On a computer, it copies the postcard and opens WhatsApp Web: choose a contact, paste it in and press send.</p>
+  </section>
+</main>
+
+<div id="sheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-msg">
+  <div class="sheet-in">
+    <img id="sheet-img" alt="Your finished postcard">
+    <p id="sheet-msg"></p>
+    <div class="sheet-row">
+      <a id="sheet-wa" href="https://wa.me/?text=Postcard%20from%20Postapp" target="_blank" rel="noopener">Open WhatsApp Web</a>
+      <button id="sheet-close" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var W=1200,H=800;
+
+/* ---------- tiny drawing kit (every landmark is drawn in a 400x400 box, ground line at y=392) ---------- */
+var X;
+function fs(f,s,lw){if(f){X.fillStyle=f;X.fill();}if(s){X.strokeStyle=s;X.lineWidth=lw||4;X.lineJoin='round';X.lineCap='round';X.stroke();}}
+function E(x,y,rx,ry,f,rot,s,lw){X.beginPath();X.ellipse(x,y,rx,ry,rot||0,0,Math.PI*2);fs(f,s,lw);}
+function C(x,y,r,f,s,lw){E(x,y,r,r,f,0,s,lw);}
+function D(d,f,s,lw){var p=new Path2D(d);if(f){X.fillStyle=f;X.fill(p);}if(s){X.strokeStyle=s;X.lineWidth=lw||4;X.lineJoin='round';X.lineCap='round';X.stroke(p);}}
+function L(d,s,lw){D(d,null,s,lw);}
+function R(x,y,w,h,f){X.fillStyle=f;X.fillRect(x,y,w,h);}
+function P(p,f,s,lw){D('M'+p.map(function(q){return q[0]+' '+q[1];}).join(' L')+' Z',f,s,lw);}
+function sym(f){f();X.save();X.translate(400,0);X.scale(-1,1);f();X.restore();}
+function clipD(d,f){X.save();X.clip(new Path2D(d));f();X.restore();}
+function arch(x,y,w,h,f){D('M'+x+' '+(y+h)+' L'+x+' '+(y+w/2)+' Q'+x+' '+y+' '+(x+w/2)+' '+y+' Q'+(x+w)+' '+y+' '+(x+w)+' '+(y+w/2)+' L'+(x+w)+' '+(y+h)+' Z',f);}
+function onion(x,y,r,f){D('M'+(x-r)+' '+y+' C'+(x-r*1.7)+' '+(y-r*1.4)+' '+(x-r*.3)+' '+(y-r*1.6)+' '+x+' '+(y-r*2.8)+' C'+(x+r*.3)+' '+(y-r*1.6)+' '+(x+r*1.7)+' '+(y-r*1.4)+' '+(x+r)+' '+y+' Z',f);L('M'+x+' '+(y-r*2.7)+' L'+x+' '+(y-r*3.5),'#e8b83a',3);}
+function roof(x,y,w,f,t){D('M'+(x-w)+' '+(y-6)+' Q'+(x-w*.7)+' '+(y+8)+' '+(x-w*.4)+' '+(y+8)+' L'+(x+w*.4)+' '+(y+8)+' Q'+(x+w*.7)+' '+(y+8)+' '+(x+w)+' '+(y-6)+' L'+(x+w*.5)+' '+(y-t)+' L'+(x-w*.5)+' '+(y-t)+' Z',f);}
+function cren(x,y,w,n,f){var u=w/n,i;for(i=0;i<n;i++)R(x+i*u,y,u*.58,12,f);}
+function grid(x,y,cols,rows,dx,dy,w,h,f){var i,j;for(i=0;i<cols;i++)for(j=0;j<rows;j++)R(x+i*dx,y+j*dy,w,h,f);}
+
+/* ---------- the landmarks ---------- */
+var ART={
+paris:function(){
+  var c='#4e4034',l='#c9b08a';
+  D('M200 12 L207 108 L193 108 Z',c);
+  D('M193 108 L207 108 L224 232 L176 232 Z',c);
+  R(162,232,76,10,c);
+  D('M176 242 L224 242 L248 326 L152 326 Z',c);
+  R(130,326,140,14,c);
+  D('M130 340 L270 340 L304 392 L262 392 Q200 300 138 392 L96 392 Z',c);
+  L('M184 124 L216 220 M216 124 L184 220 M178 252 L226 322 M222 252 L174 322',l,3);
+  L('M150 372 L168 346 M250 372 L232 346',l,3);
+},
+london:function(){
+  var s='#c8a460',d='#8f6e36',t='#3f6272',k='#2a2018',i,a;
+  R(146,150,108,242,s);R(134,140,132,14,d);R(150,122,100,20,s);
+  D('M146 122 L254 122 L240 86 L160 86 Z',s);
+  D('M156 86 L200 10 L244 86 Z',t);
+  sym(function(){D('M146 122 L146 82 L162 122 Z',t);});
+  C(200,184,34,'#fff4d6',d,6);
+  L('M200 184 L200 162 M200 184 L216 192',k,5);
+  for(i=0;i<12;i++){a=i/12*6.283;L('M'+(200+Math.sin(a)*27)+' '+(184-Math.cos(a)*27)+' L'+(200+Math.sin(a)*31)+' '+(184-Math.cos(a)*31),k,2);}
+  sym(function(){arch(158,236,16,44,'#4a3a22');arch(158,300,16,44,'#4a3a22');});
+  L('M146 226 L254 226 M146 290 L254 290',d,4);
+  R(134,376,132,16,d);
+},
+newyork:function(){
+  var c='#8c9db0',d='#6b7d92',w='#f6e8a0';
+  R(24,262,76,130,d);R(300,232,76,160,d);R(104,304,60,88,'#a6b4c4');R(238,292,60,100,'#a6b4c4');
+  grid(34,276,3,6,22,20,10,10,w);grid(310,246,3,7,22,20,10,10,w);
+  R(138,244,124,148,c);R(156,192,88,54,c);R(172,150,56,44,c);R(184,114,32,38,c);
+  D('M188 114 L200 84 L212 114 Z',c);L('M200 84 L200 12',d,5);
+  grid(150,258,6,6,19,22,9,12,w);grid(166,204,5,2,17,22,8,12,w);grid(182,162,3,2,13,18,6,10,w);
+  R(200,114,12,278,'rgba(40,60,90,.18)');
+},
+rome:function(){
+  var s='#d6a96a',d='#a97a40',k='#5a3d22',i,x;
+  D('M12 392 L12 232 Q12 192 70 186 L330 186 Q388 192 388 232 L388 392 Z',s);
+  R(12,186,376,10,d);R(12,246,376,8,d);R(12,306,376,8,d);
+  for(i=0;i<10;i++){x=26+i*36;arch(x,206,18,36,k);arch(x,266,18,36,k);arch(x,326,18,40,k);}
+  R(12,380,376,12,d);
+},
+madrid:function(){
+  var s='#e6d6b2',d='#b89e6e',k='#4a3a28';
+  R(44,150,312,242,s);R(32,136,336,16,d);
+  P([[124,136],[200,90],[276,136]],s);P([[146,132],[200,102],[254,132]],d);
+  arch(160,232,80,160,k);
+  sym(function(){arch(74,262,42,130,k);R(130,174,20,60,d);R(126,170,28,8,s);C(52,126,8,d);R(70,176,34,40,d);R(74,180,26,32,k);});
+  L('M44 200 L356 200',d,4);
+  R(32,380,336,12,d);
+},
+barcelona:function(){
+  var s='#d8b072',d='#a97f44',k='#5a4020';
+  function tw(x,w,h,top){
+    var y=392-h;R(x-w/2,y,w,h,s);
+    D('M'+(x-w/2)+' '+y+' Q'+(x-w/4)+' '+(y-top*.7)+' '+x+' '+(y-top)+' Q'+(x+w/4)+' '+(y-top*.7)+' '+(x+w/2)+' '+y+' Z',s);
+    C(x,y-top-5,6,d);
+    R(x-2,y+18,4,26,k);R(x-2,y+60,4,26,k);R(x-2,y+102,4,26,k);R(x-w/2,y+6,w,5,d);
+  }
+  R(30,320,340,72,s);R(30,320,340,8,d);
+  sym(function(){tw(64,32,190,60);tw(112,32,235,70);tw(160,34,200,60);arch(60,340,22,52,k);arch(110,340,22,52,k);});
+  tw(200,46,300,86);
+  L('M200 6 L200 -2',d,2);
+  arch(180,340,40,52,k);
+},
+sevilla:function(){
+  var s='#d9a870',d='#a9763e',k='#4a3020',g='#e8c050';
+  R(120,150,160,242,s);R(112,140,176,14,d);
+  R(130,84,140,58,s);
+  sym(function(){arch(140,96,18,38,k);R(124,76,16,10,d);});
+  arch(190,96,20,38,k);
+  D('M130 84 L200 52 L270 84 Z',d);R(168,52,64,12,s);
+  R(176,26,48,28,s);arch(190,32,20,20,k);
+  D('M170 26 L200 8 L230 26 Z',d);C(200,8,6,g);
+  for(var r=0;r<4;r++){R(156,176+r*52,24,32,k);R(220,176+r*52,24,32,k);}
+  R(112,380,176,12,d);
+},
+tokyo:function(){
+  var r='#e8431f',w='#fffaf0';
+  D('M200 6 L204 96 L196 96 Z',r);
+  D('M194 96 L206 96 L218 184 L182 184 Z',r);
+  R(158,184,84,12,w);R(158,196,84,10,r);
+  D('M170 206 L230 206 L264 328 L136 328 Z',r);
+  R(150,252,100,10,w);R(140,300,120,10,w);
+  L('M178 214 L224 322 M222 214 L176 322',w,3);
+  R(124,328,152,14,w);
+  D('M124 342 L276 342 L318 392 L278 392 Q200 328 122 392 L82 392 Z',r);
+  L('M150 366 L172 346 M250 366 L228 346',w,3);
+},
+sydney:function(){
+  var s='#f6efe2',d='#dccfb2';
+  function sh(x,y,w,h,f){D('M'+x+' '+y+' Q'+(x+w*.05)+' '+(y-h*.9)+' '+(x+w*.2)+' '+(y-h)+' Q'+(x+w*.9)+' '+(y-h*.5)+' '+(x+w)+' '+y+' Z',f);}
+  R(8,344,384,48,'#b9a587');R(8,344,384,8,d);
+  sym(function(){sh(18,346,160,160,d);sh(52,346,140,230,s);sh(100,346,100,160,d);sh(8,346,84,100,s);});
+  sym(function(){L('M70 340 Q96 200 96 130 M100 340 Q112 220 124 160','#cdbfa0',2);});
+},
+cairo:function(){
+  var s='#d9aa5e',d='#b98a3e';
+  D('M214 64 L392 392 L36 392 Z',s);D('M214 64 L392 392 L228 392 Z',d);
+  D('M30 392 L96 268 L162 392 Z',s);D('M96 268 L162 392 L100 392 Z',d);
+  D('M230 392 L290 296 L350 392 Z',s);
+  L('M184 130 L244 130 M162 180 L266 180 M140 230 L290 230 M118 280 L314 280 M92 330 L340 330','rgba(120,70,20,.32)',3);
+},
+rio:function(){
+  var s='#eaf1ec',d='#c3d2c7',m='#5d8a63';
+  D('M0 392 L90 300 L160 292 L240 292 L310 300 L400 392 Z',m);
+  R(150,318,100,76,d);R(164,298,72,24,s);
+  D('M180 112 L220 112 L238 304 L162 304 Z',s);
+  D('M20 148 L180 118 L220 118 L380 148 L380 172 L220 160 L180 160 L20 172 Z',s);
+  D('M200 112 L238 304 L220 304 Z',d);
+  C(200,92,22,s);
+  L('M200 160 L200 300',d,3);
+},
+mexico:function(){
+  var s='#efe6cf',d='#cbbf9e',g='#e8b83a';
+  R(112,356,176,36,d);R(128,336,144,24,s);R(144,316,112,22,d);R(160,294,80,24,s);
+  R(184,118,32,180,s);R(176,106,48,14,d);R(190,298,20,6,d);
+  sym(function(){D('M196 100 C170 82 148 44 140 6 C170 24 194 46 200 72 Z',g);});
+  R(190,48,20,54,g);C(200,40,10,g);
+  L('M208 62 L238 30',g,6);C(242,26,11,null,g,4);
+  R(184,152,32,6,d);R(184,200,32,6,d);R(184,248,32,6,d);
+},
+buenosaires:function(){
+  var s='#ece8de',d='#c4bdad',k='#5a5648';
+  R(12,314,100,78,'#a8b4c4');R(290,298,100,94,'#a8b4c4');
+  grid(24,328,4,3,22,22,10,12,'#f6e8a0');grid(302,312,4,4,22,22,10,12,'#f6e8a0');
+  D('M176 392 L189 36 L200 10 L211 36 L224 392 Z',s);
+  D('M200 10 L211 36 L224 392 L200 392 Z',d);
+  R(162,378,76,14,d);R(196,46,8,12,k);
+  R(188,150,5,5,k);R(188,230,5,5,k);R(188,310,5,5,k);
+},
+istanbul:function(){
+  var s='#ecd7a6',d='#c9ad70',dm='#9aa8b8',m='#f6ead0',k='#4a3a28',i;
+  function mn(x){R(x-8,120,16,272,m);R(x-14,170,28,8,d);R(x-14,250,28,8,d);D('M'+(x-9)+' 120 L'+x+' 62 L'+(x+9)+' 120 Z','#7a8898');}
+  mn(36);mn(364);
+  R(70,252,260,140,s);
+  sym(function(){D('M70 274 Q70 214 124 204 L124 274 Z',dm);D('M100 232 Q100 190 140 176 L140 220 Z',dm);});
+  D('M114 252 Q114 106 200 106 Q286 106 286 252 Z',dm);
+  for(i=0;i<7;i++)arch(128+i*20,192,10,26,k);
+  arch(172,296,56,96,k);
+  sym(function(){arch(92,310,28,82,k);});
+  R(197,80,6,28,d);L('M192 80 Q200 68 208 80',d,3);
+},
+dubai:function(){
+  var s='#a9bccd',d='#7e93a8';
+  R(14,324,74,68,d);R(98,292,52,100,'#8ea3b6');R(250,302,52,90,'#8ea3b6');R(312,334,74,58,d);
+  D('M200 4 L203 70 L212 110 L222 170 L236 250 L248 392 L152 392 L164 250 L178 170 L188 110 L197 70 Z',s);
+  D('M200 4 L203 70 L212 110 L222 170 L236 250 L248 392 L200 392 Z',d);
+  L('M190 110 L210 110 M180 170 L220 170 M170 250 L230 250 M162 320 L238 320','rgba(255,255,255,.55)',3);
+},
+moscow:function(){
+  var cr='#d65a40',st='#e6d3a8',g='#2f8f5a',b='#3a6fc4',go='#e8b83a',rd='#d6283e';
+  R(30,306,340,86,'#c9503a');R(30,306,340,8,st);R(30,350,340,6,st);
+  grid(50,322,8,1,40,0,16,24,'#f4e6c0');
+  function dr(x,y,w,col){R(x-w/2,y,w,306-y,st);onion(x,y,w*.6,col);}
+  dr(70,250,34,b);dr(130,226,38,rd);dr(270,226,38,g);dr(330,250,34,go);
+  R(168,140,64,170,cr);D('M162 140 L200 48 L238 140 Z',g);
+  R(190,160,20,36,'#f4e6c0');
+  dr(200,40,0.1,go);
+  onion(200,52,14,go);
+  R(166,180,68,6,st);R(166,236,68,6,st);
+},
+agra:function(){
+  var w='#f7f1e5',sh='#dcd3c0',k='#7a7a82';
+  sym(function(){R(26,150,14,224,w);R(22,142,22,10,sh);C(33,134,10,w);R(22,260,22,6,sh);R(22,210,22,6,sh);});
+  R(8,370,384,22,sh);R(100,244,200,128,w);
+  D('M148 244 C138 194 160 150 200 126 C240 150 262 194 252 244 Z',w);
+  L('M200 126 L200 86',w,5);C(200,80,6,w);
+  sym(function(){C(118,240,14,w);R(112,248,12,10,sh);C(118,222,3,w);});
+  arch(174,274,52,98,k);
+  sym(function(){arch(112,290,26,82,k);});
+},
+beijing:function(){
+  var b='#2f66b0',r='#c93a2a',m='#efe9db',g='#e8b83a';
+  R(24,372,352,20,m);R(54,352,292,22,m);R(84,334,232,20,m);
+  R(138,252,124,84,r);roof(200,252,134,b,42);
+  R(158,196,84,58,r);roof(200,196,104,b,40);
+  R(176,144,48,54,r);roof(200,144,76,b,34);
+  R(197,64,6,50,g);C(200,58,10,g);
+  grid(150,272,5,1,22,0,8,50,'#f0d6a0');grid(166,214,3,1,26,0,8,34,'#f0d6a0');
+},
+sanfrancisco:function(){
+  var o='#d8472a',i,t,x,y;
+  sym(function(){R(90,70,14,300,o);R(124,70,14,300,o);R(90,110,48,8,o);R(90,180,48,8,o);R(90,250,48,8,o);R(86,62,56,10,o);});
+  L('M0 242 Q70 232 114 70 Q200 310 286 70 Q330 232 400 242',o,5);
+  for(i=1;i<16;i++){t=i/16;x=114+172*t;y=70*(Math.pow(1-t,2)+t*t)+620*t*(1-t);L('M'+x+' '+y+' L'+x+' 298',o,2);}
+  for(i=1;i<6;i++){x=i*19;y=242-i*5-(i*i*4);L('M'+x+' '+y+' L'+x+' 298',o,2);}
+  R(0,298,400,12,o);R(0,310,400,4,'#8f2a16');
+  R(0,336,400,56,'#1d4a6e');
+},
+amsterdam:function(){
+  var cols=['#b5533c','#d9a45a','#5a7a8a','#c9703a','#8a5a46','#e0b85a'],xs=[8,72,132,200,262,330],ws=[58,54,60,58,60,60],hs=[270,320,290,330,280,300],i,x,w,h,y,c,f,j;
+  for(i=0;i<6;i++){
+    x=xs[i];w=ws[i];h=hs[i];y=392-h;c=cols[i];
+    R(x,y,w,h,c);
+    if(i%3===0)P([[x,y],[x,y-12],[x+w*.18,y-12],[x+w*.18,y-24],[x+w*.36,y-24],[x+w*.36,y-36],[x+w*.64,y-36],[x+w*.64,y-24],[x+w*.82,y-24],[x+w*.82,y-12],[x+w,y-12],[x+w,y]],c);
+    else if(i%3===1)D('M'+x+' '+y+' Q'+x+' '+(y-30)+' '+(x+w*.5)+' '+(y-34)+' Q'+(x+w)+' '+(y-30)+' '+(x+w)+' '+y+' Z',c);
+    else P([[x,y],[x+w/2,y-34],[x+w,y]],c);
+    for(j=0;j<Math.floor((h-30)/58);j++){
+      f=y+16+j*58;
+      R(x+8,f,16,34,'#f4ecd8');R(x+11,f+3,10,28,'#2c3a46');
+      R(x+w-24,f,16,34,'#f4ecd8');R(x+w-21,f+3,10,28,'#2c3a46');
+    }
+    R(x+w/2-4,y-18,8,8,'#f4ecd8');
+  }
+},
+berlin:function(){
+  var s='#d9c8a2',d='#b09a6e',g='#5e8f7c',i;
+  R(18,372,364,20,d);R(26,364,348,10,s);
+  for(i=0;i<6;i++){R(44+i*54,168,28,198,s);R(50+i*54,168,4,198,d);}
+  R(30,138,340,32,s);R(22,126,356,14,d);R(60,96,280,32,s);R(60,96,280,6,d);
+  grid(70,108,6,1,45,0,26,14,d);
+  for(i=0;i<4;i++)E(150+i*28,78,15,11,g);
+  R(142,82,116,12,g);
+  L('M276 84 L290 60',g,4);
+  D('M190 40 L212 40 L206 82 L196 82 Z',g);C(201,32,8,g);
+  L('M201 24 L201 8 M190 40 L170 24 M212 40 L232 24',g,4);
+},
+pisa:function(){
+  var s='#f4efe3',d='#cfc6b2',k='#8a7e66',r,i;
+  X.save();X.translate(216,392);X.rotate(.075);
+  R(-52,-300,104,300,s);
+  for(r=0;r<6;r++){R(-52,-296+r*48,104,6,d);for(i=0;i<6;i++)arch(-43+i*15,-286+r*48,8,34,k);}
+  R(-40,-340,80,44,s);R(-44,-350,88,10,d);
+  for(i=0;i<4;i++)arch(-30+i*16,-332,8,30,k);
+  X.restore();
+  R(8,382,384,10,'#9ab27a');
+},
+athens:function(){
+  var s='#eadcb8',d='#c9b888',i;
+  D('M0 392 L34 332 L366 332 L400 392 Z','#b9a67a');
+  R(50,326,300,10,d);R(58,316,284,12,s);
+  for(i=0;i<8;i++){R(66+i*35,196,22,120,s);L('M'+(77+i*35)+' 200 L'+(77+i*35)+' 314',d,2);}
+  R(50,174,300,24,s);R(50,174,300,5,d);
+  P([[42,174],[200,106],[358,174]],s);P([[84,168],[200,120],[316,168]],d);
+  C(200,100,6,d);
+},
+lisbon:function(){
+  var s='#e6d9b8',d='#b8a77e',k='#4a4030',i;
+  R(20,330,360,62,d);R(20,330,360,8,s);
+  R(120,120,160,212,s);cren(120,106,160,5,s);
+  R(110,208,180,10,d);
+  sym(function(){R(98,122,28,100,s);D('M94 122 Q112 84 130 122 Z',d);R(104,150,10,24,k);});
+  for(i=0;i<5;i++)arch(132+i*28,228,16,44,k);
+  R(70,290,260,42,s);cren(70,278,260,9,s);
+  grid(92,304,8,1,30,0,12,16,k);
+  R(160,146,20,36,k);R(220,146,20,36,k);
+},
+venice:function(){
+  var s='#efe3c8',dm='#cfd9d4',k='#8a7a5a',i;
+  R(60,262,280,92,s);R(130,206,140,58,s);
+  sym(function(){D('M60 262 Q60 214 100 208 L124 208 L124 262 Z',dm);});
+  D('M126 210 Q126 100 200 90 Q274 100 274 210 Z',dm);
+  L('M200 92 Q160 130 150 208 M200 92 Q240 130 250 208 M200 92 L200 208','#a9bab2',3);
+  R(192,56,16,40,s);D('M188 58 L200 30 L212 58 Z',s);C(200,26,5,s);
+  for(i=0;i<6;i++)arch(78+i*44,282,20,52,k);
+  for(i=0;i<5;i++)arch(144+i*24,222,10,28,k);
+  R(0,350,400,42,'#2d6a8a');
+  D('M44 352 Q56 340 36 318 Q80 332 124 350 L300 356 Q344 346 358 320 Q360 352 336 368 Q200 384 84 368 Q50 362 44 352 Z','#1c1f2a');
+  L('M258 352 L258 300','#1c1f2a',5);C(258,290,9,'#1c1f2a');
+},
+seattle:function(){
+  var s='#e9eef2',d='#7f95a6';
+  D('M156 392 Q198 300 194 236 Q192 186 132 146 L268 146 Q208 186 206 236 Q202 300 244 392 L226 392 Q200 330 200 318 Q200 330 174 392 Z',d);
+  E(200,138,90,18,s);R(150,114,100,18,'#c6d4dd');E(200,114,52,9,s);
+  L('M160 140 L240 140','#7a8fa0',3);
+  L('M200 108 L200 8',s,6);
+  L('M170 392 L230 392',d,6);
+},
+toronto:function(){
+  var s='#d8dfe6',d='#9aa8b4';
+  D('M172 392 Q198 300 196 168 L204 168 Q202 300 228 392 Z',s);
+  E(200,166,38,14,s);D('M162 158 L238 158 L228 138 L172 138 Z',d);
+  E(200,100,10,8,d);
+  L('M200 138 L200 6',s,5);
+  L('M180 164 L220 164 M178 150 L222 150',d,2);
+},
+singapore:function(){
+  var s='#b9c9d6',d='#8aa0b2';
+  sym(function(){P([[56,392],[88,140],[130,140],[118,392]],s);L('M98 166 L108 380','rgba(255,255,255,.4)',3);});
+  P([[166,392],[172,140],[228,140],[234,392]],d);
+  L('M186 166 L190 380 M214 166 L210 380','rgba(255,255,255,.4)',3);
+  D('M10 134 Q10 116 56 116 L332 116 Q376 116 394 100 Q390 134 340 140 L56 144 Q28 144 10 134 Z','#e1eaf0');
+  L('M60 126 L320 126','#6ac0d8',5);
+  R(0,372,400,20,'rgba(40,110,130,.55)');
+},
+capetown:function(){
+  D('M0 392 L0 306 Q50 292 82 236 L104 178 L120 168 L292 168 L312 180 L340 240 Q372 282 400 298 L400 392 Z','#6f8a73');
+  D('M104 178 L120 168 L292 168 L312 180 L320 200 L98 200 Z','#a8b4a0');
+  L('M110 220 L96 300 M160 206 L150 320 M232 206 L240 330 M290 206 L310 310','rgba(40,70,50,.35)',5);
+  E(120,160,56,16,'#fff');E(196,146,70,22,'#fff');E(272,158,58,17,'#fff');E(316,178,44,12,'#fff');E(80,176,34,10,'#fff');
+  L('M60 346 L150 196','#33403a',2);R(52,340,16,12,'#c94a3a');
+},
+marrakech:function(){
+  var s='#d68a56',d='#a85f34',k='#5a3220',g='#e8c050',r,i;
+  R(0,344,400,48,'#c9774a');
+  R(140,104,120,290,s);R(150,88,100,16,d);R(166,62,68,28,s);
+  D('M168 62 L200 38 L232 62 Z',d);
+  C(200,28,8,g);C(200,12,6,g);C(200,0,4,g);
+  for(r=0;r<4;r++)for(i=0;i<3;i++)arch(158+i*34,122+r*54,18,40,k);
+  R(142,264,116,6,d);R(142,210,116,6,d);R(142,156,116,6,d);
+  sym(function(){L('M52 392 Q54 340 48 300','#4a3a22',7);L('M48 300 Q20 296 8 314 M48 300 Q30 280 14 282 M48 300 Q56 276 74 270 M48 300 Q76 292 90 308','#3f7f4a',6);});
+},
+prague:function(){
+  var s='#c8b490',d='#8a7a5a',r='#3f4d5c',k='#4a3e2a';
+  function tw(x){
+    R(x-28,160,56,232,s);P([[x-34,160],[x,26],[x+34,160]],r);C(x,22,5,'#e8c050');
+    D('M'+(x-34)+' 160 L'+(x-30)+' 112 L'+(x-24)+' 160 Z',r);D('M'+(x+24)+' 160 L'+(x+30)+' 112 L'+(x+34)+' 160 Z',r);
+    R(x-4,196,8,34,k);R(x-4,252,8,34,k);R(x-34,236,68,6,d);
+  }
+  R(128,230,144,162,s);P([[128,230],[200,150],[272,230]],s);
+  C(200,226,16,'#f1e6cc',d,4);
+  arch(188,300,24,92,k);
+  tw(116);tw(284);
+},
+bangkok:function(){
+  var s='#f2e9d8',d='#c9b896',a='#e0c070',i,w,y;
+  R(30,364,340,28,s);R(62,336,276,30,d);R(94,308,212,30,s);
+  for(i=0;i<5;i++){w=140-i*20;y=308-i*40;R(200-w/2,y,w,40,i%2?d:s);arch(196,y+12,8,18,'#8a7a5a');}
+  D('M178 108 L200 14 L222 108 Z',s);L('M200 14 L200 0',a,4);
+  sym(function(){for(var j=0;j<3;j++){var ww=52-j*12,yy=310-j*36;R(66-ww/2,yy,ww,36,j%2?d:s);}D('M52 202 L66 130 L80 202 Z',s);});
+},
+seoul:function(){
+  var st='#b8b2a6',r='#c8432e',t='#2f6770',k='#2a2a30',i;
+  R(10,300,380,92,st);R(10,300,380,8,'#d2ccc0');
+  arch(168,316,64,76,k);sym(function(){arch(84,332,46,60,k);});
+  R(70,246,260,54,r);roof(200,246,190,t,34);
+  for(i=0;i<9;i++)R(80+i*28,252,5,48,'#f0d6a0');
+  R(100,180,200,32,r);roof(200,180,150,t,34);
+  for(i=0;i<6;i++)R(112+i*34,184,5,28,'#f0d6a0');
+  R(194,116,12,22,t);C(200,112,6,'#e8c050');
+},
+mumbai:function(){
+  var s='#d8bd7e',d='#a68a4a',k='#3a2e1e';
+  R(60,200,280,192,s);
+  D('M130 204 Q130 120 200 112 Q270 120 270 204 Z',s);
+  L('M200 112 L200 88',d,4);C(200,84,5,d);
+  sym(function(){R(60,152,34,56,s);D('M58 154 Q77 112 96 154 Z',s);C(77,108,4,d);arch(84,290,36,102,k);});
+  arch(150,232,100,160,k);
+  grid(160,214,4,1,22,0,14,10,k);
+  R(40,380,320,12,d);
+},
+havana:function(){
+  var s='#f2ead8',d='#cbbf9e',i;
+  R(24,370,352,22,d);R(52,350,296,22,s);
+  R(46,264,308,88,s);R(38,250,324,16,d);
+  for(i=0;i<12;i++)R(56+i*24,274,8,70,d);
+  R(136,172,128,80,s);
+  for(i=0;i<5;i++)arch(150+i*22,190,10,30,'#3a4a5a');
+  D('M132 176 Q132 70 200 60 Q268 70 268 176 Z','#d9d4c2');
+  L('M200 62 Q166 100 160 176 M200 62 Q234 100 240 176','#b4ae9a',3);
+  R(190,34,20,28,s);D('M186 34 L200 10 L214 34 Z',s);
+  D('M236 392 L236 372 Q246 362 268 360 L288 344 L330 344 L346 360 Q374 364 376 380 L376 392 Z','#e0507a');
+  D('M292 350 L326 350 L338 360 L282 360 Z','#bfe3ef');
+  C(268,392,14,'#1c1c22');C(348,392,14,'#1c1c22');C(268,392,5,'#cccccc');C(348,392,5,'#cccccc');
+},
+edinburgh:function(){
+  var s='#a89a82',d='#7a6e5a',k='#2e2a24';
+  D('M0 392 L0 342 Q40 332 70 292 L100 252 L120 204 L330 204 L350 252 Q382 300 400 330 L400 392 Z','#6f6a62');
+  L('M84 270 L130 262 M150 230 L240 224 M290 232 L340 262','rgba(30,28,24,.35)',4);
+  R(132,150,190,56,s);cren(132,138,190,10,s);
+  R(150,92,38,60,s);cren(150,82,38,3,s);
+  R(238,64,50,90,s);cren(236,52,54,4,s);
+  D('M240 64 L263 22 L286 64 Z','#5a5348');
+  L('M263 22 L263 2',d,3);D('M263 4 L286 10 L263 16 Z','#d6283e');
+  grid(160,166,6,1,28,0,10,18,k);R(168,102,10,24,k);R(256,84,10,24,k);
+},
+kyoto:function(){
+  var cols=['#d8381f','#c8301a','#b92b17','#aa2614','#9b2212'],k,w,h,base,top,cx=200,pw,p;
+  function tor(cx,top,w,h,col){
+    pw=w*.075;
+    R(cx-w*.38,top+h*.12,pw,h*.88,col);R(cx+w*.38-pw,top+h*.12,pw,h*.88,col);
+    R(cx-w*.46,top+h*.28,w*.92,h*.07,col);
+    R(cx-w*.5,top+h*.1,w,h*.07,col);
+    D('M'+(cx-w*.58)+' '+top+' Q'+cx+' '+(top+h*.12)+' '+(cx+w*.58)+' '+top+' L'+(cx+w*.52)+' '+(top+h*.09)+' Q'+cx+' '+(top+h*.2)+' '+(cx-w*.52)+' '+(top+h*.09)+' Z','#2a2420');
+    R(cx-w*.38,top+h*.9,pw,h*.1,'#2a2420');R(cx+w*.38-pw,top+h*.9,pw,h*.1,'#2a2420');
+  }
+  for(k=4;k>=0;k--){
+    w=330-k*65;h=w*.95;base=392-k*20;top=base-h;
+    tor(cx,top,w,h,cols[k]);
+  }
+}
+};
+
+/* ---------- the 37 postcards: name, country, landmark, palette, three facts each ---------- */
+var CITIES=[
+{k:'paris',n:'Paris',h:'France',lm:'Eiffel Tower',bg:'#3b5aa8',sun:'#f6d9a0',ground:'#2b4488',f:['The Eiffel Tower was finished in 1889 and was only meant to stand for 20 years.','On hot days the iron expands and the Eiffel Tower can grow about 15 centimetres taller.','Paris is nicknamed the City of Light.']},
+{k:'london',n:'London',h:'United Kingdom',lm:'Big Ben',bg:'#233a6a',sun:'#4f86c6',ground:'#16264a',f:['Big Ben is really the name of the great bell, not of the clock tower.','The London Underground opened in 1863 and is the world’s oldest metro system.','The clock dials of the Elizabeth Tower are about seven metres across.']},
+{k:'newyork',n:'New York',h:'the United States',lm:'Empire State Building',bg:'#5a3a7a',sun:'#f6b26a',ground:'#3a2456',f:['The Empire State Building opened in 1931 after about a year of construction.','Around 800 languages are spoken in New York, one of the most diverse cities on Earth.','Central Park covers about 340 hectares in the middle of Manhattan.']},
+{k:'rome',n:'Rome',h:'Italy',lm:'Colosseum',bg:'#d9694a',sun:'#3b6fa0',ground:'#8f3a26',f:['The Colosseum opened in 80 AD and could hold around 50,000 spectators.','Rome is said to be built on seven hills.','The Colosseum had a system of numbered entrances so crowds could find their seats quickly.']},
+{k:'madrid',n:'Madrid',h:'Spain',lm:'Puerta de Alcalá',bg:'#e8a03a',sun:'#c24a42',ground:'#a86a1a',f:['The Puerta de Alcalá was finished in 1778 and is one of Madrid’s best-known monuments.','Madrid sits about 650 metres above sea level, making it one of Europe’s highest capitals.','Retiro Park is part of a UNESCO World Heritage Site, inscribed in 2021.']},
+{k:'barcelona',n:'Barcelona',h:'Spain',lm:'Sagrada Família',bg:'#2a8a9a',sun:'#7b4a9a',ground:'#1b6676',f:['Work on the Sagrada Família began in 1882 and is still going.','Antoni Gaudí designed it, and many of its inner columns branch like trees.','Barcelona hosted the Summer Olympic Games in 1992.']},
+{k:'sevilla',n:'Seville',h:'Spain',lm:'La Giralda',bg:'#d65a3a',sun:'#2f7f8f',ground:'#8f3420',f:['La Giralda began as a minaret in the 12th century before becoming a bell tower.','Seville’s streets are lined with bitter orange trees.','Seville Cathedral is one of the largest Gothic cathedrals in the world.']},
+{k:'tokyo',n:'Tokyo',h:'Japan',lm:'Tokyo Tower',bg:'#2a3f8a',sun:'#fbe9d0',ground:'#1b2a63',f:['Tokyo Tower opened in 1958 and is 333 metres tall.','Its colours are white and international orange, a safety rule for tall towers.','Greater Tokyo is home to more than 35 million people.']},
+{k:'sydney',n:'Sydney',h:'Australia',lm:'Sydney Opera House',bg:'#e8704a',sun:'#2a7fb0',ground:'#1b5a82',f:['The Opera House roof is covered with more than a million tiles.','It opened in 1973 and was designed by Danish architect Jørn Utzon.','Its sail-like shells stand beside Sydney Harbour.']},
+{k:'cairo',n:'Cairo',h:'Egypt',lm:'Pyramids of Giza',bg:'#3a2a6a',sun:'#c04a3a',ground:'#241a4a',f:['The Great Pyramid was the tallest human-made structure for about 3,800 years.','Cairo is nicknamed the City of a Thousand Minarets.','The pyramids of Giza stand at the edge of the Cairo urban area.']},
+{k:'rio',n:'Rio de Janeiro',h:'Brazil',lm:'Christ the Redeemer',bg:'#e0a53a',sun:'#1f7f8f',ground:'#1f6a3a',f:['Christ the Redeemer is about 30 metres tall, not counting its pedestal.','The statue was completed in 1931 on the Corcovado mountain.','Rio’s Carnival is among the biggest street parties in the world.']},
+{k:'mexico',n:'Mexico City',h:'Mexico',lm:'Angel of Independence',bg:'#2f7f6a',sun:'#c2402f',ground:'#1f5a4a',f:['Mexico City was built on top of the Aztec capital, Tenochtitlan.','The Angel of Independence was inaugurated in 1910, a century after the independence movement began.','Mexico City sits at about 2,240 metres above sea level.']},
+{k:'buenosaires',n:'Buenos Aires',h:'Argentina',lm:'El Obelisco',bg:'#7ab0d8',sun:'#2f5a9a',ground:'#2f5f8f',f:['The Obelisco was built in 1936 to mark the city’s 400th anniversary.','Avenida 9 de Julio is one of the widest avenues in the world.','Tango was born in the port neighbourhoods of Buenos Aires and Montevideo.']},
+{k:'istanbul',n:'Istanbul',h:'Türkiye',lm:'Hagia Sophia',bg:'#2f4f8f',sun:'#c8503a',ground:'#1f3566',f:['Istanbul stretches across two continents, Europe and Asia.','Hagia Sophia was built in the 6th century in only about five years.','The Grand Bazaar is one of the oldest covered markets in the world.']},
+{k:'dubai',n:'Dubai',h:'the United Arab Emirates',lm:'Burj Khalifa',bg:'#2a7f9f',sun:'#f6c27a',ground:'#1b5a74',f:['Burj Khalifa is over 828 metres tall and is the tallest building in the world.','It opened in 2010.','Dubai grew from a small fishing and pearling town into a global hub.']},
+{k:'moscow',n:'Moscow',h:'Russia',lm:'Saint Basil’s Cathedral',bg:'#3a5a9f',sun:'#f6e6b8',ground:'#26407a',f:['Saint Basil’s Cathedral was built in the 1550s under Ivan the Terrible.','Many Moscow metro stations are decorated with chandeliers and mosaics.','Red Square lies right next to the Kremlin walls.']},
+{k:'agra',n:'Agra',h:'India',lm:'Taj Mahal',bg:'#5a2f6a',sun:'#d9694a',ground:'#3b1f48',f:['Emperor Shah Jahan built the Taj Mahal in memory of his wife Mumtaz Mahal.','Construction took about 20 years.','The white marble seems to change colour with the light from dawn to dusk.']},
+{k:'beijing',n:'Beijing',h:'China',lm:'Temple of Heaven',bg:'#b82f2f',sun:'#f6e0a0',ground:'#7a1f1f',f:['The Temple of Heaven was built in the 15th century, where emperors prayed for good harvests.','Beijing was the first city to host both the Summer and Winter Olympics.','The Forbidden City has nearly 1,000 buildings.']},
+{k:'sanfrancisco',n:'San Francisco',h:'the United States',lm:'Golden Gate Bridge',bg:'#4f8fb8',sun:'#f8e0b0',ground:'#2b5f88',f:['The Golden Gate Bridge opened in 1937, and its colour is called International Orange.','It was the longest suspension bridge main span in the world when it opened.','San Francisco’s cable cars are the last manually operated cable car system in the world.']},
+{k:'amsterdam',n:'Amsterdam',h:'the Netherlands',lm:'Canal Houses',bg:'#2f7a9a',sun:'#f6e8c0',ground:'#1f5a74',f:['Amsterdam has about 100 kilometres of canals.','Many canal houses lean forward on purpose so furniture can be hoisted up by a hook.','Amsterdam is famous for having more bicycles than residents.']},
+{k:'berlin',n:'Berlin',h:'Germany',lm:'Brandenburg Gate',bg:'#c9a33a',sun:'#3a5a8f',ground:'#8a7020',f:['The Brandenburg Gate was completed in 1791.','Berlin is often said to have more bridges than Venice.','The Berlin Wall fell in 1989.']},
+{k:'pisa',n:'Pisa',h:'Italy',lm:'Leaning Tower',bg:'#e8a24a',sun:'#2f7a6a',ground:'#a86a22',f:['Work on the tower began in 1173, and it started to lean because the ground was soft.','Engineers stabilised it in 2001, reducing the lean by about 45 centimetres.','Legend says Galileo dropped balls from the tower to study falling objects.']},
+{k:'athens',n:'Athens',h:'Greece',lm:'Parthenon',bg:'#6fb3d8',sun:'#2a79b0',ground:'#2f6f9a',f:['The Parthenon was built in the 5th century BC for the goddess Athena.','Athens has been inhabited for more than 3,000 years.','Athens hosted the first modern Olympic Games in 1896.']},
+{k:'lisbon',n:'Lisbon',h:'Portugal',lm:'Belém Tower',bg:'#e6853a',sun:'#2f7aa8',ground:'#a8541a',f:['Belém Tower was completed in 1519 to guard the river Tagus.','Lisbon is built on seven hills.','The famous custard tarts, pastéis de Belém, have been baked near the tower since 1837.']},
+{k:'venice',n:'Venice',h:'Italy',lm:'Santa Maria della Salute',bg:'#7a4f9a',sun:'#e07a4a',ground:'#533570',f:['Venice is built on more than 100 small islands.','Santa Maria della Salute was built after the plague of 1630 and rests on wooden piles driven into the lagoon bed.','There are no cars in the historic centre, only boats and feet.']},
+{k:'seattle',n:'Seattle',h:'the United States',lm:'Space Needle',bg:'#3f8f6a',sun:'#2f5a8f',ground:'#2a6a4a',f:['The Space Needle was built for the 1962 World’s Fair.','It stands 184 metres tall.','The first Starbucks opened in 1971 at Pike Place Market.']},
+{k:'toronto',n:'Toronto',h:'Canada',lm:'CN Tower',bg:'#2a4f8f',sun:'#d9694a',ground:'#1b3566',f:['The CN Tower is 553 metres tall and was the tallest freestanding structure on land for over 30 years.','It has a glass floor you can stand on high above the city.','Nearly half of Toronto’s residents were born outside Canada.']},
+{k:'singapore',n:'Singapore',h:'Singapore',lm:'Marina Bay Sands',bg:'#2a8f8a',sun:'#e0653a',ground:'#1b6a66',f:['The SkyPark on top of Marina Bay Sands is about 340 metres long.','Singapore is a city, an island and a country all at once.','The giant Supertrees at Gardens by the Bay are covered in living plants.']},
+{k:'capetown',n:'Cape Town',h:'South Africa',lm:'Table Mountain',bg:'#2f7fb8',sun:'#f2b24a',ground:'#1f5f8f',f:['Table Mountain rises more than a kilometre above the city.','A cloud called the tablecloth often spills over its flat top.','It was named one of the New7Wonders of Nature in 2011.']},
+{k:'marrakech',n:'Marrakech',h:'Morocco',lm:'Koutoubia Mosque',bg:'#2a5fa0',sun:'#f6e0a8',ground:'#1b4378',f:['The Koutoubia minaret is about 77 metres tall.','It was built in the 12th century.','At night the Jemaa el-Fnaa square fills with storytellers, musicians and food stalls.']},
+{k:'prague',n:'Prague',h:'Czechia',lm:'Týn Church',bg:'#a8452f',sun:'#3f6aa0',ground:'#6f2a1b',f:['Prague is nicknamed the City of a Hundred Spires.','The Prague astronomical clock dates back to 1410.','Prague Castle is one of the largest ancient castle complexes in the world.']},
+{k:'bangkok',n:'Bangkok',h:'Thailand',lm:'Wat Arun',bg:'#2f6a5a',sun:'#d9484a',ground:'#1f4a3f',f:['Wat Arun is the Temple of Dawn, and its main tower is around 70 metres tall.','Its spires are decorated with tiny pieces of porcelain and shells.','Bangkok’s full ceremonial name is one of the longest place names in the world.']},
+{k:'seoul',n:'Seoul',h:'South Korea',lm:'Gwanghwamun Gate',bg:'#2f4f7a',sun:'#f6e0a8',ground:'#1f3555',f:['Gwanghwamun is the main gate of Gyeongbokgung Palace, founded in 1395.','Seoul has been a capital for about 600 years.','The Han River flows right through the middle of Seoul.']},
+{k:'mumbai',n:'Mumbai',h:'India',lm:'Gateway of India',bg:'#e0663a',sun:'#2f6f9f',ground:'#8f3a1f',f:['The Gateway of India was completed in 1924 on Mumbai’s waterfront.','Mumbai is the home of Bollywood.','The city’s dabbawalas deliver around 200,000 lunch boxes every day.']},
+{k:'havana',n:'Havana',h:'Cuba',lm:'El Capitolio',bg:'#e8a83a',sun:'#2fa0a8',ground:'#a8701a',f:['Havana is famous for its classic American cars from the 1950s.','El Capitolio was completed in 1929.','Old Havana became a UNESCO World Heritage Site in 1982.']},
+{k:'edinburgh',n:'Edinburgh',h:'Scotland',lm:'Edinburgh Castle',bg:'#3f3f7a',sun:'#d9784a',ground:'#2a2a56',f:['Edinburgh Castle stands on Castle Rock, an extinct volcano.','Edinburgh hosts the Fringe, the largest arts festival in the world.','The One O’Clock Gun is fired from the castle every day except Sundays.']},
+{k:'kyoto',n:'Kyoto',h:'Japan',lm:'Fushimi Inari',bg:'#2a3f5a',sun:'#f6e6c0',ground:'#1b2a3f',f:['Fushimi Inari has thousands of vermilion torii gates along its mountain paths.','Kyoto was the capital of Japan for more than a thousand years.','Each gate is donated by a person or business and carries their name.']}
+].sort(function(a,b){return a.n.localeCompare(b.n);});
+
+/* ---------- helpers ---------- */
+function mk(w,h){var c=document.createElement('canvas');c.width=w;c.height=h;return c;}
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function lum(h){var n=parseInt(h.slice(1),16);return(0.299*(n>>16&255)+0.587*(n>>8&255)+0.114*(n&255))/255;}
+function rng(seed){return function(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
+function paintArt(key,ctx,x,y,size){var prev=X;X=ctx;ctx.save();ctx.translate(x,y);ctx.scale(size/400,size/400);ART[key]();ctx.restore();X=prev;}
+function silhouette(key,color){var c=mk(400,400),g=c.getContext('2d');paintArt(key,g,0,0,400);g.globalCompositeOperation='source-in';g.fillStyle=color;g.fillRect(0,0,400,400);return c;}
+function wrap(c,text,maxW){var words=text.split(' '),lines=[],line='',t,i;for(i=0;i<words.length;i++){t=line?line+' '+words[i]:words[i];if(c.measureText(t).width>maxW&&line){lines.push(line);line=words[i];}else line=t;}if(line)lines.push(line);return lines;}
+function spacing(c,v){if('letterSpacing' in c)c.letterSpacing=v;}
+function dateStamp(){var d=new Date();return{day:String(d.getDate()).padStart(2,'0')+' '+d.toLocaleString('en-GB',{month:'short'}).toUpperCase(),year:String(d.getFullYear())};}
+var F_DISPLAY='"Abril Fatface",Georgia,serif',F_MONO='"Space Mono",ui-monospace,Menlo,monospace',F_HAND='Kalam,"Segoe Print","Bradley Hand",cursive';
+
+function stampCanvas(a){
+  var w=176,h=216,s=mk(w,h),g=s.getContext('2d'),i,step=16;
+  g.fillStyle='#fffdf8';g.fillRect(0,0,w,h);
+  g.globalCompositeOperation='destination-out';
+  for(i=step/2;i<w;i+=step){g.beginPath();g.arc(i,0,5,0,7);g.fill();g.beginPath();g.arc(i,h,5,0,7);g.fill();}
+  for(i=step/2;i<h;i+=step){g.beginPath();g.arc(0,i,5,0,7);g.fill();g.beginPath();g.arc(w,i,5,0,7);g.fill();}
+  g.globalCompositeOperation='source-over';
+  var ink=lum(a.bg)>0.55?'#1a1410':'#fff3d6';
+  g.fillStyle=a.bg;g.fillRect(14,14,w-28,h-28);
+  g.strokeStyle=ink;g.globalAlpha=.55;g.lineWidth=2;g.strokeRect(20,20,w-40,h-40);g.globalAlpha=1;
+  g.drawImage(silhouette(a.k,ink),26,40,124,124);
+  g.fillStyle=ink;g.textAlign='center';
+  g.font='400 15px '+F_DISPLAY;g.fillText('POSTAPP',w/2,h-50);
+  g.font='500 11px '+F_MONO;spacing(g,'2px');g.fillText('AIR MAIL',w/2,h-32);spacing(g,'0px');
+  g.textAlign='left';g.font='400 22px '+F_DISPLAY;g.fillText('1',30,52);
+  return s;
+}
+
+function badge(c,a,x,y,r){
+  c.save();c.translate(x,y);
+  c.shadowColor='rgba(0,0,0,.35)';c.shadowBlur=14;c.shadowOffsetY=6;
+  c.beginPath();c.arc(0,0,r,0,Math.PI*2);c.fillStyle='#fffef9';c.fill();
+  c.shadowColor='transparent';
+  c.beginPath();c.arc(0,0,r-7,0,Math.PI*2);c.fillStyle=a.bg;c.fill();
+  c.save();c.beginPath();c.arc(0,0,r-8,0,Math.PI*2);c.clip();
+  c.beginPath();c.arc(0,0,r-8,0,Math.PI*2);c.fillStyle=a.sun;c.globalAlpha=.55;c.fill();c.globalAlpha=1;
+  paintArt(a.k,c,-(r-7)*1.02,-(r-7)*1.02,(r-7)*2.04);
+  c.restore();
+  c.setLineDash([3,5]);c.strokeStyle='rgba(255,255,255,.85)';c.lineWidth=2;c.beginPath();c.arc(0,0,r-12,0,Math.PI*2);c.stroke();c.setLineDash([]);
+  c.restore();
+}
+
+/* ---------- compose one postcard ---------- */
+var cv=document.getElementById('card'),ctx=cv.getContext('2d');
+function draw(a,fi){
+  var c=ctx,i,fact=a.f[fi%a.f.length];
+  c.save();c.clearRect(0,0,W,H);
+  c.fillStyle='#fff6e8';rr(c,0,0,W,H,26);c.fill();
+  c.save();rr(c,36,36,1128,728,14);c.clip();
+  c.fillStyle=a.bg;c.fillRect(0,0,W,H);
+  /* sun, rings and sparkles */
+  c.fillStyle=a.sun;c.globalAlpha=.9;c.beginPath();c.arc(390,470,262,0,7);c.fill();c.globalAlpha=1;
+  c.strokeStyle='rgba(255,255,255,.22)';c.lineWidth=3;
+  c.beginPath();c.arc(390,470,300,0,7);c.stroke();c.beginPath();c.arc(390,470,336,0,7);c.stroke();
+  var r=rng(a.k.charCodeAt(0)*131+a.k.length*17);
+  for(i=0;i<16;i++){c.fillStyle='rgba(255,255,255,.4)';c.beginPath();c.arc(70+r()*620,250+r()*330,2+r()*4,0,7);c.fill();}
+  for(i=0;i<7;i++){c.save();c.translate(80+r()*600,240+r()*330);var sc=.7+r()*.9;c.scale(sc,sc);c.fillStyle='rgba(255,255,255,.55)';c.fill(new Path2D('M0 -12 Q0 0 12 0 Q0 0 0 12 Q0 0 -12 0 Q0 0 0 -12 Z'));c.restore();}
+  /* ground */
+  c.fillStyle=a.ground;c.fill(new Path2D('M36 660 Q200 624 380 654 T700 650 T1030 656 T1164 640 L1164 764 L36 764 Z'));
+  c.fillStyle='rgba(255,255,255,.12)';c.fill(new Path2D('M36 700 Q300 676 560 700 T1164 690 L1164 764 L36 764 Z'));
+  /* eyebrow + title (behind the landmark) */
+  var dark=lum(a.bg)>0.55,tc=dark?'#1a1410':'#fffaf0';
+  c.fillStyle=tc;c.textBaseline='alphabetic';c.textAlign='left';
+  c.font='500 25px '+F_MONO;spacing(c,'4px');c.fillText(('GREETINGS FROM '+a.h).toUpperCase(),84,112);spacing(c,'0px');
+  var name=a.n.toUpperCase(),size=128;c.font='400 '+size+'px '+F_DISPLAY;
+  var tw=c.measureText(name).width;if(tw>800){size=Math.floor(size*800/tw);c.font='400 '+size+'px '+F_DISPLAY;}
+  c.fillStyle='rgba(0,0,0,.26)';c.fillText(name,88,222);
+  c.fillStyle=tc;c.fillText(name,84,217);
+  /* the landmark */
+  paintArt(a.k,c,140,224,500);
+  c.restore();
+  c.strokeStyle='rgba(255,255,255,.5)';c.lineWidth=3;rr(c,50,50,1100,700,8);c.stroke();
+  c.fillStyle='rgba(255,255,255,.85)';c.font='500 17px '+F_MONO;spacing(c,'5px');c.textAlign='left';c.fillText(('PAR AVION  ·  '+a.lm).toUpperCase(),84,732);spacing(c,'0px');
+
+  /* stamp */
+  var st=stampCanvas(a);
+  c.save();c.translate(1042,172);c.rotate(.06);c.shadowColor='rgba(0,0,0,.3)';c.shadowBlur=12;c.shadowOffsetY=5;c.drawImage(st,-88,-108);c.restore();
+  /* postmark */
+  var ds=dateStamp();
+  c.save();c.strokeStyle='rgba(22,26,44,.62)';c.fillStyle='rgba(22,26,44,.62)';c.lineWidth=3.5;
+  c.beginPath();c.arc(962,268,56,0,7);c.stroke();c.lineWidth=2;c.beginPath();c.arc(962,268,46,0,7);c.stroke();
+  c.textAlign='center';c.font='500 14px '+F_MONO;c.fillText('POSTAPP',962,255);c.fillText(ds.day,962,274);c.fillText(ds.year,962,293);
+  c.lineWidth=3.5;
+  for(i=0;i<4;i++){var yy=240+i*17;c.beginPath();c.moveTo(1018,yy);c.bezierCurveTo(1044,yy-10,1062,yy+10,1088,yy);c.bezierCurveTo(1108,yy-8,1126,yy+8,1148,yy);c.stroke();}
+  c.restore();
+
+  /* fact card */
+  var cw=440,fsz=40,lines,lh;
+  do{c.font='700 '+fsz+'px '+F_HAND;lines=wrap(c,fact,cw-92);fsz-=2;}while(lines.length>5&&fsz>28);
+  lh=Math.round((fsz+2)*1.2);
+  var ch=74+lines.length*lh+78,cx=700,cy=708-ch;
+  c.save();c.translate(cx+cw/2,cy+ch/2);c.rotate(-.022);
+  c.shadowColor='rgba(0,0,0,.32)';c.shadowBlur=22;c.shadowOffsetY=10;
+  c.fillStyle='#fffef9';c.fillRect(-cw/2,-ch/2,cw,ch);
+  c.shadowColor='transparent';
+  c.strokeStyle='rgba(122,59,143,.22)';c.lineWidth=2;
+  for(i=0;i<lines.length;i++){var ly=-ch/2+74+i*lh+10;c.beginPath();c.moveTo(-cw/2+26,ly);c.lineTo(cw/2-26,ly);c.stroke();}
+  c.fillStyle='#8a6a90';c.font='500 15px '+F_MONO;spacing(c,'3px');c.textAlign='left';c.fillText('DID YOU KNOW?',-cw/2+52,-ch/2+44);spacing(c,'0px');
+  c.fillStyle='#5a2a6e';c.font='700 '+(fsz+2)+'px '+F_HAND;
+  for(i=0;i<lines.length;i++)c.fillText(lines[i],-cw/2+52,-ch/2+74+i*lh);
+  c.fillStyle='#e4572e';c.font='700 34px '+F_HAND;c.textAlign='right';c.fillText('Wish you were here!',cw/2-30,ch/2-26);
+  c.fillStyle='rgba(245,190,120,.8)';
+  c.save();c.translate(-cw/2+60,-ch/2+2);c.rotate(-.18);c.fillRect(-46,-14,92,28);c.restore();
+  c.save();c.translate(cw/2-60,-ch/2+2);c.rotate(.16);c.fillRect(-46,-14,92,28);c.restore();
+  c.restore();
+  /* badge pinned to the card corner */
+  badge(c,a,cx-28,cy+20,58);
+  c.restore();
+}
+
+/* ---------- app state and UI ---------- */
+var sel=document.getElementById('city'),statusEl=document.getElementById('status');
+var cur=null,fi=0,blobP=null,i0;
+for(i0=0;i0<CITIES.length;i0++){var o=document.createElement('option');o.value=CITIES[i0].k;o.textContent=CITIES[i0].n;sel.appendChild(o);}
+function byKey(k){return CITIES.filter(function(a){return a.k===k;})[0];}
+function setStatus(t){statusEl.textContent=t||'';}
+function render(){
+  draw(cur,fi);
+  cv.setAttribute('aria-label','Postcard of '+cur.n+' showing '+cur.lm+'. '+cur.f[fi%cur.f.length]);
+  blobP=new Promise(function(res){cv.toBlob(res,'image/png');});
+}
+function pick(k,keepFact){
+  cur=byKey(k);sel.value=k;
+  if(!keepFact)fi=Math.floor(Math.random()*cur.f.length);
+  render();
+}
+sel.addEventListener('change',function(){setStatus('');pick(sel.value);});
+document.getElementById('fact').addEventListener('click',function(){setStatus('');fi=(fi+1)%cur.f.length;render();});
+document.getElementById('rand').addEventListener('click',function(){
+  var k;do{k=CITIES[Math.floor(Math.random()*CITIES.length)].k;}while(k===cur.k);
+  setStatus('');pick(k);
+});
+
+/* ---------- send ---------- */
+var sheet=document.getElementById('sheet'),sheetImg=document.getElementById('sheet-img'),sheetMsg=document.getElementById('sheet-msg'),sheetClose=document.getElementById('sheet-close'),lastFocus=null,sheetUrl=null;
+function showSheet(blob,copied,opened){
+  if(sheetUrl)URL.revokeObjectURL(sheetUrl);
+  sheetUrl=URL.createObjectURL(blob);sheetImg.src=sheetUrl;
+  if(copied&&opened)sheetMsg.textContent='The postcard is copied. In WhatsApp, choose a contact, then paste with Ctrl+V or ⌘V.';
+  else if(copied)sheetMsg.textContent='The postcard is copied. Open WhatsApp, choose a contact, then paste with Ctrl+V or ⌘V.';
+  else sheetMsg.textContent='Save the postcard (press and hold the image, or right-click it), then open WhatsApp, choose a contact and attach it.';
+  lastFocus=document.activeElement;sheet.hidden=false;sheetClose.focus();
+}
+function hideSheet(){sheet.hidden=true;if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+sheetClose.addEventListener('click',hideSheet);
+sheet.addEventListener('click',function(e){if(e.target===sheet)hideSheet();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!sheet.hidden)hideSheet();});
+
+var isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+document.getElementById('send').addEventListener('click',async function(){
+  var blob=await blobP;
+  if(!blob){setStatus('The image could not be created. Try again.');return;}
+  var file=new File([blob],'postapp-'+cur.k+'.png',{type:'image/png'}),txt='Greetings from '+cur.n+'!';
+  if(isMobile){
+    try{
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'Postcard from Postapp',text:txt});
+        setStatus('Postcard shared.');
+        return;
+      }
+    }catch(e){
+      if(e&&e.name==='AbortError'){setStatus('Share cancelled. Nothing was sent.');return;}
+    }
+  }
+  /* computer: copy the postcard and open WhatsApp Web in the same click */
+  var url='https://web.whatsapp.com/send?text='+encodeURIComponent(txt),cp,w=null,copied=false;
+  try{cp=navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).then(function(){return true;},function(){return false;});}catch(e){cp=Promise.resolve(false);}
+  try{w=window.open(url,'_blank');}catch(e){}
+  if(!w){try{var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();w=true;}catch(e){}}
+  copied=await cp;
+  if(copied&&w){setStatus('Postcard copied. Choose a contact in WhatsApp Web, paste it and press send.');return;}
+  setStatus(w?'The postcard could not be copied. Follow the steps shown on screen.':'Your browser blocked the WhatsApp window. Allow pop-ups for this page, or use the button on screen.');
+  document.getElementById('sheet-wa').href=url;
+  showSheet(blob,copied,!!w);
+});
+
+/* first paint, then repaint once the web fonts are ready */
+var fonts=[ '118px "Abril Fatface"','400 25px "Space Mono"','700 40px Kalam' ];
+pick(CITIES[Math.floor(Math.random()*CITIES.length)].k);
+if(document.fonts&&document.fonts.load){Promise.all(fonts.map(function(f){return document.fonts.load(f);})).then(function(){render();},function(){});}
+window.Postapp={cities:CITIES,pick:pick,render:render,canvas:cv,art:ART,paintArt:paintArt,setCtx:function(c){X=c;}};
+})();
+</script>
+
+</html>
