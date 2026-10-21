@@ -13,6 +13,10 @@ body{font-family:Nunito,system-ui,sans-serif;color:#f3efe3;min-height:100vh;
 background:repeating-linear-gradient(135deg,#1c2a52 0 36px,#1f2f5a 36px 72px)}
 .wrap{max-width:960px;margin:0 auto;padding:0 clamp(20px,5vw,48px) 48px}
 header{padding:36px 0 22px;text-align:center}
+.wrap{position:relative}
+.elx{position:absolute;top:18px;right:clamp(20px,5vw,48px);display:inline-flex;align-items:center;gap:6px;background:#fbf5e6;color:#26335f;font:800 14px Nunito,sans-serif;text-decoration:none;padding:9px 15px;border-radius:999px;border:2px solid #d9453d;box-shadow:3px 3px 0 #d9453d;transition:transform .12s,box-shadow .12s}
+.elx:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 #d9453d}
+.elx:focus-visible{outline:3px solid #fff;outline-offset:3px}
 h1{font:400 clamp(46px,9vw,76px)/1 Pacifico,cursive;color:#fff;text-shadow:4px 4px 0 #d9453d}
 header p{margin-top:14px;font-size:17px;color:#cdd6f0}
 .panel{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:end;background:#fbf5e6;color:#26335f;padding:18px;border-radius:6px;border:3px dashed #d9453d;outline:3px solid #fbf5e6;outline-offset:-9px}
@@ -29,12 +33,13 @@ canvas{display:block;width:100%;height:auto;border-radius:4px;box-shadow:0 22px 
 .hint{font-size:15px;color:#cdd6f0;max-width:62ch;line-height:1.5}
 #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,40px);opacity:0;background:#fbf5e6;color:#26335f;padding:14px 18px;border-radius:8px;font-weight:700;max-width:min(520px,calc(100vw - 40px));transition:.25s;pointer-events:none;text-align:center}
 #toast.on{opacity:1;transform:translate(-50%,0)}
-@media(max-width:760px){.panel{grid-template-columns:1fr}.row{flex-direction:column;align-items:stretch}}
+@media(max-width:760px){header{padding-top:72px}.panel{grid-template-columns:1fr}.row{flex-direction:column;align-items:stretch}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 <div class="wrap">
+<a class="elx" href="https://easylandx.github.io" target="_blank" rel="noopener">EasylandX <span aria-hidden="true">&#8599;</span></a>
 <header><h1>Postapp</h1><p>Elige un país, crea tu postal y envíala por WhatsApp.</p></header>
 <section class="panel">
 <div><label for="co">País</label><select id="co"></select></div>
@@ -42,7 +47,7 @@ canvas{display:block;width:100%;height:auto;border-radius:4px;box-shadow:0 22px 
 </section>
 <main class="card"><canvas id="cv" width="1200" height="800" aria-label="Vista previa de la postal"></canvas></main>
 <div class="row">
-<p class="hint">Pulsa enviar, elige WhatsApp y selecciona al destinatario entre tus contactos. En un ordenador, la postal se copia y se abre WhatsApp: elige un contacto, pégala y pulsa enviar.</p>
+<p class="hint">Pulsa enviar, elige WhatsApp y selecciona al destinatario entre tus contactos. En un ordenador, la postal se copia y se abre WhatsApp Web: elige un contacto, pégala y pulsa enviar.</p>
 <button id="dl" class="ghost">Guardar imagen</button>
 </div>
 </div>
@@ -127,7 +132,7 @@ g.restore();g.strokeStyle='rgba(0,0,0,.3)';g.lineWidth=1;g.strokeRect(x,y,w,h)}
 /* ---------- countries: name, sky/ground colours, flag, fact, landmark ---------- */
 const K=[
 {n:'Francia',s:['#7ec8f0','#fde9d0','#8fbf6a'],fl:'fr',f:"Francia produce más de 1.000 tipos distintos de queso.",d(){C(50,268,26,'#5f9a4f');C(268,272,22,'#5f9a4f');P('#3d3d52',160,112,168,170,184,290,170,290,160,238,150,290,136,290,152,170);R(142,172,36,6,'#3d3d52');R(146,226,28,5,'#3d3d52')}},
-{n:'España',s:['#f9a85a','#ffe8b5','#d8a763'],fl:'es',f:"Cada agosto, Buñol celebra La Tomatina, la mayor batalla de tomates del mundo.",d(){R(80,252,160,38,'#c9a06e');[[98,215],[129,175],[160,140],[191,175],[222,215]].forEach(([x,t])=>{R(x-8,t,16,252-t,'#dcb98a');P('#c89b66',x-9,t,x,t-30,x+9,t);R(x-2,t+26,4,12,'#7a5a3a');R(x-2,t+60,4,12,'#7a5a3a')})}},
+{n:'España',s:['#f9a85a','#ffe8b5','#d8a763'],fl:'es',f:"La Alhambra de Granada nació como fortaleza mora y se convirtió en palacio real en el siglo XIII.",d(){P('#b4a3c6',0,290,90,162,200,290);P('#a08fb6',120,290,232,140,330,290);P('#fff',90,162,76,184,86,180,92,190,100,178,108,186);P('#fff',232,140,216,166,226,162,234,172,242,160,250,168);P('#9c6b3f',20,290,70,244,250,244,300,290);R(60,212,200,34,'#c8744a');for(let i=0;i<10;i++)R(60+i*20,204,11,8,'#c8744a');[[52,168,40],[140,150,40],[222,184,38]].forEach(([x,t,w])=>{R(x,t,w,246-t,'#b9633b');for(let i=0;i<4;i++)R(x+i*(w/4)+1,t-8,w/4-3,8,'#b9633b');R(x+w/2-4,t+20,8,14,'#4a2616');D(x+w/2,t+20,4,'#4a2616')});for(let i=0;i<4;i++){const x=100+i*34;if(x>140&&x<190)continue;R(x,226,8,12,'#4a2616');D(x+4,226,4,'#4a2616')}R(150,222,20,24,'#4a2616');D(160,222,10,'#4a2616');E(22,256,9,32,'#2f6b45');E(37,264,8,26,'#2f6b45');E(290,258,9,32,'#2f6b45');E(304,266,8,26,'#2f6b45')}},
 {n:'Estados Unidos',s:['#6fb4ea','#d5ecfb','#7bbf6f'],fl:'us',f:"La Estatua de la Libertad fue un regalo de Francia en 1886.",d(){const c='#7fc4a5';R(130,250,60,40,'#a8a8a8');P(c,142,250,178,250,172,185,148,185);C(160,172,13,c);for(let i=-2;i<=2;i++)P(c,160+i*7-3,162,160+i*7,146+Math.abs(i)*4,160+i*7+3,162);L(c,8,172,192,188,140);P('#ffb703',181,138,195,138,188,112)}},
 {n:'China',s:['#f7b7a3','#fff0dc','#9bb88a'],fl:'cn',f:"El Año Nuevo chino provoca la mayor migración humana anual del planeta.",d(){P('#a9c1b2',0,290,80,200,170,290);P('#8fae9d',140,290,240,210,320,290);for(let i=0;i<4;i++){const y=262-i*40;R(132+i*9,y-24,56-i*18,28,'#c0392b');P('#2d4a3e',108+i*12,y+4,160,y-34,212-i*12,y+4)}}},
 {n:'Italia',s:['#8ec5e8','#fff1d6','#9cc274'],fl:'it',f:"Italia tiene más sitios Patrimonio de la Humanidad de la UNESCO que casi cualquier otro país.",d(){P('#3d6b3a',20,290,28,200,36,290);P('#3d6b3a',284,290,292,200,300,290);R(46,150,228,140,'#d8b88a');for(let r=0;r<3;r++){const y=162+r*40;R(46,y-6,228,5,'#c4a276');for(let i=0;i<8;i++){const x=58+i*26;R(x,y+10,14,18,'#8a6a45');D(x+7,y+10,7,'#8a6a45')}}}},
@@ -181,9 +186,66 @@ const K=[
 {n:'Ghana',s:['#8ccaee','#fff0d2','#2f86b5'],fl:'gh',f:"Ghana fue el primer país del África subsahariana en lograr la independencia, en 1957.",d(){R(0,256,320,12,'#e8d1a0');R(60,200,200,56,'#f6f3ea');for(let i=0;i<10;i++)R(60+i*22,192,12,8,'#f6f3ea');R(40,170,50,86,'#efeadf');R(230,170,50,86,'#efeadf');for(let i=0;i<3;i++)L('#444',5,110+i*36,230,128+i*36,224);R(150,222,20,34,'#6b4a2e');D(160,222,10,'#6b4a2e');L('#555',2,65,170,65,150);R(65,150,16,10,'#ce1126')}}
 ];
 
+const F2={Francia:"El arte de la baguette entró en 2022 en la lista de patrimonio cultural de la UNESCO.",
+"España":"A medianoche en Nochevieja, los españoles comen doce uvas, una por cada campanada.",
+"Estados Unidos":"El jazz nació en Nueva Orleans hacia 1900 y conquistó el mundo.",
+China:"Los sobres rojos con dinero en Año Nuevo llevan buenos deseos, y el rojo es el color de la fortuna.",
+Italia:"En Italia el capuchino es una bebida de mañana, y pedirlo después de cenar sorprende.",
+"Turquía":"El café turco y su cultura figuran en la lista de patrimonio inmaterial de la UNESCO.",
+"México":"En el Día de Muertos, las familias reciben a sus seres queridos con flores de cempasúchil y altares.",
+Tailandia:"Los tailandeses se saludan con el wai, una leve reverencia con las palmas unidas.",
+Alemania:"Los mercados navideños alemanes se remontan a la Baja Edad Media.",
+"Reino Unido":"Se dice que el té de la tarde nació en la década de 1840 con la duquesa de Bedford.",
+"Japón":"El hanami, el picnic bajo los cerezos en flor, se celebra desde hace más de mil años.",
+Grecia:"Según la tradición, los Juegos Olímpicos nacieron en Olimpia en el 776 a. C.",
+Portugal:"El fado, lleno de saudade, un anhelo agridulce, es patrimonio inmaterial de la UNESCO.",
+"Países Bajos":"Cada abril, en el Día del Rey, todo el país se viste de naranja.",
+"Canadá":"Canadá produce cerca del 70 por ciento del jarabe de arce del mundo.",
+Egipto:"La piedra de Rosetta, hallada en 1799, ayudó a descifrar por fin los jeroglíficos.",
+India:"Diwali, la fiesta de las luces, celebra el triunfo de la luz sobre la oscuridad.",
+Brasil:"El Carnaval de Río reúne a millones de personas, y las escuelas de samba se preparan todo el año.",
+Australia:"Los aborígenes australianos mantienen una de las culturas vivas más antiguas, con más de 60.000 años.",
+"Emiratos Árabes Unidos":"La cetrería es una tradición muy querida en los Emiratos, y los halcones hasta tienen pasaporte.",
+"Corea del Sur":"El kimjang, preparar kimchi en comunidad, es patrimonio inmaterial de la UNESCO.",
+Marruecos:"Servir el té de menta desde lo alto del vaso es señal de hospitalidad.",
+Suiza:"El yodel nació como forma de llamarse los pastores alpinos de valle a valle.",
+Austria:"La cultura de los cafés de Viena es patrimonio inmaterial de la UNESCO.",
+Indonesia:"El batik, tela decorada con cera y tinte, es patrimonio de la UNESCO.",
+Polonia:"En Nochebuena, las familias polacas dejan una silla vacía para un invitado inesperado.",
+Chequia:"Los checos beben más cerveza por persona que nadie en el mundo.",
+"Hungría":"El húngaro está emparentado con el finés y el estonio, no con las lenguas vecinas.",
+Croacia:"La corbata viene de los pañuelos de los soldados croatas, y «cravat» procede de «croata».",
+Irlanda:"En los pubs irlandeses hay sesiones abiertas donde los músicos tocan de oído.",
+Suecia:"La fika, una pausa diaria con café y bollos entre amigos, es un ritual sueco muy querido.",
+Noruega:"Los noruegos llaman friluftsliv a la vida al aire libre, que significa «vida de aire libre».",
+Dinamarca:"LEGO viene del danés «leg godt», que significa «juega bien».",
+Finlandia:"El sisu, la determinación serena en los momentos difíciles, es un valor finlandés esencial.",
+"Bélgica":"Los belgas presumen de haber inventado las patatas fritas, y las fríen dos veces.",
+Islandia:"En Nochebuena, los islandeses se regalan libros y leen hasta la madrugada.",
+Rusia:"Antes de un viaje, los rusos se sientan un momento en silencio para tener buena suerte.",
+Argentina:"El mate se comparte en una sola calabaza que pasa de mano en mano.",
+Chile:"Chile tiene dos premios Nobel de Literatura: Gabriela Mistral y Pablo Neruda.",
+"Perú":"Perú cultiva miles de variedades de papa, domesticada por primera vez en los Andes.",
+Colombia:"El Carnaval de Barranquilla es patrimonio inmaterial reconocido por la UNESCO.",
+Cuba:"La rumba, nacida en las calles y puertos de Cuba, es patrimonio de la UNESCO.",
+"Sudáfrica":"Sudáfrica tiene 12 lenguas oficiales, incluida la lengua de signos.",
+Kenia:"Los masái bailan el adumu, un baile de saltos, para mostrar fuerza y orgullo.",
+Vietnam:"El café con huevo se inventó en Hanói en los años cuarenta, cuando escaseaba la leche.",
+Singapur:"La cultura de los hawker, los puestos de comida callejera, es patrimonio de la UNESCO.",
+Malasia:"En las «casas abiertas» de las fiestas, los malayos de todo origen se visitan en casa.",
+Filipinas:"Se dice que Filipinas tiene la Navidad más larga del mundo, desde septiembre.",
+"Nueva Zelanda":"El saludo maorí hongi junta las narices para compartir el aliento de vida.",
+Israel:"El hebreo volvió a ser lengua cotidiana tras siglos usado sobre todo para la oración.",
+"Túnez":"Los tunecinos llevan pequeños ramilletes de jazmín como señal de bienvenida y cariño.",
+"Costa Rica":"Pura vida, que significa «vida pura», es a la vez un saludo y una forma de vivir.",
+Ghana:"La tela kente se teje con patrones que encierran un significado, desde proverbios hasta valores."};
+K.forEach(k=>k.f2=F2[k.n]);
+
 /* ---------- drawing ---------- */
+let cb=null;
 K.sort((a,b)=>a.n.localeCompare(b.n,'es'));let cur=K.find(k=>k.n==='Francia');
 function scene(k){const gr=g.createLinearGradient(0,0,0,290);gr.addColorStop(0,k.s[0]);gr.addColorStop(1,k.s[1]);g.fillStyle=gr;g.fillRect(0,0,320,290);C(262,128,24,'rgba(255,248,210,.9)');R(0,290,320,70,k.s[2]);k.d();R(0,290,320,3,'rgba(0,0,0,.12)')}
+function lay(t,mw){const o=[];let l='';t.split(' ').forEach(w=>{const n=l?l+' '+w:w;if(g.measureText(n).width>mw&&l){o.push(l);l=w}else l=n});o.push(l);return o}
 function wrap(t,x,y,mw,lh){let l='';t.split(' ').forEach(w=>{const n=l?l+' '+w:w;if(g.measureText(n).width>mw&&l){g.fillText(l,x,y);y+=lh;l=w}else l=n});g.fillText(l,x,y)}
 function stamp(k){const w=88,h=110;g.save();g.translate(488+w/2,28+h/2);g.rotate(.04);g.translate(-w/2,-h/2);
 g.shadowColor='rgba(0,0,0,.25)';g.shadowBlur=4;g.shadowOffsetY=1.5;R(0,0,w,h,'#fffdf6');g.shadowColor='transparent';
@@ -211,8 +273,10 @@ g.setLineDash([4,5]);L('#c9bb98',1.5,358,34,358,366);g.setLineDash([]);
 flag(k.fl,372,30,48,32);
 stamp(k);mark(k);
 g.textAlign='left';g.fillStyle='#26335f';g.font='600 30px Caveat,cursive';g.fillText('Querido amigo,',374,170);
-g.font='600 23px Caveat,cursive';wrap(k.f,374,198,200,24);
-[342,366].forEach(y=>L('#b9ad8c',1,372,y,576,y));}
+const facts=[k.f,k.f2].filter(Boolean),gap=9;let fs=23,ls;
+for(;;fs--){g.font='600 '+fs+'px Caveat,cursive';ls=facts.map(t=>lay(t,202));const n=ls.reduce((a,l)=>a+l.length,0);if(fs<=14||194+(n-1)*(fs+1)+(ls.length-1)*gap<=356)break}
+let fy=194;g.font='600 '+fs+'px Caveat,cursive';ls.forEach(a=>{a.forEach(l=>{g.fillText(l,374,fy);fy+=fs+1});fy+=gap});
+[342,366].forEach(y=>L('#b9ad8c',1,372,y,576,y));cb=null;$('cv').toBlob(b=>{if(cur===k)cb=b},'image/png')}
 
 /* ---------- ui ---------- */
 const sel=$('co');K.forEach((k,i)=>sel.add(new Option(k.n,i)));sel.value=K.indexOf(cur);
@@ -222,14 +286,24 @@ const blob=()=>new Promise(r=>$('cv').toBlob(r,'image/png'));
 const fname=()=>'postal-'+cur.n.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\W+/g,'-')+'.png';
 function save(b){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fname();document.body.appendChild(a);a.click();a.remove()}
 $('dl').onclick=async()=>{await draw();save(await blob());toast('Postal guardada.')};
+const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 $('send').onclick=async()=>{
+const text='¡Saludos desde '+cur.n+'!';
+if(isMobile){
 await draw();
-const b=await blob(),file=new File([b],fname(),{type:'image/png'}),text='¡Saludos desde '+cur.n+'!';
+const b=await blob(),file=new File([b],fname(),{type:'image/png'});
 if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],text});return}catch(e){if(e.name==='AbortError')return}}
-let copied=false;try{await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);copied=true}catch(e){}
-if(!copied)save(b);
-window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(text),'_blank');
-toast(copied?'Postal copiada. Elige un contacto en WhatsApp, pégala y pulsa enviar.':'Postal guardada. Elige un contacto en WhatsApp y adjúntala.')};
+save(b);window.open('https://api.whatsapp.com/send?text='+encodeURIComponent(text),'_blank');
+toast('Postal guardada. Elige un contacto en WhatsApp y adjúntala.');return}
+/* ordenador: copia la postal y abre WhatsApp Web en el mismo clic */
+const url='https://web.whatsapp.com/send?text='+encodeURIComponent(text);
+if(!cb)await draw().then(()=>new Promise(r=>setTimeout(r,60)));
+const b=cb||await blob();
+const cp=navigator.clipboard.write([new ClipboardItem({'image/png':b})]).then(()=>true,()=>false);
+let w=window.open(url,'_blank');
+if(!w){const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();w=true}
+const copied=await cp;if(!copied)save(b);
+toast(copied?'Postal copiada. Elige un contacto en WhatsApp Web, pégala y pulsa enviar.':'Postal guardada. Elige un contacto en WhatsApp Web y adjúntala.')};
 draw();
 </script>
 </body>
