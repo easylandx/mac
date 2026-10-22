@@ -51,6 +51,8 @@
   button.wa { background:var(--accent); }
   button:disabled { opacity:.5; cursor:not-allowed; }
   .hidden { display:none !important; }
+  .vh { position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; pointer-events:none; }
+  label.btn { position:relative; }
   .phone { width:min(92vw,420px); margin-top:18px; display:flex; flex-direction:column; gap:6px; font-size:.85rem; }
   .phone input { font:inherit; padding:12px 14px; border:3px solid var(--ink); border-radius:10px; background:#fff; }
   .toast { margin-top:16px; font-size:.9rem; min-height:1.2em; text-align:center; max-width:420px; }
@@ -73,8 +75,8 @@
 
   <div class="controls" id="camControls">
     <button class="primary" id="snap" disabled>📸 Take selfie</button>
-    <label class="btn hidden" id="uploadBtn">🖼️ Upload photo
-      <input type="file" id="file" accept="image/*" capture="user" hidden>
+    <label class="btn" id="uploadBtn">🖼️ Upload photo
+      <input type="file" id="file" accept="image/*" class="vh">
     </label>
   </div>
 
@@ -515,7 +517,7 @@
   }
 
   $('file').addEventListener('change', async e => {
-    const f = e.target.files[0]; if (!f) return;
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
     if (!landmarker) { try { await loadModel(); } catch (err) { say('Could not load the illustration engine. Check your connection.'); return; } }
     const im = new Image();
     im.onload = async () => {
@@ -525,7 +527,7 @@
       try { ok = await illustrate(im, im.naturalWidth, im.naturalHeight, false); } catch (err) { console.error(err); }
       drawingEl.style.display = 'none';
       URL.revokeObjectURL(im.src);
-      if (ok) { msg.hidden = true; showResult(); }
+      if (ok) { stopCamera(); msg.hidden = true; showResult(); }
       else say("I couldn't find a face in that photo. Try another one.");
     };
     im.src = URL.createObjectURL(f);
