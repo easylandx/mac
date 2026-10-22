@@ -15,7 +15,10 @@ background:repeating-linear-gradient(135deg,#1c2a52 0 36px,#1f2f5a 36px 72px)}
 header{padding:36px 0 22px;text-align:center}
 .wrap{position:relative}
 .elx{position:absolute;top:18px;right:clamp(20px,5vw,48px);display:inline-flex;align-items:center;gap:6px;background:#fbf5e6;color:#26335f;font:800 14px Nunito,sans-serif;text-decoration:none;padding:9px 15px;border-radius:999px;border:2px solid #d9453d;box-shadow:3px 3px 0 #d9453d;transition:transform .12s,box-shadow .12s}
-.elx.lang{right:auto;left:clamp(20px,5vw,48px)}
+.nav{position:absolute;top:18px;left:clamp(20px,5vw,48px);display:flex;gap:10px}
+.nav .elx{position:static}
+.elx.self{background:#ffd23f;color:#26335f}
+@media(max-width:480px){.elx{font-size:13px;padding:8px 11px}.nav{gap:8px}}
 .elx:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 #d9453d}
 .elx:focus-visible{outline:3px solid #fff;outline-offset:3px}
 .more{position:relative;margin:20px auto 0;max-width:280px;text-align:left}
@@ -50,7 +53,7 @@ canvas{display:block;width:100%;height:auto;border-radius:4px;box-shadow:0 22px 
 </head>
 <body>
 <div class="wrap">
-<a class="elx lang" href="https://easylandx.github.io/mac/postappes.html" hreflang="es" lang="es">Español</a>
+<div class="nav"><a class="elx lang" href="https://easylandx.github.io/mac/postappes.html" hreflang="es" lang="es">Español</a><a class="elx self" href="https://easylandx.github.io/mac/selfapp.html" target="_blank" rel="noopener">SelfApp</a></div>
 <a class="elx" href="https://easylandx.github.io" target="_blank" rel="noopener">EasylandX <span aria-hidden="true">&#8599;</span></a>
 <header><h1>PostApp</h1><p>Pick a country, get a postcard, send it on WhatsApp.</p><details class="more"><summary aria-label="More postcard collections">More postcards</summary><ul><li><span aria-current="page">PostApp</span></li><li><a href="https://easylandx.github.io/mac/postappes.html" target="_blank" rel="noopener">PostAppES</a></li><li><a href="https://easylandx.github.io/mac/postelec.html" target="_blank" rel="noopener">EVs</a></li><li><a href="https://easylandx.github.io/mac/postclass.html" target="_blank" rel="noopener">Composers</a></li><li><a href="https://easylandx.github.io/mac/postclasses.html" target="_blank" rel="noopener">ComposersES</a></li><li><a href="https://easylandx.github.io/mac/postthink.html" target="_blank" rel="noopener">Thinkers</a></li><li><a href="https://easylandx.github.io/mac/postcomp.html" target="_blank" rel="noopener">Computers</a></li><li><a href="https://easylandx.github.io/mac/postair.html" target="_blank" rel="noopener">Airplanes</a></li><li><a href="https://easylandx.github.io/mac/postvision.html" target="_blank" rel="noopener">Visionaries</a></li><li><a href="https://easylandx.github.io/mac/postlight.html" target="_blank" rel="noopener">Lighthouses</a></li><li><a href="https://easylandx.github.io/mac/posttree.html" target="_blank" rel="noopener">Trees</a></li><li><a href="https://easylandx.github.io/mac/postmount.html" target="_blank" rel="noopener">Mountains</a></li><li><a href="https://easylandx.github.io/mac/poscity.html" target="_blank" rel="noopener">Cities</a></li><li><a href="https://easylandx.github.io/mac/postanim.html" target="_blank" rel="noopener">Animals</a></li></ul></details></header>
 <section class="panel">
