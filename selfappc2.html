@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SelfApp Colour</title>
+<style>
+  :root { --ink:#111; --paper:#f5f2ea; --accent:#25D366; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    min-height:100vh; background:var(--paper); color:var(--ink);
+    font-family:"Helvetica Neue",Arial,sans-serif;
+    display:flex; flex-direction:column; align-items:center; padding-block:24px 40px; padding-inline:20px;
+  }
+  h1 { font-size:clamp(1.8rem,6vw,2.8rem); letter-spacing:-1px; font-weight:900; }
+  h1 span { background:linear-gradient(90deg,#ff4d6d,#ff9f1c,#2ec4b6); color:#111; padding:0 .25em; }
+  .sub { margin:6px 0 20px; font-size:.95rem; opacity:.7; text-align:center; max-width:420px; }
+  .frame {
+    position:relative; width:min(92vw,420px); aspect-ratio:3/4;
+    background:#fff; border:4px solid var(--ink); border-radius:14px;
+    box-shadow:8px 8px 0 var(--ink); overflow:hidden;
+  }
+  video, canvas#out {
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover; background:#fff;
+  }
+  video { transform:scaleX(-1); }
+  canvas#out { display:none; }
+  .msg {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    text-align:center; padding:24px; font-size:.95rem; line-height:1.4; background:#fff;
+  }
+  .msg[hidden] { display:none; }
+  .countdown {
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+    font-size:7rem; font-weight:900; color:#fff; text-shadow:4px 4px 0 #000;
+    pointer-events:none;
+  }
+  .drawing {
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.85); font-weight:900; font-size:1.3rem;
+  }
+  .controls { margin-top:30px; display:flex; flex-wrap:wrap; gap:12px; justify-content:center; width:min(92vw,420px); }
+  button, .btn {
+    font:inherit; font-weight:800; font-size:1rem; cursor:pointer;
+    border:3px solid var(--ink); background:#fff; color:var(--ink);
+    padding:14px 22px; border-radius:999px; box-shadow:4px 4px 0 var(--ink);
+    transition:transform .08s, box-shadow .08s; text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+  }
+  button:active, .btn:active { transform:translate(4px,4px); box-shadow:0 0 0 var(--ink); }
+  button.primary { background:var(--ink); color:var(--paper); }
+  button.wa { background:var(--accent); }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .hidden { display:none !important; }
+  .vh { position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; pointer-events:none; }
+  label.btn { position:relative; }
+  .phone { width:min(92vw,420px); margin-top:18px; display:flex; flex-direction:column; gap:6px; font-size:.85rem; }
+  .phone input { font:inherit; padding:12px 14px; border:3px solid var(--ink); border-radius:10px; background:#fff; }
+  .toast { margin-top:16px; font-size:.9rem; min-height:1.2em; text-align:center; max-width:420px; }
+  .flash { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; }
+  .flash.go { animation:flash .35s ease-out; }
+  @keyframes flash { 0%{opacity:.9} 100%{opacity:0} }
+  .mode { display:flex; align-items:center; gap:10px; margin-bottom:16px; font-weight:800; font-size:.85rem; color:var(--ink); text-decoration:none; user-select:none; -webkit-tap-highlight-color:transparent; }
+  .mode .lbl { opacity:.45; transition:opacity .2s; }
+  .mode .track { position:relative; width:64px; height:32px; border:3px solid var(--ink); border-radius:999px; background:#fff; box-shadow:3px 3px 0 var(--ink); transition:background .25s; }
+  .mode .knob { position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%; background:var(--ink); transition:transform .25s; }
+  .mode.color .track { background:linear-gradient(90deg,#ff4d6d,#ff9f1c,#2ec4b6); }
+  .mode.color .knob { transform:translateX(32px); }
+  .mode:not(.color) .lbl.bw, .mode.color .lbl.col { opacity:1; }
+</style>
+</head>
+<body>
+  <a class="mode color" id="modeSwitch" href="selfapp.html" role="switch" aria-checked="true" aria-label="Switch between black and white and colour">
+    <span class="lbl bw">B/W</span><span class="track"><span class="knob"></span></span><span class="lbl col">Color</span>
+  </a>
+  <h1>Self<span>App</span></h1>
+  <p class="sub">Snap a selfie and SelfApp draws you as a full-colour ink illustration.</p>
+
+  <div class="frame">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="out"></canvas>
+    <div class="countdown" id="count"></div>
+    <div class="drawing" id="drawing">✏️ Drawing you…</div>
+    <div class="msg" id="msg">Starting camera…</div>
+  </div>
+
+  <div class="controls" id="camControls">
+    <button class="primary" id="snap" disabled>📸 Take selfie</button>
+    <label class="btn" id="uploadBtn">🖼️ Upload photo
+      <input type="file" id="file" accept="image/*" class="vh">
+    </label>
+  </div>
+
+  <div class="controls hidden" id="resultControls">
+    <button id="retake">↺ Retake</button>
+    <button class="wa" id="send">💬 Send via WhatsApp</button>
+    <button id="download">⬇ Save PNG</button>
+  </div>
+
+  <div class="phone hidden" id="phoneBox">
+    <label for="phone">WhatsApp number (optional, with country code, e.g. 34600123456)</label>
+    <input id="phone" type="tel" inputmode="tel" placeholder="34600123456">
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="flash" id="flash"></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const video = $('video'), out = $('out'), msg = $('msg'), snap = $('snap');
+  const camControls = $('camControls'), resultControls = $('resultControls');
+  const phoneBox = $('phoneBox'), toast = $('toast'), count = $('count'), drawingEl = $('drawing');
+  let stream = null, busy = false, camReady = false, landmarker = null, modelPromise = null;
+
+  const say = t => toast.textContent = t || '';
+  const updateSnap = () => { snap.disabled = !(camReady && landmarker) || busy; };
+
+  // ---------- Face model (loads once, needs internet) ----------
+  function loadModel() {
+    if (modelPromise) return modelPromise;
+    modelPromise = (async () => {
+      const base = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+      const mp = await import(base + '/+esm');
+      const fileset = await mp.FilesetResolver.forVisionTasks(base + '/wasm');
+      const opts = delegate => ({
+        baseOptions: {
+          modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+          delegate
+        },
+        runningMode: 'IMAGE', numFaces: 1
+      });
+      try { landmarker = await mp.FaceLandmarker.createFromOptions(fileset, opts('GPU')); }
+      catch (e) { landmarker = await mp.FaceLandmarker.createFromOptions(fileset, opts('CPU')); }
+      return landmarker;
+    })().catch(err => { modelPromise = null; throw err; });
+    return modelPromise;
+  }
+
+  async function startCamera() {
+    out.style.display = 'none';
+    video.style.display = 'block';
+    resultControls.classList.add('hidden');
+    phoneBox.classList.add('hidden');
+    camControls.classList.remove('hidden');
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false
+      });
+      video.srcObject = stream;
+      await video.play();
+      msg.hidden = true;
+      camReady = true;
+    } catch (e) {
+      msg.hidden = false;
+      msg.textContent = 'Camera unavailable. Allow camera access, or upload a photo instead.';
+      $('uploadBtn').classList.remove('hidden');
+      camReady = false;
+    }
+    updateSnap();
+  }
+
+  function stopCamera() {
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    stream = null; camReady = false;
+  }
+
+  // ---------- Illustration drawing ----------
+  const OVAL = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
+  const HAIR_ARC = [234,127,162,21,54,103,67,109,10,338,297,332,284,251,389,356,454];
+  const R_EYE = [33,7,163,144,145,153,154,155,133,173,157,158,159,160,161,246];
+  const L_EYE = [362,382,381,380,374,373,390,249,263,466,388,387,386,385,384,398];
+  const R_LID = [33,246,161,160,159,158,157,173,133];
+  const L_LID = [263,466,388,387,386,385,384,398,362];
+  const R_BROW_U = [70,63,105,66,107], R_BROW_L = [46,53,52,65,55];
+  const L_BROW_U = [300,293,334,296,336], L_BROW_L = [276,283,282,295,285];
+  const LIPS_OUT = [61,146,91,181,84,17,314,405,321,375,291,409,270,269,267,0,37,39,40,185];
+  const LIPS_IN = [78,95,88,178,87,14,317,402,318,324,308,415,310,311,312,13,82,81,80,191];
+
+  function smoothPath(ctx, a, close) {
+    ctx.beginPath();
+    if (close) {
+      const n = a.length;
+      ctx.moveTo((a[n-1].x + a[0].x) / 2, (a[n-1].y + a[0].y) / 2);
+      for (let i = 0; i < n; i++) {
+        const p = a[i], q = a[(i + 1) % n];
+        ctx.quadraticCurveTo(p.x, p.y, (p.x + q.x) / 2, (p.y + q.y) / 2);
+      }
+      ctx.closePath();
+    } else {
+      ctx.moveTo(a[0].x, a[0].y);
+      for (let i = 1; i < a.length - 1; i++) {
+        const p = a[i], q = a[i + 1];
+        ctx.quadraticCurveTo(p.x, p.y, (p.x + q.x) / 2, (p.y + q.y) / 2);
+      }
+      ctx.lineTo(a[a.length-1].x, a[a.length-1].y);
+    }
+  }
+
+  // ---------- Colour helpers ----------
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const mk = (h, s, l) => ({ h, s, l });
+  function rgb2hsl([r, g, b]) {
+    r /= 255; g /= 255; b /= 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+    let h = 0, s = 0;
+    if (d) {
+      s = d / (1 - Math.abs(2 * l - 1));
+      h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      h = (h * 60 + 360) % 360;
+    }
+    return { h, s, l };
+  }
+  // css colour from {h,s,l} with optional lightness / saturation / hue / alpha shifts
+  const hsl = (c, dl = 0, ds = 0, dh = 0, a = 1) =>
+    `hsla(${(c.h + dh + 360) % 360},${clamp(c.s + ds, 0, 1) * 100}%,${clamp(c.l + dl, 0.04, 0.96) * 100}%,${a})`;
+
+  function hatch(ctx, spacing, lw, bg = '#fff', fg = '#111') {
+    const c = document.createElement('canvas'); c.width = c.height = spacing;
+    const x = c.getContext('2d');
+    x.fillStyle = bg; x.fillRect(0, 0, spacing, spacing);
+    x.strokeStyle = fg; x.lineWidth = lw; x.lineCap = 'square';
+    x.beginPath();
+    x.moveTo(-1, spacing + 1); x.lineTo(spacing + 1, -1);
+    x.moveTo(-1, 1); x.lineTo(1, -1);
+    x.moveTo(spacing - 1, spacing + 1); x.lineTo(spacing + 1, spacing - 1);
+    x.stroke();
+    return ctx.createPattern(c, 'repeat');
+  }
+
+  // lm: normalized landmarks, src: canvas with the (already mirrored) photo
+  function drawIllustration(lm, src) {
+    const sw = src.width, sh = src.height;
+    const W = 900, H = 1200;
+    out.width = W; out.height = H;
+    const ctx = out.getContext('2d');
+    const sctx = src.getContext('2d', { willReadFrequently: true });
+    const L = lm.map(p => ({ x: p.x * sw, y: p.y * sh }));
+
+    // average colour of a patch of the photo
+    const avg = (x, y, r) => {
+      x = clamp(Math.round(x), r, sw - r - 1); y = clamp(Math.round(y), r, sh - r - 1);
+      const d = sctx.getImageData(x - r, y - r, 2*r + 1, 2*r + 1).data;
+      let R = 0, G = 0, B = 0; const n = d.length / 4;
+      for (let i = 0; i < d.length; i += 4) { R += d[i]; G += d[i+1]; B += d[i+2]; }
+      return [R / n, G / n, B / n];
+    };
+    const mean = arr => [0, 1, 2].map(k => arr.reduce((s, c) => s + c[k], 0) / arr.length);
+    const lumOf = ([r, g, b]) => 0.299*r + 0.587*g + 0.114*b;
+    const lum = (x, y, r) => lumOf(avg(x, y, r));
+
+    let minx = 1e9, maxx = -1e9, miny = 1e9, maxy = -1e9;
+    OVAL.forEach(i => {
+      minx = Math.min(minx, L[i].x); maxx = Math.max(maxx, L[i].x);
+      miny = Math.min(miny, L[i].y); maxy = Math.max(maxy, L[i].y);
+    });
+    const fw0 = maxx - minx, fh0 = maxy - miny;
+    const pr = Math.max(4, Math.round(fw0 * 0.04));
+
+    // ---- sample colours from the photo ----
+    const hairRGB = mean([10, 67, 297].map(i => avg(L[i].x, L[i].y - fh0 * 0.08, pr)));
+    const hairLum = lumOf(hairRGB);
+    const skinRGB = mean([50, 280, 205, 425].map(i => avg(L[i].x, L[i].y, 6)));
+    const lumA = lum(L[50].x, L[50].y, 6), lumB = lum(L[280].x, L[280].y, 6);
+    const shadeIdx = lumA < lumB ? 50 : 280;
+    const shadeStrength = Math.abs(lumA - lumB);
+
+    const skin = rgb2hsl(skinRGB); skin.s = clamp(skin.s, 0.25, 0.7); skin.l = clamp(skin.l, 0.28, 0.84);
+    const hair = rgb2hsl(hairRGB); hair.s = clamp(hair.s * 1.15, 0, 0.9); hair.l = clamp(hair.l, 0.07, 0.78);
+    const irisRGB = mean([468, 473].map(i => avg(L[i].x, L[i].y, Math.max(2, Math.round(fw0 * 0.008)))));
+    const iris = rgb2hsl(irisRGB); iris.s = clamp(iris.s * 1.4 + 0.1, 0.3, 0.9); iris.l = clamp(iris.l, 0.25, 0.5);
+
+    // shirt colour: sample below the chin, fall back to a bright palette if it just hit skin
+    const shirtRGB = avg(L[152].x, L[152].y + fh0 * 0.8, pr);
+    const nearSkin = Math.hypot(shirtRGB[0] - skinRGB[0], shirtRGB[1] - skinRGB[1], shirtRGB[2] - skinRGB[2]) < 45;
+    const palette = [mk(220, .8, .5), mk(350, .75, .55), mk(170, .65, .4), mk(35, .9, .52), mk(265, .6, .55)];
+    const shirt = nearSkin ? palette[Math.floor(Math.random() * palette.length)]
+                           : (() => { const c = rgb2hsl(shirtRGB); c.s = clamp(c.s * 1.1, 0, 0.9); c.l = clamp(c.l, 0.12, 0.78); return c; })();
+    const bgHue = shirt.s > 0.15 ? shirt.h + 160 : skin.h + 200;
+    const bgC = mk(bgHue, 0.7, 0.85), dotC = mk(bgHue, 0.7, 0.6), haloC = mk(bgHue + 40, 0.9, 0.78);
+
+    // fit the face into the frame
+    const s = Math.min(W * 0.42 / fw0, H * 0.30 / fh0);
+    const cx0 = (minx + maxx) / 2, cy0 = (miny + maxy) / 2;
+    const c = { x: W / 2, y: H * 0.40 };
+    const pts = L.map(p => ({ x: (p.x - cx0) * s + c.x, y: (p.y - cy0) * s + c.y }));
+    const pick = idx => idx.map(i => pts[i]);
+    const FW = fw0 * s, FH = fh0 * s;
+    const lw = W / 150;
+    const dist = (a, b) => Math.hypot(pts[a].x - pts[b].x, pts[a].y - pts[b].y);
+    const dir = pts[shadeIdx].x < c.x ? -1 : 1;
+    const skinFill = hsl(skin);
+
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.strokeStyle = '#111'; ctx.lineWidth = lw;
+
+    // background: coloured paper + halftone dots
+    ctx.fillStyle = hsl(bgC); ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = hsl(dotC);
+    const g = 26, maxD = Math.hypot(W / 2, H / 2);
+    for (let y = g / 2, row = 0; y < H; y += g, row++) {
+      for (let x = (row % 2 ? g : g / 2); x < W; x += g) {
+        const d = Math.hypot(x - W / 2, y - H * 0.45) / maxD;
+        const r = Math.max(0, (d - 0.5) * g * 0.95);
+        if (r > 0.6) { ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); }
+      }
+    }
+    // halo behind the head
+    ctx.beginPath(); ctx.arc(c.x, c.y + FH * 0.05, FH * 0.8, 0, 7);
+    ctx.fillStyle = hsl(haloC); ctx.fill(); ctx.stroke();
+
+    // hair style from sampled tone
+    const hairMode = hairLum < 90 ? 'solid' : hairLum < 165 ? 'dense' : 'light';
+    const hairFill = hairMode === 'solid' ? hsl(hair)
+      : hairMode === 'dense' ? hatch(ctx, 7, 3, hsl(hair, 0.08), hsl(hair, -0.16))
+      : hatch(ctx, 12, 2.5, hsl(hair, 0.1), hsl(hair, -0.2));
+
+    const n = HAIR_ARC.length;
+    const edge = HAIR_ARC.map(i => pts[i]);
+    const outer = edge.map((p, k) => {
+      const t = k / (n - 1);
+      return { x: c.x + (p.x - c.x) * 1.26, y: c.y + (p.y - c.y) * 1.22 - FH * 0.07 * Math.sin(Math.PI * t) };
+    });
+    const hairline = edge.map((p, k) => {
+      const t = k / (n - 1), s2 = Math.sin(Math.PI * t);
+      return { x: p.x, y: p.y + FH * 0.15 * s2 * (0.55 + 0.9 * t) };
+    });
+    const dropY = c.y + FH * 0.32;
+    const rDrop = { x: outer[n-1].x - FW * 0.02, y: dropY };
+    const lDrop = { x: outer[0].x + FW * 0.02, y: dropY };
+
+    // back hair
+    smoothPath(ctx, outer.concat([rDrop, lDrop]), true);
+    ctx.fillStyle = hairFill; ctx.fill(); ctx.stroke();
+
+    // ears
+    [234, 454].forEach(i => {
+      const p = pts[i], d = p.x < c.x ? -1 : 1;
+      ctx.beginPath();
+      ctx.ellipse(p.x + d * FW * 0.025, p.y + FH * 0.02, FW * 0.055, FW * 0.09, 0, 0, 7);
+      ctx.fillStyle = skinFill; ctx.fill(); ctx.stroke();
+    });
+
+    // neck
+    const chinY = pts[152].y;
+    const nl = c.x - FW * 0.2, nr = c.x + FW * 0.2, nTop = chinY - FH * 0.1, nBot = chinY + FH * 0.45;
+    ctx.beginPath(); ctx.rect(nl, nTop, nr - nl, nBot - nTop);
+    ctx.fillStyle = skinFill; ctx.fill(); ctx.stroke();
+    ctx.save();
+    ctx.beginPath(); ctx.rect(nl + lw / 2, chinY - FH * 0.02, nr - nl - lw, FH * 0.12); ctx.clip();
+    ctx.fillStyle = hatch(ctx, 8, 2.5, hsl(skin, -0.12, 0.05, -4), hsl(skin, -0.3, 0.1, -8));
+    ctx.fillRect(nl, chinY - FH * 0.02, nr - nl, FH * 0.12);
+    ctx.restore();
+
+    // shirt
+    const sy = chinY + FH * 0.34;
+    ctx.beginPath();
+    ctx.moveTo(-20, H + 20);
+    ctx.lineTo(-20, sy + FH * 0.45);
+    ctx.quadraticCurveTo(c.x - FW * 0.75, sy + FH * 0.05, nl, sy - FH * 0.02);
+    ctx.lineTo(nr, sy - FH * 0.02);
+    ctx.quadraticCurveTo(c.x + FW * 0.75, sy + FH * 0.05, W + 20, sy + FH * 0.45);
+    ctx.lineTo(W + 20, H + 20);
+    ctx.closePath();
+    ctx.fillStyle = hatch(ctx, 12, 2.4, hsl(shirt), hsl(shirt, -0.13)); ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(nl, sy - FH * 0.02); ctx.lineTo(nr, sy - FH * 0.02); ctx.lineTo(c.x, sy + FH * 0.2); ctx.closePath();
+    ctx.fillStyle = hsl(skin, -0.05); ctx.fill(); ctx.stroke();
+
+    // face
+    const oval = pick(OVAL);
+    smoothPath(ctx, oval, true);
+    ctx.fillStyle = skinFill; ctx.fill();
+    ctx.save();
+    ctx.clip();
+    if (shadeStrength > 10) {
+      const sp = shadeStrength > 30 ? 8 : 12;
+      const x0 = c.x + dir * FW * 0.12, x1 = c.x + dir * FW;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(Math.min(x0, x1), c.y - FH, Math.abs(x1 - x0), FH * 2); ctx.clip();
+      ctx.fillStyle = hsl(skin, -0.1, 0.08, -4, 0.35); ctx.fillRect(c.x - FW, c.y - FH, FW * 2, FH * 2);
+      ctx.strokeStyle = hsl(skin, -0.22, 0.1, -8); ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      for (let k = -H; k < W + H; k += sp) { ctx.moveTo(k, c.y + FH); ctx.lineTo(k + FH * 2, c.y - FH); }
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+    ctx.strokeStyle = '#111'; ctx.lineWidth = lw * 1.2;
+    smoothPath(ctx, oval, true); ctx.stroke();
+    ctx.lineWidth = lw;
+
+    // blush: coloured halftone dots
+    ctx.fillStyle = hsl(mk(350, 0.75, clamp(skin.l - 0.1, 0.4, 0.6)));
+    [50, 280].forEach(i => {
+      const p = pts[i];
+      for (let a = -2; a <= 2; a++) for (let b = -1; b <= 1; b++) {
+        const rr = FW * 0.012 * (1 - Math.hypot(a / 2.5, b / 1.5) * 0.55);
+        ctx.beginPath();
+        ctx.arc(p.x + a * FW * 0.03 + (b % 2 ? FW * 0.015 : 0), p.y + FH * 0.035 + b * FW * 0.026, Math.max(0.6, rr), 0, 7);
+        ctx.fill();
+      }
+    });
+
+    // eyes
+    [[R_EYE, R_LID, 468, 33], [L_EYE, L_LID, 473, 263]].forEach(([eye, lid, ic, outerCorner]) => {
+      smoothPath(ctx, pick(eye), true);
+      ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.save(); ctx.clip();
+      const irisR = ((dist(ic, ic + 1) + dist(ic, ic + 2) + dist(ic, ic + 3) + dist(ic, ic + 4)) / 4) * 1.2;
+      ctx.fillStyle = hsl(iris);
+      ctx.beginPath(); ctx.arc(pts[ic].x, pts[ic].y, irisR, 0, 7); ctx.fill();
+      ctx.fillStyle = '#111';
+      ctx.beginPath(); ctx.arc(pts[ic].x, pts[ic].y, irisR * 0.5, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#111'; ctx.lineWidth = lw * 0.5;
+      ctx.beginPath(); ctx.arc(pts[ic].x, pts[ic].y, irisR, 0, 7); ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(pts[ic].x - irisR * 0.35, pts[ic].y - irisR * 0.35, irisR * 0.3, 0, 7); ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle = '#111'; ctx.lineWidth = lw * 0.8;
+      smoothPath(ctx, pick(eye), true); ctx.stroke();
+      ctx.lineWidth = lw * 2.2;
+      smoothPath(ctx, pick(lid), false); ctx.stroke();
+      const o = pts[outerCorner], d = o.x < c.x ? -1 : 1;
+      ctx.lineWidth = lw * 1.6;
+      ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(o.x + d * FW * 0.05, o.y - FH * 0.03); ctx.stroke();
+    });
+
+    // eyebrows
+    [[R_BROW_U, R_BROW_L], [L_BROW_U, L_BROW_L]].forEach(([u, l]) => {
+      const poly = pick(u).concat(pick(l).reverse());
+      smoothPath(ctx, poly, true);
+      ctx.fillStyle = hsl(hair, -0.2); ctx.lineWidth = lw * 0.6; ctx.fill(); ctx.stroke();
+    });
+
+    // nose
+    ctx.lineWidth = lw; ctx.strokeStyle = '#111';
+    smoothPath(ctx, [pts[98], pts[97], pts[2], pts[326], pts[327]], false); ctx.stroke();
+    const a193 = pts[193], b417 = pts[417];
+    const side = ((dir < 0) === (a193.x < b417.x)) ? a193 : b417;
+    const wing = ((dir < 0) === (pts[98].x < pts[327].x)) ? pts[98] : pts[327];
+    ctx.lineWidth = lw * 0.8;
+    ctx.beginPath(); ctx.moveTo(side.x, side.y + FH * 0.02);
+    ctx.quadraticCurveTo(side.x, wing.y - FH * 0.02, wing.x, wing.y - FH * 0.01); ctx.stroke();
+
+    // mouth (red hatched lips)
+    ctx.lineWidth = lw;
+    const lip = mk(350, clamp(skin.s + 0.15, 0.4, 0.8), clamp(skin.l - 0.2, 0.3, 0.55));
+    smoothPath(ctx, pick(LIPS_OUT), true);
+    ctx.fillStyle = hatch(ctx, 6, 2, hsl(lip), hsl(lip, -0.16)); ctx.fill(); ctx.stroke();
+    const open = dist(13, 14) / dist(61, 291);
+    if (open > 0.05) {
+      smoothPath(ctx, pick(LIPS_IN), true);
+      ctx.fillStyle = '#3b1018'; ctx.fill();
+      if (open > 0.1) {
+        ctx.save(); smoothPath(ctx, pick(LIPS_IN), true); ctx.clip();
+        ctx.fillStyle = '#fff';
+        const top = pts[13].y, hgt = pts[14].y - pts[13].y;
+        ctx.fillRect(pts[78].x, top - 2, pts[308].x - pts[78].x, hgt * 0.4);
+        ctx.restore();
+      }
+    }
+    ctx.lineWidth = lw * 1.1;
+    smoothPath(ctx, pick(LIPS_IN), true); ctx.stroke();
+
+    // fringe (hair in front of the forehead)
+    smoothPath(ctx, edge.concat(hairline.slice().reverse()), true);
+    ctx.fillStyle = hairFill; ctx.fill();
+    ctx.lineWidth = lw; ctx.stroke();
+
+    // hair strands
+    ctx.strokeStyle = hairMode === 'solid' ? hsl(hair, 0.28, -0.1) : hsl(hair, -0.28);
+    ctx.lineWidth = lw * 0.55;
+    for (let k = 2; k <= n - 3; k += 2) {
+      const h = hairline[k], o = outer[k];
+      ctx.beginPath(); ctx.moveTo(h.x, h.y);
+      ctx.quadraticCurveTo((h.x + o.x) / 2 + dir * FW * 0.04, (h.y + o.y) / 2 - FH * 0.03, o.x, o.y);
+      ctx.stroke();
+    }
+
+    // frame + signature
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 18; ctx.lineJoin = 'miter';
+    ctx.strokeRect(9, 9, W - 18, H - 18);
+    ctx.font = '900 34px Helvetica, Arial, sans-serif'; ctx.textAlign = 'right';
+    const tw = ctx.measureText('SelfApp').width;
+    ctx.fillStyle = '#111'; ctx.fillRect(W - 40 - tw - 14, H - 40 - 38, tw + 28, 54);
+    ctx.fillStyle = '#fff'; ctx.fillText('SelfApp', W - 40, H - 40);
+  }
+
+  function showResult() {
+    video.style.display = 'none';
+    out.style.display = 'block';
+    camControls.classList.add('hidden');
+    resultControls.classList.remove('hidden');
+    phoneBox.classList.remove('hidden');
+    say('Your illustration is ready! Retake it or send it.');
+  }
+
+  async function illustrate(srcEl, sw, sh, mirror) {
+    const scale = Math.min(1, 960 / sw);
+    const tmp = document.createElement('canvas');
+    tmp.width = Math.round(sw * scale); tmp.height = Math.round(sh * scale);
+    const t = tmp.getContext('2d', { willReadFrequently: true });
+    if (mirror) { t.translate(tmp.width, 0); t.scale(-1, 1); }
+    t.drawImage(srcEl, 0, 0, tmp.width, tmp.height);
+    const res = landmarker.detect(tmp);
+    if (!res.faceLandmarks || !res.faceLandmarks.length) return false;
+    drawIllustration(res.faceLandmarks[0], tmp);
+    return true;
+  }
+
+  // ---------- Capture ----------
+  async function takeSelfie() {
+    if (busy || !landmarker) return;
+    busy = true; updateSnap(); say('');
+    count.style.display = 'flex';
+    for (let n = 3; n > 0; n--) { count.textContent = n; await new Promise(r => setTimeout(r, 800)); }
+    count.style.display = 'none';
+    $('flash').classList.remove('go'); void $('flash').offsetWidth; $('flash').classList.add('go');
+    drawingEl.style.display = 'flex';
+    await new Promise(r => setTimeout(r, 60));
+    let ok = false;
+    try { ok = await illustrate(video, video.videoWidth, video.videoHeight, true); } catch (e) { console.error(e); }
+    drawingEl.style.display = 'none';
+    busy = false;
+    if (ok) { stopCamera(); showResult(); }
+    else { say("I couldn't find your face. Look at the camera, add some light, and try again."); updateSnap(); }
+  }
+
+  $('file').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    if (!landmarker) { try { await loadModel(); } catch (err) { say('Could not load the illustration engine. Check your connection.'); return; } }
+    const im = new Image();
+    im.onload = async () => {
+      drawingEl.style.display = 'flex';
+      await new Promise(r => setTimeout(r, 60));
+      let ok = false;
+      try { ok = await illustrate(im, im.naturalWidth, im.naturalHeight, false); } catch (err) { console.error(err); }
+      drawingEl.style.display = 'none';
+      URL.revokeObjectURL(im.src);
+      if (ok) { stopCamera(); msg.hidden = true; showResult(); }
+      else say("I couldn't find a face in that photo. Try another one.");
+    };
+    im.src = URL.createObjectURL(f);
+  });
+
+  // ---------- Share ----------
+  const toBlob = () => new Promise(res => out.toBlob(res, 'image/png'));
+
+  function downloadBlob(blob) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'selfapp.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+
+  async function sendWhatsApp() {
+    const blob = await toBlob();
+    const file = new File([blob], 'selfapp.png', { type: 'image/png' });
+    const text = 'Look at my SelfApp illustration! 🎨';
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], text });
+        say('Pick WhatsApp in the share sheet to send it.');
+        return;
+      } catch (e) { if (e.name === 'AbortError') return; }
+    }
+    // Fallback (desktop): save image, open WhatsApp chat
+    downloadBlob(blob);
+    const num = $('phone').value.replace(/\D/g, '');
+    const url = 'https://wa.me/' + (num ? num : '') + '?text=' + encodeURIComponent(text);
+    window.open(url, '_blank', 'noopener');
+    say('Image saved. In WhatsApp, attach selfapp.png from your downloads.');
+  }
+
+  snap.addEventListener('click', takeSelfie);
+  $('retake').addEventListener('click', () => { say(''); startCamera(); });
+  $('send').addEventListener('click', sendWhatsApp);
+  $('download').addEventListener('click', async () => downloadBlob(await toBlob()));
+
+  // ---------- Boot ----------
+  say('Loading the illustrator…');
+  loadModel().then(() => { say(''); updateSnap(); })
+    .catch(() => say('Could not load the illustration engine. Check your internet connection and reload the page.'));
+  startCamera();
+})();
+</script>
+
+<script>
+document.getElementById('modeSwitch').addEventListener('click', function (e) {
+  e.preventDefault();
+  var a = this; a.classList.toggle('color');
+  setTimeout(function () { location.href = a.getAttribute('href'); }, 260);
+});
+</script>
+</body>
+</html>
