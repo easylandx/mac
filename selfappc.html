@@ -53,8 +53,8 @@
   .hidden { display:none !important; }
   .vh { position:absolute; width:1px; height:1px; opacity:0; overflow:hidden; pointer-events:none; }
   label.btn { position:relative; }
-  .phone { width:min(92vw,420px); margin-top:18px; display:flex; flex-direction:column; gap:6px; font-size:.85rem; }
-  .phone input { font:inherit; padding:12px 14px; border:3px solid var(--ink); border-radius:10px; background:#fff; }
+  .hint { margin-top:16px; font-size:.9rem; text-align:center; max-width:420px; opacity:.7; }
+  .hint.hidden { display:none; }
   .toast { margin-top:16px; font-size:.9rem; min-height:1.2em; text-align:center; max-width:420px; }
   .flash { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; }
   .flash.go { animation:flash .35s ease-out; }
@@ -103,10 +103,7 @@
     <button id="download">⬇ Save PNG</button>
   </div>
 
-  <div class="phone hidden" id="phoneBox">
-    <label for="phone">WhatsApp number (optional – leave empty to choose a contact in WhatsApp)</label>
-    <input id="phone" type="tel" inputmode="tel" placeholder="34600123456">
-  </div>
+  <p class="hint" id="hint">On WhatsApp Web, choose a contact, then press Ctrl+V.</p>
 
   <div class="toast" id="toast"></div>
   <div class="flash" id="flash"></div>
@@ -116,7 +113,7 @@
   const $ = id => document.getElementById(id);
   const video = $('video'), out = $('out'), msg = $('msg'), snap = $('snap');
   const camControls = $('camControls'), resultControls = $('resultControls');
-  const phoneBox = $('phoneBox'), toast = $('toast'), count = $('count'), drawingEl = $('drawing');
+  const hint = $('hint'), toast = $('toast'), count = $('count'), drawingEl = $('drawing');
   let stream = null, busy = false, camReady = false, landmarker = null, modelPromise = null;
 
   const say = t => toast.textContent = t || '';
@@ -147,7 +144,6 @@
     out.style.display = 'none';
     video.style.display = 'block';
     resultControls.classList.add('hidden');
-    phoneBox.classList.add('hidden');
     camControls.classList.remove('hidden');
     try {
       stream = await navigator.mediaDevices.getUserMedia({
@@ -498,8 +494,6 @@
     out.style.display = 'block';
     camControls.classList.add('hidden');
     resultControls.classList.remove('hidden');
-    phoneBox.classList.remove('hidden');
-    say('Your illustration is ready! Retake it or send it.');
   }
 
   async function illustrate(srcEl, sw, sh, mirror) {
@@ -579,8 +573,7 @@
 
     // Desktop / web: open WhatsApp Web (contact chooser) + copy image to clipboard.
     // Both must start synchronously inside the click so the browser allows them.
-    const num = $('phone').value.replace(/\D/g, '');
-    const url = 'https://web.whatsapp.com/send?' + (num ? 'phone=' + num + '&' : '') + 'text=' + encodeURIComponent(text);
+    const url = 'https://web.whatsapp.com/send?' + 'text=' + encodeURIComponent(text);
     let copied = false;
     const copyP = (navigator.clipboard && window.ClipboardItem)
       ? navigator.clipboard.write([new ClipboardItem({ 'image/png': toBlob() })]).then(() => { copied = true; }).catch(() => {})
