@@ -3,38 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SelfApp</title>
+<title>SelfApp Colour</title>
 <style>
   :root { --ink:#111; --paper:#f5f2ea; --accent:#25D366; }
   * { box-sizing:border-box; margin:0; padding:0; }
   body {
     min-height:100vh; background:var(--paper); color:var(--ink);
     font-family:"Helvetica Neue",Arial,sans-serif;
-    display:flex; flex-direction:column; align-items:center; padding:24px 16px 40px;
+    display:flex; flex-direction:column; align-items:center; padding-block:24px 40px; padding-inline:20px;
   }
   h1 { font-size:clamp(1.8rem,6vw,2.8rem); letter-spacing:-1px; font-weight:900; }
-  h1 span { background:var(--ink); color:var(--paper); padding:0 .25em; }
+  h1 span { background:linear-gradient(90deg,#ff4d6d,#ff9f1c,#2ec4b6); color:#111; padding:0 .25em; }
   .sub { margin:6px 0 20px; font-size:.95rem; opacity:.7; text-align:center; max-width:420px; }
   .frame {
     position:relative; width:min(92vw,420px); aspect-ratio:3/4;
     background:#fff; border:4px solid var(--ink); border-radius:14px;
     box-shadow:8px 8px 0 var(--ink); overflow:hidden;
   }
-  video, canvas.view {
+  video, canvas#out {
     position:absolute; inset:0; width:100%; height:100%; object-fit:cover; background:#fff;
   }
-  video { transform:scaleX(-1); display:none; }
-  canvas.view { display:none; }
+  video { transform:scaleX(-1); }
+  canvas#out { display:none; }
   .msg {
-    position:absolute; inset:0; display:flex; flex-direction:column; gap:10px; align-items:center; justify-content:center;
-    text-align:center; padding:24px; font-size:.95rem; line-height:1.4; background:#fff; cursor:pointer;
-    background-image:radial-gradient(#11111122 1.4px, transparent 1.6px); background-size:16px 16px;
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    text-align:center; padding:24px; font-size:.95rem; line-height:1.4; background:#fff;
   }
-  .msg big { font-size:3rem; }
-  .msg b { font-size:1.15rem; }
-  .msg small { opacity:.6; }
   .msg[hidden] { display:none; }
-  .frame.drag { outline:5px dashed var(--accent); outline-offset:-12px; }
   .countdown {
     position:absolute; inset:0; display:none; align-items:center; justify-content:center;
     font-size:7rem; font-weight:900; color:#fff; text-shadow:4px 4px 0 #000;
@@ -56,8 +51,6 @@
   button.wa { background:var(--accent); }
   button:disabled { opacity:.5; cursor:not-allowed; }
   .hidden { display:none !important; }
-  .slider { width:min(92vw,420px); margin-top:22px; display:flex; align-items:center; gap:12px; font-weight:800; font-size:.85rem; }
-  .slider input { flex:1; accent-color:var(--ink); }
   .phone { width:min(92vw,420px); margin-top:18px; display:flex; flex-direction:column; gap:6px; font-size:.85rem; }
   .phone input { font:inherit; padding:12px 14px; border:3px solid var(--ink); border-radius:10px; background:#fff; }
   .toast { margin-top:16px; font-size:.9rem; min-height:1.2em; text-align:center; max-width:420px; }
@@ -68,40 +61,27 @@
 </head>
 <body>
   <h1>Self<span>App</span></h1>
-  <p class="sub">Upload any photo (or snap a selfie) and SelfApp draws it as a black &amp; white ink illustration.</p>
+  <p class="sub">Snap a selfie and SelfApp draws you as a full-colour ink illustration.</p>
 
-  <div class="frame" id="frame">
+  <div class="frame">
     <video id="video" autoplay playsinline muted></video>
-    <canvas class="view" id="out"></canvas>
-    <canvas class="view" id="cmp"></canvas>
+    <canvas id="out"></canvas>
     <div class="countdown" id="count"></div>
     <div class="drawing" id="drawing">✏️ Drawing you…</div>
-    <div class="msg" id="msg"><big>🖼️</big><b>Drop a photo here</b><span>or tap to choose one</span><small>Best results: one face, looking roughly at the camera</small></div>
+    <div class="msg" id="msg">Starting camera…</div>
   </div>
 
-  <input type="file" id="file" accept="image/*" hidden>
-
-  <div class="controls" id="idleControls">
-    <button class="primary" id="uploadBtn">🖼️ Upload photo</button>
-    <button id="camBtn">📸 Use camera</button>
-  </div>
-
-  <div class="controls hidden" id="camControls">
+  <div class="controls" id="camControls">
     <button class="primary" id="snap" disabled>📸 Take selfie</button>
-    <button id="camBack">← Back</button>
+    <label class="btn hidden" id="uploadBtn">🖼️ Upload photo
+      <input type="file" id="file" accept="image/*" capture="user" hidden>
+    </label>
   </div>
 
   <div class="controls hidden" id="resultControls">
-    <button class="primary" id="another">🖼️ New photo</button>
-    <button id="camAgain">📸 Camera</button>
-    <button id="compare">👁 Compare</button>
+    <button id="retake">↺ Retake</button>
     <button class="wa" id="send">💬 Send via WhatsApp</button>
     <button id="download">⬇ Save PNG</button>
-  </div>
-
-  <div class="slider hidden" id="shadeBox">
-    <label for="shade">Shading</label>
-    <input type="range" id="shade" min="0" max="100" value="50">
   </div>
 
   <div class="phone hidden" id="phoneBox">
@@ -111,76 +91,57 @@
 
   <div class="toast" id="toast"></div>
   <div class="flash" id="flash"></div>
+
 <script>
 (() => {
   const $ = id => document.getElementById(id);
-  const W = 900, H = 1200;
-  const video = $('video'), out = $('out'), cmp = $('cmp'), msg = $('msg'), snap = $('snap'), frame = $('frame');
-  const idleControls = $('idleControls'), camControls = $('camControls'), resultControls = $('resultControls');
-  const phoneBox = $('phoneBox'), shadeBox = $('shadeBox'), toast = $('toast'), count = $('count'), drawingEl = $('drawing');
-  let stream = null, busy = false, camReady = false;
-  let landmarker = null, segmenter = null, mpLib = null, fileset = null, modelPromise = null, segPromise = null;
-  let cap = null;
-
-  const FACE_URL = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
-  const SEG_URL = 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite';
+  const video = $('video'), out = $('out'), msg = $('msg'), snap = $('snap');
+  const camControls = $('camControls'), resultControls = $('resultControls');
+  const phoneBox = $('phoneBox'), toast = $('toast'), count = $('count'), drawingEl = $('drawing');
+  let stream = null, busy = false, camReady = false, landmarker = null, modelPromise = null;
 
   const say = t => toast.textContent = t || '';
   const updateSnap = () => { snap.disabled = !(camReady && landmarker) || busy; };
-  const wait = ms => new Promise(r => setTimeout(r, ms));
 
-  // ---------- Models (load once, need internet) ----------
+  // ---------- Face model (loads once, needs internet) ----------
   function loadModel() {
     if (modelPromise) return modelPromise;
     modelPromise = (async () => {
       const base = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
-      mpLib = await import(base + '/+esm');
-      fileset = await mpLib.FilesetResolver.forVisionTasks(base + '/wasm');
-      const make = async (Cls, url, extra) => {
-        for (const delegate of ['GPU', 'CPU']) {
-          try {
-            return await Cls.createFromOptions(fileset, Object.assign({
-              baseOptions: { modelAssetPath: url, delegate }, runningMode: 'IMAGE'
-            }, extra));
-          } catch (e) { if (delegate === 'CPU') throw e; }
-        }
-      };
-      landmarker = await make(mpLib.FaceLandmarker, FACE_URL, { numFaces: 4 });
-      // optional: hair segmentation (makes the hair match the photo). Drawing still works without it.
-      segPromise = make(mpLib.ImageSegmenter, SEG_URL, { outputCategoryMask: true, outputConfidenceMasks: false })
-        .then(s => { segmenter = s; })
-        .catch(e => console.warn('Hair segmenter unavailable, using generic hair.', e));
+      const mp = await import(base + '/+esm');
+      const fileset = await mp.FilesetResolver.forVisionTasks(base + '/wasm');
+      const opts = delegate => ({
+        baseOptions: {
+          modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+          delegate
+        },
+        runningMode: 'IMAGE', numFaces: 1
+      });
+      try { landmarker = await mp.FaceLandmarker.createFromOptions(fileset, opts('GPU')); }
+      catch (e) { landmarker = await mp.FaceLandmarker.createFromOptions(fileset, opts('CPU')); }
       return landmarker;
     })().catch(err => { modelPromise = null; throw err; });
     return modelPromise;
   }
 
-  // ---------- Camera ----------
-  function setMode(m) {
-    idleControls.classList.toggle('hidden', m !== 'idle');
-    camControls.classList.toggle('hidden', m !== 'camera');
-    resultControls.classList.toggle('hidden', m !== 'result');
-    shadeBox.classList.toggle('hidden', m !== 'result');
-    phoneBox.classList.toggle('hidden', m !== 'result');
-    video.style.display = m === 'camera' ? 'block' : 'none';
-    out.style.display = m === 'result' ? 'block' : 'none';
-    cmp.style.display = 'none';
-    msg.hidden = m !== 'idle';
-    if (m !== 'camera') stopCamera();
-  }
-
   async function startCamera() {
-    setMode('camera'); say('');
+    out.style.display = 'none';
+    video.style.display = 'block';
+    resultControls.classList.add('hidden');
+    phoneBox.classList.add('hidden');
+    camControls.classList.remove('hidden');
     try {
       stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false
       });
       video.srcObject = stream;
       await video.play();
+      msg.hidden = true;
       camReady = true;
     } catch (e) {
-      setMode('idle');
-      say('Camera unavailable. Allow camera access, or upload a photo instead.');
+      msg.hidden = false;
+      msg.textContent = 'Camera unavailable. Allow camera access, or upload a photo instead.';
+      $('uploadBtn').classList.remove('hidden');
       camReady = false;
     }
     updateSnap();
@@ -191,7 +152,7 @@
     stream = null; camReady = false;
   }
 
-  // ---------- Geometry tables (MediaPipe face mesh indices) ----------
+  // ---------- Illustration drawing ----------
   const OVAL = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
   const HAIR_ARC = [234,127,162,21,54,103,67,109,10,338,297,332,284,251,389,356,454];
   const R_EYE = [33,7,163,144,145,153,154,155,133,173,157,158,159,160,161,246];
@@ -202,33 +163,6 @@
   const L_BROW_U = [300,293,334,296,336], L_BROW_L = [276,283,282,295,285];
   const LIPS_OUT = [61,146,91,181,84,17,314,405,321,375,291,409,270,269,267,0,37,39,40,185];
   const LIPS_IN = [78,95,88,178,87,14,317,402,318,324,308,415,310,311,312,13,82,81,80,191];
-
-  // ---------- Small helpers ----------
-  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const sstep = (x, e0, e1) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
-  const makeCanvas = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; return c; };
-
-  function boxBlur(a, w, h, r) {
-    if (r < 1) return a;
-    const t = new Float32Array(a.length), n = 2 * r + 1;
-    for (let y = 0; y < h; y++) {
-      const o = y * w; let sum = 0;
-      for (let k = -r; k <= r; k++) sum += a[o + clamp(k, 0, w - 1)];
-      for (let x = 0; x < w; x++) {
-        t[o + x] = sum / n;
-        sum += a[o + Math.min(w - 1, x + r + 1)] - a[o + Math.max(0, x - r)];
-      }
-    }
-    for (let x = 0; x < w; x++) {
-      let sum = 0;
-      for (let k = -r; k <= r; k++) sum += t[clamp(k, 0, h - 1) * w + x];
-      for (let y = 0; y < h; y++) {
-        a[y * w + x] = sum / n;
-        sum += t[Math.min(h - 1, y + r + 1) * w + x] - t[Math.max(0, y - r) * w + x];
-      }
-    }
-    return a;
-  }
 
   function smoothPath(ctx, a, close) {
     ctx.beginPath();
@@ -250,11 +184,29 @@
     }
   }
 
-  function hatch(ctx, spacing, lw) {
+  // ---------- Colour helpers ----------
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const mk = (h, s, l) => ({ h, s, l });
+  function rgb2hsl([r, g, b]) {
+    r /= 255; g /= 255; b /= 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+    let h = 0, s = 0;
+    if (d) {
+      s = d / (1 - Math.abs(2 * l - 1));
+      h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      h = (h * 60 + 360) % 360;
+    }
+    return { h, s, l };
+  }
+  // css colour from {h,s,l} with optional lightness / saturation / hue / alpha shifts
+  const hsl = (c, dl = 0, ds = 0, dh = 0, a = 1) =>
+    `hsla(${(c.h + dh + 360) % 360},${clamp(c.s + ds, 0, 1) * 100}%,${clamp(c.l + dl, 0.04, 0.96) * 100}%,${a})`;
+
+  function hatch(ctx, spacing, lw, bg = '#fff', fg = '#111') {
     const c = document.createElement('canvas'); c.width = c.height = spacing;
     const x = c.getContext('2d');
-    x.fillStyle = '#fff'; x.fillRect(0, 0, spacing, spacing);
-    x.strokeStyle = '#111'; x.lineWidth = lw; x.lineCap = 'square';
+    x.fillStyle = bg; x.fillRect(0, 0, spacing, spacing);
+    x.strokeStyle = fg; x.lineWidth = lw; x.lineCap = 'square';
     x.beginPath();
     x.moveTo(-1, spacing + 1); x.lineTo(spacing + 1, -1);
     x.moveTo(-1, 1); x.lineTo(1, -1);
@@ -263,42 +215,26 @@
     return ctx.createPattern(c, 'repeat');
   }
 
-  // full-canvas parallel lines
-  function linesCanvas(angle, spacing, lw, color, offset) {
-    const c = makeCanvas(), x = c.getContext('2d');
-    x.strokeStyle = color; x.lineWidth = lw;
-    x.translate(W / 2, H / 2); x.rotate(angle);
-    const R = Math.hypot(W, H) / 2 + 10;
-    x.beginPath();
-    for (let k = -R + (offset || 0); k <= R; k += spacing) { x.moveTo(-R, k); x.lineTo(R, k); }
-    x.stroke();
-    return c;
-  }
-  // canvas whose alpha = fn(pixelIndex) (0..1), solid colour
-  function alphaCanvas(fn, color) {
-    const c = makeCanvas(), x = c.getContext('2d'), id = x.createImageData(W, H), d = id.data;
-    const v = color === '#fff' ? 255 : 17;
-    for (let i = 0; i < W * H; i++) {
-      const a = fn(i);
-      if (a > 0.003) { const j = i * 4; d[j] = d[j+1] = d[j+2] = v; d[j+3] = Math.round(255 * Math.min(1, a)); }
-    }
-    x.putImageData(id, 0, 0);
-    return c;
-  }
-  function intersect(a, b) {
-    const c = makeCanvas(), x = c.getContext('2d');
-    x.drawImage(a, 0, 0); x.globalCompositeOperation = 'destination-in'; x.drawImage(b, 0, 0);
-    return c;
-  }
-  // draw `lines` only where alpha fn is > 0
-  function hatchWhere(ctx, lines, fn) { ctx.drawImage(intersect(lines, alphaCanvas(fn)), 0, 0); }
-
-  // ---------- Analysis: everything that depends only on the photo ----------
-  function prepare(c0) {
-    const { lm, src, seg } = c0;
+  // lm: normalized landmarks, src: canvas with the (already mirrored) photo
+  function drawIllustration(lm, src) {
     const sw = src.width, sh = src.height;
+    const W = 900, H = 1200;
+    out.width = W; out.height = H;
+    const ctx = out.getContext('2d');
     const sctx = src.getContext('2d', { willReadFrequently: true });
     const L = lm.map(p => ({ x: p.x * sw, y: p.y * sh }));
+
+    // average colour of a patch of the photo
+    const avg = (x, y, r) => {
+      x = clamp(Math.round(x), r, sw - r - 1); y = clamp(Math.round(y), r, sh - r - 1);
+      const d = sctx.getImageData(x - r, y - r, 2*r + 1, 2*r + 1).data;
+      let R = 0, G = 0, B = 0; const n = d.length / 4;
+      for (let i = 0; i < d.length; i += 4) { R += d[i]; G += d[i+1]; B += d[i+2]; }
+      return [R / n, G / n, B / n];
+    };
+    const mean = arr => [0, 1, 2].map(k => arr.reduce((s, c) => s + c[k], 0) / arr.length);
+    const lumOf = ([r, g, b]) => 0.299*r + 0.587*g + 0.114*b;
+    const lum = (x, y, r) => lumOf(avg(x, y, r));
 
     let minx = 1e9, maxx = -1e9, miny = 1e9, maxy = -1e9;
     OVAL.forEach(i => {
@@ -306,135 +242,48 @@
       miny = Math.min(miny, L[i].y); maxy = Math.max(maxy, L[i].y);
     });
     const fw0 = maxx - minx, fh0 = maxy - miny;
+    const pr = Math.max(4, Math.round(fw0 * 0.04));
 
-    const lum = (x, y, r) => {
-      x = clamp(Math.round(x), r, sw - r - 1); y = clamp(Math.round(y), r, sh - r - 1);
-      const d = sctx.getImageData(x - r, y - r, 2*r + 1, 2*r + 1).data;
-      let s = 0; for (let i = 0; i < d.length; i += 4) s += 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
-      return s / (d.length / 4);
-    };
-    const hairLumFallback = lum(L[10].x, L[10].y - fh0 * 0.08, Math.max(4, Math.round(fw0 * 0.04)));
+    // ---- sample colours from the photo ----
+    const hairRGB = mean([10, 67, 297].map(i => avg(L[i].x, L[i].y - fh0 * 0.08, pr)));
+    const hairLum = lumOf(hairRGB);
+    const skinRGB = mean([50, 280, 205, 425].map(i => avg(L[i].x, L[i].y, 6)));
     const lumA = lum(L[50].x, L[50].y, 6), lumB = lum(L[280].x, L[280].y, 6);
     const shadeIdx = lumA < lumB ? 50 : 280;
+    const shadeStrength = Math.abs(lumA - lumB);
 
+    const skin = rgb2hsl(skinRGB); skin.s = clamp(skin.s, 0.25, 0.7); skin.l = clamp(skin.l, 0.28, 0.84);
+    const hair = rgb2hsl(hairRGB); hair.s = clamp(hair.s * 1.15, 0, 0.9); hair.l = clamp(hair.l, 0.07, 0.78);
+    const irisRGB = mean([468, 473].map(i => avg(L[i].x, L[i].y, Math.max(2, Math.round(fw0 * 0.008)))));
+    const iris = rgb2hsl(irisRGB); iris.s = clamp(iris.s * 1.4 + 0.1, 0.3, 0.9); iris.l = clamp(iris.l, 0.25, 0.5);
+
+    // shirt colour: sample below the chin, fall back to a bright palette if it just hit skin
+    const shirtRGB = avg(L[152].x, L[152].y + fh0 * 0.8, pr);
+    const nearSkin = Math.hypot(shirtRGB[0] - skinRGB[0], shirtRGB[1] - skinRGB[1], shirtRGB[2] - skinRGB[2]) < 45;
+    const palette = [mk(220, .8, .5), mk(350, .75, .55), mk(170, .65, .4), mk(35, .9, .52), mk(265, .6, .55)];
+    const shirt = nearSkin ? palette[Math.floor(Math.random() * palette.length)]
+                           : (() => { const c = rgb2hsl(shirtRGB); c.s = clamp(c.s * 1.1, 0, 0.9); c.l = clamp(c.l, 0.12, 0.78); return c; })();
+    const bgHue = shirt.s > 0.15 ? shirt.h + 160 : skin.h + 200;
+    const bgC = mk(bgHue, 0.7, 0.85), dotC = mk(bgHue, 0.7, 0.6), haloC = mk(bgHue + 40, 0.9, 0.78);
+
+    // fit the face into the frame
     const s = Math.min(W * 0.42 / fw0, H * 0.30 / fh0);
     const cx0 = (minx + maxx) / 2, cy0 = (miny + maxy) / 2;
     const c = { x: W / 2, y: H * 0.40 };
     const pts = L.map(p => ({ x: (p.x - cx0) * s + c.x, y: (p.y - cy0) * s + c.y }));
+    const pick = idx => idx.map(i => pts[i]);
     const FW = fw0 * s, FH = fh0 * s;
     const lw = W / 150;
-    const dir = pts[shadeIdx].x < c.x ? -1 : 1;
-
-    // photo re-projected into illustration space + greyscale
-    const ph = makeCanvas(), pc = ph.getContext('2d', { willReadFrequently: true });
-    pc.fillStyle = '#808080'; pc.fillRect(0, 0, W, H);
-    pc.setTransform(s, 0, 0, s, c.x - cx0 * s, c.y - cy0 * s);
-    pc.imageSmoothingQuality = 'high';
-    pc.drawImage(src, 0, 0);
-    pc.setTransform(1, 0, 0, 1, 0, 0);
-    const pd = pc.getImageData(0, 0, W, H).data;
-    const G = new Float32Array(W * H);
-    for (let i = 0; i < W * H; i++) G[i] = 0.299 * pd[i*4] + 0.587 * pd[i*4+1] + 0.114 * pd[i*4+2];
-
-    // hair mask (from segmentation), mapped into illustration space
-    let hairA = null, hairPx = 0;
-    if (seg) {
-      const mc = document.createElement('canvas'); mc.width = seg.w; mc.height = seg.h;
-      const mx = mc.getContext('2d'), id = mx.createImageData(seg.w, seg.h);
-      for (let i = 0; i < seg.data.length; i++) if (seg.data[i] === 1) id.data[i*4+3] = 255;
-      mx.putImageData(id, 0, 0);
-      const oc = makeCanvas(), ox = oc.getContext('2d', { willReadFrequently: true });
-      ox.imageSmoothingEnabled = true; ox.imageSmoothingQuality = 'high';
-      ox.setTransform(s * sw / seg.w, 0, 0, s * sh / seg.h, c.x - cx0 * s, c.y - cy0 * s);
-      ox.drawImage(mc, 0, 0);
-      const od = ox.getImageData(0, 0, W, H).data;
-      hairA = new Float32Array(W * H);
-      for (let i = 0; i < W * H; i++) hairA[i] = od[i*4+3] / 255;
-      const br = Math.max(2, Math.round(FW * 0.009));
-      boxBlur(hairA, W, H, br); boxBlur(hairA, W, H, br);
-      // keep only hair around the chosen face (ignores other people)
-      const x0 = c.x - FW * 1.45, x1 = c.x + FW * 1.45, y0 = c.y - FH * 1.4, y1 = c.y + FH * 2.1;
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-        const i = y * W + x;
-        if (x < x0 || x > x1 || y < y0 || y > y1) { hairA[i] = 0; continue; }
-        const v = sstep(hairA[i], 0.38, 0.62);
-        hairA[i] = v; if (v > 0.5) hairPx++;
-      }
-    }
-
-    // face mask (alpha) from the landmark oval
-    const oval = OVAL.map(i => pts[i]);
-    const fm = makeCanvas(), fx = fm.getContext('2d', { willReadFrequently: true });
-    smoothPath(fx, oval, true); fx.fillStyle = '#000'; fx.fill();
-    const fd = fx.getImageData(0, 0, W, H).data;
-    const faceA = new Float32Array(W * H);
-    for (let i = 0; i < W * H; i++) faceA[i] = fd[i*4+3] / 255;
-
-    // smoothed tone map of the face -> z-score (positive = darker than the rest of the face)
-    const Gf = G.slice(); const rf = Math.max(2, Math.round(FW * 0.02));
-    boxBlur(Gf, W, H, rf); boxBlur(Gf, W, H, rf);
-    let n = 0, sum = 0, sum2 = 0;
-    for (let i = 0; i < W * H; i++) {
-      if (faceA[i] > 0.95 && !(hairA && hairA[i] > 0.3)) { const g = Gf[i]; n++; sum += g; sum2 += g * g; }
-    }
-    const fmean = n ? sum / n : 128, fstd = n ? Math.max(8, Math.sqrt(Math.max(0, sum2 / n - fmean * fmean))) : 30;
-    const zFace = new Float32Array(W * H);
-    for (let i = 0; i < W * H; i++) zFace[i] = (fmean - Gf[i]) / fstd;
-
-    // hair tone
-    let hmean = hairLumFallback, hstd = 30, zHair = null;
-    const hairVisible = hairA && hairPx > FW * FH * 0.12;
-    if (hairVisible) {
-      const Gh = G.slice(); boxBlur(Gh, W, H, Math.max(1, Math.round(FW * 0.007)));
-      let hn = 0, hs = 0, hs2 = 0;
-      for (let i = 0; i < W * H; i++) if (hairA[i] > 0.9) { const g = Gh[i]; hn++; hs += g; hs2 += g * g; }
-      hmean = hs / hn; hstd = Math.max(8, Math.sqrt(Math.max(0, hs2 / hn - hmean * hmean)));
-      zHair = new Float32Array(W * H);
-      for (let i = 0; i < W * H; i++) zHair[i] = (hmean - Gh[i]) / hstd;
-    }
-
-    // are the teeth visible?
-    let teeth = 0;
-    try {
-      const poly = LIPS_IN.map(i => L[i]);
-      let X0 = 1e9, X1 = -1e9, Y0 = 1e9, Y1 = -1e9;
-      poly.forEach(p => { X0 = Math.min(X0, p.x); X1 = Math.max(X1, p.x); Y0 = Math.min(Y0, p.y); Y1 = Math.max(Y1, p.y); });
-      const xx = clamp(Math.floor(X0), 0, sw - 2), yy = clamp(Math.floor(Y0), 0, sh - 2);
-      const bw = Math.min(Math.ceil(X1 - X0) + 1, sw - xx), bh = Math.min(Math.ceil(Y1 - Y0) + 1, sh - yy);
-      if (bw > 4 && bh > 3) {
-        const md = sctx.getImageData(xx, yy, bw, bh).data;
-        const path = new Path2D(); poly.forEach((p, i) => i ? path.lineTo(p.x, p.y) : path.moveTo(p.x, p.y)); path.closePath();
-        const probe = document.createElement('canvas').getContext('2d');
-        let inside = 0, bright = 0;
-        for (let y = 0; y < bh; y += 2) for (let x = 0; x < bw; x += 2) {
-          if (!probe.isPointInPath(path, xx + x + 0.5, yy + y + 0.5)) continue;
-          const j = (y * bw + x) * 4, r = md[j], g = md[j+1], b = md[j+2];
-          inside++;
-          if (0.299*r + 0.587*g + 0.114*b > 140 && Math.max(r, g, b) - Math.min(r, g, b) < 75) bright++;
-        }
-        teeth = inside ? bright / inside : 0;
-      }
-    } catch (e) { console.warn(e); }
-
-    return { L, pts, s, c, FW, FH, lw, dir, ph, G, hairA, hairVisible, hmean, hstd, zHair,
-             hairLumFallback, faceA, zFace, teeth, segOK: !!seg };
-  }
-
-  // ---------- Drawing ----------
-  function render(P, shade) {
-    const { pts, c, FW, FH, lw, dir, hairA, zHair, faceA, zFace } = P;
-    out.width = W; out.height = H;
-    const ctx = out.getContext('2d');
-    const pick = idx => idx.map(i => pts[i]);
     const dist = (a, b) => Math.hypot(pts[a].x - pts[b].x, pts[a].y - pts[b].y);
-    const chinY = pts[152].y;
+    const dir = pts[shadeIdx].x < c.x ? -1 : 1;
+    const skinFill = hsl(skin);
 
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     ctx.strokeStyle = '#111'; ctx.lineWidth = lw;
 
-    // background: halftone dots
-    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#111';
+    // background: coloured paper + halftone dots
+    ctx.fillStyle = hsl(bgC); ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = hsl(dotC);
     const g = 26, maxD = Math.hypot(W / 2, H / 2);
     for (let y = g / 2, row = 0; y < H; y += g, row++) {
       for (let x = (row % 2 ? g : g / 2); x < W; x += g) {
@@ -443,51 +292,51 @@
         if (r > 0.6) { ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); }
       }
     }
+    // halo behind the head
+    ctx.beginPath(); ctx.arc(c.x, c.y + FH * 0.05, FH * 0.8, 0, 7);
+    ctx.fillStyle = hsl(haloC); ctx.fill(); ctx.stroke();
 
-    // hair mode from the photo's real hair tone
-    const hairMode = P.hmean < 95 ? 'solid' : P.hmean < 168 ? 'dense' : 'light';
-    const hairFill = hairMode === 'solid' ? '#111' : hairMode === 'dense' ? hatch(ctx, 7, 3) : hatch(ctx, 12, 2.5);
-    const useMask = P.hairVisible;
-    const bald = P.segOK && !P.hairVisible;
+    // hair style from sampled tone
+    const hairMode = hairLum < 90 ? 'solid' : hairLum < 165 ? 'dense' : 'light';
+    const hairFill = hairMode === 'solid' ? hsl(hair)
+      : hairMode === 'dense' ? hatch(ctx, 7, 3, hsl(hair, 0.08), hsl(hair, -0.16))
+      : hatch(ctx, 12, 2.5, hsl(hair, 0.1), hsl(hair, -0.2));
 
-    // generic hair geometry (fallback + bald skull)
-    const HA = HAIR_ARC.length;
+    const n = HAIR_ARC.length;
     const edge = HAIR_ARC.map(i => pts[i]);
-    const outerK = bald ? [1.04, 1.0, 0.1] : [1.26, 1.22, 0.07];
     const outer = edge.map((p, k) => {
-      const t = k / (HA - 1);
-      return { x: c.x + (p.x - c.x) * outerK[0], y: c.y + (p.y - c.y) * outerK[1] - FH * outerK[2] * Math.sin(Math.PI * t) };
+      const t = k / (n - 1);
+      return { x: c.x + (p.x - c.x) * 1.26, y: c.y + (p.y - c.y) * 1.22 - FH * 0.07 * Math.sin(Math.PI * t) };
     });
     const hairline = edge.map((p, k) => {
-      const t = k / (HA - 1), s2 = Math.sin(Math.PI * t);
+      const t = k / (n - 1), s2 = Math.sin(Math.PI * t);
       return { x: p.x, y: p.y + FH * 0.15 * s2 * (0.55 + 0.9 * t) };
     });
+    const dropY = c.y + FH * 0.32;
+    const rDrop = { x: outer[n-1].x - FW * 0.02, y: dropY };
+    const lDrop = { x: outer[0].x + FW * 0.02, y: dropY };
 
-    if (bald) {
-      smoothPath(ctx, outer, true); ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
-    } else if (!useMask) {
-      const dropY = c.y + FH * 0.32;
-      const rDrop = { x: outer[HA-1].x - FW * 0.02, y: dropY };
-      const lDrop = { x: outer[0].x + FW * 0.02, y: dropY };
-      smoothPath(ctx, outer.concat([rDrop, lDrop]), true);
-      ctx.fillStyle = hairFill; ctx.fill(); ctx.stroke();
-    }
+    // back hair
+    smoothPath(ctx, outer.concat([rDrop, lDrop]), true);
+    ctx.fillStyle = hairFill; ctx.fill(); ctx.stroke();
 
     // ears
     [234, 454].forEach(i => {
       const p = pts[i], d = p.x < c.x ? -1 : 1;
       ctx.beginPath();
       ctx.ellipse(p.x + d * FW * 0.025, p.y + FH * 0.02, FW * 0.055, FW * 0.09, 0, 0, 7);
-      ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+      ctx.fillStyle = skinFill; ctx.fill(); ctx.stroke();
     });
 
     // neck
+    const chinY = pts[152].y;
     const nl = c.x - FW * 0.2, nr = c.x + FW * 0.2, nTop = chinY - FH * 0.1, nBot = chinY + FH * 0.45;
     ctx.beginPath(); ctx.rect(nl, nTop, nr - nl, nBot - nTop);
-    ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+    ctx.fillStyle = skinFill; ctx.fill(); ctx.stroke();
     ctx.save();
     ctx.beginPath(); ctx.rect(nl + lw / 2, chinY - FH * 0.02, nr - nl - lw, FH * 0.12); ctx.clip();
-    ctx.fillStyle = hatch(ctx, 8, 2.5); ctx.fillRect(nl, chinY - FH * 0.02, nr - nl, FH * 0.12);
+    ctx.fillStyle = hatch(ctx, 8, 2.5, hsl(skin, -0.12, 0.05, -4), hsl(skin, -0.3, 0.1, -8));
+    ctx.fillRect(nl, chinY - FH * 0.02, nr - nl, FH * 0.12);
     ctx.restore();
 
     // shirt
@@ -500,27 +349,36 @@
     ctx.quadraticCurveTo(c.x + FW * 0.75, sy + FH * 0.05, W + 20, sy + FH * 0.45);
     ctx.lineTo(W + 20, H + 20);
     ctx.closePath();
-    ctx.fillStyle = '#111'; ctx.fill(); ctx.stroke();
+    ctx.fillStyle = hatch(ctx, 12, 2.4, hsl(shirt), hsl(shirt, -0.13)); ctx.fill(); ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(nl, sy - FH * 0.02); ctx.lineTo(nr, sy - FH * 0.02); ctx.lineTo(c.x, sy + FH * 0.2); ctx.closePath();
-    ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+    ctx.fillStyle = hsl(skin, -0.05); ctx.fill(); ctx.stroke();
 
-    // face: white, then ink hatching that follows the real light & shadow of the photo
+    // face
     const oval = pick(OVAL);
-    smoothPath(ctx, oval, true); ctx.fillStyle = '#fff'; ctx.fill();
-    {
-      const t1 = 0.5 + (0.5 - shade) * 1.5, t2 = t1 + 0.8, t3 = t1 + 1.6;
-      const sp = W / 100, lwh = W / 400;
-      hatchWhere(ctx, linesCanvas(-Math.PI / 4, sp, lwh, '#111'), i => faceA[i] * sstep(zFace[i], t1 - 0.1, t1 + 0.1));
-      hatchWhere(ctx, linesCanvas(Math.PI / 4, sp, lwh, '#111'), i => faceA[i] * sstep(zFace[i], t2 - 0.1, t2 + 0.1));
-      hatchWhere(ctx, linesCanvas(0, sp * 0.6, lwh * 1.1, '#111'), i => faceA[i] * sstep(zFace[i], t3 - 0.1, t3 + 0.1));
+    smoothPath(ctx, oval, true);
+    ctx.fillStyle = skinFill; ctx.fill();
+    ctx.save();
+    ctx.clip();
+    if (shadeStrength > 10) {
+      const sp = shadeStrength > 30 ? 8 : 12;
+      const x0 = c.x + dir * FW * 0.12, x1 = c.x + dir * FW;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(Math.min(x0, x1), c.y - FH, Math.abs(x1 - x0), FH * 2); ctx.clip();
+      ctx.fillStyle = hsl(skin, -0.1, 0.08, -4, 0.35); ctx.fillRect(c.x - FW, c.y - FH, FW * 2, FH * 2);
+      ctx.strokeStyle = hsl(skin, -0.22, 0.1, -8); ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      for (let k = -H; k < W + H; k += sp) { ctx.moveTo(k, c.y + FH); ctx.lineTo(k + FH * 2, c.y - FH); }
+      ctx.stroke();
+      ctx.restore();
     }
+    ctx.restore();
     ctx.strokeStyle = '#111'; ctx.lineWidth = lw * 1.2;
     smoothPath(ctx, oval, true); ctx.stroke();
     ctx.lineWidth = lw;
 
-    // blush: halftone dots
-    ctx.fillStyle = '#111';
+    // blush: coloured halftone dots
+    ctx.fillStyle = hsl(mk(350, 0.75, clamp(skin.l - 0.1, 0.4, 0.6)));
     [50, 280].forEach(i => {
       const p = pts[i];
       for (let a = -2; a <= 2; a++) for (let b = -1; b <= 1; b++) {
@@ -531,34 +389,18 @@
       }
     });
 
-    // hair that follows the photo's real hair silhouette
-    if (useMask) {
-      const body = alphaCanvas(i => hairA[i], '#111');
-      const r = lw * 0.95;
-      for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2; ctx.drawImage(body, Math.cos(a) * r, Math.sin(a) * r); }
-      const hs = Math.max(1, W / 450);
-      if (hairMode === 'solid') {
-        ctx.drawImage(body, 0, 0);
-        hatchWhere(ctx, linesCanvas(-1.15, 15, hs * 1.6, '#fff'), i => hairA[i] * sstep(-zHair[i], 0.05, 0.3));
-        hatchWhere(ctx, linesCanvas(-1.15, 7.5, hs * 2.1, '#fff', 3), i => hairA[i] * sstep(-zHair[i], 0.85, 1.1));
-      } else {
-        ctx.drawImage(alphaCanvas(i => hairA[i], '#fff'), 0, 0);
-        const sp = hairMode === 'dense' ? 6 : 11, lh = hairMode === 'dense' ? hs * 2.6 : hs * 2.1;
-        const base = hairMode === 'dense' ? -0.4 : -0.7;
-        hatchWhere(ctx, linesCanvas(-1.15, sp, lh, '#111'), i => hairA[i] * sstep(zHair[i], base - 0.1, base + 0.1));
-        hatchWhere(ctx, linesCanvas(0.45, sp * 1.1, lh * 0.9, '#111'), i => hairA[i] * sstep(zHair[i], 0.7, 0.9));
-        if (hairMode === 'dense') hatchWhere(ctx, linesCanvas(-1.15, sp, lh * 1.2, '#111', sp / 2), i => hairA[i] * sstep(zHair[i], 1.4, 1.6));
-      }
-    }
-
     // eyes
     [[R_EYE, R_LID, 468, 33], [L_EYE, L_LID, 473, 263]].forEach(([eye, lid, ic, outerCorner]) => {
       smoothPath(ctx, pick(eye), true);
       ctx.fillStyle = '#fff'; ctx.fill();
       ctx.save(); ctx.clip();
       const irisR = ((dist(ic, ic + 1) + dist(ic, ic + 2) + dist(ic, ic + 3) + dist(ic, ic + 4)) / 4) * 1.2;
-      ctx.fillStyle = '#111';
+      ctx.fillStyle = hsl(iris);
       ctx.beginPath(); ctx.arc(pts[ic].x, pts[ic].y, irisR, 0, 7); ctx.fill();
+      ctx.fillStyle = '#111';
+      ctx.beginPath(); ctx.arc(pts[ic].x, pts[ic].y, irisR * 0.5, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#111'; ctx.lineWidth = lw * 0.5;
+      ctx.beginPath(); ctx.arc(pts[ic].x, pts[ic].y, irisR, 0, 7); ctx.stroke();
       ctx.fillStyle = '#fff';
       ctx.beginPath(); ctx.arc(pts[ic].x - irisR * 0.35, pts[ic].y - irisR * 0.35, irisR * 0.3, 0, 7); ctx.fill();
       ctx.restore();
@@ -575,7 +417,7 @@
     [[R_BROW_U, R_BROW_L], [L_BROW_U, L_BROW_L]].forEach(([u, l]) => {
       const poly = pick(u).concat(pick(l).reverse());
       smoothPath(ctx, poly, true);
-      ctx.fillStyle = '#111'; ctx.lineWidth = lw * 0.6; ctx.fill(); ctx.stroke();
+      ctx.fillStyle = hsl(hair, -0.2); ctx.lineWidth = lw * 0.6; ctx.fill(); ctx.stroke();
     });
 
     // nose
@@ -588,165 +430,105 @@
     ctx.beginPath(); ctx.moveTo(side.x, side.y + FH * 0.02);
     ctx.quadraticCurveTo(side.x, wing.y - FH * 0.02, wing.x, wing.y - FH * 0.01); ctx.stroke();
 
-    // mouth
+    // mouth (red hatched lips)
     ctx.lineWidth = lw;
+    const lip = mk(350, clamp(skin.s + 0.15, 0.4, 0.8), clamp(skin.l - 0.2, 0.3, 0.55));
     smoothPath(ctx, pick(LIPS_OUT), true);
-    ctx.fillStyle = hatch(ctx, 6, 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = hatch(ctx, 6, 2, hsl(lip), hsl(lip, -0.16)); ctx.fill(); ctx.stroke();
     const open = dist(13, 14) / dist(61, 291);
     if (open > 0.05) {
       smoothPath(ctx, pick(LIPS_IN), true);
-      ctx.fillStyle = '#111'; ctx.fill();
-      if (P.teeth > 0.18) {
+      ctx.fillStyle = '#3b1018'; ctx.fill();
+      if (open > 0.1) {
         ctx.save(); smoothPath(ctx, pick(LIPS_IN), true); ctx.clip();
         ctx.fillStyle = '#fff';
         const top = pts[13].y, hgt = pts[14].y - pts[13].y;
-        ctx.fillRect(pts[78].x, top - 2, pts[308].x - pts[78].x, hgt * clamp(0.25 + P.teeth * 0.9, 0.3, 0.8));
+        ctx.fillRect(pts[78].x, top - 2, pts[308].x - pts[78].x, hgt * 0.4);
         ctx.restore();
       }
     }
     ctx.lineWidth = lw * 1.1;
     smoothPath(ctx, pick(LIPS_IN), true); ctx.stroke();
 
-    // generic fringe + strands (only when the hair silhouette is unavailable)
-    if (!useMask && !bald) {
-      smoothPath(ctx, edge.concat(hairline.slice().reverse()), true);
-      ctx.fillStyle = hairFill; ctx.fill();
-      ctx.lineWidth = lw; ctx.stroke();
-      ctx.strokeStyle = hairMode === 'solid' ? '#fff' : '#111';
-      ctx.lineWidth = lw * 0.55;
-      for (let k = 2; k <= HA - 3; k += 2) {
-        const h = hairline[k], o = outer[k];
-        ctx.beginPath(); ctx.moveTo(h.x, h.y);
-        ctx.quadraticCurveTo((h.x + o.x) / 2 + dir * FW * 0.04, (h.y + o.y) / 2 - FH * 0.03, o.x, o.y);
-        ctx.stroke();
-      }
+    // fringe (hair in front of the forehead)
+    smoothPath(ctx, edge.concat(hairline.slice().reverse()), true);
+    ctx.fillStyle = hairFill; ctx.fill();
+    ctx.lineWidth = lw; ctx.stroke();
+
+    // hair strands
+    ctx.strokeStyle = hairMode === 'solid' ? hsl(hair, 0.28, -0.1) : hsl(hair, -0.28);
+    ctx.lineWidth = lw * 0.55;
+    for (let k = 2; k <= n - 3; k += 2) {
+      const h = hairline[k], o = outer[k];
+      ctx.beginPath(); ctx.moveTo(h.x, h.y);
+      ctx.quadraticCurveTo((h.x + o.x) / 2 + dir * FW * 0.04, (h.y + o.y) / 2 - FH * 0.03, o.x, o.y);
+      ctx.stroke();
     }
 
     // frame + signature
     ctx.strokeStyle = '#111'; ctx.lineWidth = 18; ctx.lineJoin = 'miter';
     ctx.strokeRect(9, 9, W - 18, H - 18);
-    ctx.fillStyle = '#fff'; ctx.font = '900 34px Helvetica, Arial, sans-serif'; ctx.textAlign = 'right';
-    ctx.fillText('SelfApp', W - 40, H - 40);
-  }
-
-  // ---------- Detect face (+ hair) in any image ----------
-  function runSeg(canvas) {
-    if (!segmenter) return null;
-    try {
-      const r = segmenter.segment(canvas), m = r.categoryMask;
-      if (!m) { r.close && r.close(); return null; }
-      const o = { data: new Uint8Array(m.getAsUint8Array()), w: m.width, h: m.height };
-      r.close && r.close();
-      return o.data.length === o.w * o.h ? o : null;
-    } catch (e) { console.warn('segmentation failed', e); return null; }
-  }
-
-  async function analyse(srcEl, sw, sh, mirror) {
-    if (segPromise) await Promise.race([segPromise, wait(20000)]);
-    const base = Math.min(1, 1280 / Math.max(sw, sh));
-    const iw = Math.round(sw * base), ih = Math.round(sh * base);
-    for (const pad of [0, 0.4]) {            // second pass adds a margin for tightly-cropped faces
-      const px = Math.round(Math.max(iw, ih) * pad);
-      const tmp = document.createElement('canvas');
-      tmp.width = iw + 2 * px; tmp.height = ih + 2 * px;
-      const t = tmp.getContext('2d', { willReadFrequently: true });
-      t.fillStyle = '#fff'; t.fillRect(0, 0, tmp.width, tmp.height);
-      if (mirror) { t.translate(tmp.width, 0); t.scale(-1, 1); }
-      t.drawImage(srcEl, px, px, iw, ih);
-      t.setTransform(1, 0, 0, 1, 0, 0);
-      const res = landmarker.detect(tmp);
-      if (res.faceLandmarks && res.faceLandmarks.length) {
-        let best = res.faceLandmarks[0], bestA = -1;
-        res.faceLandmarks.forEach(f => {      // several faces? pick the biggest
-          let a = 1e9, b = -1e9, c = 1e9, d = -1e9;
-          f.forEach(p => { a = Math.min(a, p.x); b = Math.max(b, p.x); c = Math.min(c, p.y); d = Math.max(d, p.y); });
-          const area = (b - a) * (d - c); if (area > bestA) { bestA = area; best = f; }
-        });
-        return { lm: best, src: tmp, seg: runSeg(tmp) };
-      }
-    }
-    return null;
+    ctx.font = '900 34px Helvetica, Arial, sans-serif'; ctx.textAlign = 'right';
+    const tw = ctx.measureText('SelfApp').width;
+    ctx.fillStyle = '#111'; ctx.fillRect(W - 40 - tw - 14, H - 40 - 38, tw + 28, 54);
+    ctx.fillStyle = '#fff'; ctx.fillText('SelfApp', W - 40, H - 40);
   }
 
   function showResult() {
-    setMode('result');
-    say(cap.P.segOK ? 'Your illustration is ready!' : 'Ready! (Hair detail model unavailable, using generic hair.)');
-  }
-
-  function doRender() {
-    render(cap.P, $('shade').value / 100);
-    cmp.width = W; cmp.height = H;
-    cmp.getContext('2d').drawImage(cap.P.ph, 0, 0);
+    video.style.display = 'none';
+    out.style.display = 'block';
+    camControls.classList.add('hidden');
+    resultControls.classList.remove('hidden');
+    phoneBox.classList.remove('hidden');
+    say('Your illustration is ready! Retake it or send it.');
   }
 
   async function illustrate(srcEl, sw, sh, mirror) {
-    const c0 = await analyse(srcEl, sw, sh, mirror);
-    if (!c0) return false;
-    c0.P = prepare(c0);
-    cap = c0;
-    doRender();
+    const scale = Math.min(1, 960 / sw);
+    const tmp = document.createElement('canvas');
+    tmp.width = Math.round(sw * scale); tmp.height = Math.round(sh * scale);
+    const t = tmp.getContext('2d', { willReadFrequently: true });
+    if (mirror) { t.translate(tmp.width, 0); t.scale(-1, 1); }
+    t.drawImage(srcEl, 0, 0, tmp.width, tmp.height);
+    const res = landmarker.detect(tmp);
+    if (!res.faceLandmarks || !res.faceLandmarks.length) return false;
+    drawIllustration(res.faceLandmarks[0], tmp);
     return true;
   }
 
-  // ---------- Capture / upload ----------
+  // ---------- Capture ----------
   async function takeSelfie() {
     if (busy || !landmarker) return;
     busy = true; updateSnap(); say('');
     count.style.display = 'flex';
-    for (let n = 3; n > 0; n--) { count.textContent = n; await wait(800); }
+    for (let n = 3; n > 0; n--) { count.textContent = n; await new Promise(r => setTimeout(r, 800)); }
     count.style.display = 'none';
     $('flash').classList.remove('go'); void $('flash').offsetWidth; $('flash').classList.add('go');
     drawingEl.style.display = 'flex';
-    await wait(60);
+    await new Promise(r => setTimeout(r, 60));
     let ok = false;
     try { ok = await illustrate(video, video.videoWidth, video.videoHeight, true); } catch (e) { console.error(e); }
     drawingEl.style.display = 'none';
     busy = false;
-    if (ok) showResult();
+    if (ok) { stopCamera(); showResult(); }
     else { say("I couldn't find your face. Look at the camera, add some light, and try again."); updateSnap(); }
   }
 
-  async function handleFile(f) {
-    if (!f || !f.type.startsWith('image/')) { say('Please choose an image file.'); return; }
-    if (busy) return;
-    busy = true; say('');
-    drawingEl.style.display = 'flex';
-    try {
-      if (!landmarker) await loadModel();
-    } catch (err) {
-      drawingEl.style.display = 'none'; busy = false;
-      say('Could not load the illustration engine. Check your connection.'); return;
-    }
-    const url = URL.createObjectURL(f);
+  $('file').addEventListener('change', async e => {
+    const f = e.target.files[0]; if (!f) return;
+    if (!landmarker) { try { await loadModel(); } catch (err) { say('Could not load the illustration engine. Check your connection.'); return; } }
     const im = new Image();
     im.onload = async () => {
-      await wait(60);
+      drawingEl.style.display = 'flex';
+      await new Promise(r => setTimeout(r, 60));
       let ok = false;
       try { ok = await illustrate(im, im.naturalWidth, im.naturalHeight, false); } catch (err) { console.error(err); }
-      drawingEl.style.display = 'none'; busy = false;
-      URL.revokeObjectURL(url);
-      if (ok) { stopCamera(); showResult(); }
-      else say("I couldn't find a face in that photo. Try one where the face is clearly visible.");
+      drawingEl.style.display = 'none';
+      URL.revokeObjectURL(im.src);
+      if (ok) { msg.hidden = true; showResult(); }
+      else say("I couldn't find a face in that photo. Try another one.");
     };
-    im.onerror = () => { drawingEl.style.display = 'none'; busy = false; URL.revokeObjectURL(url); say('That image could not be opened. Try a JPG or PNG.'); };
-    im.src = url;
-  }
-
-  const fileInput = $('file');
-  const pickFile = () => { fileInput.value = ''; fileInput.click(); };
-  fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
-  $('uploadBtn').addEventListener('click', pickFile);
-  $('another').addEventListener('click', pickFile);
-  msg.addEventListener('click', pickFile);
-  frame.addEventListener('dragover', e => { e.preventDefault(); frame.classList.add('drag'); });
-  frame.addEventListener('dragleave', () => frame.classList.remove('drag'));
-  frame.addEventListener('drop', e => {
-    e.preventDefault(); frame.classList.remove('drag');
-    handleFile(e.dataTransfer.files && e.dataTransfer.files[0]);
-  });
-  document.addEventListener('paste', e => {
-    const it = [...(e.clipboardData ? e.clipboardData.items : [])].find(i => i.type.startsWith('image/'));
-    if (it) handleFile(it.getAsFile());
+    im.src = URL.createObjectURL(f);
   });
 
   // ---------- Share ----------
@@ -771,6 +553,7 @@
         return;
       } catch (e) { if (e.name === 'AbortError') return; }
     }
+    // Fallback (desktop): save image, open WhatsApp chat
     downloadBlob(blob);
     const num = $('phone').value.replace(/\D/g, '');
     const url = 'https://wa.me/' + (num ? num : '') + '?text=' + encodeURIComponent(text);
@@ -778,29 +561,16 @@
     say('Image saved. In WhatsApp, attach selfapp.png from your downloads.');
   }
 
-  // ---------- Buttons ----------
   snap.addEventListener('click', takeSelfie);
-  $('camBtn').addEventListener('click', startCamera);
-  $('camAgain').addEventListener('click', startCamera);
-  $('camBack').addEventListener('click', () => { say(''); setMode('idle'); });
+  $('retake').addEventListener('click', () => { say(''); startCamera(); });
   $('send').addEventListener('click', sendWhatsApp);
   $('download').addEventListener('click', async () => downloadBlob(await toBlob()));
-  $('compare').addEventListener('click', () => {
-    const showing = cmp.style.display === 'block';
-    cmp.style.display = showing ? 'none' : 'block';
-    $('compare').textContent = showing ? '👁 Compare' : '👁 Illustration';
-  });
-  let shadeTimer = null;
-  $('shade').addEventListener('input', () => {
-    clearTimeout(shadeTimer);
-    shadeTimer = setTimeout(() => { if (cap) doRender(); }, 120);
-  });
 
   // ---------- Boot ----------
-  setMode('idle');
   say('Loading the illustrator…');
   loadModel().then(() => { say(''); updateSnap(); })
     .catch(() => say('Could not load the illustration engine. Check your internet connection and reload the page.'));
+  startCamera();
 })();
 </script>
 </body>
