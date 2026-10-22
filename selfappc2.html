@@ -66,12 +66,19 @@
   .mode.color .track { background:linear-gradient(90deg,#ff4d6d,#ff9f1c,#2ec4b6); }
   .mode.color .knob { transform:translateX(32px); }
   .mode:not(.color) .lbl.bw, .mode.color .lbl.col { opacity:1; }
+  .topbar { width:100%; max-width:420px; display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+  .topbar .mode { margin-bottom:0; }
+  .elx { font-weight:800; font-size:.8rem; color:var(--ink); background:#fff; text-decoration:none; padding:7px 12px; border:3px solid var(--ink); border-radius:999px; box-shadow:3px 3px 0 var(--ink); white-space:nowrap; -webkit-tap-highlight-color:transparent; }
+  .elx:active { transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink); }
 </style>
 </head>
 <body>
-  <a class="mode color" id="modeSwitch" href="selfapp.html" role="switch" aria-checked="true" aria-label="Switch between black and white and colour">
-    <span class="lbl bw">B/W</span><span class="track"><span class="knob"></span></span><span class="lbl col">Color</span>
-  </a>
+  <div class="topbar">
+    <a class="mode color" id="modeSwitch" href="https://easylandx.github.io/mac/selfapp.html" role="switch" aria-checked="true" aria-label="Switch between black and white and colour">
+      <span class="lbl bw">B/W</span><span class="track"><span class="knob"></span></span><span class="lbl col">Color</span>
+    </a>
+    <a class="elx" href="https://easylandx.github.io" target="_blank" rel="noopener">EasylandX ↗</a>
+  </div>
   <h1>Self<span>App</span></h1>
   <p class="sub">Snap a selfie and SelfApp draws you as a full-colour ink illustration.</p>
 
