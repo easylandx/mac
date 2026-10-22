@@ -97,7 +97,7 @@
   </div>
 
   <div class="phone hidden" id="phoneBox">
-    <label for="phone">WhatsApp number (optional, with country code, e.g. 34600123456)</label>
+    <label for="phone">WhatsApp number (optional – leave empty to choose a contact in WhatsApp)</label>
     <input id="phone" type="tel" inputmode="tel" placeholder="34600123456">
   </div>
 
@@ -555,22 +555,38 @@
   }
 
   async function sendWhatsApp() {
-    const blob = await toBlob();
-    const file = new File([blob], 'selfapp.png', { type: 'image/png' });
     const text = 'Look at my SelfApp illustration! 🎨';
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], text });
-        say('Pick WhatsApp in the share sheet to send it.');
-        return;
-      } catch (e) { if (e.name === 'AbortError') return; }
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+
+    // Mobile: native share sheet -> pick WhatsApp -> pick contact
+    if (isMobile && navigator.canShare) {
+      const blob = await toBlob();
+      const file = new File([blob], 'selfapp.png', { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], text });
+          return;
+        } catch (e) { if (e.name === 'AbortError') return; }
+      }
     }
-    // Fallback (desktop): save image, open WhatsApp chat
-    downloadBlob(blob);
+
+    // Desktop / web: open WhatsApp Web (contact chooser) + copy image to clipboard.
+    // Both must start synchronously inside the click so the browser allows them.
     const num = $('phone').value.replace(/\D/g, '');
-    const url = 'https://wa.me/' + (num ? num : '') + '?text=' + encodeURIComponent(text);
-    window.open(url, '_blank', 'noopener');
-    say('Image saved. In WhatsApp, attach selfapp.png from your downloads.');
+    const url = 'https://web.whatsapp.com/send?' + (num ? 'phone=' + num + '&' : '') + 'text=' + encodeURIComponent(text);
+    let copied = false;
+    const copyP = (navigator.clipboard && window.ClipboardItem)
+      ? navigator.clipboard.write([new ClipboardItem({ 'image/png': toBlob() })]).then(() => { copied = true; }).catch(() => {})
+      : Promise.resolve();
+    const w = window.open(url, '_blank');
+    if (!w) location.href = url;
+    await copyP;
+    if (copied) {
+      say('WhatsApp Web opened. Choose a contact, then press Ctrl+V (⌘V on Mac) in the chat to paste your image.');
+    } else {
+      downloadBlob(await toBlob());
+      say('WhatsApp Web opened. Choose a contact and attach selfapp.png (just saved to your downloads).');
+    }
   }
 
   snap.addEventListener('click', takeSelfie);
