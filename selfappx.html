@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SelfApp</title>
+<style>
+  :root { --ink:#111; --paper:#f5f2ea; --accent:#25D366; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    min-height:100vh; background:var(--paper); color:var(--ink);
+    font-family:"Helvetica Neue",Arial,sans-serif;
+    display:flex; flex-direction:column; align-items:center; padding:24px 16px 40px;
+  }
+  h1 { font-size:clamp(1.8rem,6vw,2.8rem); letter-spacing:-1px; font-weight:900; }
+  h1 span { background:var(--ink); color:var(--paper); padding:0 .25em; }
+  .sub { margin:6px 0 20px; font-size:.95rem; opacity:.7; text-align:center; max-width:420px; }
+  .frame {
+    position:relative; width:min(92vw,420px); aspect-ratio:3/4;
+    background:#fff; border:4px solid var(--ink); border-radius:14px;
+    box-shadow:8px 8px 0 var(--ink); overflow:hidden;
+  }
+  video, canvas#out {
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover; background:#fff;
+  }
+  video { transform:scaleX(-1); }
+  canvas#out { display:none; }
+  .msg {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    text-align:center; padding:24px; font-size:.95rem; line-height:1.4; background:#fff;
+  }
+  .msg[hidden] { display:none; }
+  .countdown {
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+    font-size:7rem; font-weight:900; color:#fff; text-shadow:4px 4px 0 #000;
+    pointer-events:none;
+  }
+  .drawing {
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+    background:rgba(255,255,255,.85); font-weight:900; font-size:1.3rem;
+  }
+  .controls { margin-top:30px; display:flex; flex-wrap:wrap; gap:12px; justify-content:center; width:min(92vw,420px); }
+  .controls.modes { margin-top:22px; }
+  button, .btn {
+    font:inherit; font-weight:800; font-size:1rem; cursor:pointer;
+    border:3px solid var(--ink); background:#fff; color:var(--ink);
+    padding:14px 22px; border-radius:999px; box-shadow:4px 4px 0 var(--ink);
+    transition:transform .08s, box-shadow .08s; text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+  }
+  button:active, .btn:active { transform:translate(4px,4px); box-shadow:0 0 0 var(--ink); }
+  button.primary { background:var(--ink); color:var(--paper); }
+  button.wa { background:var(--accent); }
+  button.mode.active { background:var(--ink); color:var(--paper); }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  .hidden { display:none !important; }
+  .phone { width:min(92vw,420px); margin-top:18px; display:flex; flex-direction:column; gap:6px; font-size:.85rem; }
+  .phone input { font:inherit; padding:12px 14px; border:3px solid var(--ink); border-radius:10px; background:#fff; }
+  .toast { margin-top:16px; font-size:.9rem; min-height:1.2em; text-align:center; max-width:420px; }
+  .flash { position:fixed; inset:0; background:#fff; opacity:0; pointer-events:none; }
+  .flash.go { animation:flash .35s ease-out; }
+  @keyframes flash { 0%{opacity:.9} 100%{opacity:0} }
+</style>
+</head>
+<body>
+  <h1>Self<span>App</span></h1>
+  <p class="sub">Snap a photo or upload one. SelfApp finds a woman's face or a cat and draws it as a black &amp; white ink illustration.</p>
+
+  <div class="frame">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="out"></canvas>
+    <div class="countdown" id="count"></div>
+    <div class="drawing" id="drawing">✏️ Drawing…</div>
+    <div class="msg" id="msg">Starting camera…</div>
+  </div>
+
+  <input type="file" id="file" accept="image/*" hidden>
+
+  <div class="controls" id="camControls">
+    <button class="primary" id="snap" disabled>📸 Take photo</button>
+    <label class="btn" id="uploadBtn" for="file">🖼️ Upload photo</label>
+  </div>
+
+  <div class="controls modes hidden" id="modeControls">
+    <button class="mode" id="modeFace" disabled>👩 Woman face</button>
+    <button class="mode" id="modeCat" disabled>🐱 Cat</button>
+  </div>
+
+  <div class="controls hidden" id="resultControls">
+    <button id="retake">↺ Retake</button>
+    <label class="btn" for="file">🖼️ New photo</label>
+    <button class="wa" id="send">💬 Send via WhatsApp</button>
+    <button id="download">⬇ Save PNG</button>
+  </div>
+
+  <div class="phone hidden" id="phoneBox">
+    <label for="phone">WhatsApp number (optional, with country code, e.g. 34600123456)</label>
+    <input id="phone" type="tel" inputmode="tel" placeholder="34600123456">
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="flash" id="flash"></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const video = $('video'), out = $('out'), msg = $('msg'), snap = $('snap');
+  const camControls = $('camControls'), resultControls = $('resultControls'), modeControls = $('modeControls');
+  const phoneBox = $('phoneBox'), toast = $('toast'), count = $('count'), drawingEl = $('drawing');
+  const modeFace = $('modeFace'), modeCat = $('modeCat');
+  let stream = null, busy = false, camReady = false;
+  let landmarker = null, detector = null, modelPromise = null;
+  let current = null; // { src, face, cat, mode }
+
+  const say = t => toast.textContent = t || '';
+  const updateSnap = () => { snap.disabled = !(camReady && landmarker) || busy; };
+
+  // ---------- Models (load once, need internet) ----------
+  function loadModel() {
+    if (modelPromise) return modelPromise;
+    modelPromise = (async () => {
+      const base = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+      const mp = await import(base + '/+esm');
+      const fileset = await mp.FilesetResolver.forVisionTasks(base + '/wasm');
+      const faceOpts = delegate => ({
+        baseOptions: {
+          modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+          delegate
+        },
+        runningMode: 'IMAGE', numFaces: 1
+      });
+      try { landmarker = await mp.FaceLandmarker.createFromOptions(fileset, faceOpts('GPU')); }
+      catch (e) { landmarker = await mp.FaceLandmarker.createFromOptions(fileset, faceOpts('CPU')); }
+      // cat detector is optional: if it fails, face mode still works
+      try {
+        detector = await mp.ObjectDetector.createFromOptions(fileset, {
+          baseOptions: {
+            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite',
+            delegate: 'CPU'
+          },
+          runningMode: 'IMAGE', scoreThreshold: 0.25, maxResults: 10, categoryAllowlist: ['cat']
+        });
+      } catch (e) { console.error('Cat detector unavailable', e); detector = null; }
+      return landmarker;
+    })().catch(err => { modelPromise = null; throw err; });
+    return modelPromise;
+  }
+
+  async function startCamera() {
+    out.style.display = 'none';
+    video.style.display = 'block';
+    resultControls.classList.add('hidden');
+    modeControls.classList.add('hidden');
+    phoneBox.classList.add('hidden');
+    camControls.classList.remove('hidden');
+    current = null;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false
+      });
+      video.srcObject = stream;
+      await video.play();
+      msg.hidden = true;
+      camReady = true;
+    } catch (e) {
+      msg.hidden = false;
+      msg.textContent = 'Camera unavailable. Allow camera access, or upload a photo instead.';
+      camReady = false;
+    }
+    updateSnap();
+  }
+
+  function stopCamera() {
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    stream = null; camReady = false;
+  }
+
+  // ---------- Shared drawing helpers ----------
+  function smoothPath(ctx, a, close) {
+    ctx.beginPath();
+    if (close) {
+      const n = a.length;
+      ctx.moveTo((a[n-1].x + a[0].x) / 2, (a[n-1].y + a[0].y) / 2);
+      for (let i = 0; i < n; i++) {
+        const p = a[i], q = a[(i + 1) % n];
+        ctx.quadraticCurveTo(p.x, p.y, (p.x + q.x) / 2, (p.y + q.y) / 2);
+      }
+      ctx.closePath();
+    } else {
+      ctx.moveTo(a[0].x, a[0].y);
+      for (let i = 1; i < a.length - 1; i++) {
+        const p = a[i], q = a[i + 1];
+        ctx.quadraticCurveTo(p.x, p.y, (p.x + q.x) / 2, (p.y + q.y) / 2);
+      }
+      ctx.lineTo(a[a.length-1].x, a[a.length-1].y);
+    }
+  }
+
+  function hatch(ctx, spacing, lw) {
+    const c = document.createElement('canvas'); c.width = c.height = spacing;
+    const x = c.getContext('2d');
+    x.fillStyle = '#fff'; x.fillRect(0, 0, spacing, spacing);
+    x.strokeStyle = '#111'; x.lineWidth = lw; x.lineCap = 'square';
+    x.beginPath();
+    x.moveTo(-1, spacing + 1); x.lineTo(spacing + 1, -1);
+    x.moveTo(-1, 1); x.lineTo(1, -1);
+    x.moveTo(spacing - 1, spacing + 1); x.lineTo(spacing + 1, spacing - 1);
+    x.stroke();
+    return ctx.createPattern(c, 'repeat');
+  }
+
+  function halftoneBg(ctx, W, H) {
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#111';
+    const g = 26, maxD = Math.hypot(W / 2, H / 2);
+    for (let y = g / 2, row = 0; y < H; y += g, row++) {
+      for (let x = (row % 2 ? g : g / 2); x < W; x += g) {
+        const d = Math.hypot(x - W / 2, y - H * 0.45) / maxD;
+        const r = Math.max(0, (d - 0.5) * g * 0.95);
+        if (r > 0.6) { ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); }
+      }
+    }
+  }
+
+  function frameAndSignature(ctx, W, H) {
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 18; ctx.lineJoin = 'miter';
+    ctx.strokeRect(9, 9, W - 18, H - 18);
+    ctx.fillStyle = '#fff'; ctx.font = '900 34px Helvetica, Arial, sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('SelfApp', W - 40, H - 40);
+  }
+
+  // ---------- Woman face illustration ----------
+  const OVAL = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
+  const HAIR_ARC = [234,127,162,21,54,103,67,109,10,338,297,332,284,251,389,356,454];
+  const R_EYE = [33,7,163,144,145,153,154,155,133,173,157,158,159,160,161,246];
+  const L_EYE = [362,382,381,380,374,373,390,249,263,466,388,387,386,385,384,398];
+  const R_LID = [33,246,161,160,159,158,157,173,133];
+  const L_LID = [263,466,388,387,386,385,384,398,362];
+  const R_BROW_U = [70,63,105,66,107], R_BROW_L = [46,53,52,65,55];
+  const L_BROW_U = [300,293,334,296,336], L_BROW_L = [276,283,282,295,285];
+  const LIPS_OUT = [61,146,91,181,84,17,314,405,321,375,291,409,270,269,267,0,37,39,40,185];
+  const LIPS_IN = [78,95,88,178,87,14,317,402,318,324,308,415,310,311,312,13,82,81,80,191];
+
+  // lm: normalized landmarks, src: canvas with the (already mirrored) photo
+  function drawIllustration(lm, src) {
+    const sw = src.width, sh = src.height;
+    const W = 900, H = 1200;
+    out.width = W; out.height = H;
+    const ctx = out.getContext('2d');
+    const sctx = src.getContext('2d', { willReadFrequently: true });
+    const L = lm.map(p => ({ x: p.x * sw, y: p.y * sh }));
+
+    // sample tones from the photo (hair + cheeks) to personalise the drawing
+    const lum = (x, y, r) => {
+      x = Math.max(r, Math.min(sw - r - 1, Math.round(x)));
+      y = Math.max(r, Math.min(sh - r - 1, Math.round(y)));
+      const d = sctx.getImageData(x - r, y - r, 2*r + 1, 2*r + 1).data;
+      let s = 0; for (let i = 0; i < d.length; i += 4) s += 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+      return s / (d.length / 4);
+    };
+    let minx = 1e9, maxx = -1e9, miny = 1e9, maxy = -1e9;
+    OVAL.forEach(i => {
+      minx = Math.min(minx, L[i].x); maxx = Math.max(maxx, L[i].x);
+      miny = Math.min(miny, L[i].y); maxy = Math.max(maxy, L[i].y);
+    });
+    const fw0 = maxx - minx, fh0 = maxy - miny;
+    const hairLum = lum(L[10].x, L[10].y - fh0 * 0.08, Math.max(4, Math.round(fw0 * 0.04)));
+    const lumA = lum(L[50].x, L[50].y, 6), lumB = lum(L[280].x, L[280].y, 6);
+    const shadeIdx = lumA < lumB ? 50 : 280;
+    const shadeStrength = Math.abs(lumA - lumB);
+
+    // fit the face into the frame
+    const s = Math.min(W * 0.42 / fw0, H * 0.30 / fh0);
+    const cx0 = (minx + maxx) / 2, cy0 = (miny + maxy) / 2;
+    const c = { x: W / 2, y: H * 0.40 };
+    const pts = L.map(p => ({ x: (p.x - cx0) * s + c.x, y: (p.y - cy0) * s + c.y }));
+    const pick = idx => idx.map(i => pts[i]);
+    const FW = fw0 * s, FH = fh0 * s;
+    const lw = W / 150;
+    const dist = (a, b) => Math.hypot(pts[a].x - pts[b].x, pts[a].y - pts[b].y);
+    const dir = pts[shadeIdx].x < c.x ? -1 : 1;
+
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.strokeStyle = '#111'; ctx.lineWidth = lw;
+
+    // background: halftone dots
+    halftoneBg(ctx, W, H);
+
+    // hair style from sampled tone
+    const hairMode = hairLum < 90 ? 'solid' : hairLum < 165 ? 'dense' : 'light';
+    const hairFill = hairMode === 'solid' ? '#111' : hairMode === 'dense' ? hatch(ctx, 7, 3) : hatch(ctx, 12, 2.5);
+
+    const n = HAIR_ARC.length;
+    const edge = HAIR_ARC.map(i => pts[i]);
+    const outer = edge.map((p, k) => {
+      const t = k / (n - 1);
+      return { x: c.x + (p.x - c.x) * 1.26, y: c.y + (p.y - c.y) * 1.22 - FH * 0.07 * Math.sin(Math.PI * t) };
+    });
+    const hairline = edge.map((p, k) => {
+      const t = k / (n - 1), s2 = Math.sin(Math.PI * t);
+      return { x: p.x, y: p.y + FH * 0.15 * s2 * (0.55 + 0.9 * t) };
+    });
+    const dropY = c.y + FH * 0.32;
+    const rDrop = { x: outer[n-1].x - FW * 0.02, y: dropY };
+    const lDrop = { x: outer[0].x + FW * 0.02, y: dropY };
+
+    // back hair
+    smoothPath(ctx, outer.concat([rDrop, lDrop]), true);
+    ctx.fillStyle = hairFill; ctx.fill(); ctx.stroke();
+
+    // ears
+    [234, 454].forEach(i => {
+      const p = pts[i], d = p.x < c.x ? -1 : 1;
+      ctx.beginPath();
+      ctx.ellipse(p.x + d * FW * 0.025, p.y + FH * 0.02, FW * 0.055, FW * 0.09, 0, 0, 7);
+      ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+    });
+
+    // neck
+    const chinY = pts[152].y;
+    const nl = c.x - FW * 0.2, nr = c.x + FW * 0.2, nTop = chinY - FH * 0.1, nBot = chinY + FH * 0.45;
+    ctx.beginPath(); ctx.rect(nl, nTop, nr - nl, nBot - nTop);
+    ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+    ctx.save();
+    ctx.beginPath(); ctx.rect(nl + lw / 2, chinY - FH * 0.02, nr - nl - lw, FH * 0.12); ctx.clip();
+    ctx.fillStyle = hatch(ctx, 8, 2.5); ctx.fillRect(nl, chinY - FH * 0.02, nr - nl, FH * 0.12);
+    ctx.restore();
+
+    // shirt
+    const sy = chinY + FH * 0.34;
+    ctx.beginPath();
+    ctx.moveTo(-20, H + 20);
+    ctx.lineTo(-20, sy + FH * 0.45);
+    ctx.quadraticCurveTo(c.x - FW * 0.75, sy + FH * 0.05, nl, sy - FH * 0.02);
+    ctx.lineTo(nr, sy - FH * 0.02);
+    ctx.quadraticCurveTo(c.x + FW * 0.75, sy + FH * 0.05, W + 20, sy + FH * 0.45);
+    ctx.lineTo(W + 20, H + 20);
+    ctx.closePath();
+    ctx.fillStyle = '#111'; ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(nl, sy - FH * 0.02); ctx.lineTo(nr, sy - FH * 0.02); ctx.lineTo(c.x, sy + FH * 0.2); ctx.closePath();
+    ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+
+    // face
+    const oval = pick(OVAL);
+    smoothPath(ctx, oval, true);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.save();
+    ctx.clip();
+    if (shadeStrength > 10) {
+      const sp = shadeStrength > 30 ? 8 : 12;
+      ctx.strokeStyle = '#111'; ctx.lineWidth = 2.2;
+      const x0 = c.x + dir * FW * 0.12, x1 = c.x + dir * FW;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(Math.min(x0, x1), c.y - FH, Math.abs(x1 - x0), FH * 2); ctx.clip();
+      ctx.beginPath();
+      for (let k = -H; k < W + H; k += sp) { ctx.moveTo(k, c.y + FH); ctx.lineTo(k + FH * 2, c.y - FH); }
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+    ctx.strokeStyle = '#111'; ctx.lineWidth = lw * 1.2;
+    smoothPath(ctx, oval, true); ctx.stroke();
+    ctx.lineWidth = lw;
+
+    // blush: halftone dots
+    ctx.fillStyle = '#111';
+    [50, 280].forEach(i => {
+      const p = pts[i];
+      for (let a = -2; a <= 2; a++) for (let b = -1; b <= 1; b++) {
+        const rr = FW * 0.012 * (1 - Math.hypot(a / 2.5, b / 1.5) * 0.55);
+        ctx.beginPath();
+        ctx.arc(p.x + a * FW * 0.03 + (b % 2 ? FW * 0.015 : 0), p.y + FH * 0.035 + b * FW * 0.026, Math.max(0.6, rr), 0, 7);
+        ctx.fill();
+      }
+    });
+
+    // eyes
+    [[R_EYE, R_LID, 468, 33], [L_EYE, L_LID, 473, 263]].forEach(([eye, lid, ic, outerCorner]) => {
+      smoothPath(ctx, pick(eye), true);
+      ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.save(); ctx.clip();
+      const irisR = ((dist(ic, ic + 1) + dist(ic, ic + 2) + dist(ic, ic + 3) + dist(ic, ic + 4)) / 4) * 1.2;
+      ctx.fillStyle = '#111';
+      ctx.beginPath(); ctx.arc(pts[ic].x, pts[ic].y, irisR, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(pts[ic].x - irisR * 0.35, pts[ic].y - irisR * 0.35, irisR * 0.3, 0, 7); ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle = '#111'; ctx.lineWidth = lw * 0.8;
+      smoothPath(ctx, pick(eye), true); ctx.stroke();
+      ctx.lineWidth = lw * 2.2;
+      smoothPath(ctx, pick(lid), false); ctx.stroke();
+      const o = pts[outerCorner], d = o.x < c.x ? -1 : 1;
+      ctx.lineWidth = lw * 1.6;
+      ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(o.x + d * FW * 0.05, o.y - FH * 0.03); ctx.stroke();
+    });
+
+    // eyebrows
+    [[R_BROW_U, R_BROW_L], [L_BROW_U, L_BROW_L]].forEach(([u, l]) => {
+      const poly = pick(u).concat(pick(l).reverse());
+      smoothPath(ctx, poly, true);
+      ctx.fillStyle = '#111'; ctx.lineWidth = lw * 0.6; ctx.fill(); ctx.stroke();
+    });
+
+    // nose
+    ctx.lineWidth = lw; ctx.strokeStyle = '#111';
+    smoothPath(ctx, [pts[98], pts[97], pts[2], pts[326], pts[327]], false); ctx.stroke();
+    const a193 = pts[193], b417 = pts[417];
+    const side = ((dir < 0) === (a193.x < b417.x)) ? a193 : b417;
+    const wing = ((dir < 0) === (pts[98].x < pts[327].x)) ? pts[98] : pts[327];
+    ctx.lineWidth = lw * 0.8;
+    ctx.beginPath(); ctx.moveTo(side.x, side.y + FH * 0.02);
+    ctx.quadraticCurveTo(side.x, wing.y - FH * 0.02, wing.x, wing.y - FH * 0.01); ctx.stroke();
+
+    // mouth
+    ctx.lineWidth = lw;
+    smoothPath(ctx, pick(LIPS_OUT), true);
+    ctx.fillStyle = hatch(ctx, 6, 2); ctx.fill(); ctx.stroke();
+    const open = dist(13, 14) / dist(61, 291);
+    if (open > 0.05) {
+      smoothPath(ctx, pick(LIPS_IN), true);
+      ctx.fillStyle = '#111'; ctx.fill();
+      if (open > 0.1) {
+        ctx.save(); smoothPath(ctx, pick(LIPS_IN), true); ctx.clip();
+        ctx.fillStyle = '#fff';
+        const top = pts[13].y, hgt = pts[14].y - pts[13].y;
+        ctx.fillRect(pts[78].x, top - 2, pts[308].x - pts[78].x, hgt * 0.4);
+        ctx.restore();
+      }
+    }
+    ctx.lineWidth = lw * 1.1;
+    smoothPath(ctx, pick(LIPS_IN), true); ctx.stroke();
+
+    // fringe (hair in front of the forehead)
+    smoothPath(ctx, edge.concat(hairline.slice().reverse()), true);
+    ctx.fillStyle = hairFill; ctx.fill();
+    ctx.lineWidth = lw; ctx.stroke();
+
+    // hair strands
+    ctx.strokeStyle = hairMode === 'solid' ? '#fff' : '#111';
+    ctx.lineWidth = lw * 0.55;
+    for (let k = 2; k <= n - 3; k += 2) {
+      const h = hairline[k], o = outer[k];
+      ctx.beginPath(); ctx.moveTo(h.x, h.y);
+      ctx.quadraticCurveTo((h.x + o.x) / 2 + dir * FW * 0.04, (h.y + o.y) / 2 - FH * 0.03, o.x, o.y);
+      ctx.stroke();
+    }
+
+    frameAndSignature(ctx, W, H);
+  }
+
+  // ---------- Cat illustration ----------
+  // box: cat bounding box in src pixels, src: canvas with the photo
+  function drawCatIllustration(box, src) {
+    const sw = src.width, sh = src.height;
+    const W = 900, H = 1200;
+    out.width = W; out.height = H;
+    const ctx = out.getContext('2d');
+    const sctx = src.getContext('2d', { willReadFrequently: true });
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+    // head region: whole box for close-ups, top square for full-body cats
+    let hx = box.originX, hy = box.originY, hw = box.width, hh = box.height;
+    if (hh > hw * 1.15) hh = hw;
+    const reg = (x, y, w, h) => {
+      x = clamp(Math.floor(x), 0, sw - 2); y = clamp(Math.floor(y), 0, sh - 2);
+      w = Math.max(2, Math.min(sw - x, Math.floor(w))); h = Math.max(2, Math.min(sh - y, Math.floor(h)));
+      const d = sctx.getImageData(x, y, w, h).data;
+      let s = 0, s2 = 0; const n = d.length / 4;
+      for (let i = 0; i < d.length; i += 4) { const l = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2]; s += l; s2 += l * l; }
+      const m = s / n; return { m, sd: Math.sqrt(Math.max(0, s2 / n - m * m)) };
+    };
+    const core = reg(hx + hw * 0.2, hy + hh * 0.2, hw * 0.6, hh * 0.6);
+    const left = reg(hx + hw * 0.1, hy + hh * 0.25, hw * 0.35, hh * 0.5);
+    const right = reg(hx + hw * 0.55, hy + hh * 0.25, hw * 0.35, hh * 0.5);
+    const dir = left.m < right.m ? -1 : 1;
+    const shadeStrength = Math.abs(left.m - right.m);
+    const furMode = core.m < 90 ? 'solid' : core.m < 165 ? 'dense' : 'light';
+    const tabby = core.sd > 38 && furMode !== 'solid';
+    const dark = furMode === 'solid';
+
+    const c = { x: W / 2, y: H * 0.46 };
+    const HW = W * 0.58;
+    const asp = clamp((hh / Math.max(1, hw) - 0.7) / 0.3, 0, 1);
+    const HH = HW * (0.7 + 0.2 * asp);
+    const lw = W / 150;
+
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.strokeStyle = '#111'; ctx.lineWidth = lw;
+    halftoneBg(ctx, W, H);
+
+    const furFill = dark ? '#111' : furMode === 'dense' ? hatch(ctx, 8, 2.5) : '#fff';
+    const P = (ux, uy) => ({ x: c.x + ux * HW, y: c.y + uy * HH });
+
+    // head outline
+    const rightHalf = [[0,-0.5],[0.2,-0.49],[0.36,-0.4],[0.47,-0.22],[0.5,0.0],[0.5,0.18],[0.43,0.36],[0.3,0.47],[0.14,0.5]];
+    const headPts = rightHalf.map(([x, y]) => P(x, y))
+      .concat([P(0, 0.52)])
+      .concat(rightHalf.slice(1).reverse().map(([x, y]) => P(-x, y)));
+    const headPath = () => smoothPath(ctx, headPts, true);
+
+    // ears (behind the head)
+    const ear = sgn => {
+      const bi = P(sgn * 0.08, -0.45);
+      const tip = { x: c.x + sgn * HW * 0.37, y: c.y - HH * 0.5 - HW * 0.27 };
+      const bo = P(sgn * 0.5, -0.12);
+      ctx.beginPath();
+      ctx.moveTo(bi.x, bi.y);
+      ctx.lineTo(tip.x, tip.y);
+      ctx.quadraticCurveTo(tip.x + sgn * HW * 0.08, tip.y + (bo.y - tip.y) * 0.45, bo.x, bo.y);
+      ctx.closePath();
+      ctx.fillStyle = furFill; ctx.fill(); ctx.lineWidth = lw * 1.2; ctx.stroke();
+      // inner ear
+      const ib = P(sgn * 0.14, -0.43), ibo = P(sgn * 0.4, -0.2);
+      const it = { x: c.x + sgn * HW * 0.35, y: tip.y + HW * 0.1 };
+      ctx.beginPath();
+      ctx.moveTo(ib.x, ib.y); ctx.lineTo(it.x, it.y);
+      ctx.quadraticCurveTo(it.x + sgn * HW * 0.03, it.y + (ibo.y - it.y) * 0.45, ibo.x, ibo.y);
+      ctx.closePath();
+      ctx.fillStyle = hatch(ctx, 6, 2.4); ctx.fill(); ctx.lineWidth = lw * 0.8; ctx.stroke();
+    };
+    ear(-1); ear(1);
+
+    // cheek tufts (behind the head)
+    [-1, 1].forEach(sgn => [0.22, 0.36].forEach(yr => {
+      const a = P(sgn * 0.44, yr), t = P(sgn * 0.6, yr + 0.07), b = P(sgn * 0.4, yr + 0.12);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(t.x, t.y); ctx.lineTo(b.x, b.y); ctx.closePath();
+      ctx.fillStyle = furFill; ctx.fill(); ctx.lineWidth = lw; ctx.stroke();
+    }));
+
+    // body
+    const bodyPath = () => {
+      const a = P(-0.3, 0.35), b = P(0.3, 0.35);
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.quadraticCurveTo(c.x - HW * 0.55, c.y + HH * 0.6, c.x - HW * 0.72, H + 20);
+      ctx.lineTo(c.x + HW * 0.72, H + 20);
+      ctx.quadraticCurveTo(c.x + HW * 0.55, c.y + HH * 0.6, b.x, b.y);
+      ctx.closePath();
+    };
+    bodyPath();
+    ctx.fillStyle = furFill; ctx.fill(); ctx.lineWidth = lw * 1.2; ctx.stroke();
+
+    // body fur marks
+    ctx.save(); bodyPath(); ctx.clip();
+    ctx.strokeStyle = dark ? '#fff' : '#111'; ctx.lineWidth = lw * 0.55;
+    const nTicks = tabby ? 9 : 5;
+    for (let k = 0; k < nTicks; k++) {
+      const t = (k + 0.5) / nTicks;
+      const x = c.x - HW * 0.6 + t * HW * 1.2, y = c.y + HH * (0.68 + 0.05 * Math.sin(k * 2.1));
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + (t - 0.5) * HW * 0.1, y + HH * (tabby ? 0.32 : 0.14)); ctx.stroke();
+    }
+    ctx.restore();
+
+    // collar with tag
+    ctx.save(); bodyPath(); ctx.clip();
+    const cy0 = c.y + HH * 0.5, bend = HH * 0.14;
+    const cl = { x: c.x - HW * 0.5, y: cy0 }, cr = { x: c.x + HW * 0.5, y: cy0 };
+    ctx.lineCap = 'butt';
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 50;
+    ctx.beginPath(); ctx.moveTo(cl.x, cl.y); ctx.quadraticCurveTo(c.x, cy0 + bend * 2, cr.x, cr.y); ctx.stroke();
+    if (dark) {
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 36;
+      ctx.beginPath(); ctx.moveTo(cl.x, cl.y); ctx.quadraticCurveTo(c.x, cy0 + bend * 2, cr.x, cr.y); ctx.stroke();
+    }
+    ctx.restore();
+    ctx.lineCap = 'round';
+    const tag = { x: c.x, y: cy0 + bend + 14 };
+    ctx.beginPath(); ctx.arc(tag.x, tag.y, 30, 0, 7);
+    ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#111'; ctx.lineWidth = lw * 1.2; ctx.stroke();
+    ctx.fillStyle = '#111';
+    ctx.beginPath(); ctx.arc(tag.x, tag.y, 7, 0, 7); ctx.fill();
+
+    // head fill, shading and stripes
+    headPath();
+    ctx.fillStyle = furFill; ctx.fill();
+    ctx.save(); headPath(); ctx.clip();
+    if (shadeStrength > 10 && !dark) {
+      const sp = shadeStrength > 30 ? 8 : 12;
+      ctx.strokeStyle = '#111'; ctx.lineWidth = 2.2;
+      const x0 = c.x + dir * HW * 0.2, x1 = c.x + dir * HW;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(Math.min(x0, x1), c.y - HH, Math.abs(x1 - x0), HH * 2); ctx.clip();
+      ctx.beginPath();
+      for (let k = -H; k < W + H; k += sp) { ctx.moveTo(k, c.y + HH); ctx.lineTo(k + HH * 2, c.y - HH); }
+      ctx.stroke();
+      ctx.restore();
+    }
+    if (tabby) {
+      ctx.strokeStyle = '#111'; ctx.lineWidth = lw * 1.7;
+      [-0.13, 0, 0.13].forEach((ux, i) => {
+        const a = P(ux, -0.5), b = P(ux * 1.2, i === 1 ? -0.2 : -0.26);
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      });
+      ctx.lineWidth = lw * 1.4;
+      [-1, 1].forEach(sgn => [0.0, 0.1, 0.2].forEach((yr, i) => {
+        const a = P(sgn * 0.52, yr), b = P(sgn * (0.38 - i * 0.01), yr + 0.03);
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      }));
+    }
+    ctx.restore();
+    ctx.strokeStyle = '#111'; ctx.lineWidth = lw * 1.3;
+    headPath(); ctx.stroke();
+    ctx.lineWidth = lw;
+
+    // eyes
+    const ey = c.y - HH * 0.05;
+    [-1, 1].forEach(sgn => {
+      const inner = { x: c.x + sgn * HW * 0.1, y: ey + HH * 0.03 };
+      const outerC = { x: c.x + sgn * HW * 0.34, y: ey - HW * 0.03 };
+      const eh = HW * 0.115, mx = (inner.x + outerC.x) / 2;
+      const eyePath = () => {
+        ctx.beginPath(); ctx.moveTo(inner.x, inner.y);
+        ctx.quadraticCurveTo(mx, ey - eh * 1.2, outerC.x, outerC.y);
+        ctx.quadraticCurveTo(mx, ey + eh * 1.05, inner.x, inner.y);
+        ctx.closePath();
+      };
+      eyePath(); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.save(); eyePath(); ctx.clip();
+      const ic = { x: mx, y: ey - eh * 0.05 }, r = eh * 1.0;
+      ctx.fillStyle = hatch(ctx, 5, 2.4);
+      ctx.beginPath(); ctx.arc(ic.x, ic.y, r, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#111'; ctx.lineWidth = lw * 0.8; ctx.stroke();
+      ctx.fillStyle = '#111';
+      ctx.beginPath(); ctx.ellipse(ic.x, ic.y, r * 0.2, r * 1.05, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(ic.x - r * 0.38, ic.y - r * 0.38, r * 0.2, 0, 7); ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle = '#111'; ctx.lineWidth = lw * 0.9;
+      eyePath(); ctx.stroke();
+      ctx.lineWidth = lw * 2.3;
+      ctx.beginPath(); ctx.moveTo(inner.x, inner.y); ctx.quadraticCurveTo(mx, ey - eh * 1.2, outerC.x, outerC.y); ctx.stroke();
+      ctx.lineWidth = lw * 1.6;
+      ctx.beginPath(); ctx.moveTo(outerC.x, outerC.y); ctx.lineTo(outerC.x + sgn * HW * 0.05, outerC.y - HH * 0.035); ctx.stroke();
+
+      // whisker dots above the eye
+      ctx.fillStyle = dark ? '#fff' : '#111';
+      for (let k = 0; k < 3; k++) {
+        ctx.beginPath(); ctx.arc(c.x + sgn * HW * (0.17 + k * 0.06), ey - HH * (0.2 + k * 0.012), lw * 0.7, 0, 7); ctx.fill();
+      }
+    });
+
+    // muzzle pads
+    [-1, 1].forEach(sgn => {
+      const m = P(sgn * 0.085, 0.22);
+      ctx.beginPath(); ctx.arc(m.x, m.y, HW * 0.1, 0, 7);
+      ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#111'; ctx.lineWidth = lw * 0.8; ctx.stroke();
+      ctx.fillStyle = '#111';
+      for (let a = 0; a < 3; a++) for (let b = 0; b < 2; b++) {
+        ctx.beginPath(); ctx.arc(m.x + sgn * (HW * 0.035 + a * HW * 0.02), m.y + HH * 0.015 + b * HH * 0.03 - a * 1, lw * 0.5, 0, 7); ctx.fill();
+      }
+    });
+
+    // nose
+    const n0 = P(0, 0.12), nw = HW * 0.05, nh = HW * 0.04;
+    ctx.beginPath();
+    ctx.moveTo(n0.x - nw, n0.y); ctx.lineTo(n0.x + nw, n0.y); ctx.lineTo(n0.x, n0.y + nh * 1.2); ctx.closePath();
+    ctx.fillStyle = dark ? '#fff' : '#111'; ctx.fill();
+    ctx.strokeStyle = '#111'; ctx.lineWidth = lw * 1.2; ctx.stroke();
+
+    // mouth
+    ctx.strokeStyle = '#111'; ctx.lineWidth = lw;
+    const mTop = { x: n0.x, y: n0.y + nh * 1.2 }, mB = P(0, 0.29);
+    ctx.beginPath(); ctx.moveTo(mTop.x, mTop.y); ctx.lineTo(mB.x, mB.y);
+    ctx.moveTo(mB.x, mB.y); ctx.quadraticCurveTo(mB.x - HW * 0.04, mB.y + HH * 0.07, mB.x - HW * 0.11, mB.y + HH * 0.01);
+    ctx.moveTo(mB.x, mB.y); ctx.quadraticCurveTo(mB.x + HW * 0.04, mB.y + HH * 0.07, mB.x + HW * 0.11, mB.y + HH * 0.01);
+    ctx.stroke();
+
+    // whiskers (black, then white where they cross a black cat's fur)
+    const whiskers = color => {
+      ctx.strokeStyle = color; ctx.lineWidth = lw * 0.6;
+      [-1, 1].forEach(sgn => [0, 1, 2].forEach(k => {
+        const a = { x: c.x + sgn * HW * 0.19, y: c.y + HH * (0.17 + 0.05 * k) };
+        const b = { x: c.x + sgn * HW * 0.82, y: a.y + (k - 1) * HW * 0.09 - HH * 0.03 };
+        ctx.beginPath(); ctx.moveTo(a.x, a.y);
+        ctx.quadraticCurveTo((a.x + b.x) / 2, a.y - HH * 0.06 + (k - 1) * HW * 0.02, b.x, b.y); ctx.stroke();
+      }));
+    };
+    whiskers('#111');
+    if (dark) {
+      ctx.save(); headPath(); ctx.clip(); whiskers('#fff'); ctx.restore();
+    }
+
+    frameAndSignature(ctx, W, H);
+  }
+
+  // ---------- Detection and rendering ----------
+  function updateModeButtons() {
+    const hasFace = !!(current && current.face), hasCat = !!(current && current.cat);
+    modeFace.disabled = !hasFace; modeCat.disabled = !hasCat;
+    modeFace.title = hasFace ? '' : 'No face found in this photo';
+    modeCat.title = hasCat ? '' : 'No cat found in this photo';
+    modeFace.classList.toggle('active', !!current && current.mode === 'face');
+    modeCat.classList.toggle('active', !!current && current.mode === 'cat');
+  }
+
+  function render(mode) {
+    current.mode = mode;
+    if (mode === 'face') drawIllustration(current.face, current.src);
+    else drawCatIllustration(current.cat, current.src);
+    updateModeButtons();
+  }
+
+  function analyze(tmp) {
+    const fr = landmarker.detect(tmp);
+    const face = (fr.faceLandmarks && fr.faceLandmarks[0]) || null;
+    let cat = null;
+    if (detector) {
+      const dr = detector.detect(tmp);
+      const cats = (dr.detections || []).filter(d => d.categories && d.categories[0] && d.categories[0].categoryName === 'cat' && d.boundingBox);
+      cats.sort((a, b) => b.boundingBox.width * b.boundingBox.height - a.boundingBox.width * a.boundingBox.height);
+      if (cats.length) cat = cats[0].boundingBox;
+    }
+    return { src: tmp, face, cat, mode: null };
+  }
+
+  function showResult() {
+    video.style.display = 'none';
+    out.style.display = 'block';
+    msg.hidden = true;
+    camControls.classList.add('hidden');
+    resultControls.classList.remove('hidden');
+    modeControls.classList.remove('hidden');
+    phoneBox.classList.remove('hidden');
+    if (current.face && current.cat) say('Found a face and a cat. Pick which one to draw.');
+    else if (current.cat) say('Found a cat! Your illustration is ready.');
+    else say('Your illustration is ready! Retake it or send it.');
+  }
+
+  async function illustrate(srcEl, sw, sh, mirror) {
+    const scale = Math.min(1, 960 / sw);
+    const tmp = document.createElement('canvas');
+    tmp.width = Math.round(sw * scale); tmp.height = Math.round(sh * scale);
+    const t = tmp.getContext('2d', { willReadFrequently: true });
+    if (mirror) { t.translate(tmp.width, 0); t.scale(-1, 1); }
+    t.drawImage(srcEl, 0, 0, tmp.width, tmp.height);
+    const found = analyze(tmp);
+    if (!found.face && !found.cat) return false;
+    current = found;
+    render(found.face ? 'face' : 'cat');
+    return true;
+  }
+
+  // ---------- Capture ----------
+  async function takeSelfie() {
+    if (busy || !landmarker) return;
+    busy = true; updateSnap(); say('');
+    count.style.display = 'flex';
+    for (let n = 3; n > 0; n--) { count.textContent = n; await new Promise(r => setTimeout(r, 800)); }
+    count.style.display = 'none';
+    $('flash').classList.remove('go'); void $('flash').offsetWidth; $('flash').classList.add('go');
+    drawingEl.style.display = 'flex';
+    await new Promise(r => setTimeout(r, 60));
+    let ok = false;
+    try { ok = await illustrate(video, video.videoWidth, video.videoHeight, true); } catch (e) { console.error(e); }
+    drawingEl.style.display = 'none';
+    busy = false;
+    if (ok) { stopCamera(); showResult(); }
+    else { say("I couldn't find a face or a cat. Get closer, add some light, and try again."); updateSnap(); }
+  }
+
+  $('file').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    if (!landmarker) {
+      say('Loading the illustrator…');
+      try { await loadModel(); say(''); } catch (err) { say('Could not load the illustration engine. Check your connection.'); return; }
+    }
+    const im = new Image();
+    im.onerror = () => say("I couldn't open that file. Try a JPG or PNG photo.");
+    im.onload = async () => {
+      drawingEl.style.display = 'flex';
+      await new Promise(r => setTimeout(r, 60));
+      let ok = false;
+      try { ok = await illustrate(im, im.naturalWidth, im.naturalHeight, false); } catch (err) { console.error(err); }
+      drawingEl.style.display = 'none';
+      URL.revokeObjectURL(im.src);
+      if (ok) { stopCamera(); showResult(); }
+      else say("I couldn't find a woman's face or a cat in that photo. Try another one with a clear face or cat.");
+    };
+    im.src = URL.createObjectURL(f);
+  });
+
+  modeFace.addEventListener('click', () => { if (current && current.face) { render('face'); say('Face illustration ready.'); } });
+  modeCat.addEventListener('click', () => { if (current && current.cat) { render('cat'); say('Cat illustration ready.'); } });
+
+  // ---------- Share ----------
+  const toBlob = () => new Promise(res => out.toBlob(res, 'image/png'));
+
+  function downloadBlob(blob) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'selfapp.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+
+  async function sendWhatsApp() {
+    const blob = await toBlob();
+    const file = new File([blob], 'selfapp.png', { type: 'image/png' });
+    const text = 'Look at my SelfApp illustration! 🎨';
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], text });
+        say('Pick WhatsApp in the share sheet to send it.');
+        return;
+      } catch (e) { if (e.name === 'AbortError') return; }
+    }
+    // Fallback (desktop): save image, open WhatsApp chat
+    downloadBlob(blob);
+    const num = $('phone').value.replace(/\D/g, '');
+    const url = 'https://wa.me/' + (num ? num : '') + '?text=' + encodeURIComponent(text);
+    window.open(url, '_blank', 'noopener');
+    say('Image saved. In WhatsApp, attach selfapp.png from your downloads.');
+  }
+
+  snap.addEventListener('click', takeSelfie);
+  $('retake').addEventListener('click', () => { say(''); startCamera(); });
+  $('send').addEventListener('click', sendWhatsApp);
+  $('download').addEventListener('click', async () => downloadBlob(await toBlob()));
+
+  // ---------- Boot ----------
+  say('Loading the illustrator…');
+  loadModel().then(() => { say(''); updateSnap(); })
+    .catch(() => say('Could not load the illustration engine. Check your internet connection and reload the page.'));
+  startCamera();
+})();
+</script>
+</body>
+</html>
