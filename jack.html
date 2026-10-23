@@ -162,32 +162,34 @@ async function ai(){
   }
   ND.classList.toggle('on',!!aiOn)}
 document.fonts.load(FONT);
-const POL=['#0d0d0d','#f2f2f2','#d4a017','#c1121f','#1d3fd1','#b8b8b8','#2a9d8f','#ff6b35','#7b2cbf','#ffd60a'];
 let crOn=0;
 async function crazy(){
   const b=$('#cz');
   if(crOn){crOn=0;return}
   if(aiOn)ai();
-  const t=crOn=Date.now(),R=(a,z)=>a+Math.random()*(z-a);
+  const t=crOn=Date.now(),R=(a,z)=>a+Math.random()*(z-a),G=16,gc=Math.ceil(W/G),gr=Math.ceil(H/G);
   b.classList.add('on');
   while(crOn===t){
     while(busy)await sleep(60);
     if(crOn!==t)break;
     const pg=cur,ok=()=>crOn===t&&cur===pg&&!busy;
-    for(let n=0;n<60&&ok();n++){
-      const g=cx[Math.random()<.5?'L':'R'],c=POL[Math.random()*POL.length|0],w=R(2,10),sp=R(8,20),len=R(30,120)|0;
-      let x=R(0,W),y=R(0,H),a=R(0,6.283);
-      for(let i=0;i<len&&ok();i++){
-        a+=R(-.5,.5);const nx=x+Math.cos(a)*sp,ny=y+Math.sin(a)*sp;
-        g.strokeStyle=c;g.lineWidth=Math.max(1,w*(.6+.4*Math.sin(i/6)));g.lineCap=g.lineJoin='round';
-        g.beginPath();g.moveTo(x,y);g.lineTo(nx,ny);g.stroke();x=nx;y=ny;
-        if(x<-40||x>W+40||y<-40||y>H+40)break;
-        if(i%8==7)await frame()}
-      for(let k=0,m=R(4,14)|0;k<m;k++){g.fillStyle=c;g.beginPath();g.arc(x+R(-60,60),y+R(-60,60),R(1,k<2?9:4),0,6.283);g.fill()}
-    }
+    const grid={L:new Uint8Array(gc*gr),R:new Uint8Array(gc*gr)},cnt={L:0,R:0},p={L:{x:R(0,W),y:R(0,H)},R:{x:R(0,W),y:R(0,H)}};
+    const mark=(s,x,y,r)=>{const m=grid[s];for(let j=Math.max(0,(y-r)/G|0);j<=Math.min(gr-1,(y+r)/G|0);j++)for(let i=Math.max(0,(x-r)/G|0);i<=Math.min(gc-1,(x+r)/G|0);i++)if(!m[j*gc+i]){m[j*gc+i]=1;cnt[s]++}};
+    while(ok()&&Math.min(cnt.L,cnt.R)<.85*gc*gr){
+      const s=cnt.L<=cnt.R?'L':'R',g=cx[s],P=p[s];
+      let tx=0,ty=0;
+      for(let k=0;k<6;k++){tx=R(0,W);ty=R(0,H);if(!grid[s][(ty/G|0)*gc+(tx/G|0)])break}
+      const x0=P.x,y0=P.y,c1x=x0+R(-260,260),c1y=y0+R(-260,260),c2x=tx+R(-260,260),c2y=ty+R(-260,260),w=R(10,26),h=R(0,360),N=28;
+      let px=x0,py=y0;
+      for(let i=1;i<=N&&ok();i++){
+        const u=i/N,v=1-u,x=v*v*v*x0+3*v*v*u*c1x+3*v*u*u*c2x+u*u*u*tx,y=v*v*v*y0+3*v*v*u*c1y+3*v*u*u*c2y+u*u*u*ty;
+        g.lineCap=g.lineJoin='round';g.lineWidth=w;g.strokeStyle=`hsl(${((h+i*7)|0)%360},90%,55%)`;
+        g.beginPath();g.moveTo(px,py);g.lineTo(x,y);g.stroke();mark(s,x,y,w/2);px=x;py=y;
+        if(i%5==0)await frame()}
+      P.x=tx;P.y=ty}
     if(!ok())continue;
-    await sleep(400);
-    if(crOn===t&&cur<29)await go(1,1)}
+    await sleep(500);
+    if(crOn===t&&cur===pg&&cur<29)await go(1,1)}
   b.classList.remove('on')}
 $('#cz').onclick=crazy;
 ND.onclick=ai;setTimeout(()=>scrollTo(0,1),300);
