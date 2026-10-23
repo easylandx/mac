@@ -7,9 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Roboto+Condensed:wght@400;500&family=Inter:wght@500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;margin:0;background:#15161a;color:#eee;font-family:Inter,system-ui,sans-serif;overflow:hidden;overscroll-behavior:none;touch-action:none}
+html,body{margin:0;background:#15161a;color:#eee;font-family:Inter,system-ui,sans-serif;overflow-x:hidden;overscroll-behavior:none;touch-action:pan-y}
+#sp{height:400vh}
 body{margin:0}
-.device{position:fixed;inset:0;display:grid;grid-template-columns:1fr 22px 1fr;grid-template-rows:1fr;background:#0b0b0d;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);perspective:2000px;touch-action:none}
+.device{position:fixed;top:0;left:0;width:100%;height:100vh;height:100dvh;display:grid;grid-template-columns:1fr 22px 1fr;grid-template-rows:1fr;background:#0b0b0d;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);perspective:2000px;touch-action:pan-y}
 .device>*{grid-row:1}
 .scr{position:relative;overflow:hidden;background:#fffdf5;border-radius:2%/1.6%;grid-column:1}
 #sr{grid-column:3}
@@ -44,19 +45,19 @@ canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor
   <div class="flap" id="fl"></div><div class="flap" id="fr"></div>
 </div>
 
-<div class="bar"><button id="er" title="Eraser">🧽</button><button id="clr" title="Clear">🗑</button><button id="save" title="Save">💾</button><button id="wa">WhatsApp</button><a id="epx" href="https://easylandx.github.io" target="_blank" rel="noopener">easylandx</a></div>
-<div id="toast"></div>
+<div class="bar"><button id="ai" title="AI mode">✨ AI</button><button id="er" title="Eraser">🧽</button><button id="clr" title="Clear">🗑</button><button id="save" title="Save">💾</button><button id="wa">WhatsApp</button><a id="epx" href="https://easylandx.github.io" target="_blank" rel="noopener">easylandx</a></div>
+<div id="toast"></div><div id="sp"></div>
 
 <script>
 let W=720;const H=800,$=s=>document.querySelector(s),mk=()=>{const c=document.createElement('canvas');c.width=W;c.height=H;return c};
 const cv={L:$('#cl'),R:$('#cr')},dev=$('#dev');
-const INK='#1c3fd1',PEN=6,FONT='500 34px "Roboto Condensed","Arial Narrow",Arial,sans-serif',ND={classList:{add(){},remove(){},toggle(){}}};
-{const a=Math.max(innerWidth,innerHeight),b=Math.min(innerWidth,innerHeight);W=Math.max(400,Math.round(H*((a-22)/2)/b));document.querySelectorAll('.paper').forEach(q=>q.style.setProperty('--m',(90/W*100)+'%'))}
+const INK='#1c3fd1',PEN=6,FONT='500 34px "Roboto Condensed","Arial Narrow",Arial,sans-serif',ND=$('#ai');
+{const a=Math.max(screen.width,screen.height),b=Math.min(screen.width,screen.height);W=Math.max(400,Math.round(H*((a-22)/2)/b));document.querySelectorAll('.paper').forEach(q=>q.style.setProperty('--m',(90/W*100)+'%'))}
 cv.L.width=cv.R.width=W;cv.L.height=cv.R.height=H;
 const cx={L:cv.L.getContext('2d'),R:cv.R.getContext('2d')};
 let sp=[{L:mk(),R:mk()}],cur=0,mode='pen',busy=0,aiOn=0,dr=null;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms)),frame=()=>new Promise(r=>requestAnimationFrame(r));
-const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3200)};
+const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',6000)};
 const lab=()=>{};
 function store(){for(const s of['L','R']){const g=sp[cur][s].getContext('2d');g.clearRect(0,0,W,H);g.drawImage(cv[s],0,0)}}
 function live(s,c){cx[s].clearRect(0,0,W,H);cx[s].drawImage(c,0,0)}
@@ -93,6 +94,7 @@ async function go(d,force){
   busy=0}
 function sw(el,def){let x0=null;
   el.addEventListener('pointerdown',e=>{if(el===dev&&e.target!==dev&&!e.target.classList.contains('hinge'))return;x0=e.clientX;el.setPointerCapture(e.pointerId)});
+  el.addEventListener('pointercancel',()=>x0=null);
   el.addEventListener('pointerup',e=>{if(x0==null)return;const dx=e.clientX-x0;x0=null;if(Math.abs(dx)>40)go(dx<0?1:-1);else if(def)go(def);else if(Math.abs(dx)<12){const n=Date.now();if(n-(sw.t||0)<450){sw.t=0;ai()}else sw.t=n}})}
 sw($('#tl'),-1);sw($('#tr'),1);sw(dev,0);
 
@@ -157,7 +159,8 @@ async function ai(){
   }
   ND.classList.toggle('on',!!aiOn)}
 document.fonts.load(FONT);
-toast('Tap to type, drag to draw, double-tap the hinge for AI mode');
+ND.onclick=ai;setTimeout(()=>scrollTo(0,1),300);
+toast(/iPhone|iPad/.test(navigator.userAgent)&&!navigator.standalone?'Swipe up on the centre hinge to hide the address bar, or Share > Add to Home Screen for true full screen':'Tap to type, drag to draw');
 if(matchMedia('(pointer:coarse)').matches)addEventListener('pointerup',()=>{const d=document.documentElement,f=d.requestFullscreen||d.webkitRequestFullscreen;if(f&&!document.fullscreenElement&&!document.webkitFullscreenElement)try{const r=f.call(d,{navigationUI:'hide'});r&&r.catch&&r.catch(()=>{})}catch(e){}},{once:true});
 </script>
 </body></html>
