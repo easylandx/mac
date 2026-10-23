@@ -73,7 +73,7 @@ function txt(s,p){const c=cv[s],r=c.getBoundingClientRect(),k=r.width/W,fs=34,y=
   const fin=()=>{if(done)return;done=1;if(i.value){const g=cx[s];g.font=FONT;g.fillStyle=INK;g.fillText(i.value,p.x,y)}i.remove()};
   i.onblur=fin;i.onkeydown=ev=>{if(ev.key=='Enter')fin()}}
 for(const s of['L','R']){const c=cv[s];
-  c.addEventListener('pointerdown',e=>{if(aiOn||busy)return;e.preventDefault();const p=pos(c,e);c.setPointerCapture(e.pointerId);dr={s,sx:p.x,sy:p.y,x:p.x,y:p.y,mv:0}});
+  c.addEventListener('pointerdown',e=>{if(busy)return;e.preventDefault();const p=pos(c,e);c.setPointerCapture(e.pointerId);dr={s,sx:p.x,sy:p.y,x:p.x,y:p.y,mv:0}});
   c.addEventListener('pointermove',e=>{if(!dr||dr.s!=s)return;const p=pos(c,e);if(!dr.mv){if(Math.hypot(p.x-dr.sx,p.y-dr.sy)<8)return;dr.mv=1}ink(s,dr,p);dr.x=p.x;dr.y=p.y});
   c.addEventListener('pointerup',()=>{if(dr&&dr.s==s&&!dr.mv&&mode!='erase')txt(s,{x:dr.sx,y:dr.sy});dr=null});
   c.addEventListener('pointercancel',()=>dr=null)}
@@ -99,7 +99,7 @@ function sw(el,def){let x0=null;
 sw($('#tl'),-1);sw($('#tr'),1);sw(dev,0);
 
 addEventListener('keydown',e=>{if(e.target.tagName=='INPUT')return;if(e.key=='ArrowRight')go(1);if(e.key=='ArrowLeft')go(-1)});
-$('#clr').onclick=()=>{if(aiOn||busy)return;if(confirm('Clear both pages of this spread?')){cx.L.clearRect(0,0,W,H);cx.R.clearRect(0,0,W,H)}};
+$('#clr').onclick=()=>{if(busy)return;if(confirm('Clear both pages of this spread?')){cx.L.clearRect(0,0,W,H);cx.R.clearRect(0,0,W,H)}};
 document.addEventListener('gesturestart',e=>e.preventDefault());
 
 /* save + share */
@@ -137,27 +137,28 @@ const ART=[
 ['Little steps climb mountains',()=>[[[4,90],[34,34],[50,56],[68,22],[96,90],[4,90]],[[27,48],[34,34],[41,48]],[[61,36],[68,22],[75,36]],C(84,12,7)]]
 ];
 const COLS=['#1d3b8b','#b3261e','#1b6b3a','#6a2c91','#222','#c2570c'];
+let last=[];const pick=()=>{let i;do i=Math.random()*ART.length|0;while(last.includes(i));last=[...last.slice(-1),i];return ART[i]};
 async function ai(){
   if(aiOn){aiOn=0;ND.classList.remove('on');return}
   const t=aiOn=Date.now();ND.classList.add('on');
   try{await document.fonts.load(FONT)}catch(e){}
-  let s='L';
+  let n=0,s;
   while(aiOn===t){
-    while(busy)await sleep(60);if(aiOn!==t)break;const pg=cur,ok=()=>aiOn===t&&cur===pg&&!busy;
-    const[tx,fn]=ART[Math.random()*ART.length|0],c=INK,g=cx[s];
+    while(busy)await sleep(60);if(aiOn!==t)break;const pg=cur,ok=()=>aiOn===t&&cur===pg&&!busy;s=n<2?'L':'R';
+    const[tx,fn]=pick(),c=INK,g=cx[s];
     g.font=FONT;g.fillStyle=c;
     const lines=[];let ln='';
     for(const w of tx.split(' ')){const tt=ln?ln+' '+w:w;if(g.measureText(tt).width>560&&ln){lines.push(ln);ln=w}else ln=tt}lines.push(ln);
-    const y=40*(3+(Math.random()*4|0))-8,x=110;
-    for(let i=0;i<lines.length&&ok();i++)for(let j=1;j<=lines[i].length&&ok();j++){g.fillText(lines[i][j-1],x+g.measureText(lines[i].slice(0,j-1)).width,y+i*40);await sleep(60)}
-    if(!ok()){if(aiOn===t)s='L';continue}
-    const k=2.7,ax=110+Math.random()*Math.max(0,W-420),ay=y+lines.length*40+10;
+    const y=n==0?40*(2+(Math.random()*2|0))-8:n==1?40*(11+(Math.random()*2|0))-8:40*(3+(Math.random()*4|0))-8,x=110;
+    for(let i=0;i<lines.length&&ok();i++)for(let j=1;j<=lines[i].length&&ok();j++){g.font=FONT;g.fillStyle=c;g.fillText(lines[i][j-1],x+g.measureText(lines[i].slice(0,j-1)).width,y+i*40);await sleep(60)}
+    if(!ok()){if(aiOn===t)n=0;continue}
+    const k=n<2?1.9:2.7,ax=110+Math.random()*Math.max(0,W-110-k*100-20),ay=y+lines.length*40+10;
     g.strokeStyle=c;g.lineWidth=4;g.lineCap=g.lineJoin='round';
-    for(const st of fn()){for(let i=1;i<st.length;i++){if(!ok())break;g.beginPath();g.moveTo(ax+st[i-1][0]*k,ay+st[i-1][1]*k);g.lineTo(ax+st[i][0]*k,ay+st[i][1]*k);g.stroke();if(i%2)await frame()}}
-    if(!ok()){if(aiOn===t)s='L';continue}
+    for(const st of fn()){for(let i=1;i<st.length;i++){if(!ok())break;g.strokeStyle=c;g.lineWidth=4;g.lineCap=g.lineJoin='round';g.beginPath();g.moveTo(ax+st[i-1][0]*k,ay+st[i-1][1]*k);g.lineTo(ax+st[i][0]*k,ay+st[i][1]*k);g.stroke();if(i%2)await frame()}}
+    if(!ok()){if(aiOn===t)n=0;continue}
     await sleep(1800);
-    if(!ok()){if(aiOn===t)s='L';continue}
-    if(s=='L')s='R';else{s='L';if(cur>=29){aiOn=0;break}await go(1,1)}
+    if(!ok()){if(aiOn===t)n=0;continue}
+    if(++n>2){n=0;if(cur>=29){aiOn=0;break}await go(1,1)}
   }
   ND.classList.toggle('on',!!aiOn)}
 document.fonts.load(FONT);
