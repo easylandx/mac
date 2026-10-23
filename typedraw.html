@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="TypeDraw"><meta name="theme-color" content="#0b0b0d">
+<link rel="manifest" href='data:application/manifest+json,{"name":"TypeDraw","short_name":"TypeDraw","display":"fullscreen","orientation":"landscape"}'>
 <title>TypeDraw</title>
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Inter:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Roboto+Condensed:wght@400;500&family=Inter:wght@500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0;background:#15161a;color:#eee;font-family:Inter,system-ui,sans-serif;overflow:hidden;overscroll-behavior:none;touch-action:none}
-body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:env(safe-area-inset-top) max(16px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(16px,env(safe-area-inset-left))}
-.device{position:relative;display:grid;grid-template-columns:1fr 3% 1fr;grid-template-rows:1fr;width:min(calc(100vw - 32px),calc((100dvh - 74px)*1.52));aspect-ratio:1.52;background:#0b0b0d;border-radius:3.2% / 4.8%;padding:1.6%;perspective:1800px;box-shadow:0 18px 50px #000a,inset 0 0 0 2px #2a2b31;touch-action:none}
+body{margin:0}
+.device{position:fixed;inset:0;display:grid;grid-template-columns:1fr 22px 1fr;grid-template-rows:1fr;background:#0b0b0d;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);perspective:2000px;touch-action:none}
 .device>*{grid-row:1}
 .scr{position:relative;overflow:hidden;background:#fffdf5;border-radius:2%/1.6%;grid-column:1}
 #sr{grid-column:3}
 .hinge{grid-column:2;background:linear-gradient(90deg,#000,#34353b 50%,#000)}
-.paper{position:absolute;inset:0;background:linear-gradient(to right,transparent calc(12.5% - 1px),#e9a0a0 0 calc(12.5% + 1px),transparent 0),repeating-linear-gradient(to bottom,transparent 0 calc(4.1667% - 2px),#a9c8e8 0 4.1667%),#fffdf5}
+.paper{position:absolute;inset:0;background:linear-gradient(to right,transparent calc(var(--m) - 1px),#e9a0a0 0 calc(var(--m) + 1px),transparent 0),repeating-linear-gradient(to bottom,transparent 0 calc(5% - 2px),#a9c8e8 0 5%),#fffdf5}
 .scr::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(to left,#0003,transparent 9%)}
 #sr::after{background:linear-gradient(to right,#0003,transparent 9%)}
 canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
@@ -21,17 +23,12 @@ canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor
 .tab.l{left:0;clip-path:polygon(0 0,100% 100%,0 100%)}
 .flap{display:none;grid-column:1;background-size:100% 100%;border-radius:2%/1.6%;z-index:5;box-shadow:0 0 28px #0009;transform-origin:right center;pointer-events:none}
 #fr{grid-column:3;transform-origin:left center}
-.ti{position:absolute;border:0;border-bottom:1px dashed #888;background:transparent;outline:0;font-family:Caveat,cursive;font-weight:700;padding:0;line-height:1;z-index:4}
-.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;max-width:100%}
-.bar button,.bar a{font:600 13px Inter,system-ui,sans-serif;background:#26272d;color:#eee;border:1px solid #3a3b43;border-radius:9px;padding:7px 11px;cursor:pointer;text-decoration:none}
-.bar button.on{background:#e8d9a8;color:#222;border-color:#e8d9a8}
-.bar button:active{transform:scale(.96)}
-.brand{font:700 20px Caveat,cursive;margin-right:6px;color:#e8d9a8}
-#col{width:34px;height:32px;border:0;padding:0;background:none}
-#sz{width:80px}
-#pg{font-size:12px;min-width:42px;text-align:center;opacity:.8}
-#epx{font-size:11px;opacity:.4;padding:5px 8px;background:none;border-color:transparent}
-#epx:hover{opacity:.9}
+.ti{position:absolute;border:0;border-bottom:1px dashed #888;background:transparent;outline:0;font-family:"Roboto Condensed","Arial Narrow",Arial,sans-serif;font-weight:500;padding:0;line-height:1;z-index:4}
+.brand{font:700 20px Caveat,cursive;color:#e8d9a8}
+.bar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 6px);z-index:10;display:flex;gap:2px;align-items:center;background:#0006;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-radius:20px;padding:2px 6px}
+.bar button,.bar a{font:600 11px Inter,system-ui,sans-serif;background:none;color:#fff;border:0;border-radius:14px;padding:6px 8px;cursor:pointer;text-decoration:none;opacity:.85}
+.bar button.on{background:#e8d9a8;color:#222;opacity:1}
+#epx{font-size:10px;opacity:.55}
 #toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:#000c;padding:9px 14px;border-radius:10px;font-size:13px;display:none;z-index:20}
 #rot{display:none;position:fixed;inset:0;background:#15161a;z-index:30;align-items:center;justify-content:center;flex-direction:column;gap:14px;text-align:center;padding:30px}
 #rot i{font-size:56px;font-style:normal;display:block;animation:tw 2s infinite}
@@ -47,31 +44,20 @@ canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor
   <div class="flap" id="fl"></div><div class="flap" id="fr"></div>
 </div>
 
-<div class="bar">
-  <span class="brand">TypeDraw</span>
-  <button data-m="pen" class="on" title="Pen">✏️</button>
-  <button data-m="text" title="Type text">Aa</button>
-  <button data-m="erase" title="Eraser">🧽</button>
-  <input type="color" id="col" value="#1d3b8b" title="Colour">
-  <input type="range" id="sz" min="1" max="12" value="3" title="Size">
-  <button id="prev" title="Previous page">◀</button><span id="pg">1 / 1</span><button id="next" title="Next page">▶</button>
-  <button id="clr" title="Clear this spread">🗑</button>
-  <button id="ai">✨ AI</button>
-  <button id="save">💾 Save</button>
-  <button id="wa">WhatsApp</button>
-  <a id="epx" href="https://easypagex.github.io" target="_blank" rel="noopener">easypagex</a>
-</div>
+<div class="bar"><button id="er" title="Eraser">🧽</button><button id="clr" title="Clear">🗑</button><button id="save" title="Save">💾</button><button id="wa">WhatsApp</button><a id="epx" href="https://easylandx.github.io" target="_blank" rel="noopener">easylandx</a></div>
 <div id="toast"></div>
 
 <script>
-const W=720,H=960,$=s=>document.querySelector(s),mk=()=>{const c=document.createElement('canvas');c.width=W;c.height=H;return c};
-const cv={L:$('#cl'),R:$('#cr')},dev=$('#dev'),col=$('#col'),sz=$('#sz');
+let W=720;const H=800,$=s=>document.querySelector(s),mk=()=>{const c=document.createElement('canvas');c.width=W;c.height=H;return c};
+const cv={L:$('#cl'),R:$('#cr')},dev=$('#dev');
+const INK='#1c3fd1',PEN=6,FONT='500 34px "Roboto Condensed","Arial Narrow",Arial,sans-serif',ND={classList:{add(){},remove(){},toggle(){}}};
+{const a=Math.max(innerWidth,innerHeight),b=Math.min(innerWidth,innerHeight);W=Math.max(400,Math.round(H*((a-22)/2)/b));document.querySelectorAll('.paper').forEach(q=>q.style.setProperty('--m',(90/W*100)+'%'))}
 cv.L.width=cv.R.width=W;cv.L.height=cv.R.height=H;
 const cx={L:cv.L.getContext('2d'),R:cv.R.getContext('2d')};
 let sp=[{L:mk(),R:mk()}],cur=0,mode='pen',busy=0,aiOn=0,dr=null;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms)),frame=()=>new Promise(r=>requestAnimationFrame(r));
 const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3200)};
-const lab=()=>$('#pg').textContent=(cur+1)+' / '+sp.length;
+const lab=()=>{};
 function store(){for(const s of['L','R']){const g=sp[cur][s].getContext('2d');g.clearRect(0,0,W,H);g.drawImage(cv[s],0,0)}}
 function live(s,c){cx[s].clearRect(0,0,W,H);cx[s].drawImage(c,0,0)}
 function paper(g){g.fillStyle='#fffdf5';g.fillRect(0,0,W,H);g.lineWidth=2;g.strokeStyle='#a9c8e8';for(let y=40;y<H;y+=40){g.beginPath();g.moveTo(0,y-1);g.lineTo(W,y-1);g.stroke()}g.strokeStyle='#e9a0a0';g.beginPath();g.moveTo(90,0);g.lineTo(90,H);g.stroke()}
@@ -79,17 +65,18 @@ function img(c){const t=mk(),g=t.getContext('2d');paper(g);g.drawImage(c,0,0);re
 
 /* drawing */
 const pos=(c,e)=>{const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}};
-function ink(s,a,b){const g=cx[s],er=mode=='erase';g.globalCompositeOperation=er?'destination-out':'source-over';g.strokeStyle=col.value;g.lineWidth=er?+sz.value*6:+sz.value;g.lineCap=g.lineJoin='round';g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.globalCompositeOperation='source-over'}
-function txt(s,e,p){const c=cv[s],r=c.getBoundingClientRect(),k=r.width/W,fs=18+ +sz.value*5,i=document.createElement('input');
-  i.className='ti';i.style.cssText=`left:${p.x*k}px;top:${(p.y-fs*.8)*k}px;font-size:${fs*k}px;color:${col.value};width:${(W-p.x-10)*k}px`;
-  c.parentNode.appendChild(i);setTimeout(()=>i.focus(),30);let done=0;
-  const fin=()=>{if(done)return;done=1;if(i.value){const g=cx[s];g.font=`700 ${fs}px Caveat,cursive`;g.fillStyle=col.value;g.fillText(i.value,p.x,p.y)}i.remove()};
+function ink(s,a,b){const g=cx[s],er=mode=='erase';g.globalCompositeOperation=er?'destination-out':'source-over';g.strokeStyle=INK;g.lineWidth=er?40:PEN;g.lineCap=g.lineJoin='round';g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.globalCompositeOperation='source-over'}
+function txt(s,p){const c=cv[s],r=c.getBoundingClientRect(),k=r.width/W,fs=34,y=Math.max(32,Math.round(p.y/40)*40-8),i=document.createElement('input');
+  i.className='ti';i.style.cssText=`left:${p.x*k}px;top:${(y-fs*.8)*k}px;font-size:${fs*k}px;color:${INK};width:${(W-p.x-10)*k}px`;
+  c.parentNode.appendChild(i);i.focus();let done=0;
+  const fin=()=>{if(done)return;done=1;if(i.value){const g=cx[s];g.font=FONT;g.fillStyle=INK;g.fillText(i.value,p.x,y)}i.remove()};
   i.onblur=fin;i.onkeydown=ev=>{if(ev.key=='Enter')fin()}}
 for(const s of['L','R']){const c=cv[s];
-  c.addEventListener('pointerdown',e=>{if(aiOn||busy)return;e.preventDefault();const p=pos(c,e);if(mode=='text'){txt(s,e,p);return}c.setPointerCapture(e.pointerId);dr={s,x:p.x,y:p.y};ink(s,p,p)});
-  c.addEventListener('pointermove',e=>{if(!dr||dr.s!=s)return;const p=pos(c,e);ink(s,dr,p);dr.x=p.x;dr.y=p.y});
-  ['pointerup','pointercancel'].forEach(t=>c.addEventListener(t,()=>dr=null))}
-document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x==b))});
+  c.addEventListener('pointerdown',e=>{if(aiOn||busy)return;e.preventDefault();const p=pos(c,e);c.setPointerCapture(e.pointerId);dr={s,sx:p.x,sy:p.y,x:p.x,y:p.y,mv:0}});
+  c.addEventListener('pointermove',e=>{if(!dr||dr.s!=s)return;const p=pos(c,e);if(!dr.mv){if(Math.hypot(p.x-dr.sx,p.y-dr.sy)<8)return;dr.mv=1}ink(s,dr,p);dr.x=p.x;dr.y=p.y});
+  c.addEventListener('pointerup',()=>{if(dr&&dr.s==s&&!dr.mv&&mode!='erase')txt(s,{x:dr.sx,y:dr.sy});dr=null});
+  c.addEventListener('pointercancel',()=>dr=null)}
+$('#er').onclick=()=>{mode=mode=='erase'?'pen':'erase';$('#er').classList.toggle('on',mode=='erase')};
 
 /* page flip */
 async function go(d,force){
@@ -106,9 +93,9 @@ async function go(d,force){
   busy=0}
 function sw(el,def){let x0=null;
   el.addEventListener('pointerdown',e=>{if(el===dev&&e.target!==dev&&!e.target.classList.contains('hinge'))return;x0=e.clientX;el.setPointerCapture(e.pointerId)});
-  el.addEventListener('pointerup',e=>{if(x0==null)return;const dx=e.clientX-x0;x0=null;if(Math.abs(dx)>40)go(dx<0?1:-1);else if(def)go(def)})}
+  el.addEventListener('pointerup',e=>{if(x0==null)return;const dx=e.clientX-x0;x0=null;if(Math.abs(dx)>40)go(dx<0?1:-1);else if(def)go(def);else if(Math.abs(dx)<12){const n=Date.now();if(n-(sw.t||0)<450){sw.t=0;ai()}else sw.t=n}})}
 sw($('#tl'),-1);sw($('#tr'),1);sw(dev,0);
-$('#prev').onclick=()=>go(-1);$('#next').onclick=()=>go(1);
+
 addEventListener('keydown',e=>{if(e.target.tagName=='INPUT')return;if(e.key=='ArrowRight')go(1);if(e.key=='ArrowLeft')go(-1)});
 $('#clr').onclick=()=>{if(aiOn||busy)return;if(confirm('Clear both pages of this spread?')){cx.L.clearRect(0,0,W,H);cx.R.clearRect(0,0,W,H)}};
 document.addEventListener('gesturestart',e=>e.preventDefault());
@@ -149,26 +136,28 @@ const ART=[
 ];
 const COLS=['#1d3b8b','#b3261e','#1b6b3a','#6a2c91','#222','#c2570c'];
 async function ai(){
-  if(aiOn){aiOn=0;$('#ai').classList.remove('on');return}
-  const t=aiOn=Date.now();$('#ai').classList.add('on');
-  try{await document.fonts.load('700 44px Caveat')}catch(e){}
+  if(aiOn){aiOn=0;ND.classList.remove('on');return}
+  const t=aiOn=Date.now();ND.classList.add('on');
+  try{await document.fonts.load(FONT)}catch(e){}
   let s='L';
   while(aiOn===t){
-    const[tx,fn]=ART[Math.random()*ART.length|0],c=COLS[Math.random()*COLS.length|0],g=cx[s];
-    g.font='700 44px Caveat,cursive';g.fillStyle=c;
+    const[tx,fn]=ART[Math.random()*ART.length|0],c=INK,g=cx[s];
+    g.font=FONT;g.fillStyle=c;
     const lines=[];let ln='';
     for(const w of tx.split(' ')){const tt=ln?ln+' '+w:w;if(g.measureText(tt).width>560&&ln){lines.push(ln);ln=w}else ln=tt}lines.push(ln);
     const y=40*(3+(Math.random()*4|0))-8,x=110;
     for(let i=0;i<lines.length&&aiOn===t;i++)for(let j=1;j<=lines[i].length&&aiOn===t;j++){g.fillText(lines[i][j-1],x+g.measureText(lines[i].slice(0,j-1)).width,y+i*40);await sleep(60)}
     if(aiOn!==t)break;
-    const k=2.7,ax=110+Math.random()*320,ay=y+lines.length*40+10;
+    const k=2.7,ax=110+Math.random()*Math.max(0,W-420),ay=y+lines.length*40+10;
     g.strokeStyle=c;g.lineWidth=4;g.lineCap=g.lineJoin='round';
     for(const st of fn()){for(let i=1;i<st.length;i++){if(aiOn!==t)break;g.beginPath();g.moveTo(ax+st[i-1][0]*k,ay+st[i-1][1]*k);g.lineTo(ax+st[i][0]*k,ay+st[i][1]*k);g.stroke();if(i%2)await frame()}}
     await sleep(1800);
     if(aiOn!==t)break;
     if(s=='L')s='R';else{s='L';if(cur>=29){aiOn=0;break}await go(1,1)}
   }
-  $('#ai').classList.toggle('on',!!aiOn)}
-$('#ai').onclick=ai;lab();
+  ND.classList.toggle('on',!!aiOn)}
+document.fonts.load(FONT);
+toast('Tap to type, drag to draw, double-tap the hinge for AI mode');
+if(matchMedia('(pointer:coarse)').matches)addEventListener('pointerup',()=>{const d=document.documentElement,f=d.requestFullscreen||d.webkitRequestFullscreen;if(f&&!document.fullscreenElement&&!document.webkitFullscreenElement)try{const r=f.call(d,{navigationUI:'hide'});r&&r.catch&&r.catch(()=>{})}catch(e){}},{once:true});
 </script>
 </body></html>
