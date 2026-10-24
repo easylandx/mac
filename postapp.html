@@ -62,7 +62,7 @@ canvas{display:block;width:100%;height:auto;border-radius:4px;box-shadow:0 22px 
 </section>
 <main class="card"><canvas id="cv" width="1200" height="800" aria-label="Postcard preview"></canvas></main>
 <div class="row">
-<p class="hint">Press send, choose WhatsApp, then pick the recipient from your contacts. On a computer, the postcard is copied and WhatsApp Web opens: choose a contact, paste it in and press send.</p>
+<p class="hint">Press send, choose WhatsApp, then pick the recipient from your contacts. On a computer, the postcard is copied and WhatsApp Web opens: choose a contact, paste it in (Ctrl-V) and press send.</p>
 <button id="dl" class="ghost">Save image</button>
 </div>
 </div>
@@ -391,7 +391,7 @@ function save(b){const a=document.createElement('a');a.href=URL.createObjectURL(
 $('dl').onclick=async()=>{await draw();save(await blob());toast('Postcard saved.')};
 const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 $('send').onclick=async()=>{
-const text='Greetings from '+cur.n+'!';
+const text='Greetings from '+cur.n+'!\nMade with https://easylandx.github.io/mac/postapp.html';
 if(isMobile){
 await draw();
 const b=await blob(),file=new File([b],fname(),{type:'image/png'});

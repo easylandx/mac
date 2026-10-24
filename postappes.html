@@ -62,7 +62,7 @@ canvas{display:block;width:100%;height:auto;border-radius:4px;box-shadow:0 22px 
 </section>
 <main class="card"><canvas id="cv" width="1200" height="800" aria-label="Vista previa de la postal"></canvas></main>
 <div class="row">
-<p class="hint">Pulsa enviar, elige WhatsApp y selecciona al destinatario entre tus contactos. En un ordenador, la postal se copia y se abre WhatsApp Web: elige un contacto, pégala y pulsa enviar.</p>
+<p class="hint">Pulsa enviar, elige WhatsApp y selecciona al destinatario entre tus contactos. En un ordenador, la postal se copia y se abre WhatsApp Web: elige un contacto, pégala (Ctrl-V) y pulsa enviar.</p>
 <button id="dl" class="ghost">Guardar imagen</button>
 </div>
 </div>
@@ -391,7 +391,7 @@ function save(b){const a=document.createElement('a');a.href=URL.createObjectURL(
 $('dl').onclick=async()=>{await draw();save(await blob());toast('Postal guardada.')};
 const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 $('send').onclick=async()=>{
-const text='¡Saludos desde '+cur.n+'!';
+const text='¡Saludos desde '+cur.n+'!\nCreado con https://easylandx.github.io/mac/postappes.html';
 if(isMobile){
 await draw();
 const b=await blob(),file=new File([b],fname(),{type:'image/png'});
