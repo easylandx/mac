@@ -82,7 +82,7 @@ cv.L.width=cv.R.width=W;cv.L.height=cv.R.height=H;
 const cx={L:cv.L.getContext('2d'),R:cv.R.getContext('2d')};
 let sp=[newSp()],cur=0,mode='pen',busy=0,aiOn=0,dr=null;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms)),frame=()=>new Promise(r=>requestAnimationFrame(r));
-const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',6000)};
+const toast=(m,ms)=>{const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',ms||6000)};
 const lab=()=>{};
 function store(){for(const s of SD){const g=sp[cur][s].getContext('2d');g.clearRect(0,0,W,H);g.drawImage(cv[s],0,0)}}
 function live(s,c){cx[s].clearRect(0,0,W,H);cx[s].drawImage(c,0,0)}
@@ -144,10 +144,14 @@ const canShare=f=>navigator.canShare&&navigator.canShare({files:[f]});
 $('#save').onclick=async()=>{const f=await shot();
   if(canShare(f)&&matchMedia('(pointer:coarse)').matches){try{await navigator.share({files:[f],title:'TypeDraw'});return}catch(e){if(e.name=='AbortError')return}}
   dl(f);toast('Saved. On phones, use Share, then Save Image to add it to Photos.')};
-$('#wa').onclick=async()=>{const f=await shot();
-  if(canShare(f)){try{await navigator.share({files:[f],text:'Made with TypeDraw ✍️ '+LINK});return}catch(e){if(e.name=='AbortError')return}}
-  dl(f);toast('Image downloaded. Attach it to your WhatsApp chat.');
-  setTimeout(()=>open('https://wa.me/?text='+encodeURIComponent('Made with TypeDraw ✍️ '+LINK),'_blank'),900)};
+$('#wa').onclick=async()=>{const f=await shot(),MSG='Made with TypeDraw ✍️ '+LINK,WEB='https://web.whatsapp.com/send?text='+encodeURIComponent(MSG);
+  /* phones: native share sheet (WhatsApp is in it) */
+  if(matchMedia('(pointer:coarse)').matches&&canShare(f)){try{await navigator.share({files:[f],text:MSG});return}catch(e){if(e.name=='AbortError')return}}
+  /* web: copy the image, tell the person to paste it, then open WhatsApp Web */
+  let ok=0;try{await navigator.clipboard.write([new ClipboardItem({'image/png':f})]);ok=1}catch(e){}
+  if(ok)toast('Image copied! WhatsApp Web opens next: choose a contact, then press Ctrl+V (Cmd+V on Mac) to paste the image. The message text is already filled in.',8000);
+  else{dl(f);toast('Image downloaded. WhatsApp Web opens next: choose a contact, then attach the image (or drag it into the chat). The message text is already filled in.',8000)}
+  setTimeout(()=>open(WEB,'_blank'),ok?2800:2000)};
 
 /* AI mode */
 const C=(x,y,r,a0=0,a1=6.283,n=28)=>Array.from({length:n+1},(_,i)=>{const a=a0+(a1-a0)*i/n;return[x+r*Math.cos(a),y+r*Math.sin(a)]});
@@ -753,7 +757,7 @@ const onRes=()=>{clearTimeout(oriT);oriT=setTimeout(()=>{setOri();fit()},120)};
 mqP.addEventListener?mqP.addEventListener('change',onRes):mqP.addListener(onRes);
 addEventListener('resize',onRes);addEventListener('orientationchange',onRes);
 document.fonts&&document.fonts.ready.then(fit);
-toast(PT?'Tap to type, drag to draw. Swipe from either side edge, or tap a bottom corner, to turn the page':/iPhone|iPad/.test(navigator.userAgent)&&!navigator.standalone?'Swipe up on the centre hinge to hide the address bar, or Share > Add to Home Screen for true full screen':'Tap to type, drag to draw');
+toast(PT?'Tap to type, drag to draw. Swipe the side edges or tap a corner to turn the page. Tip: rotate to landscape for a two-page spread.':/iPhone|iPad/.test(navigator.userAgent)&&!navigator.standalone?'Tap to type, drag to draw. Swipe up on the centre hinge to hide the address bar, or Share > Add to Home Screen for full screen.':'Tap to type, drag to draw. Swipe the hinge or tap a corner to turn the page. Tip: rotate your phone to portrait for single pages.',8000);
 if(matchMedia('(pointer:coarse)').matches)addEventListener('pointerup',()=>{const d=document.documentElement,f=d.requestFullscreen||d.webkitRequestFullscreen;if(f&&!document.fullscreenElement&&!document.webkitFullscreenElement)try{const r=f.call(d,{navigationUI:'hide'});r&&r.catch&&r.catch(()=>{})}catch(e){}},{once:true});
 </script>
 </body></html>
