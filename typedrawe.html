@@ -158,6 +158,7 @@ const C=(x,y,r,a0=0,a1=6.283,n=28)=>Array.from({length:n+1},(_,i)=>{const a=a0+(
 const rays=(x,y,r1,r2,n)=>Array.from({length:n},(_,i)=>{const a=6.283*i/n;return[[x+r1*Math.cos(a),y+r1*Math.sin(a)],[x+r2*Math.cos(a),y+r2*Math.sin(a)]]});
 const gull=(x,y,s)=>[[x-12*s,y],[x-6*s,y-6*s],[x,y],[x+6*s,y-6*s],[x+12*s,y]];
 const wave=y=>Array.from({length:24},(_,i)=>[5+i*4,y+5*Math.sin(i*.9)]);
+const EL=(x,y,a,b,n=24)=>Array.from({length:n+1},(_,i)=>{const t=6.283*i/n;return[x+a*Math.cos(t),y+b*Math.sin(t)]});
 const ART=[
 ['Persigue el sol',()=>[C(50,50,17),...rays(50,50,24,40,10)]],
 ['Hazlo con amor',()=>[Array.from({length:41},(_,i)=>{const t=6.283*i/40;return[50+2.4*16*Math.pow(Math.sin(t),3),46-2.4*(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))]})]],
@@ -170,30 +171,57 @@ const ART=[
 ['Fluye con la corriente',()=>[[[40,34],[40,6],[64,28],[40,28]],[[30,34],[70,34],[62,44],[38,44],[30,34]],wave(58),wave(74),wave(90)]],
 ['Deja volar tus pensamientos',()=>[gull(50,56,2.2),gull(22,24,1.2),gull(78,20,1.4)]],
 ['Los pequeños pasos escalan montañas',()=>[[[4,90],[34,34],[50,56],[68,22],[96,90],[4,90]],[[27,48],[34,34],[41,48]],[[61,36],[68,22],[75,36]],C(84,12,7)]]
+,
+['Sonríe, es gratis',()=>[C(50,50,38,0,6.283,36),C(37,40,4,0,6.283,10),C(63,40,4,0,6.283,10),C(50,52,24,.35,2.79,16)]],
+['Mantén viva la curiosidad',()=>[C(42,42,28,0,6.283,32),[[62,62],[92,92]],[[57,67],[87,97]],C(42,42,20,3.6,5,8)]],
+['Sé luz en la oscuridad',()=>[[[38,52],[62,52],[62,96],[38,96],[38,52]],[[50,52],[50,44]],[[50,42],[42,30],[50,8],[58,30],[50,42]],[[44,60],[44,90]]]],
+['Hogar es donde está el corazón',()=>[[[10,50],[50,12],[90,50]],[[20,44],[20,92],[80,92],[80,44]],[[42,92],[42,64],[58,64],[58,92]],[[68,30],[68,14],[78,14],[78,38]],C(50,40,5,0,6.283,10)]],
+['La lluvia hace crecer las flores',()=>[[[24,52],[16,44],[20,32],[32,30],[40,18],[56,16],[66,26],[78,28],[86,40],[80,52],[24,52]],[[30,62],[26,76]],[[46,62],[42,76]],[[62,62],[58,76]],[[76,62],[72,76]],[[38,80],[34,94]],[[54,80],[50,94]]]],
+['Sigue escalando',()=>[[[12,88],[84,16]],[[46,14],[86,14],[86,54]]]],
+['Siembra una semilla de bondad',()=>[[[50,96],[50,46]],[[50,70],[28,62],[20,40],[42,46],[50,70]],[[50,56],[72,48],[80,26],[58,32],[50,56]],[[18,96],[82,96]],[[30,96],[36,90]],[[64,96],[72,90]]]],
+['La música es el alma de la vida',()=>[C(28,80,10,0,6.283,14),C(66,70,10,0,6.283,14),[[38,80],[38,26]],[[76,70],[76,16]],[[38,26],[76,16],[76,28],[38,38],[38,26]]]],
+['Lee, imagina, sueña',()=>[[[50,32],[18,24],[10,80],[50,88],[50,32]],[[50,32],[82,24],[90,80],[50,88]],[[20,38],[42,44]],[[19,50],[41,56]],[[18,62],[40,68]],[[80,38],[58,44]],[[81,50],[59,56]]]],
+['Transfórmate y vuela',()=>[[[50,30],[50,82]],[[50,46],[16,14],[8,46],[50,56],[50,46]],[[50,46],[84,14],[92,46],[50,56]],[[50,56],[18,62],[26,86],[50,68]],[[50,56],[82,62],[74,86],[50,68]],[[50,30],[40,14]],[[50,30],[60,14]],C(24,36,6,0,6.283,10),C(76,36,6,0,6.283,10)]],
+['Icemos las velas',()=>[[[12,66],[88,66],[74,84],[26,84],[12,66]],[[50,66],[50,8]],[[54,12],[84,60],[54,60],[54,12]],[[46,22],[20,60],[46,60],[46,22]],wave(94)]],
+['Cada día es un regalo',()=>[[[20,48],[80,48],[80,94],[20,94],[20,48]],[[14,34],[86,34],[86,48],[14,48],[14,34]],[[50,34],[50,94]],[[50,34],[34,14],[28,28],[50,34],[66,14],[72,28],[50,34]]]],
+['Brilla como un diamante',()=>[[[24,30],[76,30],[94,48],[50,94],[6,48],[24,30]],[[6,48],[94,48]],[[24,30],[36,48],[50,94],[64,48],[76,30]],[[36,48],[50,30],[64,48]]]],
+['Disfruta del camino',()=>[C(24,68,20,0,6.283,24),C(78,68,20,0,6.283,24),[[24,68],[42,38],[68,38],[78,68]],[[42,38],[56,68],[24,68]],[[56,68],[68,38]],[[36,32],[50,32]],[[68,38],[64,24],[76,22]],C(24,68,3,0,6.283,8),C(78,68,3,0,6.283,8)]],
+['Sé único en tu especie',()=>{const s=[];for(let i=0;i<3;i++){const a=i*1.047,c=Math.cos(a),n=Math.sin(a);s.push([[50+42*c,50+42*n],[50-42*c,50-42*n]])}for(let i=0;i<6;i++){const a=i*1.047,p=[50+26*Math.cos(a),50+26*Math.sin(a)];for(const d of[-.6,.6])s.push([p,[p[0]+12*Math.cos(a+d),p[1]+12*Math.sin(a+d)]])}return s}],
+['Los gatos hacen la vida más bonita',()=>[C(50,60,30,0,6.283,32),[[22,44],[22,12],[44,30]],[[78,44],[78,12],[56,30]],C(38,54,3,0,6.283,8),C(62,54,3,0,6.283,8),[[45,64],[55,64],[50,70],[45,64]],[[50,70],[50,76]],[[20,66],[36,68]],[[20,76],[36,72]],[[80,66],[64,68]],[[80,76],[64,72]]]],
+['Escribe tu propia historia',()=>[[[16,86],[24,62],[68,18],[84,34],[40,78],[16,86]],[[24,62],[40,78]],[[60,26],[76,42]]]],
+['Vive feliz, como una abeja',()=>[EL(56,60,28,18,28),C(24,60,10,0,6.283,14),EL(48,34,9,16,16),EL(66,36,9,14,16),[[40,44],[40,76]],[[52,43],[52,77]],[[64,45],[64,75]],[[20,52],[12,38]],[[28,51],[28,36]],[[84,60],[94,60]]]],
+['Elévate con alegría',()=>[C(50,38,28,0,6.283,36),[[46,66],[54,66],[50,61]],[[50,66],[44,78],[56,88],[50,98]],C(40,28,8,3.6,5.2,8)]],
+['Baila bajo la lluvia',()=>[C(50,54,42,3.1416,6.2832,28),[[8,54],[92,54]],[[50,12],[28,54]],[[50,12],[72,54]],[[50,12],[50,54]],[[50,54],[50,88],[44,95],[36,89]],[[18,66],[15,76]],[[78,66],[75,76]]]],
+['Explora siempre, asómbrate más',()=>[C(50,50,40,0,6.283,36),...rays(50,50,32,40,12),[[50,20],[58,50],[50,80],[42,50],[50,20]],[[50,20],[50,80]],C(50,50,4,0,6.283,8)]],
+['Sorbe despacio, vive plenamente',()=>[[[16,42],[16,62],[28,82],[62,82],[74,62],[74,42],[16,42]],C(76,56,12,-1.5,1.5,12),[[8,90],[84,90]],[[34,34],[38,26],[34,18],[38,10]],[[50,34],[54,26],[50,18],[54,10]]]],
+['Las ideas cambian el mundo',()=>[C(50,38,26,0,6.283,32),[[40,62],[42,76],[58,76],[60,62]],[[42,82],[58,82]],[[46,88],[54,88]],[[44,50],[44,40],[50,34],[56,40],[56,50]],[[18,10],[26,18]],[[82,10],[74,18]],[[8,38],[16,38]],[[92,38],[84,38]],[[50,2],[50,8]]]]
 ];
 const COLS=['#1d3b8b','#b3261e','#1b6b3a','#6a2c91','#222','#c2570c'];
-let last=[];const pick=()=>{let i;do i=Math.random()*ART.length|0;while(last.includes(i));last=[...last.slice(-1),i];return ART[i]};
+let last=[];const pick=()=>{let i;do i=Math.random()*ART.length|0;while(last.includes(i));last=[...last.slice(-9),i];return ART[i]};
+const INKS=['#1c3fd1','#c4161c','#14110e'];
 async function ai(){
   if(aiOn){aiOn=0;ND.classList.remove('on');return}
   crOn=0;stopArt();const t=aiOn=Date.now();ND.classList.add('on');
   try{await document.fonts.load(FONT)}catch(e){}
-  let n=0,s;
+  let n=0,ci=0,s;
   while(aiOn===t){
-    while(busy)await sleep(60);if(aiOn!==t)break;const pg=cur,ok=()=>aiOn===t&&cur===pg&&!busy;s=PT||n<2?'L':'R';
-    const[tx,fn]=pick(),c=INK,g=cx[s];
+    while(busy)await sleep(60);if(aiOn!==t)break;const pg=cur,ok=()=>aiOn===t&&cur===pg&&!busy;
+    s=PT||n<2?'L':'R';
+    const P=PT||s=='L'?2:3,i=PT||s=='L'?n:n-2,
+    top=P==2?40+i*380:40+i*250,slot=P==2?370:240,
+    [tx,fn]=pick(),c=INKS[ci++%3],g=cx[s];
     g.font=FONT;g.fillStyle=c;
     const lines=[];let ln='';
-    for(const w of tx.split(' ')){const tt=ln?ln+' '+w:w;if(g.measureText(tt).width>(PT?W-124:560)&&ln){lines.push(ln);ln=w}else ln=tt}lines.push(ln);
-    const y=n==0?40*(2+(Math.random()*2|0))-8:n==1?40*(11+(Math.random()*2|0))-8:40*(3+(Math.random()*4|0))-8,x=110;
-    for(let i=0;i<lines.length&&ok();i++)for(let j=1;j<=lines[i].length&&ok();j++){g.font=FONT;g.fillStyle=c;g.fillText(lines[i][j-1],x+g.measureText(lines[i].slice(0,j-1)).width,y+i*40);await sleep(60)}
+    for(const w of tx.split(' ')){const tt=ln?ln+' '+w:w;if(g.measureText(tt).width>Math.min(560,W-124)&&ln){lines.push(ln);ln=w}else ln=tt}lines.push(ln);
+    const y=40*Math.floor((top+40)/40)-8+(P==2?40*(Math.random()*2|0):0),x=110;
+    for(let i=0;i<lines.length&&ok();i++)for(let j=1;j<=lines[i].length&&ok();j++){g.font=FONT;g.fillStyle=c;g.fillText(lines[i][j-1],x+g.measureText(lines[i].slice(0,j-1)).width,y+i*40);await sleep(18)}
     if(!ok()){if(aiOn===t)n=0;continue}
-    const k=Math.min(n<2?1.9:2.7,(W-130)/100),ax=110+Math.random()*Math.max(0,W-110-k*100-20),ay=y+lines.length*40+10;
-    g.strokeStyle=c;g.lineWidth=4;g.lineCap=g.lineJoin='round';
-    for(const st of fn()){for(let i=1;i<st.length;i++){if(!ok())break;g.strokeStyle=c;g.lineWidth=4;g.lineCap=g.lineJoin='round';g.beginPath();g.moveTo(ax+st[i-1][0]*k,ay+st[i-1][1]*k);g.lineTo(ax+st[i][0]*k,ay+st[i][1]*k);g.stroke();if(i%2)await frame()}}
+    const ay=y+lines.length*40+10,k=Math.max(.7,Math.min(P==2?2:1.5,(top+slot-8-ay)/100,(W-130)/100)),ax=110+Math.random()*Math.max(0,W-110-k*100-20),lw=P==2?4:3.2;
+    for(const st of fn()){for(let i=1;i<st.length;i++){if(!ok())break;g.strokeStyle=c;g.lineWidth=lw;g.lineCap=g.lineJoin='round';g.beginPath();g.moveTo(ax+st[i-1][0]*k,ay+st[i-1][1]*k);g.lineTo(ax+st[i][0]*k,ay+st[i][1]*k);g.stroke();if(i%3==0)await frame()}}
     if(!ok()){if(aiOn===t)n=0;continue}
-    await sleep(1800);
+    await sleep(450);
     if(!ok()){if(aiOn===t)n=0;continue}
-    if(++n>(PT?1:2)){n=0;if(cur>=LIM-1){aiOn=0;break}await go(1,1)}
+    if(++n>=(PT?2:5)){n=0;if(cur>=LIM-1){aiOn=0;break}await go(1,1)}
   }
   ND.classList.toggle('on',!!aiOn)}
 document.fonts.load(FONT);
