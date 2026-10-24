@@ -1019,22 +1019,32 @@ function parasol(){
     if(y>H*.78)return pk(['#5a9a4a','#7aba5a','#e8c84a','#d9a0b8','#4a8a3a']);
     return Math.random()<.35?pk(['#ffffff','#f0f4fa']):pk(['#8ab8e8','#6a9ad8','#a8c8f0'])},
   ang(x,y){return body(x,y)?1.4+Math.sin(y/30)*.2:y>H*.78?-1.2+Math.sin(x/30)*.5:Math.sin(x/70)*.2}}}
-function magpie(){
-  const rail=(x,y)=>x>W*.25&&x<W*.9&&(Math.abs(y-H*.55)<5||Math.abs(y-H*.63)<5),post=(x,y)=>[.3,.55,.85].some(p=>Math.abs(x-p*W)<6)&&y>H*.46&&y<H*.8,
-  bird=(x,y)=>inE(x,y,W*.6,H*.5,W*.045,H*.03);
-  return{base:'#e8eef5',len:24,wid:7,k:1.5,per:18,
-  col(x,y){if(bird(x,y))return Math.random()<.4?'#ffffff':'#14110e';if(rail(x,y)||post(x,y))return pk(['#6a5a4a','#8a7a6a']);
-    if(y<H*.35&&x>W*.65&&Math.sin(x/25)>-.2)return pk(['#8a7a8a','#a898a8','#6a5a6a']);
-    if(y>H*.5)return Math.random()<.4?pk(['#aab8d8','#c8d4ec','#b8a8d0']):pk(['#ffffff','#eef2fa','#f4f8ff']);
-    return pk(['#e8eef5','#d8e4f0','#f0f4fa'])},
-  ang(x,y){return Math.sin(x/70+y/40)*.15}}}
+function poppies(){
+  const hz=H*.42,tr=(x,y)=>y<hz&&y>hz-H*.07-Math.abs(Math.sin(x/61))*H*.05;
+  return{base:'#9fc0e8',len:26,wid:7,k:1.6,per:18,
+  col(x,y){
+    if(tr(x,y))return pk(['#2f6a45','#3f7d4a','#1f4a36','#4d8a5a','#5a9a5c']);
+    if(y<hz)return Math.random()<.35?pk(['#ffffff','#f3f6fa','#e8eef5','#f8ecf0']):pk(['#8fb0e0','#a9c6ea','#7fa3d8','#b8d0ee']);
+    const d=(y-hz)/(H-hz);
+    if(Math.random()<.1+d*.4)return pk(['#d8301e','#e8452a','#c4281c','#f06a3c','#e03a24']);
+    return pk(['#5a9a4a','#7aba5a','#8fc66a','#3f7a3a','#e8d870','#a8c870','#6aa84a'])},
+  ang(x,y){return y<hz?Math.sin(x/70)*.15:Math.sin(x/30+y/25)*.25},
+  async post(g,ok){
+    for(const[fx,fy,s]of[[W*.3,H*.72,1.1],[W*.64,H*.6,.8]]){
+      if(!ok())return;
+      g.globalAlpha=.92;
+      g.fillStyle='#f2efe6';g.beginPath();g.ellipse(fx,fy,14*s,34*s,0,0,6.283);g.fill();
+      g.fillStyle='#e8c8a8';g.beginPath();g.arc(fx,fy-40*s,8*s,0,6.283);g.fill();
+      g.fillStyle='#4a7aa8';g.beginPath();g.ellipse(fx,fy-52*s,26*s,14*s,0,Math.PI,6.283);g.closePath();g.fill();
+      g.strokeStyle='#3a3a4a';g.lineWidth=2*s;g.beginPath();g.moveTo(fx,fy-52*s);g.lineTo(fx,fy-30*s);g.stroke();
+      g.globalAlpha=1;await frame()}}}}
 const vBase=async(g,ok)=>{await wash(g,'#e8d5a6',ok,8,.45);if(!ok())return;const gr=g.createRadialGradient(W/2,H/2,Math.min(W,H)*.25,W/2,H/2,Math.max(W,H)*.75);gr.addColorStop(0,'rgba(120,80,30,0)');gr.addColorStop(1,'rgba(120,80,30,.42)');g.fillStyle=gr;g.fillRect(0,0,W,H)},
 mBase=async(g,ok)=>{await wash(g,'#e9d8b6',ok,8,.45);if(!ok())return;for(let i=0;i<14;i++){g.globalAlpha=.05;g.fillStyle='#9b3a22';g.beginPath();g.ellipse(rnd(0,W),rnd(0,H),rnd(40,140),rnd(20,70),rnd(0,3),0,6.283);g.fill()}g.globalAlpha=1},
 works={vinci:[[monaF,cMona],[supperF,cSupper],[vitF,cVit],[ladyF,cLady],[virginF,cVirgin]].map(([f,c])=>async(g,ok)=>{await vBase(g,ok);if(!ok())return;const T=mkT();await f(g,ok,T);await c(g,ok,T)}),
  michel:[david,sistineF,pietaF,judgmentF,mosesF].map(f=>(g,ok)=>f(g,ok,mkT())),
  vince:[starry,sunfl,cafe,potato,almond].map(f=>(g,ok)=>dabScene([f],g,ok)),
  pablo:[guernica,demoiselles,guitarist,weeping,dreamF].map(f=>(g,ok)=>f(g,ok,mkT())),
- monet:[lilies,sunrise,parasol,magpie,hay].map(f=>(g,ok)=>mdabScene([f],g,ok))};
+ monet:[lilies,sunrise,parasol,poppies,hay].map(f=>(g,ok)=>mdabScene([f],g,ok))};
 return{works,vinci:vinciF,michel:michelF,vince:(g,ok)=>dabScene([starry,sunfl,cafe],g,ok),pablo:pabloF,monet:(g,ok)=>mdabScene([lilies,sunrise],g,ok),
  self:{vinci:async(g,ok)=>{await vinciP(g,ok);await cSelf(g,ok,mkT())},michel:michelP,vince:(g,ok)=>dabScene([vgSelf],g,ok),pablo:pabloP,monet:(g,ok)=>mdabScene([mnSelf],g,ok)}}})();
 
@@ -1044,7 +1054,7 @@ const TITLES={vinci:['Self-portrait','Mona Lisa','The Last Supper','Vitruvian Ma
 michel:['Self-portrait','David','The Creation of Adam','Pietà','The Last Judgment','Moses'],
 vince:['Self-portrait','The Starry Night','Sunflowers','Café Terrace at Night','The Potato Eaters','Almond Blossom'],
 pablo:['Self-portrait','Guernica','Les Demoiselles d’Avignon','The Old Guitarist','The Weeping Woman','The Dream'],
-monet:['Self-portrait','Water Lilies','Impression, Sunrise','Woman with a Parasol','The Magpie','Haystacks']};
+monet:['Self-portrait','Water Lilies','Impression, Sunrise','Woman with a Parasol','Poppy Field','Haystacks']};
 const mm=$('#mm'),mo=$('#mo');
 mm.innerHTML=MS.map(([k,a,b])=>`<button data-k="${k}">${a}<small>${b}</small></button>`).join('')+'<button data-k="stop" id="mstop">Stop painting</button>';
 function syncMM(){mm.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.k==artK));$('#mstop').style.display=artOn?'flex':'none';mo.classList.toggle('on',!!artOn)}
