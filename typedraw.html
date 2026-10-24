@@ -54,6 +54,11 @@ canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor
 .pt .bar button,.pt .bar a{font-size:10.5px;padding:6px}
 .pt #epx{font-size:10px}
 .pt #toast{bottom:calc(env(safe-area-inset-bottom) + 84px);max-width:calc(100vw - 32px);text-align:center}
+#pho{position:fixed;z-index:12;display:none;background:#fff;padding:6px 6px 18px;box-shadow:0 6px 22px #0008;touch-action:none;cursor:move;border-radius:2px;user-select:none;-webkit-user-select:none}
+#pho img{display:block;width:100%;height:auto;pointer-events:none}
+.pb{position:absolute;top:-14px;width:34px;height:34px;border:0;border-radius:50%;font:700 18px Inter,system-ui,sans-serif;color:#fff;cursor:pointer;box-shadow:0 2px 8px #0006;display:flex;align-items:center;justify-content:center;padding:0}
+#pno{left:-14px;background:#c4161c}#pok{right:-14px;background:#1b8a4a}
+.rz{position:absolute;right:-12px;bottom:-12px;width:30px;height:30px;border-radius:50%;background:#1c3fd1;border:3px solid #fff;cursor:nwse-resize;box-shadow:0 2px 8px #0006}
 </style></head><body>
 
 <div class="device" id="dev">
@@ -63,8 +68,8 @@ canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor
   <div class="flap" id="fl"></div><div class="flap" id="fr"></div>
 </div>
 
-<div class="bar"><button id="ai" title="AI mode">✨ AI</button><button id="cz" title="Pollock">🎨 Pollock</button><button id="mo" title="More painters">More ▾</button><button id="er" title="Eraser">🧽</button><button id="rs" title="Reset notebook">↺</button><button id="clr" title="Clear">🗑</button><button id="save" title="Save">💾</button><button id="wa">WhatsApp</button><a id="epx" href="https://easylandx.github.io" target="_blank" rel="noopener">easylandx</a></div>
-<div id="toast"></div><div id="mm"></div><div id="sp"></div>
+<div class="bar"><button id="ai" title="AI mode">✨ AI</button><button id="cz" title="Pollock">🎨 Pollock</button><button id="mo" title="More painters">More ▾</button><button id="un" title="Undo">↩</button><button id="er" title="Eraser">🧽</button><button id="rs" title="Reset notebook">↺</button><button id="ph" title="Add photo">📷</button><button id="clr" title="Clear">🗑</button><button id="save" title="Save">💾</button><button id="wa">WhatsApp</button><a id="epx" href="https://easylandx.github.io" target="_blank" rel="noopener">easylandx</a></div>
+<div id="pho"><img alt=""><button class="pb" id="pno" title="Cancel">✕</button><button class="pb" id="pok" title="Place photo">✓</button><div class="rz"></div></div><input type="file" id="pf" accept="image/*" style="display:none"><div id="toast"></div><div id="mm"></div><div id="sp"></div>
 
 <script>
 let W=720;const H=800,$=s=>document.querySelector(s),mk=()=>{const c=document.createElement('canvas');c.width=W;c.height=H;return c};
@@ -89,17 +94,20 @@ function live(s,c){cx[s].clearRect(0,0,W,H);cx[s].drawImage(c,0,0)}
 function paper(g){g.fillStyle='#fffdf5';g.fillRect(0,0,W,H);g.lineWidth=2;g.strokeStyle='#a9c8e8';for(let y=40;y<H;y+=40){g.beginPath();g.moveTo(0,y-1);g.lineTo(W,y-1);g.stroke()}g.strokeStyle='#e9a0a0';g.beginPath();g.moveTo(90,0);g.lineTo(90,H);g.stroke()}
 function img(c){const t=mk(),g=t.getContext('2d');paper(g);g.drawImage(c,0,0);return 'url('+t.toDataURL('image/jpeg',.85)+')'}
 
+/* undo history */
+const HIS=[];
+function pushH(sides){const sn={};for(const s of sides){const c=mk();c.getContext('2d').drawImage(cv[s],0,0);sn[s]=c}HIS.push({i:cur,sn});if(HIS.length>25)HIS.shift()}
 /* drawing */
 const pos=(c,e)=>{const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}};
 function ink(s,a,b){const g=cx[s],er=mode=='erase';g.globalCompositeOperation=er?'destination-out':'source-over';g.strokeStyle=INK;g.lineWidth=er?40:PEN;g.lineCap=g.lineJoin='round';g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.globalCompositeOperation='source-over'}
 function txt(s,p){const c=cv[s],r=c.getBoundingClientRect(),k=r.width/W,fs=34,y=Math.max(32,Math.round(p.y/40)*40-8),i=document.createElement('input');
   i.className='ti';i.style.cssText=`left:${p.x*k}px;top:${(y-fs*.8)*k}px;font-size:${fs*k}px;color:${INK};width:${(W-p.x-10)*k}px`;
   c.parentNode.appendChild(i);i.focus();let done=0;
-  const fin=()=>{if(done)return;done=1;if(i.value){const g=cx[s];g.font=FONT;g.fillStyle=INK;g.fillText(i.value,p.x,y)}i.remove();setTimeout(onRes,300)};
+  const fin=()=>{if(done)return;done=1;if(i.value){pushH([s]);const g=cx[s];g.font=FONT;g.fillStyle=INK;g.fillText(i.value,p.x,y)}i.remove();setTimeout(onRes,300)};
   i.onblur=fin;i.onkeydown=ev=>{if(ev.key=='Enter')fin()}}
 for(const s of['L','R']){const c=cv[s];
   c.addEventListener('pointerdown',e=>{if(busy)return;e.preventDefault();const p=pos(c,e);c.setPointerCapture(e.pointerId);dr={s,sx:p.x,sy:p.y,x:p.x,y:p.y,mv:0}});
-  c.addEventListener('pointermove',e=>{if(!dr||dr.s!=s)return;const p=pos(c,e);if(!dr.mv){if(Math.hypot(p.x-dr.sx,p.y-dr.sy)<8)return;dr.mv=1}ink(s,dr,p);dr.x=p.x;dr.y=p.y});
+  c.addEventListener('pointermove',e=>{if(!dr||dr.s!=s)return;const p=pos(c,e);if(!dr.mv){if(Math.hypot(p.x-dr.sx,p.y-dr.sy)<8)return;dr.mv=1;pushH([s])}ink(s,dr,p);dr.x=p.x;dr.y=p.y});
   c.addEventListener('pointerup',()=>{if(dr&&dr.s==s&&!dr.mv&&mode!='erase')txt(s,{x:dr.sx,y:dr.sy});dr=null});
   c.addEventListener('pointercancel',()=>dr=null)}
 $('#er').onclick=()=>{mode=mode=='erase'?'pen':'erase';$('#er').classList.toggle('on',mode=='erase')};
@@ -127,8 +135,8 @@ function sw(el,def,noAI){let x0=null;
   el.addEventListener('pointerup',e=>{if(x0==null)return;const dx=e.clientX-x0;x0=null;if(Math.abs(dx)>40)go(dx<0?1:-1);else if(def)go(def);else if(!noAI&&Math.abs(dx)<12){const n=Date.now();if(n-(sw.t||0)<450){sw.t=0;ai()}else sw.t=n}})}
 sw($('#tl'),-1);sw($('#tr'),1);sw($('#tr2'),1);sw(dev,0);sw($('#edl'),0,1);sw($('#edr'),0,1);
 
-addEventListener('keydown',e=>{if(e.target.tagName=='INPUT')return;if(e.key=='ArrowRight')go(1);if(e.key=='ArrowLeft')go(-1)});
-$('#clr').onclick=()=>{if(busy)return;if(confirm(PT?'Clear this page?':'Clear both pages of this spread?')){for(const s of SD)cx[s].clearRect(0,0,W,H)}};
+addEventListener('keydown',e=>{if(e.target.tagName=='INPUT')return;if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()=='z'){e.preventDefault();$('#un').click();return}if(e.key=='ArrowRight')go(1);if(e.key=='ArrowLeft')go(-1)});
+$('#clr').onclick=()=>{if(busy)return;if(confirm(PT?'Clear this page?':'Clear both pages of this spread?')){pushH(SD);for(const s of SD)cx[s].clearRect(0,0,W,H)}};
 document.addEventListener('gesturestart',e=>e.preventDefault());
 
 /* save + share */
@@ -210,7 +218,7 @@ async function ai(){
     const P=PT||s=='L'?2:3,i=PT||s=='L'?n:n-2,
     top=P==2?40+i*380:40+i*250,slot=P==2?370:240,
     [tx,fn]=pick(),c=INKS[ci++%3],g=cx[s];
-    g.font=FONT;g.fillStyle=c;
+    pushH([s]);g.font=FONT;g.fillStyle=c;
     const lines=[];let ln='';
     for(const w of tx.split(' ')){const tt=ln?ln+' '+w:w;if(g.measureText(tt).width>Math.min(560,W-124)&&ln){lines.push(ln);ln=w}else ln=tt}lines.push(ln);
     const y=40*Math.floor((top+40)/40)-8+(P==2?40*(Math.random()*2|0):0),x=110;
@@ -236,7 +244,7 @@ async function crazy(){
   while(crOn===t){
     while(busy)await sleep(60);
     if(crOn!==t)break;
-    const pg=cur,ok=()=>crOn===t&&cur===pg&&!busy;
+    const pg=cur,ok=()=>crOn===t&&cur===pg&&!busy;pushH(SD);
     const grid={L:new Uint8Array(gc*gr),R:new Uint8Array(gc*gr)},cnt={L:0,R:0},p={L:{x:R(0,W),y:R(0,H)},R:{x:R(0,W),y:R(0,H)}};
     const mark=(s,x,y,r)=>{const m=grid[s];for(let j=Math.max(0,(y-r)/G|0);j<=Math.min(gr-1,(y+r)/G|0);j++)for(let i=Math.max(0,(x-r)/G|0);i<=Math.min(gc-1,(x+r)/G|0);i++)if(!m[j*gc+i]){m[j*gc+i]=1;cnt[s]++}};
     while(ok()&&Math.min(...SD.map(q=>cnt[q]))<.85*gc*gr){
@@ -1078,6 +1086,7 @@ async function art(k){
     if(artOn!==t)break;
     const pg=cur,ok=()=>artOn===t&&cur===pg&&!busy;
     toast(SD.map((s,i)=>TT[q+i]).filter(Boolean).join('  +  '),5000);
+    pushH(SD.filter((s,i)=>q+i<WK.length));
     try{await Promise.all(SD.map((s,i)=>q+i<WK.length?WK[q+i](cx[s],ok):0))}
     catch(e){console.error(e);if(artOn===t)stopArt();toast('Something went wrong while painting');break}
     for(const s of SD){cx[s].globalAlpha=1;cx[s].setLineDash([])}
@@ -1095,10 +1104,40 @@ $('#rs').onclick=async()=>{
   while(busy)await sleep(60);
   busy=1;
   mode='pen';$('#er').classList.remove('on');
-  sp=[newSp()];cur=0;for(const k in NB)delete NB[k];
+  sp=[newSp()];cur=0;HIS.length=0;for(const k in NB)delete NB[k];
   for(const s of['L','R'])cx[s].clearRect(0,0,W,H);
   document.querySelectorAll('.ti').forEach(i=>i.remove());
   busy=0;toast('Notebook reset',2500)};
+/* photo upload */
+const pf=$('#pf'),po=$('#pho'),pi=po.querySelector('img');let pUrl=null,pd=null;
+function cancelPhoto(){po.style.display='none';if(pUrl){URL.revokeObjectURL(pUrl);pUrl=null}pi.removeAttribute('src')}
+$('#ph').onclick=()=>{if(busy)return;aiOn=0;crOn=0;stopArt();ND.classList.remove('on');$('#cz').classList.remove('on');mm.style.display='none';pf.click()};
+pf.onchange=()=>{const f=pf.files&&pf.files[0];pf.value='';if(!f)return;cancelPhoto();pUrl=URL.createObjectURL(f);
+  pi.onload=()=>{const w=Math.round(Math.min(innerWidth*.45,360)),h=w*pi.naturalHeight/pi.naturalWidth;po.style.width=w+'px';po.style.left=Math.max(8,(innerWidth-w)/2)+'px';po.style.top=Math.max(8,(innerHeight-h)/2-20)+'px';po.style.display='block';toast('Drag to move, pull the blue corner to resize, then tap the green check.',7000)};
+  pi.onerror=()=>{cancelPhoto();toast('Could not load that image.',4000)};pi.src=pUrl};
+po.addEventListener('pointerdown',e=>{if(e.target.closest('.pb'))return;e.preventDefault();po.setPointerCapture(e.pointerId);const r=po.getBoundingClientRect();pd={rz:e.target.classList.contains('rz'),x:e.clientX,y:e.clientY,l:r.left,t:r.top,w:r.width}});
+po.addEventListener('pointermove',e=>{if(!pd)return;const dx=e.clientX-pd.x,dy=e.clientY-pd.y;if(pd.rz)po.style.width=Math.max(70,Math.min(innerWidth,pd.w+dx))+'px';else{po.style.left=pd.l+dx+'px';po.style.top=pd.t+dy+'px'}});
+po.addEventListener('pointerup',()=>pd=null);po.addEventListener('pointercancel',()=>pd=null);
+$('#pno').onclick=cancelPhoto;
+$('#pok').onclick=()=>{
+  const o=po.getBoundingClientRect(),mx=o.left+o.width/2,my=o.top+o.height/2;let s=null;
+  for(const q of SD){const r=cv[q].getBoundingClientRect();if(mx>=r.left&&mx<=r.right&&my>=r.top&&my<=r.bottom){s=q;break}}
+  if(!s){toast('Move the photo onto a page first.',3500);return}
+  const r=cv[s].getBoundingClientRect(),kx=W/r.width,ky=H/r.height,ir=pi.getBoundingClientRect(),g=cx[s];
+  pushH([s]);g.save();g.globalCompositeOperation='source-over';g.shadowColor='rgba(0,0,0,.35)';g.shadowBlur=10*kx;g.shadowOffsetY=3*ky;g.fillStyle='#fff';g.fillRect((o.left-r.left)*kx,(o.top-r.top)*ky,o.width*kx,o.height*ky);g.restore();
+  g.drawImage(pi,(ir.left-r.left)*kx,(ir.top-r.top)*ky,ir.width*kx,ir.height*ky);
+  cancelPhoto()};
+$('#un').onclick=async()=>{
+  if(busy)return;
+  if(!HIS.length){toast('Nothing to undo',1800);return}
+  const was=aiOn||crOn||artOn;
+  aiOn=0;crOn=0;stopArt();ND.classList.remove('on');$('#cz').classList.remove('on');
+  if(was)await sleep(250);
+  while(busy)await sleep(60);
+  if(!HIS.length)return;
+  const h=HIS.pop();
+  if(h.i!==cur){store();cur=h.i;for(const s of SD)live(s,sp[cur][s])}
+  for(const s in h.sn){const g=cx[s];g.clearRect(0,0,W,H);g.drawImage(h.sn[s],0,0)}};
 $('#cz').onclick=crazy;
 ND.onclick=ai;setTimeout(()=>scrollTo(0,1),300);
 /* each orientation keeps its own notebook (portrait = single pages, landscape = spreads) */
@@ -1108,7 +1147,7 @@ async function setOri(){
   const el=document.activeElement;if(el&&el.classList&&el.classList.contains('ti'))return;
   await sleep(150);while(busy)await sleep(60);
   if(mqP.matches===PT)return;
-  busy=1;aiOn=0;crOn=0;stopArt();ND.classList.remove('on');$('#cz').classList.remove('on');mm.style.display='none';
+  cancelPhoto();HIS.length=0;busy=1;aiOn=0;crOn=0;stopArt();ND.classList.remove('on');$('#cz').classList.remove('on');mm.style.display='none';
   store();NB[PT?'p':'l']={W,sp,cur};
   PT=mqP.matches;SD=PT?['L']:['L','R'];LIM=PT?60:30;
   document.body.classList.toggle('pt',PT);
