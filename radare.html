@@ -164,6 +164,8 @@
   }).addTo(map);
 
   var markerLayer = L.layerGroup().addTo(map);
+  var markers = {};      // one marker per aircraft, reused between refreshes
+  var routeCache = {};   // callsign -> {o, d, airline} | null | 'loading'
 
   // ---- UI helpers ----
   var statusEl = document.getElementById('status');
@@ -182,6 +184,80 @@
     return '<div class="pop-row"><span>' + esc(k) + '</span><span>' + esc(v) + '</span></div>';
   }
 
+  function airportLabel(ap) {
+    if (!ap) return 'N/A';
+    var code = ap.iata_code || ap.icao_code || '';
+    var city = ap.municipality || ap.name || '';
+    return (code + ' ' + city).trim() || 'N/A';
+  }
+  function routeRows(callsign) {
+    var cs = (callsign || '').toUpperCase();
+    if (!cs) return '';
+    var r = routeCache[cs];
+    if (r === undefined || r === 'loading') return row('Route', 'Loading...');
+    if (r.fail) return row('Route', r.fail);
+    return (r.airline ? row('Airline', r.airline) : '') +
+           row('From', airportLabel(r.o)) +
+           row('To', airportLabel(r.d));
+  }
+  function getJson(path) {
+    return fetch(WORKER_URL + path).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+  // Source 1: adsbdb.com (by callsign)
+  function fromAdsbdb(d) {
+    var fr = d && d.response && typeof d.response === 'object' ? d.response.flightroute : null;
+    return fr && fr.origin && fr.destination
+      ? { o: fr.origin, d: fr.destination, airline: fr.airline && fr.airline.name }
+      : null;
+  }
+  // Source 2: adsb.lol routeset (by callsign + position)
+  function fromRouteset(d) {
+    var e = Array.isArray(d) ? d[0] : d;
+    if (!e || e.plausible === false) return null;
+    var aps = e._airports;
+    if (Array.isArray(aps) && aps.length >= 2) {
+      var f = aps[0], t = aps[aps.length - 1];
+      return {
+        o: { iata_code: f.iata, icao_code: f.icao, municipality: f.location, name: f.name },
+        d: { iata_code: t.iata, icao_code: t.icao, municipality: t.location, name: t.name }
+      };
+    }
+    var codes = String(e._airport_codes_iata || e.airport_codes || '').split('-');
+    if (codes.length >= 2 && codes[0] && codes[codes.length - 1]) {
+      return { o: { iata_code: codes[0] }, d: { iata_code: codes[codes.length - 1] } };
+    }
+    return null;
+  }
+  function loadRoute(ac) {
+    var cs = ac && ac.flight ? String(ac.flight).trim().toUpperCase() : '';
+    if (!cs) return Promise.resolve();
+    var cur = routeCache[cs];
+    if (cur && !cur.retry) return Promise.resolve();    // cached, or already loading
+    routeCache[cs] = 'loading';
+    var errA = null, errB = null;
+    return getJson('/route/' + encodeURIComponent(cs)).then(fromAdsbdb)
+      .catch(function (e) { errA = e; return null; })
+      .then(function (r) {
+        if (r) return r;
+        return getJson('/routeset/' + encodeURIComponent(cs) + '/' + ac.lat + '/' + ac.lon).then(fromRouteset)
+          .catch(function (e) { errB = e; return null; });
+      })
+      .then(function (r) {
+        routeCache[cs] = r ||
+          (errA && errB ? { fail: 'Lookup failed (' + errA.message + ')', retry: true }
+                        : { fail: 'Not in database' });
+      });
+  }
+  function onPopupOpen(e) {
+    var m = e.target;
+    loadRoute(m._ac).then(function () {
+      if (m.isPopupOpen()) m.getPopup().setContent(popupHtml(m._ac));
+    });
+  }
+
   function popupHtml(a) {
     var callsign = a.flight ? String(a.flight).trim() : '';
     var onGround = a.alt_baro === 'ground';
@@ -197,6 +273,7 @@
       row('Altitude', altTxt) +
       row('Ground speed', spdTxt) +
       row('Heading', hdgTxt) +
+      routeRows(callsign) +
       (a.r ? row('Registration', a.r) : '') +
       (a.t ? row('Aircraft type', a.t) : '') +
       '<div style="margin-top:6px;color:var(--muted);font-size:10px">* country of registration, estimated from ICAO address</div>';
@@ -260,18 +337,33 @@
       setStatus('Fetching data...', '');
       var out = await fetchAircraft();
 
-      markerLayer.clearLayers();   // remove old markers before plotting new ones
-
+      var seen = {};
       var count = 0;
       out.list.forEach(function (a) {
         if (!isNum(a.lat) || !isNum(a.lon)) return;
         if (a.lat < BBOX.lamin || a.lat > BBOX.lamax || a.lon < BBOX.lomin || a.lon > BBOX.lomax) return;
         if (isNum(a.seen_pos) && a.seen_pos > 60) return;   // stale position
         var hdg = isNum(a.track) ? a.track : a.true_heading;
-        var m = L.marker([a.lat, a.lon], { icon: planeIcon(hdg), keyboard: false });
-        m.bindPopup(popupHtml(a), { closeButton: true, autoPan: true });
-        m.addTo(markerLayer);
+        var key = a.hex || (a.flight + '|' + a.r);
+        seen[key] = true;
+        var m = markers[key];
+        if (m) {
+          m._ac = a;
+          m.setLatLng([a.lat, a.lon]);
+          m.setIcon(planeIcon(hdg));
+          if (m.isPopupOpen()) m.getPopup().setContent(popupHtml(a));
+        } else {
+          m = L.marker([a.lat, a.lon], { icon: planeIcon(hdg), keyboard: false });
+          m._ac = a;
+          m.bindPopup(function (layer) { return popupHtml(layer._ac); }, { closeButton: true, autoPan: true });
+          m.on('popupopen', onPopupOpen);
+          m.addTo(markerLayer);
+          markers[key] = m;
+        }
         count++;
+      });
+      Object.keys(markers).forEach(function (k) {
+        if (!seen[k]) { markerLayer.removeLayer(markers[k]); delete markers[k]; }
       });
 
       nextIn = out.interval;
