@@ -264,7 +264,7 @@ async function crazy(){
     if(crOn===t&&cur===pg&&cur<LIM-1)await go(1,1)}
   b.classList.remove('on')}
 /* ===== MASTERS: painting engine ===== */
-const MS=[['vinci','Vinci','Leonardo da Vinci'],['michel','Michel','Miguel Ángel Buonarroti'],['vince','Vince','Vincent van Gogh'],['pablo','Pablo','Pablo Picasso'],['monet','Monet','Claude Monet'],['klimt','Klimt','Gustav Klimt'],['munch','Munch','Edvard Munch'],['goya','Goya','Francisco Goya'],['degas','Degas','Edgar Degas'],['renoir','Renoir','Pierre-Auguste Renoir']];
+const MS=[['vinci','Vinci','Leonardo da Vinci'],['michel','Michel','Miguel Ángel Buonarroti'],['vince','Vince','Vincent van Gogh'],['pablo','Pablo','Pablo Picasso'],['monet','Monet','Claude Monet'],['klimt','Klimt','Gustav Klimt'],['munch','Munch','Edvard Munch'],['goya','Goya','Francisco Goya'],['degas','Degas','Edgar Degas'],['renoir','Renoir','Pierre-Auguste Renoir'],['diego','Diego','Diego Velázquez']];
 const STY=(()=>{
 const INKC='#4a2f17',CHK='#8e3320',
 rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),pk=a=>a[Math.random()*a.length|0],
@@ -1754,6 +1754,231 @@ async function rnSelf(g,ok,T){
   g.globalAlpha=.5;g.fillStyle='#f0a098';for(const q of[-1,1]){g.beginPath();g.arc(cx+q*rx*.55,hy+ry*.2,rx*.17,0,6.283);g.fill()}g.globalAlpha=1;
   mfeat(g,cx,hy,rx*.95,{lip:'#a8453a',lip2:'#8a3a2f',c:'#2a1a10',brow:-1,shade:'#d8a890'});await T(1)}
 
+/* ---------- Diego Velázquez: warm shadows, silvery light, loose modelling ---------- */
+const VZS='#e2b898';
+async function vzHead(g,x,y,r,o,lx,ly,ok,T){
+  const hc=o.hair||'#2a1a10';
+  if(o.long)await gb(g,[[x-r*1.05,y-r*.5],[x-r*.8,y-r*1.15],[x,y-r*1.35],[x+r*.8,y-r*1.15],[x+r*1.05,y-r*.5],[x+r*1.3,y+r*1.1],[x+r*.8,y+r*1.5],[x-r*.8,y+r*1.5],[x-r*1.3,y+r*1.1]],hc,lx,ly,ok,T,{rr:.9});
+  await gface(g,x,y,r,lx,ly,ok,T,{skin:o.skin||VZS,lip:o.lip,brow:o.brow,closed:o.closed});
+  if(!o.bald)await gb(g,[[x-r*.95,y-r*.1],[x-r*.8,y-r*.95],[x,y-r*1.12],[x+r*.8,y-r*.95],[x+r*.95,y-r*.1],[x+r*.6,y-r*.6],[x,y-r*.72],[x-r*.6,y-r*.6]],hc,lx,ly,ok,T,{rr:.9});
+  if(o.mus)for(const s of[-1,1])await gb(g,kband([[x+s*r*.04,y+r*.47],[x+s*r*.3,y+r*.44],[x+s*r*.58,y+r*.33],[x+s*r*.68,y+r*.14]],t=>r*.055*(1-.5*t)),hc,lx,ly,ok,T,{rr:.9});
+  if(o.gt)await gb(g,[[x-r*.12,y+r*.78],[x+r*.12,y+r*.78],[x+r*.08,y+r*1.02],[x-r*.08,y+r*1.02]],hc,lx,ly,ok,T,{rr:.9})}
+async function vzDress(g,x,y,s,c,tr,lx,ly,ok,T,o={}){
+  const L=o.len||3.3,w=o.w||1.1,sk=o.sk||'#ead0b4';
+  await gb(g,[[x-s*.22,y+s*.7],[x+s*.22,y+s*.7],[x+s*w,y+s*L*.5],[x+s*w*.95,y+s*L],[x-s*w*.95,y+s*L],[x-s*w,y+s*L*.5]],c,lx,ly,ok,T,{rr:.9,lo:'rgba(10,4,0,.6)'});
+  await gb(g,[[x-s*.36,y],[x+s*.36,y],[x+s*.24,y+s*.95],[x-s*.24,y+s*.95]],c,lx,ly,ok,T,{rr:.8});
+  if(tr){await gb(g,kband([[x,y+s*.2],[x,y+s*.95]],()=>s*.05),tr,lx,ly,ok,T,{rr:.8});for(let i=0;i<4;i++)mel(g,x,y+s*(.3+i*.17),s*.03,s*.03,tr)}
+  await gb(g,mrd(x,y+s*.02,s*.3,s*.11,0,1,0,16),sk,lx,ly,ok,T,{rr:.8});
+  for(const k of[-1,1]){await gb(g,kband([[x+k*s*.38,y+s*.05],[x+k*s*.55,y+s*.6],[x+k*s*.46,y+s*1.15]],t=>s*(.17-.05*t)),c,lx,ly,ok,T,{rr:.8});mel(g,x+k*s*.46,y+s*1.2,s*.08,s*.07,sk)}}
+
+/* Self-portrait */
+async function vzSelf(g,ok,T){
+  const U=GS(),lp=GQ(-.1,-.16),lx=lp[0],ly=lp[1],B=(p,c,o)=>gb(g,GP(p),c,lx,ly,ok,T,o||{});
+  glin(g,'#3a3024','#2a2218','#0e0a06');ggl(g,lx,ly,U*.75,'rgba(170,140,100,.4)');await T(1);
+  await B([[-.8,.95],[-.5,.22],[-.3,.1],[.3,.1],[.5,.22],[.8,.95]],'#14110e',{rr:1.1,hi:'rgba(255,214,150,.3)',lo:'rgba(0,0,0,.8)'});
+  await B([[-.17,.02],[.17,.02],[.14,.17],[-.14,.17]],'#ece4d2',{rr:.9,lo:'rgba(110,90,60,.5)'});
+  for(let i=0;i<5&&ok();i++)await ln(g,[GQ(-.13+i*.065,.04),GQ(-.12+i*.06,.16)],ok,T,1.2,'#a89c80',.5);
+  const[hx,hy]=GQ(0,-.14);
+  await vzHead(g,hx,hy,U*.13,{long:1,mus:1,gt:1,hair:'#2a1a10',brow:-1},lx,ly,ok,T);
+  ln(g,[GQ(.17,.32),GQ(.17,.42)],ok,T,6,'#b8201e',1);ln(g,[GQ(.13,.36),GQ(.21,.36)],ok,T,6,'#b8201e',1);
+  await gfin(g,ok,T,.6)}
+
+/* 1. Las Meninas */
+async function meninas(g,ok,T){
+  const U=GS(),Q=GQ,lp=Q(-.05,-.02),lx=lp[0],ly=lp[1],
+  B=(p,c,o)=>gb(g,GP(p),c,lx,ly,ok,T,o||{}),
+  hd=(x,y,r,o)=>{const[a,b]=Q(x,y);return vzHead(g,a,b,U*r,o,lx,ly,ok,T)},
+  frm=async(a,b,c,d,col)=>{await B([[a,b],[c,b],[c,d],[a,d]],'#6a4a20',{hi:'rgba(255,214,130,.4)',rr:1.6});const e=.007;await B([[a+e,b+e],[c-e,b+e],[c-e,d-e],[a+e,d-e]],col,{rr:1.6,hi:'rgba(200,170,120,.25)'})};
+  glin(g,'#0e0a06','#1a130d','#2a1e14');await T(1);
+  await B([[-.8,-.95],[.8,-.95],[.8,-.3],[-.8,-.3]],'#120d08',{rr:1.6});
+  await B([[-.8,-.32],[.8,-.32],[.8,.24],[-.8,.24]],'#4a3a2a',{rr:1.4,hi:'rgba(220,180,120,.4)'});
+  await B([[-.8,.22],[.8,.22],[.8,.95],[-.8,.95]],'#6a4a2e',{rr:1.5,hi:'rgba(255,214,150,.5)'});
+  for(let i=0;i<5&&ok();i++)await ln(g,[Q(-.7+i*.35,.95),Q(-.4+i*.2,.24)],ok,T,1.5,'#3a2410',.35);
+  ggl(g,lx,ly,U*.5,'rgba(255,230,170,.22)');
+  await frm(-.22,-.29,-.1,-.13,'#3a4a3a');await frm(.08,-.3,.24,-.2,'#4a3a2a');await frm(.3,-.24,.42,-.08,'#2e3a4a');
+  await frm(-.04,-.2,.04,-.08,'#6a5a58');
+  {const[a,b]=Q(-.012,-.145),[c,d]=Q(.016,-.145);mel(g,a,b,U*.008,U*.011,'#d8b090');mel(g,a,b-U*.012,U*.01,U*.006,'#2a1a10');mel(g,c,d,U*.008,U*.011,'#e0c0a0');mel(g,c,d-U*.012,U*.01,U*.006,'#5a3a1a')}
+  await gb(g,GP([[.1,-.22],[.2,-.22],[.2,.05],[.1,.05]]),'#f2d890',Q(.15,-.1)[0],Q(.15,-.1)[1],ok,T,{rr:1.2,hi:'rgba(255,250,210,.7)',lo:'rgba(120,80,20,.6)'});
+  for(let i=0;i<3&&ok();i++)await mp(g,GP([[.1,-.01+i*.02],[.2,-.01+i*.02],[.2,.0+i*.02],[.1,.0+i*.02]]),i%2?'#c8a860':'#e8c878',ok,T);
+  await B([[.14,-.11],[.17,-.11],[.18,.05],[.13,.05]],'#1a120a');mel(g,...Q(.155,-.135),U*.011,U*.013,'#d8b090');
+  await B([[-.5,-.48],[-.28,-.48],[-.28,.2],[-.5,.2]],'#5a4228',{rr:1.4,hi:'rgba(220,170,100,.3)'});
+  await ln(g,[Q(-.48,-.46),Q(-.3,-.46),Q(-.3,.18),Q(-.48,.18),Q(-.48,-.46)],ok,T,2,'#2a1a0e',.7);
+  await ln(g,[Q(-.48,-.46),Q(-.3,.18)],ok,T,1.5,'#2a1a0e',.5);await ln(g,[Q(-.3,-.46),Q(-.48,.18)],ok,T,1.5,'#2a1a0e',.5);
+  /* the painter */
+  await B([[-.255,-.07],[-.145,-.07],[-.1,.27],[-.3,.27]],'#1a1612',{hi:'rgba(255,214,150,.25)'});
+  await B([[-.225,-.085],[-.175,-.085],[-.165,-.055],[-.235,-.055]],'#ece4d2');
+  await hd(-.2,-.125,.03,{mus:1,long:1,hair:'#2a1a10'});
+  await gb(g,kband(GP([[-.25,-.04],[-.3,.03],[-.33,-.03]]),t=>U*(.016-.005*t)),'#1a1612',lx,ly,ok,T);
+  await gb(g,kband(GP([[-.15,-.04],[-.12,.05],[-.17,.1]]),t=>U*(.016-.005*t)),'#1a1612',lx,ly,ok,T);
+  mel(g,...Q(-.19,.11),U*.032,U*.022,'#9a6a3a',.4);mel(g,...Q(-.335,-.03),U*.01,U*.01,'#e0b898');
+  await ln(g,[Q(-.335,-.03),Q(-.36,-.1)],ok,T,2,'#3a2410',.9);
+  await ln(g,[Q(-.18,-.03),Q(-.18,.03)],ok,T,4,'#b8201e',1);await ln(g,[Q(-.205,0),Q(-.155,0)],ok,T,4,'#b8201e',1);
+  /* Marcela de Ulloa and the guardadamas */
+  await B([[.24,.0],[.31,.0],[.33,.27],[.22,.27]],'#14100c',{hi:'rgba(255,214,150,.2)'});
+  await B([[.235,-.04],[.305,-.04],[.31,.02],[.23,.02]],'#e8e2d4');
+  await hd(.27,-.03,.02,{hair:'#e8e2d4',skin:'#d8b090'});
+  await B([[.15,.0],[.21,.0],[.22,.27],[.13,.27]],'#1e1812');
+  await hd(.18,-.035,.022,{hair:'#1a120a'});
+  /* the Infanta Margarita */
+  const[ix,iy]=Q(-.04,-.035),ir=U*.05;
+  await vzDress(g,ix,iy+ir*1.3,ir*1.8,'#e6e0d4','#d98ca0',lx,ly,ok,T,{len:3.4,w:1.15,sk:'#f0d4b8'});
+  await vzHead(g,ix,iy,ir,{long:1,hair:'#e0b858',skin:'#f2d8bc'},lx,ly,ok,T);
+  mel(g,ix-ir*.95,iy-ir*.95,ir*.35,ir*.25,'#d98ca0');
+  /* the maids of honour */
+  const[mx,my]=Q(-.15,.04),mr=U*.034;
+  await vzDress(g,mx,my+mr*1.3,mr*1.7,'#a85a48','#d8b068',lx,ly,ok,T,{len:3.4,w:1.05});
+  await vzHead(g,mx,my,mr,{long:1,hair:'#6a3a1a'},lx,ly,ok,T);
+  mel(g,...Q(-.105,.1),U*.015,U*.013,'#b8452d');
+  const[sx,sy]=Q(.11,.035),sr=U*.033;
+  await vzDress(g,sx,sy+sr*1.3,sr*1.7,'#8a5a48','#e8d8b0',lx,ly,ok,T,{len:3.4,w:1.05});
+  await vzHead(g,sx,sy,sr,{long:1,hair:'#7a4a22'},lx,ly,ok,T);
+  /* dwarf Maribárbola, dog, Nicolasito */
+  const[dx,dy]=Q(.31,.115),dr=U*.03;
+  await vzDress(g,dx,dy+dr*1.3,dr*1.5,'#2e3a5a','#c8b078',lx,ly,ok,T,{len:3.2,w:1.0});
+  await vzHead(g,dx,dy,dr,{long:1,hair:'#2a1a10'},lx,ly,ok,T);
+  await gb(g,mrd(...Q(.34,.4),U*.075,U*.03,.04,3),'#c8a070',lx,ly,ok,T,{rr:.9});
+  await gb(g,mrd(...Q(.265,.385),U*.026,U*.022,.05,3),'#b88a58',lx,ly,ok,T);
+  mel(g,...Q(.25,.37),U*.01,U*.016,'#4a2a14',.3);
+  await B([[.385,.18],[.455,.18],[.47,.3],[.38,.3]],'#2a1e12',{hi:'rgba(255,214,150,.3)'});
+  await ln(g,[Q(.39,.2),Q(.45,.26)],ok,T,2,'#c8a040',.9);
+  await gb(g,kband(GP([[.41,.3],[.4,.35],[.41,.4]]),()=>U*.018),'#1a1410',lx,ly,ok,T);
+  await gb(g,kband(GP([[.44,.3],[.39,.33],[.37,.355]]),()=>U*.018),'#1a1410',lx,ly,ok,T);
+  mel(g,...Q(.365,.36),U*.016,U*.01,'#0e0a06');
+  await hd(.42,.145,.028,{long:1,hair:'#3a2210'});
+  await gfin(g,ok,T,.7)}
+
+/* 2. La Venus del espejo */
+async function venusMirror(g,ok,T){
+  const U=GS(),lp=GQ(-.1,-.06),lx=lp[0],ly=lp[1],B=(p,c,o)=>gb(g,GP(p),c,lx,ly,ok,T,o||{});
+  glin(g,'#2a0e0e','#3a1214','#1a0a0a');ggl(g,lx,ly,U*.6,'rgba(210,150,110,.3)');await T(1);
+  await B([[-.8,-.95],[.8,-.95],[.8,.1],[-.8,.1]],'#2a1214',{rr:1.6});
+  await B([[-.8,-.95],[.15,-.95],[.05,-.4],[-.1,-.1],[-.3,.04],[-.8,.04]],'#8a1a1e',{rr:1.4,hi:'rgba(255,120,100,.3)'});
+  for(let i=0;i<4&&ok();i++)await gb(g,kband(GP([[-.62+i*.2,-.92],[-.55+i*.17,-.4],[-.5+i*.14,-.02]]),()=>U*.03),i%2?'#5a0c10':'#a82428',lx,ly,ok,T,{rr:1.2});
+  await ln(g,[GQ(.2,-.5),GQ(.22,-.2),GQ(.18,.02)],ok,T,3,'#b8943a',.9);
+  await B([[-.8,-.02],[.8,-.06],[.8,.2],[-.8,.22]],'#12101a',{rr:1.4,hi:'rgba(120,100,160,.25)'});
+  await B([[-.8,.14],[.8,.1],[.8,.95],[-.8,.95]],'#8a8a96',{rr:1.4,hi:'rgba(255,250,240,.5)',lo:'rgba(20,18,30,.65)'});
+  for(const[a,b,c,d,e,f]of[[-.6,.45,-.2,.34,.3,.46],[-.5,.65,0,.58,.5,.7],[-.4,.28,.0,.24,.5,.3]])await ln(g,[GQ(a,b),GQ(c,d),GQ(e,f)],ok,T,3,'#4a4a58',.45);
+  const sk='#e8c0a0',[nx,ny]=GQ(.23,.0);
+  await B([[-.3,.12],[-.42,.16],[-.52,.16],[-.5,.2],[-.36,.2]],'#d8aa88');
+  await B([[.22,-.02],[.12,-.04],[.02,.02],[-.06,-.03],[-.16,-.08],[-.27,-.05],[-.38,.03],[-.5,.1],[-.48,.17],[-.36,.15],[-.2,.13],[-.05,.16],[.1,.16],[.2,.13]],sk,{rr:1,hi:'rgba(255,238,212,.75)',lo:'rgba(110,50,30,.6)'});
+  await gb(g,kband(GP([[.15,.02],[.02,.07],[-.06,.06]]),()=>U*.012),'#b87c60',lx,ly,ok,T,{rr:.7});
+  await ln(g,[GQ(-.3,.1),GQ(-.46,.14)],ok,T,2,'#a06448',.5);
+  await B([[.2,-.03],[.26,-.04],[.28,.03],[.22,.04]],'#e0b898');
+  await gb(g,kband(GP([[.18,.02],[.26,.1],[.32,.04]]),t=>U*(.028-.008*t)),'#e0b898',lx,ly,ok,T);
+  const[hx,hy]=GQ(.3,.0);
+  await gb(g,mrd(hx,hy,U*.045,U*.05,.05,4),'#3a2214',lx,ly,ok,T);
+  mel(g,hx-U*.03,hy+U*.01,U*.02,U*.016,'#2a1810');
+  const[mx,my]=GQ(.4,.1);
+  await gb(g,mrd(mx,my,U*.075,U*.095,.02,3),'#3a2412',lx,ly,ok,T,{rr:.8,hi:'rgba(255,200,120,.4)'});
+  await gb(g,mrd(mx,my,U*.062,U*.082,0,1),'#8a7a86',lx,ly,ok,T,{rr:.9,hi:'rgba(255,250,255,.4)'});
+  await gb(g,mrd(mx,my+U*.005,U*.03,U*.04,0,1),'#d8a898',lx,ly,ok,T,{rr:1});
+  for(const s of[-1,1])mel(g,mx+s*U*.012,my-U*.004,U*.006,U*.004,'#3a2a2a');
+  mel(g,mx,my+U*.022,U*.01,U*.004,'#a8504a');
+  mel(g,mx,my-U*.1,U*.022,U*.016,'#e8809a');
+  await B([[.33,.32],[.24,.22],[.2,.4],[.32,.43]],'#5a4a52',{rr:.8});
+  await B([[.35,.28],[.45,.28],[.47,.45],[.33,.45]],'#f0c8b0',{rr:.9,hi:'rgba(255,240,220,.7)'});
+  await gb(g,kband(GP([[.35,.3],[.37,.2],[.36,.17]]),()=>U*.014),'#f0c8b0',lx,ly,ok,T);
+  await gb(g,kband(GP([[.45,.3],[.44,.2],[.44,.17]]),()=>U*.014),'#f0c8b0',lx,ly,ok,T);
+  await gb(g,kband(GP([[.34,.3],[.4,.36],[.46,.33]]),()=>U*.012),'#e07090',lx,ly,ok,T);
+  await vzHead(g,...GQ(.4,.25),U*.028,{long:1,hair:'#b88838',skin:'#f4d0b8'},lx,ly,ok,T);
+  await gfin(g,ok,T,.65)}
+
+/* 3. Cristo crucificado */
+async function cristo(g,ok,T){
+  const U=GS(),lp=GQ(-.02,-.18),lx=lp[0],ly=lp[1],B=(p,c,o)=>gb(g,GP(p),c,lx,ly,ok,T,o||{}),sk='#d9b490';
+  glin(g,'#0a0806','#16110c','#080604');
+  ggl(g,GQ(0,-.1)[0],GQ(0,-.1)[1],U*.7,'rgba(110,100,86,.55)');
+  ggl(g,GQ(0,.5)[0],GQ(0,.5)[1],U*.55,'rgba(150,80,30,.3)');await T(1);
+  await B([[-.035,-.55],[.035,-.55],[.035,.6],[-.035,.6]],'#3a2a1a',{rr:1.6,hi:'rgba(200,150,90,.3)',lo:'rgba(0,0,0,.7)'});
+  await B([[-.3,-.4],[.3,-.4],[.3,-.33],[-.3,-.33]],'#3a2a1a',{rr:1.6,hi:'rgba(200,150,90,.3)',lo:'rgba(0,0,0,.7)'});
+  await B([[-.8,.52],[-.3,.47],[.3,.5],[.8,.46],[.8,.95],[-.8,.95]],'#1c1610',{rr:1.6,hi:'rgba(150,110,60,.3)'});
+  await B([[-.085,-.35],[.085,-.35],[.08,-.2],[.06,-.05],[.05,.06],[-.05,.06],[-.06,-.05],[-.08,-.2]],sk,{rr:.8,hi:'rgba(255,236,200,.7)',lo:'rgba(30,14,6,.7)'});
+  for(const s of[-1,1]){
+    await gb(g,kband(GP([[s*.08,-.35],[s*.18,-.345],[s*.29,-.378]]),t=>U*(.028-.012*t)),sk,lx,ly,ok,T,{rr:.8});
+    mel(g,...GQ(s*.297,-.384),U*.015,U*.017,sk);mel(g,...GQ(s*.296,-.38),U*.005,U*.005,'#8a1a14');
+    await gb(g,kband(GP([[s*.296,-.375],[s*.3,-.3],[s*.298,-.25]]),()=>U*.004),'#7a1a14',lx,ly,ok,T)}
+  for(let i=0;i<4&&ok();i++)await ln(g,[GQ(-.06,-.28+i*.04),GQ(0,-.265+i*.04),GQ(.06,-.28+i*.04)],ok,T,1.4,'#8a6040',.5);
+  mel(g,...GQ(.04,-.2),U*.008,U*.012,'#8a1a14');
+  await B([[-.07,.0],[.07,.0],[.085,.1],[.04,.17],[-.03,.15],[-.08,.1]],'#e8e0cc',{hi:'rgba(255,250,235,.7)',lo:'rgba(80,70,50,.55)'});
+  await ln(g,[GQ(-.05,.02),GQ(-.03,.1),GQ(-.04,.14)],ok,T,1.5,'#9a9078',.6);await ln(g,[GQ(.04,.03),GQ(.05,.11)],ok,T,1.5,'#9a9078',.6);
+  await gb(g,kband(GP([[-.03,.06],[-.02,.2],[-.01,.36]]),t=>U*(.034-.012*t)),sk,lx,ly,ok,T,{rr:.8});
+  await gb(g,kband(GP([[.03,.06],[.025,.2],[.01,.36]]),t=>U*(.034-.012*t)),sk,lx,ly,ok,T,{rr:.8});
+  await B([[-.04,.35],[.05,.35],[.045,.42],[-.035,.42]],sk,{rr:.8});mel(g,...GQ(0,.4),U*.006,U*.006,'#8a1a14');
+  const[hx,hy]=GQ(.015,-.415);
+  await gb(g,mrd(hx,hy,U*.032,U*.04,0,1),sk,lx,ly,ok,T,{rr:.9});
+  await B([[-.04,-.46],[.02,-.47],[.045,-.43],[.0,-.4],[-.02,-.36],[-.05,-.33],[-.06,-.4]],'#2a1810',{rr:.7});
+  await B([[.0,-.385],[.04,-.39],[.035,-.37],[.01,-.365]],'#3a2214');
+  await ln(g,E(hx,hy-U*.035,U*.04,U*.012,16),ok,T,2,'#5a4020',.9);
+  await B([[-.08,-.51],[.08,-.51],[.08,-.46],[-.08,-.46]],'#cdb88a',{hi:'rgba(255,240,190,.5)'});
+  for(let i=0;i<3&&ok();i++)await ln(g,[GQ(-.06,-.495+i*.015),GQ(.06,-.495+i*.015)],ok,T,1.6,'#2a1a10',.8);
+  await gfin(g,ok,T,.55)}
+
+/* 4. Retrato de Inocencio X */
+async function inocencio(g,ok,T){
+  const U=GS(),lp=GQ(-.06,-.2),lx=lp[0],ly=lp[1],B=(p,c,o)=>gb(g,GP(p),c,lx,ly,ok,T,o||{});
+  glin(g,'#5a1014','#7a1a1c','#2a0808');await T(1);
+  for(let i=0;i<5&&ok();i++)await gb(g,kband(GP([[-.75+i*.3,-.95],[-.7+i*.3,0],[-.76+i*.3,.95]]),()=>U*.05),i%2?'#3a0a0c':'#8a1c20',lx,ly,ok,T,{rr:1.4});
+  await B([[-.32,-.12],[.32,-.12],[.38,.95],[-.38,.95]],'#8a2a1a',{rr:1.2,hi:'rgba(255,170,120,.35)'});
+  for(const s of[-1,1]){await gb(g,kband(GP([[s*.36,-.14],[s*.36,.1]]),()=>U*.012),'#c8962a',lx,ly,ok,T);mel(g,...GQ(s*.36,-.16),U*.025,U*.025,'#d8a030')}
+  await gb(g,kband(GP([[.3,.3],[.4,.32],[.5,.4]]),()=>U*.04),'#7a4a1a',lx,ly,ok,T);
+  await B([[-.14,-.1],[.14,-.1],[.3,.0],[.36,.3],[.34,.55],[-.34,.55],[-.36,.3],[-.3,.0]],'#c01e22',{rr:1,hi:'rgba(255,150,130,.5)',lo:'rgba(30,0,0,.7)'});
+  for(let i=0;i<6;i++)mel(g,...GQ(0,.0+i*.08),U*.007,U*.007,'#e0c060');
+  await B([[-.34,.55],[.34,.55],[.38,.95],[-.38,.95]],'#f2ece0',{rr:1,hi:'rgba(255,255,250,.6)',lo:'rgba(120,100,90,.5)'});
+  await ln(g,Array.from({length:13},(_,i)=>GQ(-.34+i*.0567,.55+(i%2?.03:0))),ok,T,2,'#d8d0c0',.9);
+  await gb(g,kband(GP([[-.3,.08],[-.34,.3],[-.28,.52]]),()=>U*.075),'#f4efe4',lx,ly,ok,T,{hi:'rgba(255,255,250,.7)',lo:'rgba(120,100,90,.5)'});
+  await gb(g,kband(GP([[.3,.08],[.36,.3],[.34,.5]]),()=>U*.075),'#f4efe4',lx,ly,ok,T,{hi:'rgba(255,255,250,.7)',lo:'rgba(120,100,90,.5)'});
+  await B([[-.4,.34],[-.24,.3],[-.2,.5],[-.37,.54]],'#f4f0e0',{hi:'rgba(255,255,240,.6)'});
+  for(let i=0;i<3&&ok();i++)await ln(g,[GQ(-.37+i*.01,.38+i*.04),GQ(-.26+i*.01,.35+i*.04)],ok,T,1.3,'#6a5a48',.6);
+  await gb(g,mrd(...GQ(-.27,.45),U*.04,U*.03,.05,3),'#e0a888',lx,ly,ok,T);mel(g,...GQ(-.285,.44),U*.007,U*.007,'#e8c040');
+  await gb(g,mrd(...GQ(.39,.43),U*.04,U*.03,.05,3),'#e0a888',lx,ly,ok,T);mel(g,...GQ(.375,.43),U*.008,U*.008,'#e8c040');
+  await B([[-.07,-.12],[.07,-.12],[.06,-.06],[-.06,-.06]],'#f4f0e8');
+  const[hx,hy]=GQ(0,-.2),r=U*.095;
+  for(const s of[-1,1])mel(g,hx+s*r*.9,hy+r*.05,r*.12,r*.25,'#c8705a');
+  await gface(g,hx,hy,r,lx,ly,ok,T,{skin:'#d4806a',brow:-1,lip:'#9a4a40'});
+  await gb(g,[[hx-r*.28,hy+r*.68],[hx+r*.28,hy+r*.68],[hx+r*.2,hy+r*1.05],[hx,hy+r*1.35],[hx-r*.2,hy+r*1.05]],'#b8b0a0',lx,ly,ok,T,{rr:.8});
+  await gb(g,[[hx-r*1.0,hy-r*.1],[hx-r*.95,hy-r*.9],[hx,hy-r*1.25],[hx+r*.95,hy-r*.9],[hx+r*1.0,hy-r*.1],[hx+r*.7,hy-r*.55],[hx,hy-r*.65],[hx-r*.7,hy-r*.55]],'#c8202a',lx,ly,ok,T,{rr:.9});
+  await gb(g,kband([[hx-r*.8,hy-r*.5],[hx,hy-r*.64],[hx+r*.8,hy-r*.5]],()=>r*.05),'#f0e8e0',lx,ly,ok,T,{rr:.9});
+  await gfin(g,ok,T,.6)}
+
+/* 5. Príncipe Baltasar Carlos a caballo */
+async function baltasar(g,ok,T){
+  const U=GS(),lp=GQ(.05,-.1),lx=lp[0],ly=lp[1],B=(p,c,o)=>gb(g,GP(p),c,lx,ly,ok,T,o||{}),
+  K=(pts,w0,w1,c,o)=>gb(g,kband(GP(pts),t=>U*(w0+(w1-w0)*t)),c,lx,ly,ok,T,o||{rr:.8}),sk='#f0cdb0';
+  glin(g,'#7aa8d8','#c8dcec','#e8dcc0');await T(1);
+  for(const[x,y,a,b]of[[-.3,-.6,.28,.07],[.25,-.5,.34,.08],[-.05,-.35,.22,.05],[.4,-.28,.2,.05]])await mf(g,mrd(...GQ(x,y),U*a,U*b,.08,5),'rgba(255,255,255,.75)',ok,T);
+  await B([[-.8,.0],[-.55,-.06],[-.4,-.16],[-.2,-.08],[-.05,-.18],[.15,-.09],[.35,-.16],[.55,-.06],[.8,-.02],[.8,.2],[-.8,.2]],'#6e7eb0',{rr:1.6,hi:'rgba(255,255,255,.35)',lo:'rgba(30,40,80,.4)'});
+  await B([[-.8,.08],[-.4,.02],[.0,.08],[.4,.03],[.8,.1],[.8,.5],[-.8,.5]],'#7a8a50',{rr:1.5,hi:'rgba(255,250,190,.4)'});
+  await B([[-.8,.3],[-.2,.24],[.4,.3],[.8,.26],[.8,.95],[-.8,.95]],'#8a7a40',{rr:1.4,hi:'rgba(255,240,170,.5)'});
+  for(const[x,y,r]of[[-.45,.08,.06],[-.38,.1,.05],[.5,.1,.05],[-.5,.14,.05]])await mf(g,mrd(...GQ(x,y),U*r,U*r*1.2,.1,5),'#2a4a28',ok,T);
+  const hc='#8a5030';
+  await K([[.1,.09],[.2,.12],[.25,.22]],.03,.014,'#6a3c20');await K([[-.1,.2],[-.12,.34],[-.1,.47]],.04,.016,'#6a3c20');
+  mel(g,...GQ(.255,.23),U*.017,U*.01,'#1a120a');mel(g,...GQ(-.1,.48),U*.02,U*.01,'#1a120a');
+  await K([[-.3,.04],[-.4,.12],[-.44,.3]],.03,.012,'#2a1a10');
+  await B([[-.3,.08],[-.22,-.08],[-.05,-.12],[.12,-.1],[.2,-.02],[.16,.12],[.0,.2],[-.2,.22]],hc,{rr:.9,hi:'rgba(255,200,150,.5)',lo:'rgba(30,10,0,.65)'});
+  await K([[-.22,.18],[-.26,.32],[-.3,.44]],.045,.016,hc);mel(g,...GQ(-.3,.46),U*.02,U*.01,'#1a120a');
+  await K([[.15,.06],[.27,.02],[.35,.1]],.036,.016,hc);mel(g,...GQ(.355,.115),U*.015,U*.012,'#1a120a');
+  await B([[.12,-.1],[.2,-.22],[.3,-.3],[.34,-.22],[.26,-.08],[.2,-.02]],hc,{rr:.9,hi:'rgba(255,200,150,.5)'});
+  await B([[.28,-.36],[.36,-.4],[.42,-.34],[.44,-.22],[.4,-.2],[.34,-.26],[.28,-.28]],'#7a4528',{rr:.9});
+  await K([[.14,-.1],[.2,-.24],[.29,-.33],[.31,-.38]],.016,.012,'#2a1a10');
+  mel(g,...GQ(.34,-.36),U*.005,U*.005,'#14100c');mel(g,...GQ(.42,-.22),U*.006,U*.004,'#2a1a10');
+  await ln(g,[GQ(.3,-.3),GQ(.36,-.28),GQ(.42,-.26)],ok,T,2,'#8a2a1a',.9);
+  await B([[-.12,-.1],[.06,-.12],[.1,.0],[-.14,.02]],'#a82a1a',{hi:'rgba(255,170,120,.4)'});
+  await ln(g,[GQ(-.14,.02),GQ(.1,.0)],ok,T,2,'#d8a030',.9);
+  await K([[-.03,-.12],[.02,-.02],[.03,.06]],.03,.02,'#1a1410');
+  await B([[.0,.04],[.05,.04],[.06,.1],[-.01,.1]],'#5a3a20');
+  await B([[-.075,-.3],[.03,-.3],[.05,-.12],[-.09,-.12]],'#1a1410',{hi:'rgba(255,214,150,.3)'});
+  await K([[-.06,-.29],[.0,-.2],[.03,-.14]],.016,.016,'#b82a22');
+  await ln(g,[GQ(-.04,-.25),GQ(.02,-.17)],ok,T,2,'#d8a030',.9);
+  await B([[-.055,-.305],[.015,-.305],[.01,-.285],[-.05,-.285]],'#f0ece0');
+  await K([[.03,-.28],[.1,-.22],[.14,-.2]],.022,.014,'#1a1410');mel(g,...GQ(.145,-.2),U*.01,U*.01,sk);
+  await ln(g,[GQ(.14,-.19),GQ(.2,-.3)],ok,T,4,'#d8a030',1);
+  await K([[-.07,-.27],[-.12,-.2],[-.06,-.15]],.02,.014,'#1a1410');
+  await vzHead(g,...GQ(-.02,-.335),U*.028,{long:1,hair:'#6a4a2a',skin:sk},lx,ly,ok,T);
+  await B([[-.06,-.36],[-.055,-.41],[.0,-.425],[.04,-.41],[.045,-.36]],'#14100c');
+  mel(g,...GQ(-.01,-.362),U*.055,U*.012,'#14100c');
+  await K([[.04,-.41],[.1,-.42],[.14,-.37]],.012,.004,'#f0ece0');
+  await gfin(g,ok,T,.45)}
+
 const vBase=async(g,ok)=>{await wash(g,'#e8d5a6',ok,8,.45);if(!ok())return;const gr=g.createRadialGradient(W/2,H/2,Math.min(W,H)*.25,W/2,H/2,Math.max(W,H)*.75);gr.addColorStop(0,'rgba(120,80,30,0)');gr.addColorStop(1,'rgba(120,80,30,.42)');g.fillStyle=gr;g.fillRect(0,0,W,H)},
 mBase=async(g,ok)=>{await wash(g,'#e9d8b6',ok,8,.45);if(!ok())return;for(let i=0;i<14;i++){g.globalAlpha=.05;g.fillStyle='#9b3a22';g.beginPath();g.ellipse(rnd(0,W),rnd(0,H),rnd(40,140),rnd(20,70),rnd(0,3),0,6.283);g.fill()}g.globalAlpha=1},
 works={vinci:[[monaF,cMona],[supperF,cSupper],[vitF,cVit],[ladyF,cLady],[virginF,cVirgin]].map(([f,c])=>async(g,ok)=>{await vBase(g,ok);if(!ok())return;const T=mkT();await f(g,ok,T);await c(g,ok,T)}),
@@ -1765,9 +1990,10 @@ works={vinci:[[monaF,cMona],[supperF,cSupper],[vitF,cVit],[ladyF,cLady],[virginF
  munch:[scream,madonna,danceLife,vampire,puberty].map(f=>(g,ok)=>f(g,ok,mkT())),
  goya:[may3,saturn,majaN,majaC,family].map(f=>(g,ok)=>f(g,ok,mkT())),
  degas:[balletClass,absinthe,littleDancer,blueDancers,bellelli].map(f=>(g,ok)=>f(g,ok,mkT())),
- renoir:[moulin,boating,loge,umbrellas,parisienne].map(f=>(g,ok)=>f(g,ok,mkT()))};
+ renoir:[moulin,boating,loge,umbrellas,parisienne].map(f=>(g,ok)=>f(g,ok,mkT())),
+ diego:[meninas,venusMirror,cristo,inocencio,baltasar].map(f=>(g,ok)=>f(g,ok,mkT()))};
 return{works,vinci:vinciF,michel:michelF,vince:(g,ok)=>dabScene([starry,sunfl,cafe],g,ok),pablo:pabloF,monet:(g,ok)=>mdabScene([lilies,sunrise],g,ok),klimt:(g,ok)=>kiss(g,ok,mkT()),munch:(g,ok)=>pk([scream,madonna])(g,ok,mkT()),goya:(g,ok)=>pk([may3,saturn])(g,ok,mkT()),degas:(g,ok)=>pk([balletClass,blueDancers])(g,ok,mkT()),renoir:(g,ok)=>pk([moulin,boating])(g,ok,mkT()),
- self:{vinci:async(g,ok)=>{await vinciP(g,ok);await cSelf(g,ok,mkT())},michel:michelP,vince:(g,ok)=>dabScene([vgSelf],g,ok),pablo:pabloP,monet:(g,ok)=>mdabScene([mnSelf],g,ok),klimt:(g,ok)=>kSelf(g,ok,mkT()),munch:(g,ok)=>muSelf(g,ok,mkT()),goya:(g,ok)=>goyaSelf(g,ok,mkT()),degas:(g,ok)=>dgSelf(g,ok,mkT()),renoir:(g,ok)=>rnSelf(g,ok,mkT())}}})();
+ self:{vinci:async(g,ok)=>{await vinciP(g,ok);await cSelf(g,ok,mkT())},michel:michelP,vince:(g,ok)=>dabScene([vgSelf],g,ok),pablo:pabloP,monet:(g,ok)=>mdabScene([mnSelf],g,ok),klimt:(g,ok)=>kSelf(g,ok,mkT()),munch:(g,ok)=>muSelf(g,ok,mkT()),goya:(g,ok)=>goyaSelf(g,ok,mkT()),degas:(g,ok)=>dgSelf(g,ok,mkT()),renoir:(g,ok)=>rnSelf(g,ok,mkT()),diego:(g,ok)=>vzSelf(g,ok,mkT())}}})();
 
 /* ===== MASTERS: More menu + loop ===== */
 let artOn=0,artK='',artN=0;
@@ -1780,7 +2006,8 @@ klimt:['Autorretrato','El beso','Retrato de Adele Bloch-Bauer I','El árbol de l
 munch:['Autorretrato','El grito','Madonna','La danza de la vida','Vampiro (Amor y dolor)','Pubertad'],
 goya:['Autorretrato','El tres de mayo de 1808 en Madrid','Saturno devorando a un hijo','La maja desnuda','La maja vestida','La familia de Carlos IV'],
 degas:['Autorretrato','La clase de danza','La absenta','La pequeña bailarina de catorce años','Bailarinas azules','La familia Bellelli'],
-renoir:['Autorretrato','Baile en el Moulin de la Galette','El almuerzo de los remeros','El palco','Los paraguas','La parisina']};
+renoir:['Autorretrato','Baile en el Moulin de la Galette','El almuerzo de los remeros','El palco','Los paraguas','La parisina'],
+diego:['Autorretrato','Las Meninas','La Venus del espejo','Cristo crucificado','Retrato de Inocencio X','Príncipe Baltasar Carlos a caballo']};
 const mm=$('#mm'),mo=$('#mo');
 mm.innerHTML=MS.map(([k,a,b])=>`<button data-k="${k}">${a}<small>${b}</small></button>`).join('')+'<button data-k="stop" id="mstop">Dejar de pintar</button>';
 function syncMM(){mm.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.k==artK));$('#mstop').style.display=artOn?'flex':'none';mo.classList.toggle('on',!!artOn)}
