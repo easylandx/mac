@@ -132,6 +132,9 @@
       url: 'https://api.adsb.lol/v2/point/' + CENTER[0] + '/' + CENTER[1] + '/' + RADIUS_NM },
     { name: 'airplanes.live', interval: REFRESH_MS, parse: parseAdsb,
       url: 'https://api.airplanes.live/v2/point/' + CENTER[0] + '/' + CENTER[1] + '/' + RADIUS_NM },
+    { name: 'adsb.lol via relay', interval: 20000, parse: parseAdsb,
+      url: 'https://api.allorigins.win/raw?url=' + encodeURIComponent(
+           'https://api.adsb.lol/v2/point/' + CENTER[0] + '/' + CENTER[1] + '/' + RADIUS_NM) },
     { name: 'opensky', interval: 60000, parse: parseOpenSky,
       url: 'https://opensky-network.org/api/states/all?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin +
            '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax }
