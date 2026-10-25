@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0e1a2b">
+<title>BadgeApp</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%AA%AA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0e1a2b;--card:#16263d;--ink:#eef3ff;--mute:#9db0cf;--acc:#ffd23f;--hot:#ff5a5f;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-behavior:smooth;scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,sans-serif;-webkit-tap-highlight-color:transparent;padding-bottom:96px}
+.wrap{width:100%;max-width:560px;margin:0 auto;padding:0 24px}
+.hero{min-height:100svh;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;gap:22px;padding-top:32px;padding-bottom:40px}
+.lanyard{width:56px;height:84px;margin:0 auto -10px;border-radius:6px 6px 0 0;background:repeating-linear-gradient(135deg,var(--acc) 0 10px,#e6b800 10px 20px)}
+h1{font-weight:800;font-size:clamp(52px,17vw,92px);line-height:.92;margin:0;letter-spacing:-.04em;text-align:center}
+.sub{text-align:center;color:var(--mute);font-size:19px;line-height:1.4;margin:0}
+.dots{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.dots i{width:22px;height:30px;border-radius:5px;display:block;border:2px solid rgba(255,255,255,.25)}
+input[type=text]{width:100%;font:inherit;font-size:18px;padding:16px 18px;border-radius:16px;border:2px solid #2b4163;background:var(--card);color:var(--ink);outline:none}
+input[type=text]:focus-visible,button:focus-visible,a:focus-visible,label:focus-within{outline:3px solid var(--acc);outline-offset:3px}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;font:inherit;font-weight:700;font-size:20px;padding:18px;border-radius:18px;border:0;cursor:pointer;background:var(--acc);color:#1a1400;text-decoration:none}
+.btn.alt{background:var(--card);color:var(--ink);border:2px solid #2b4163}
+.btn.wa{background:#25d366;color:#04230f}
+.btn:active{transform:scale(.98)}
+.row{display:grid;gap:12px}
+.out{padding-top:36px;padding-bottom:20px;display:none}
+.out.on{display:block}
+.stage{background:radial-gradient(circle at 50% 0,#22385a,#0b1424);border-radius:28px;padding:24px 20px 20px;text-align:center}
+canvas{width:min(100%,340px);height:auto;display:block;margin:0 auto;filter:drop-shadow(0 16px 24px rgba(0,0,0,.5))}
+.cap{color:var(--mute);margin:16px 0 0;font-size:16px}
+.out .row{margin-top:18px}
+.elx{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:5;background:var(--hot);color:#fff;font-weight:800;font-size:17px;padding:14px 20px;border-radius:999px;text-decoration:none;box-shadow:0 8px 22px rgba(0,0,0,.45)}
+.elx:active{transform:scale(.96)}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<main>
+<section class="hero wrap">
+  <div class="lanyard" aria-hidden="true"></div>
+  <h1>BadgeApp</h1>
+  <p class="sub">Take a selfie or upload a photo. Get a random ID badge from 10 different models.</p>
+  <div class="dots" id="dots" aria-hidden="true"></div>
+  <input type="text" id="nm" placeholder="Your name (optional)" autocomplete="name" maxlength="28">
+  <div class="row">
+    <label class="btn" for="f1" id="camBtn" tabindex="0">Take a selfie</label>
+    <label class="btn alt" for="f2" tabindex="0">Upload a photo</label>
+  </div>
+  <input type="file" id="f1" accept="image/*" capture="user" hidden>
+  <input type="file" id="f2" accept="image/*" hidden>
+</section>
+
+<section class="out wrap" id="out">
+  <div class="stage">
+    <canvas id="cv" width="600" height="940" aria-label="Your generated ID badge"></canvas>
+    <p class="cap" id="cap"></p>
+  </div>
+  <div class="row">
+    <button class="btn" id="again">Shuffle a new badge</button>
+    <button class="btn alt" id="save">Save badge</button>
+    <button class="btn wa" id="wa">Send via WhatsApp</button>
+    <label class="btn alt" for="f1">Retake selfie</label>
+  </div>
+</section>
+</main>
+
+<a class="elx" href="https://easylandx.github.io" target="_blank" rel="noopener">EasyLandX</a>
+
+<script>
+const W=600,H=940,cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+let photoImg=null,last=-1,cur=null;
+const FN=['Alex','Sam','Luna','Marco','Nina','Leo','Zoe','Hugo','Mia','Theo','Iris','Dani','Eva','Nico','Lola'];
+const LN=['Rivera','Stone','Vega','Moreau','Kimura','Duarte','Novak','Bell','Ortega','Fox','Silva','Hart','Lund','Reyes','Cole'];
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const rr=(c,x,y,w,h,r)=>{c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()};
+const T=(s,x,y,sz,col,wt=700,al='center',mono)=>{ctx.font=`${wt} ${sz}px ${mono?'"DM Mono",ui-monospace,monospace':'"Bricolage Grotesque",system-ui,sans-serif'}`;ctx.fillStyle=col;ctx.textAlign=al;ctx.textBaseline='alphabetic';ctx.fillText(s,x,y)};
+const NM=(s,x,y,max,sz,col,al='center')=>{ctx.font=`800 ${sz}px "Bricolage Grotesque",system-ui,sans-serif`;while(ctx.measureText(s).width>max&&sz>24){sz-=2;ctx.font=`800 ${sz}px "Bricolage Grotesque",system-ui,sans-serif`}T(s,x,y,sz,col,800,al)};
+const PH=(x,y,w,h,r,gray)=>{ctx.save();if(r==='o'){ctx.beginPath();ctx.arc(x+w/2,y+h/2,w/2,0,7)}else rr(ctx,x,y,w,h,r);ctx.clip();const s=Math.max(w/photoImg.width,h/photoImg.height),dw=photoImg.width*s,dh=photoImg.height*s;ctx.drawImage(photoImg,x+(w-dw)/2,y+(h-dh)/2,dw,dh);if(gray){ctx.globalCompositeOperation='saturation';ctx.fillStyle='#808080';ctx.fillRect(x,y,w,h)}ctx.restore()};
+const BAR=(x,y,w,h,col,seed)=>{let s=seed,cx=x;ctx.fillStyle=col;while(cx<x+w-8){s=(s*9301+49297)%233280;const bw=3+Math.floor(s/233280*7);ctx.fillRect(cx,y,bw,h);cx+=bw+3+(s%4)}};
+const R=(c)=>{ctx.fillStyle=c;return ctx};
+const circ=(x,y,r,c)=>{ctx.fillStyle=c;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill()};
+const RS=(seed)=>{let s=seed;return()=>{s=(s*9301+49297)%233280;return s/233280}};
+
+const MODELS=[
+{n:'Corporate',c:['#1b4dff','#f6f8ff'],roles:['Product Designer','Account Lead','Data Analyst','Operations'],depts:['Design Studio','Growth','Insights'],draw(d){
+ R('#f6f8ff').fillRect(0,0,W,H);R('#1b4dff').fillRect(0,0,W,300);R('#ffd23f');ctx.beginPath();ctx.moveTo(0,300);ctx.lineTo(W,230);ctx.lineTo(W,300);ctx.fill();
+ T('NORTHWIND CO.',300,112,34,'#fff',800);circ(300,330,158,'#fff');PH(160,190,280,280,'o');
+ NM(d.n,300,590,520,56,'#0d1b4d');T(d.r,300,640,32,'#4a5a8a',500);T(d.d,300,692,28,'#1b4dff',700);
+ BAR(90,740,420,86,'#0d1b4d',d.s);T(d.i,300,878,28,'#0d1b4d',500,'center',1);R('#1b4dff').fillRect(0,904,W,36)}},
+{n:'Press Pass',c:['#ffd400','#111'],roles:['Photographer','Reporter','Editor','Camera Operator'],depts:['Daily Wire','City Desk','World News'],draw(d){
+ R('#ffd400').fillRect(0,0,W,H);R('#111').fillRect(0,0,W,190);T('PRESS',300,160,130,'#ffd400',800);
+ ctx.fillStyle='#111';ctx.fillRect(60,214,480,480);PH(72,226,456,456,0);
+ NM(d.n,300,770,520,62,'#111');T(d.r.toUpperCase(),300,818,30,'#111',700);
+ ctx.fillStyle='#111';for(let x=-40;x<W;x+=60){ctx.beginPath();ctx.moveTo(x,H);ctx.lineTo(x+30,860);ctx.lineTo(x+60,860);ctx.lineTo(x+30,H);ctx.fill()}
+ R('#ffd400').fillRect(150,870,300,50);T(d.i,300,906,28,'#111',500,'center',1)}},
+{n:'All Access',c:['#ff2d95','#0b0b12'],roles:['Guest','Crew','Artist Liaison','Headliner'],depts:['Backstage','Stage Left','Green Room'],draw(d){
+ R('#0b0b12').fillRect(0,0,W,H);ctx.save();ctx.shadowColor='#ff2d95';ctx.shadowBlur=30;ctx.fillStyle='#ff2d95';ctx.beginPath();ctx.moveTo(0,640);ctx.lineTo(W,520);ctx.lineTo(W,560);ctx.lineTo(0,680);ctx.fill();ctx.restore();
+ ctx.save();ctx.shadowColor='#18f0ff';ctx.shadowBlur=36;ctx.strokeStyle='#18f0ff';ctx.lineWidth=10;ctx.beginPath();ctx.arc(300,330,160,0,7);ctx.stroke();ctx.restore();PH(150,180,300,300,'o');
+ ctx.save();ctx.shadowColor='#ff2d95';ctx.shadowBlur=24;T('ALL ACCESS',300,116,64,'#ff2d95',800);ctx.restore();
+ NM(d.n,300,600,520,58,'#fff');T(d.r,300,760,34,'#18f0ff',700);T(d.d,300,806,28,'#fff',500);T(d.i,300,890,26,'#ff2d95',500,'center',1)}},
+{n:'Agent Terminal',c:['#19ff8a','#04140f'],roles:['Field Agent','Analyst','Cipher Tech','Handler'],depts:['Sector 7','Signals','Deep Ops'],draw(d){
+ R('#04140f').fillRect(0,0,W,H);ctx.strokeStyle='rgba(25,255,138,.12)';ctx.lineWidth=2;for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+ T('IDENTITY VERIFIED',300,110,34,'#19ff8a',500,'center',1);PH(130,150,340,400,6);
+ ctx.fillStyle='rgba(25,255,138,.14)';for(let y=150;y<550;y+=6)ctx.fillRect(130,y,340,2);
+ ctx.strokeStyle='#19ff8a';ctx.lineWidth=6;[[118,138,1,1],[482,138,-1,1],[118,562,1,-1],[482,562,-1,-1]].forEach(([x,y,a,b])=>{ctx.beginPath();ctx.moveTo(x,y+40*b);ctx.lineTo(x,y);ctx.lineTo(x+40*a,y);ctx.stroke()});
+ NM(d.n.toUpperCase(),60,640,480,50,'#19ff8a','left');T(d.r,60,690,28,'#9dffcf',500,'left',1);T(d.d,60,730,28,'#9dffcf',500,'left',1);T('CLEARANCE LEVEL '+(1+d.s%9),60,790,28,'#19ff8a',500,'left',1);BAR(60,820,300,70,'#19ff8a',d.s);T(d.i,60,916,24,'#19ff8a',500,'left',1)}},
+{n:'Retro Wave',c:['#ff3d81','#5b2bff'],roles:['Arcade Champ','DJ','Skater','Cruiser'],depts:['Team Neon','Sunset Club','Mix Tape'],draw(d){
+ const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#5b2bff');g.addColorStop(.55,'#ff3d81');g.addColorStop(1,'#ffb347');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ for(let i=0;i<7;i++){R('rgba(255,255,255,.18)').fillRect(0,640+i*i*5+i*8,W,6+i)}
+ T('SUPER MEMBER',300,118,60,'#fff',800);ctx.save();ctx.translate(300,340);ctx.rotate(-.06);ctx.fillStyle='#fff';ctx.fillRect(-175,-195,350,390);ctx.restore();
+ ctx.save();ctx.translate(300,340);ctx.rotate(-.06);ctx.translate(-300,-340);PH(135,155,330,370,0);ctx.restore();
+ ctx.save();ctx.shadowColor='#2b0a6b';ctx.shadowOffsetX=5;ctx.shadowOffsetY=5;NM(d.n,300,620,520,60,'#fff');ctx.restore();T(d.r,300,670,32,'#fff',500);T(d.d,300,712,26,'#ffe9f2',500);
+ R('#fff').fillRect(90,780,420,84);BAR(110,792,380,60,'#5b2bff',d.s);T(d.i,300,904,26,'#fff',500,'center',1)}},
+{n:'Campus',c:['#7a1230','#eef0f6'],roles:['Student','Teaching Assistant','Exchange Student','Researcher'],depts:['Fine Arts','Engineering','Humanities'],draw(d){
+ R('#eef0f6').fillRect(0,0,W,H);R('#7a1230').fillRect(0,0,W,230);circ(300,128,56,'#f1c75b');circ(300,128,44,'#7a1230');T('U',300,150,56,'#f1c75b',800);
+ T('UNIVERSITY',300,212,32,'#fff',700);ctx.fillStyle='#7a1230';ctx.fillRect(140,262,320,400);PH(148,270,304,384,0);
+ NM(d.n,300,740,520,54,'#3a0a18');T(d.r,300,786,30,'#7a1230',700);T(d.d,300,826,26,'#555',500);BAR(100,846,400,46,'#3a0a18',d.s);T(d.i,300,920,22,'#3a0a18',500,'center',1)}},
+{n:'Medical Staff',c:['#0fa3a3','#e9fbf8'],roles:['Nurse','Pediatrician','Radiologist','Paramedic'],depts:['Emergency','Cardiology','General Ward'],draw(d){
+ R('#e9fbf8').fillRect(0,0,W,H);R('#0fa3a3').fillRect(0,0,W,240);circ(300,130,60,'#fff');R('#e5384a').fillRect(280,90,40,80);ctx.fillRect(260,110,80,40);
+ T('CITY HOSPITAL',300,222,32,'#fff',800);circ(300,380,156,'#0fa3a3');PH(160,240,280,280,'o');
+ NM(d.n,300,640,520,56,'#08494a');T(d.r,300,690,34,'#0fa3a3',800);T(d.d,300,734,28,'#4b7778',500);BAR(100,770,400,70,'#08494a',d.s);T(d.i,300,876,26,'#08494a',500,'center',1);R('#e5384a').fillRect(0,904,W,36)}},
+{n:'Festival',c:['#ff6a1a','#ffd23f'],roles:['Volunteer','Camper','VIP','Food Stand'],depts:['Day 1-3','Main Stage','Camp Zone'],draw(d){
+ R('#ff6a1a').fillRect(0,0,W,H);circ(80,150,160,'#ffd23f');circ(560,260,140,'#ff2d95');circ(120,780,190,'#2b6cff');circ(540,840,120,'#ffd23f');
+ T('FESTIVAL',300,118,84,'#fff',800);circ(300,350,165,'#fff');PH(150,200,300,300,'o');
+ ctx.fillStyle='#111';rr(ctx,60,560,480,250,28);ctx.fill();NM(d.n,300,650,440,54,'#fff');T(d.r,300,704,32,'#ffd23f',700);T(d.d,300,748,26,'#fff',500);T(d.i,300,790,22,'#ff6a1a',500,'center',1)}},
+{n:'Space Crew',c:['#6a7bff','#050a2a'],roles:['Commander','Pilot','Mission Specialist','Flight Engineer'],depts:['Orbital Team','Lunar Gate','Mars Program'],draw(d){
+ const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#050a2a');g.addColorStop(1,'#1c2370');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ const r=RS(d.s);ctx.fillStyle='#fff';for(let i=0;i<70;i++){ctx.globalAlpha=.3+r()*.7;ctx.fillRect(r()*W,r()*H,1+r()*3,1+r()*3)}ctx.globalAlpha=1;
+ ctx.strokeStyle='rgba(140,160,255,.5)';ctx.lineWidth=3;ctx.save();ctx.translate(300,330);ctx.rotate(-.35);ctx.beginPath();ctx.ellipse(0,0,250,90,0,0,7);ctx.stroke();ctx.restore();
+ circ(300,330,150,'#6a7bff');PH(156,186,288,288,'o');circ(500,250,16,'#ff7b4a');
+ T('MISSION CREW',300,100,40,'#c5ceff',800);NM(d.n,300,600,520,56,'#fff');T(d.r,300,652,32,'#8fa0ff',700);T(d.d,300,700,26,'#c5ceff',500);
+ BAR(100,750,400,70,'#c5ceff',d.s);T(d.i,300,866,26,'#c5ceff',500,'center',1);circ(300,900,18,'#6a7bff')}},
+{n:'Classified',c:['#cf2a2a','#cfd2d6'],roles:['Special Agent','Courier','Observer','Director'],depts:['Bureau 9','Night Desk','Unit Zero'],draw(d){
+ R('#cfd2d6').fillRect(0,0,W,H);R('#111').fillRect(0,0,W,150);T('CLASSIFIED',300,110,70,'#e23a3a',800);
+ ctx.fillStyle='#111';ctx.fillRect(110,190,380,440);PH(120,200,360,420,0,1);
+ NM(d.n.toUpperCase(),300,700,520,52,'#111');T(d.r,300,746,30,'#333',700);T(d.d,300,786,26,'#444',500);BAR(90,806,420,60,'#111',d.s);T(d.i,300,904,24,'#111',500,'center',1);
+ ctx.save();ctx.translate(380,560);ctx.rotate(-.35);ctx.strokeStyle='#cf2a2a';ctx.lineWidth=8;ctx.strokeRect(-130,-40,260,80);T('TOP SECRET',0,16,44,'#cf2a2a',800);ctx.restore()}}
+];
+
+const dots=document.getElementById('dots');
+MODELS.forEach(m=>{const i=document.createElement('i');i.style.background=`linear-gradient(180deg,${m.c[0]} 55%,${m.c[1]} 55%)`;dots.appendChild(i)});
+
+function mkData(){
+ const typed=document.getElementById('nm').value.trim();
+ return {n:typed||pick(FN)+' '+pick(LN),s:Math.floor(Math.random()*90000)+10000,id:null};
+}
+function render(newModel=true){
+ if(!photoImg)return;
+ if(newModel||cur===null){let k;do{k=Math.floor(Math.random()*MODELS.length)}while(k===last&&MODELS.length>1);last=k;cur=mkData()}
+ const m=MODELS[last];
+ const d={n:cur.n,s:cur.s,img:photoImg,r:m.roles[cur.s%m.roles.length],d:m.depts[cur.s%m.depts.length],i:'ID-'+String(cur.s).padStart(5,'0')+'-'+String.fromCharCode(65+cur.s%26)+String.fromCharCode(65+(cur.s>>3)%26)};
+ ctx.clearRect(0,0,W,H);ctx.save();rr(ctx,0,0,W,H,44);ctx.clip();m.draw(d);ctx.restore();
+ ctx.save();ctx.globalCompositeOperation='destination-out';rr(ctx,W/2-52,26,104,22,11);ctx.fill();ctx.restore();
+ document.getElementById('cap').textContent='Model '+(last+1)+' of 10: '+m.n;
+ cv.dataset.id=d.i;
+}
+function click(){try{const a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.type='square';o.frequency.value=1200;g.gain.setValueAtTime(.12,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.09);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.1)}catch(e){}}
+function load(file){
+ if(!file)return;const img=new Image(),url=URL.createObjectURL(file);
+ img.onload=async()=>{photoImg=img;try{await document.fonts.load('800 40px "Bricolage Grotesque"');await document.fonts.load('500 20px "DM Mono"')}catch(e){}
+  click();render(true);const o=document.getElementById('out');o.classList.add('on');setTimeout(()=>o.scrollIntoView({behavior:'smooth',block:'start'}),60)};
+ img.src=url;
+}
+['f1','f2'].forEach(id=>document.getElementById(id).addEventListener('change',e=>{load(e.target.files[0]);e.target.value=''}));
+document.querySelectorAll('label.btn').forEach(l=>l.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();l.click()}}));
+document.getElementById('again').onclick=()=>render(true);
+const blob=()=>new Promise(r=>cv.toBlob(r,'image/png'));
+async function save(){const b=await blob(),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='badge-'+(cv.dataset.id||'id')+'.png';document.body.appendChild(a);a.click();a.remove()}
+document.getElementById('save').onclick=save;
+document.getElementById('wa').onclick=async()=>{
+ const b=await blob(),f=new File([b],'badge.png',{type:'image/png'});
+ if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],text:'My BadgeApp ID badge'});return}catch(e){if(e.name==='AbortError')return}}
+ await save();window.open('https://wa.me/?text='+encodeURIComponent('My BadgeApp ID badge'),'_blank');
+};
+</script>
+</body>
+</html>
