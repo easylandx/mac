@@ -134,6 +134,16 @@
       url: 'https://api.airplanes.live/v2/point/' + CENTER[0] + '/' + CENTER[1] + '/' + RADIUS_NM },
   ];
 
+  // Your own CORS relay (see worker.js). Paste its address here, no trailing slash,
+  // e.g. 'https://madrid-radar.YOURNAME.workers.dev'. It is tried first.
+  var WORKER_URL = '';
+  if (WORKER_URL) {
+    SOURCES.unshift({
+      name: 'relay', interval: REFRESH_MS, parse: parseAdsb,
+      url: WORKER_URL + '/point/' + CENTER[0] + '/' + CENTER[1] + '/' + RADIUS_NM
+    });
+  }
+
   // The ✈️ glyph points north-east (~45°) in most fonts, so subtract 45°.
   var EMOJI_OFFSET_DEG = 45;
 
