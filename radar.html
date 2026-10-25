@@ -95,9 +95,37 @@
   var REFRESH_MS = 10000;
 
   // Free sources, no API key. Tried in order; the next is used if one fails.
+  // adsb.lol and airplanes.live sit behind Cloudflare; in Spain those IPs are
+  // often blocked during LaLiga matches, so OpenSky (different host) is the
+  // third fallback. Anonymous OpenSky allows ~400 requests/day -> poll slowly.
+  function parseAdsb(data) { return data.ac || data.aircraft || []; }
+
+  // Convert OpenSky state vectors to the same shape the adsb.lol feed uses
+  function parseOpenSky(data) {
+    return (data.states || []).map(function (s) {
+      var alt = isNum(s[13]) ? s[13] : s[7];                  // metres
+      return {
+        hex: s[0],
+        flight: s[1],
+        country: s[2],
+        lon: s[5],
+        lat: s[6],
+        alt_baro: s[8] ? 'ground' : (isNum(alt) ? alt * 3.28084 : null),  // -> feet
+        gs: isNum(s[9]) ? s[9] * 1.94384 : null,              // m/s -> knots
+        track: s[10],
+        seen_pos: isNum(s[3]) ? Math.max(0, Date.now() / 1000 - s[3]) : null
+      };
+    });
+  }
+
   var SOURCES = [
-    { name: 'adsb.lol',      url: 'https://api.adsb.lol/v2/point/' + CENTER[0] + '/' + CENTER[1] + '/' + RADIUS_NM },
-    { name: 'airplanes.live', url: 'https://api.airplanes.live/v2/point/' + CENTER[0] + '/' + CENTER[1] + '/' + RADIUS_NM }
+    { name: 'adsb.lol', interval: REFRESH_MS, parse: parseAdsb,
+      url: 'https://api.adsb.lol/v2/point/' + CENTER[0] + '/' + CENTER[1] + '/' + RADIUS_NM },
+    { name: 'airplanes.live', interval: REFRESH_MS, parse: parseAdsb,
+      url: 'https://api.airplanes.live/v2/point/' + CENTER[0] + '/' + CENTER[1] + '/' + RADIUS_NM },
+    { name: 'opensky', interval: 60000, parse: parseOpenSky,
+      url: 'https://opensky-network.org/api/states/all?lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin +
+           '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax }
   ];
 
   // The ✈️ glyph points north-east (~45°) in most fonts, so subtract 45°.
@@ -176,7 +204,7 @@
 
     return '<div class="pop-title">' + esc(callsign || a.r || a.hex || 'N/A') + '</div>' +
       row('Callsign', callsign || 'N/A') +
-      row('Country', countryFromHex(a.hex) + ' *') +
+      row('Country', a.country ? a.country : countryFromHex(a.hex) + ' *') +
       row('Altitude', altTxt) +
       row('Ground speed', spdTxt) +
       row('Heading', hdgTxt) +
@@ -196,22 +224,29 @@
 
   // ---- Data ----
   async function fetchAircraft() {
-    var lastErr = null;
+    var errors = [];
     for (var i = 0; i < SOURCES.length; i++) {
+      var src = SOURCES[i];
+      var timer = null;
       try {
-        var res = await fetch(SOURCES[i].url, { cache: 'no-store' });
-        if (!res.ok) throw new Error(SOURCES[i].name + ' HTTP ' + res.status);
+        var ctrl = new AbortController();
+        timer = setTimeout(function () { ctrl.abort(); }, 8000);
+        var res = await fetch(src.url, { cache: 'no-store', signal: ctrl.signal });
+        clearTimeout(timer);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
         var data = await res.json();
-        var list = data.ac || data.aircraft || [];
-        return { list: list, source: SOURCES[i].name };
+        return { list: src.parse(data), source: src.name, interval: src.interval };
       } catch (e) {
-        lastErr = new Error(SOURCES[i].name + ': ' + (e && e.message ? e.message : 'request failed'));
+        clearTimeout(timer);
+        console.warn(src.name + ' failed:', e);
+        errors.push(src.name);
       }
     }
-    throw lastErr || new Error('no data source reachable');
+    throw new Error('all sources failed (' + errors.join(', ') + ')');
   }
 
   async function update() {
+    var nextIn = 15000;   // retry delay after a total failure
     try {
       setStatus('Fetching data...', '');
       var out = await fetchAircraft();
@@ -230,12 +265,13 @@
         count++;
       });
 
+      nextIn = out.interval;
       setStatus('Live: ' + count + ' flight' + (count === 1 ? '' : 's') + ' tracked (' + out.source + ')', 'live');
     } catch (err) {
       console.error(err);
       setStatus('Error: ' + (err && err.message ? err.message : 'request failed') + ' — retrying...', 'error');
     } finally {
-      setTimeout(update, REFRESH_MS);
+      setTimeout(update, nextIn);
     }
   }
 
