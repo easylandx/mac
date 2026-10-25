@@ -87,6 +87,8 @@
   }
   .cfg button:hover { background: rgba(61,255,168,.22); }
 
+  .dark-tiles { filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.6); }
+
   .leaflet-control-attribution { background: rgba(12,18,26,.6) !important; color: var(--muted) !important; }
   .leaflet-control-attribution a { color: var(--muted) !important; }
 </style>
@@ -136,10 +138,11 @@
   });
   L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO | Data: OpenSky Network',
-    subdomains: 'abcd',
-    maxZoom: 19
+  // Free OpenStreetMap tiles (no API key), turned into a dark radar look with a CSS filter
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors | Data: OpenSky Network',
+    maxZoom: 19,
+    className: 'dark-tiles'
   }).addTo(map);
 
   // Faint outline of the query area
@@ -275,11 +278,17 @@
         } catch (e) {
           // Fall back to anonymous access and tell the user why
           nextDelay = REFRESH_ANON_MS;
-          note = ' (login failed: ' + e.message + '; using anonymous access)';
+          note = ' [login step failed: ' + e.message + ']';
         }
       }
 
-      var res = await fetch(API_URL, { cache: 'no-store', headers: headers });
+      var res;
+      try {
+        res = await fetch(API_URL, { cache: 'no-store', headers: headers });
+      } catch (e) {
+        throw new Error('data request blocked by the browser/network' +
+          (headers.Authorization ? ' (sent with login token)' : ' (anonymous)') + note);
+      }
 
       if (res.status === 429) {
         nextDelay = BACKOFF_MS;
