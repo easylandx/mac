@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Madrid Radar Live</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <style>
   :root {
     --bg: #0b0f14;
@@ -82,10 +83,18 @@
   <div id="status" class="status"><span class="dot"></span><span id="statusText">Fetching data...</span></div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>window.L || document.write('<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"><\/script>');</script>
+<script>window.L || document.write('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script>');</script>
 <script>
 (function () {
   'use strict';
+
+  if (typeof L === 'undefined') {
+    document.getElementById('status').className = 'status error';
+    document.getElementById('statusText').textContent = 'Error: map library blocked (cdnjs, jsDelivr and unpkg all unreachable)';
+    return;
+  }
 
   // ---- Config ----
   // Comunidad de Madrid bounding box (aircraft outside it are hidden)
