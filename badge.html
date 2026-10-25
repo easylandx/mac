@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,6 +14,7 @@
 <style>
 :root{--bg:#0e1a2b;--card:#16263d;--ink:#eef3ff;--mute:#9db0cf;--acc:#ffd23f;--hot:#ff5a5f;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 *,*::before,*::after{box-sizing:inherit}
+html,body,button,label,a,input,canvas{touch-action:manipulation;-webkit-touch-callout:none}
 html{scroll-behavior:smooth;scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,sans-serif;-webkit-tap-highlight-color:transparent;padding-bottom:96px}
 .wrap{width:100%;max-width:560px;margin:0 auto;padding:0 24px}
@@ -193,6 +194,7 @@ function load(file){
 }
 ['f1','f2'].forEach(id=>document.getElementById(id).addEventListener('change',e=>{load(e.target.files[0]);e.target.value=''}));
 document.querySelectorAll('label.btn').forEach(l=>l.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();l.click()}}));
+['gesturestart','gesturechange','gestureend'].forEach(g=>document.addEventListener(g,e=>e.preventDefault()));
 const go=d=>{last=(last+d+MODELS.length)%MODELS.length;cur=mkData();render(false)};
 document.getElementById('prev').onclick=()=>go(-1);
 document.getElementById('next').onclick=()=>go(1);
