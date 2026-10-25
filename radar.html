@@ -239,7 +239,7 @@
       } catch (e) {
         clearTimeout(timer);
         console.warn(src.name + ' failed:', e);
-        errors.push(src.name);
+        errors.push(src.name + ' ' + (e && e.name === 'AbortError' ? 'timeout' : (e && e.message) || 'error'));
       }
     }
     throw new Error('all sources failed (' + errors.join(', ') + ')');
