@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Madrid Radar Live</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root {
+    --bg: #0b0f14;
+    --panel: rgba(12, 18, 26, 0.72);
+    --border: rgba(80, 255, 170, 0.25);
+    --accent: #3dffa8;
+    --text: #d7e3ee;
+    --muted: #7f93a6;
+    --err: #ff6b6b;
+  }
+  html, body { height: 100%; margin: 0; background: var(--bg); }
+  #map { position: absolute; inset: 0; background: var(--bg); }
+
+  .hud {
+    position: absolute; top: 14px; left: 14px; z-index: 1000;
+    padding: 12px 16px; min-width: 210px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 8px 30px rgba(0,0,0,.45);
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    color: var(--text);
+    pointer-events: none;
+  }
+  .hud h1 {
+    margin: 0 0 6px; font-size: 15px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600;
+  }
+  .status { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+  .status.live .dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulse 1.6s infinite; }
+  .status.live { color: var(--text); }
+  .status.error .dot { background: var(--err); box-shadow: 0 0 8px var(--err); }
+  .status.error { color: var(--err); }
+  @keyframes pulse { 50% { opacity: .35; } }
+
+  /* Plane markers */
+  .plane-icon { background: none; border: none; }
+  .plane {
+    font-size: 22px; line-height: 1; width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    transform-origin: 50% 50%;
+    filter: drop-shadow(0 0 4px rgba(61,255,168,.55));
+    cursor: pointer;
+  }
+
+  /* Dark popup */
+  .leaflet-popup-content-wrapper {
+    background: rgba(12, 18, 26, 0.94); color: var(--text);
+    border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.55);
+  }
+  .leaflet-popup-tip { background: rgba(12, 18, 26, 0.94); border: 1px solid var(--border); }
+  .leaflet-container a.leaflet-popup-close-button { color: var(--muted); }
+  .leaflet-container a.leaflet-popup-close-button:hover { color: var(--accent); }
+  .leaflet-popup-content { margin: 12px 14px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+  .pop-title { font-size: 15px; font-weight: 700; color: var(--accent); letter-spacing: .08em; margin-bottom: 8px; }
+  .pop-row { display: flex; justify-content: space-between; gap: 18px; padding: 3px 0; border-top: 1px solid rgba(255,255,255,.06); }
+  .pop-row span:first-child { color: var(--muted); }
+  .pop-row span:last-child { color: var(--text); font-weight: 600; }
+
+  .cfg {
+    position: absolute; top: 14px; right: 14px; z-index: 1000; width: 250px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; color: var(--text);
+    padding: 10px 14px;
+  }
+  .cfg summary { cursor: pointer; color: var(--accent); letter-spacing: .08em; text-transform: uppercase; font-size: 12px; }
+  .cfg p { color: var(--muted); line-height: 1.45; margin: 8px 0; }
+  .cfg input {
+    width: 100%; box-sizing: border-box; margin-bottom: 6px; padding: 7px 8px;
+    background: rgba(0,0,0,.35); color: var(--text); border: 1px solid rgba(255,255,255,.14);
+    border-radius: 6px; font: inherit;
+  }
+  .cfg button {
+    padding: 6px 10px; margin-right: 6px; cursor: pointer; font: inherit;
+    background: rgba(61,255,168,.12); color: var(--accent); border: 1px solid var(--border); border-radius: 6px;
+  }
+  .cfg button:hover { background: rgba(61,255,168,.22); }
+
+  .leaflet-control-attribution { background: rgba(12,18,26,.6) !important; color: var(--muted) !important; }
+  .leaflet-control-attribution a { color: var(--muted) !important; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div class="hud">
+  <h1>Madrid Radar Live</h1>
+  <div id="status" class="status"><span class="dot"></span><span id="statusText">Fetching data...</span></div>
+</div>
+
+<details class="cfg" id="cfg">
+  <summary>⚙ OpenSky API login</summary>
+  <p>Anonymous access has a tiny daily quota (400 credits), so the radar polls slowly. Create a free API client on your OpenSky Account page for 10× more (4,000/day) and a faster refresh.</p>
+  <input id="cid" placeholder="client_id" autocomplete="off" spellcheck="false">
+  <input id="csec" type="password" placeholder="client_secret" autocomplete="off">
+  <button id="csave">Save</button><button id="cclear">Clear</button>
+  <p style="margin-bottom:0">Or load the file you downloaded:</p>
+  <input id="cfile" type="file" accept=".json,application/json" style="margin-top:6px">
+</details>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ---- Config ----
+  var BBOX = { lamin: 39.8, lomin: -4.6, lamax: 41.2, lomax: -3.0 };
+  var API_URL = 'https://opensky-network.org/api/states/all?' +
+    'lamin=' + BBOX.lamin + '&lomin=' + BBOX.lomin +
+    '&lamax=' + BBOX.lamax + '&lomax=' + BBOX.lomax;
+  var TOKEN_URL = 'https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token';
+  // OpenSky credits: anonymous 400/day (~1 request per 3.6 min), logged-in 4000/day (~1 per 22 s)
+  var REFRESH_ANON_MS = 240000;
+  var REFRESH_AUTH_MS = 30000;
+  var BACKOFF_MS = 300000;         // wait after a 429
+  // The ✈️ glyph points to the north-east (~45°) in most fonts,
+  // so subtract 45° to make heading 0° = north.
+  var EMOJI_OFFSET_DEG = 45;
+
+  // ---- Map ----
+  var map = L.map('map', {
+    center: [40.4167, -3.7038],
+    zoom: 9,
+    zoomControl: false
+  });
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO | Data: OpenSky Network',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(map);
+
+  // Faint outline of the query area
+  L.rectangle([[BBOX.lamin, BBOX.lomin], [BBOX.lamax, BBOX.lomax]], {
+    color: '#3dffa8', weight: 1, opacity: 0.25, fill: false, dashArray: '4 6', interactive: false
+  }).addTo(map);
+
+  var markerLayer = L.layerGroup().addTo(map);
+
+  // ---- UI helpers ----
+  var statusEl = document.getElementById('status');
+  var statusText = document.getElementById('statusText');
+  function setStatus(text, kind) {
+    statusText.textContent = text;
+    statusEl.className = 'status' + (kind ? ' ' + kind : '');
+  }
+
+  function esc(str) {
+    return String(str).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function isNum(v) { return typeof v === 'number' && isFinite(v); }
+
+  function popupHtml(s) {
+    var callsign = s[1] ? String(s[1]).trim() : '';
+    var country  = s[2] || 'Unknown';
+    var onGround = s[8] === true;
+    var alt      = s[7];     // baro_altitude (m)
+    var vel      = s[9];     // velocity (m/s)
+    var track    = s[10];    // true_track (deg)
+
+    var altTxt = onGround ? 'On ground'
+               : isNum(alt) ? Math.round(alt * 3.28084).toLocaleString('en-US') + ' ft' : 'N/A';
+    var spdTxt = isNum(vel) ? Math.round(vel * 1.943844) + ' kt' : 'N/A';
+    var hdgTxt = isNum(track) ? Math.round(track) + '°' : 'N/A';
+
+    return '<div class="pop-title">' + esc(callsign || 'N/A') + '</div>' +
+      row('Callsign', callsign || 'N/A') +
+      row('Country', country) +
+      row('Altitude', altTxt) +
+      row('Ground speed', spdTxt) +
+      row('Heading', hdgTxt);
+  }
+  function row(k, v) {
+    return '<div class="pop-row"><span>' + esc(k) + '</span><span>' + esc(v) + '</span></div>';
+  }
+
+  function planeIcon(track) {
+    var rot = (isNum(track) ? track : 0) - EMOJI_OFFSET_DEG;
+    return L.divIcon({
+      className: 'plane-icon',
+      html: '<div class="plane" style="transform: rotate(' + rot + 'deg);">✈️</div>',
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+      popupAnchor: [0, -10]
+    });
+  }
+
+  // ---- Credentials (optional, stored only in this browser) ----
+  var cidEl = document.getElementById('cid'), csecEl = document.getElementById('csec');
+  function loadCreds() {
+    try { return JSON.parse(localStorage.getItem('opensky_creds') || 'null'); } catch (e) { return null; }
+  }
+  var creds = loadCreds();
+  if (creds) { cidEl.value = creds.id || ''; csecEl.value = creds.secret || ''; }
+  var token = null, tokenExp = 0;
+
+  document.getElementById('csave').onclick = function () {
+    var id = cidEl.value.trim(), secret = csecEl.value.trim();
+    creds = (id && secret) ? { id: id, secret: secret } : null;
+    try { if (creds) localStorage.setItem('opensky_creds', JSON.stringify(creds)); } catch (e) {}
+    token = null; schedule(0);
+  };
+  document.getElementById('cfile').onchange = function (ev) {
+    var f = ev.target.files && ev.target.files[0];
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+      try {
+        var j = JSON.parse(r.result);
+        cidEl.value = j.clientId || j.client_id || '';
+        csecEl.value = j.clientSecret || j.client_secret || '';
+        if (!cidEl.value || !csecEl.value) throw new Error('missing keys');
+        document.getElementById('csave').click();
+      } catch (e) {
+        setStatus('Could not read credentials.json (expected clientId and clientSecret).', 'error');
+      }
+    };
+    r.readAsText(f);
+  };
+  document.getElementById('cclear').onclick = function () {
+    creds = null; token = null; cidEl.value = ''; csecEl.value = '';
+    try { localStorage.removeItem('opensky_creds'); } catch (e) {}
+    schedule(0);
+  };
+
+  async function getToken() {
+    if (!creds) return null;
+    if (token && Date.now() < tokenExp - 30000) return token;
+    var res = await fetch(TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'grant_type=client_credentials&client_id=' + encodeURIComponent(creds.id) +
+            '&client_secret=' + encodeURIComponent(creds.secret)
+    });
+    if (!res.ok) throw new Error('token request failed (HTTP ' + res.status + ')');
+    var j = await res.json();
+    token = j.access_token;
+    tokenExp = Date.now() + (j.expires_in || 1800) * 1000;
+    return token;
+  }
+
+  // ---- Data loop ----
+  var timer = null;
+  function schedule(ms) {
+    clearTimeout(timer);
+    timer = setTimeout(update, ms);
+  }
+
+  async function update() {
+    var nextDelay = creds ? REFRESH_AUTH_MS : REFRESH_ANON_MS;
+    var note = '';
+    try {
+      setStatus('Fetching data...', '');
+
+      var headers = {};
+      if (creds) {
+        try {
+          var t = await getToken();
+          if (t) headers.Authorization = 'Bearer ' + t;
+        } catch (e) {
+          // Fall back to anonymous access and tell the user why
+          nextDelay = REFRESH_ANON_MS;
+          note = ' (login failed: ' + e.message + '; using anonymous access)';
+        }
+      }
+
+      var res = await fetch(API_URL, { cache: 'no-store', headers: headers });
+
+      if (res.status === 429) {
+        nextDelay = BACKOFF_MS;
+        setStatus('OpenSky quota reached (429). Retrying in ' + Math.round(BACKOFF_MS / 60000) +
+                  ' min. Add API credentials (top right) for a bigger quota.', 'error');
+        return;
+      }
+      if (res.status === 401 || res.status === 403) {
+        token = null;
+        nextDelay = BACKOFF_MS;
+        setStatus('OpenSky says authentication is required (HTTP ' + res.status +
+                  '). Add your API client credentials (top right).', 'error');
+        return;
+      }
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+
+      var data = await res.json();
+      var states = Array.isArray(data.states) ? data.states : [];
+
+      // Clear old markers before plotting the new ones
+      markerLayer.clearLayers();
+
+      var count = 0;
+      states.forEach(function (s) {
+        var lon = s[5], lat = s[6];
+        if (!isNum(lat) || !isNum(lon)) return;
+        var m = L.marker([lat, lon], { icon: planeIcon(s[10]), keyboard: false });
+        m.bindPopup(popupHtml(s), { closeButton: true, autoPan: true });
+        m.addTo(markerLayer);
+        count++;
+      });
+
+      setStatus('Live: ' + count + ' flight' + (count === 1 ? '' : 's') + ' tracked' + note, note ? 'error' : 'live');
+    } catch (err) {
+      console.error(err);
+      nextDelay = Math.max(nextDelay, 60000);
+      setStatus('Error: ' + (err && err.message ? err.message : 'request failed') + ' — retrying...', 'error');
+    } finally {
+      schedule(nextDelay);
+    }
+  }
+
+  update();
+})();
+</script>
+</body>
+</html>
