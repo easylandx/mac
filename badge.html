@@ -36,6 +36,7 @@ input[type=text]:focus-visible,button:focus-visible,a:focus-visible,label:focus-
 canvas{width:min(100%,340px);height:auto;display:block;margin:0 auto;filter:drop-shadow(0 16px 24px rgba(0,0,0,.5))}
 .cap{color:var(--mute);margin:16px 0 0;font-size:16px}
 .out .row{margin-top:18px}
+.nav{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .elx{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:5;background:var(--hot);color:#fff;font-weight:800;font-size:17px;padding:14px 20px;border-radius:999px;text-decoration:none;box-shadow:0 8px 22px rgba(0,0,0,.45)}
 .elx:active{transform:scale(.96)}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
@@ -63,7 +64,7 @@ canvas{width:min(100%,340px);height:auto;display:block;margin:0 auto;filter:drop
     <p class="cap" id="cap"></p>
   </div>
   <div class="row">
-    <button class="btn" id="again">Shuffle a new badge</button>
+    <div class="nav"><button class="btn" id="prev" aria-label="Previous badge">&#8249; Previous</button><button class="btn" id="next" aria-label="Next badge">Next &#8250;</button></div>
     <button class="btn alt" id="save">Save badge</button>
     <button class="btn wa" id="wa">Send via WhatsApp</button>
     <label class="btn alt" for="f1">Retake selfie</label>
@@ -170,14 +171,16 @@ function load(file){
 }
 ['f1','f2'].forEach(id=>document.getElementById(id).addEventListener('change',e=>{load(e.target.files[0]);e.target.value=''}));
 document.querySelectorAll('label.btn').forEach(l=>l.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();l.click()}}));
-document.getElementById('again').onclick=()=>render(true);
+const go=d=>{last=(last+d+MODELS.length)%MODELS.length;cur=mkData();render(false)};
+document.getElementById('prev').onclick=()=>go(-1);
+document.getElementById('next').onclick=()=>go(1);
 const blob=()=>new Promise(r=>cv.toBlob(r,'image/png'));
 async function save(){const b=await blob(),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='badge-'+(cv.dataset.id||'id')+'.png';document.body.appendChild(a);a.click();a.remove()}
 document.getElementById('save').onclick=save;
 document.getElementById('wa').onclick=async()=>{
  const b=await blob(),f=new File([b],'badge.png',{type:'image/png'});
- if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],text:'My BadgeApp ID badge'});return}catch(e){if(e.name==='AbortError')return}}
- await save();window.open('https://wa.me/?text='+encodeURIComponent('My BadgeApp ID badge'),'_blank');
+ if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],text:'My BadgeApp ID badge\nMade with https://easylandx.github.io/mac/badge.html'});return}catch(e){if(e.name==='AbortError')return}}
+ await save();window.open('https://wa.me/?text='+encodeURIComponent('My BadgeApp ID badge\nMade with https://easylandx.github.io/mac/badge.html'),'_blank');
 };
 </script>
 </body>
