@@ -241,9 +241,13 @@
       var src = SOURCES[i];
       var timer = null;
       try {
-        var ctrl = new AbortController();
-        timer = setTimeout(function () { ctrl.abort(); }, 8000);
-        var res = await fetch(src.url, { cache: 'no-store', signal: ctrl.signal });
+        // No AbortController: sandboxed viewers can't clone AbortSignal, so race a timer instead
+        var res = await Promise.race([
+          fetch(src.url),
+          new Promise(function (_, reject) {
+            timer = setTimeout(function () { reject(new Error('timeout')); }, 8000);
+          })
+        ]);
         clearTimeout(timer);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         var data = await res.json();
