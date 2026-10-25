@@ -136,7 +136,7 @@
 
   // Your own CORS relay (see worker.js). Paste its address here, no trailing slash,
   // e.g. 'https://madrid-radar.YOURNAME.workers.dev'. It is tried first.
-  var WORKER_URL = '';
+  var WORKER_URL = 'https://madrid-radar.paniaguai.workers.dev';
   if (WORKER_URL) {
     SOURCES.unshift({
       name: 'relay', interval: REFRESH_MS, parse: parseAdsb,
