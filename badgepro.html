@@ -220,7 +220,7 @@ function MARK(cx,cy,s,k,c1,c2,ch){
 function HDR(d,x,y,al,c1,c2,col,pill){
  if(!logoImg&&!d.c)return;
  let w=0;if(d.c){ctx.font=fnt(30,800);w=Math.min(ctx.measureText(d.c).width,300)}
- const L=logoImg?88:56,tot=(d.c?L+16:L)+w,sx=al=='c'?x-tot/2:x;
+ const L=logoImg?104:56,tot=(d.c?L+16:L)+w,sx=al=='c'?x-tot/2:x;
  if(pill){const ph=L+24;ctx.fillStyle='rgba(0,0,0,.55)';rr(ctx,sx-14,y-ph/2,tot+28,ph,ph/2);ctx.fill()}
  MARK(sx+L/2,y,L,d.k,c1,c2,(d.c||'?')[0].toUpperCase());
  if(d.c)FT(d.c,sx+L+16,y+11,300,30,col,800,'left')
@@ -246,8 +246,8 @@ const LAY=[
  FOOT(d,120,770,360,ink,'c',54);ctx.fillStyle=ac;ctx.fillRect(0,910,W,30)},
 /* 1 Editorial: offset photo block, left aligned */
 (d,m)=>{const{bg,ac,ink,on}=m;
- HDR(d,50,78,'l',ac,on,ink);
- ctx.fillStyle=ac;rr(ctx,68,150,500,420,28);ctx.fill();PH(50,132,500,420,28);
+ HDR(d,50,82,'l',ac,on,ink);
+ ctx.fillStyle=ac;rr(ctx,68,164,500,420,28);ctx.fill();PH(50,146,500,420,28);
  FT(d.n,50,646,500,54,ink,800,'left');ctx.fillStyle=ac;rr(ctx,50,668,90,8,4);ctx.fill();
  ROLE(d.r,50,744,ink,500,'left',40);
  FOOT(d,50,812,300,ink,'l',46);ctx.fillStyle=ac;ctx.fillRect(0,920,W,20)},
@@ -261,7 +261,7 @@ const LAY=[
  FOOT(d,120,800,360,ink,'c',48)},
 /* 3 Banner: framed square portrait, full-width role band */
 (d,m)=>{const{bg,ac,ink,on}=m;
- HDR(d,50,76,'l',ac,on,ink);ctx.fillStyle=ac;rr(ctx,50,134,500,4,2);ctx.fill();
+ HDR(d,50,80,'l',ac,on,ink);ctx.fillStyle=ac;rr(ctx,50,144,500,4,2);ctx.fill();
  ctx.fillStyle=ac;rr(ctx,140,162,320,320,40);ctx.fill();PH(150,172,300,300,32);
  FT(d.n,300,556,520,52,ink);
  ctx.fillStyle=ac;ctx.fillRect(0,590,W,130);ROLE(d.r,300,655,on,500,'center',42);
@@ -277,7 +277,7 @@ const LAY=[
 /* 5 Sidebar: colour column with vertical company name */
 (d,m)=>{const{bg,ac,ink,on}=m;
  ctx.fillStyle=ac;ctx.fillRect(0,0,150,H);
- if(logoImg||d.c)MARK(75,logoImg?116:112,logoImg?112:84,d.k,on,ac,(d.c||'?')[0].toUpperCase());
+ if(logoImg||d.c)MARK(75,logoImg?118:112,logoImg?124:84,d.k,on,ac,(d.c||'?')[0].toUpperCase());
  if(d.c){ctx.save();ctx.translate(86,590);ctx.rotate(-Math.PI/2);FT(d.c,0,0,520,36,on,800,'center');ctx.restore()}
  PH(185,70,375,420,26);
  const p=d.n.split(' '),last=p.length>1?p.pop():'',first=p.join(' ')||d.n;
@@ -288,7 +288,7 @@ const LAY=[
 /* 6 Frame: outlined card, framed square portrait */
 (d,m)=>{const{bg,ac,ink,on}=m;
  ctx.save();ctx.strokeStyle=ac;ctx.lineWidth=6;rr(ctx,24,24,552,892,30);ctx.stroke();ctx.restore();
- HDR(d,300,104,'c',ac,on,ink);
+ HDR(d,300,98,'c',ac,on,ink);
  ctx.fillStyle=ac;rr(ctx,112,162,376,416,30);ctx.fill();PH(120,170,360,400,24);
  FT(d.n,300,650,500,52,ink);ROLE(d.r,300,722,ink,480,'center',36);
  ctx.fillStyle=ac;rr(ctx,250,766,100,5,2);ctx.fill();
