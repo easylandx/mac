@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0e1a2b">
+<title>BadgeApp</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%AA%AA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0e1a2b;--card:#16263d;--ink:#eef3ff;--mute:#9db0cf;--acc:#ffd23f;--hot:#ff5a5f;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html,body,button,label,a,input,canvas{touch-action:manipulation;-webkit-touch-callout:none}
+html{scroll-behavior:smooth;scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+body{position:relative;margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,sans-serif;-webkit-tap-highlight-color:transparent;padding-bottom:96px}
+.wrap{width:100%;max-width:560px;margin:0 auto;padding:0 24px}
+.hero{min-height:100svh;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;gap:22px;padding-top:32px;padding-bottom:40px}
+.lanyard{width:56px;height:84px;margin:0 auto -10px;border-radius:6px 6px 0 0;background:repeating-linear-gradient(135deg,var(--acc) 0 10px,#e6b800 10px 20px)}
+h1{font-weight:800;font-size:clamp(52px,17vw,92px);line-height:.92;margin:0;letter-spacing:-.04em;text-align:center}
+.sub{text-align:center;color:var(--mute);font-size:19px;line-height:1.4;margin:0}
+.dots{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.dots i{width:18px;height:26px;border-radius:5px;display:block;border:2px solid rgba(255,255,255,.25)}
+input[type=text]{width:100%;font:inherit;font-size:18px;padding:16px 18px;border-radius:16px;border:2px solid #2b4163;background:var(--card);color:var(--ink);outline:none}
+input[type=text]:focus-visible,button:focus-visible,a:focus-visible,label:focus-within{outline:3px solid var(--acc);outline-offset:3px}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;font:inherit;font-weight:700;font-size:20px;padding:18px;border-radius:18px;border:0;cursor:pointer;background:var(--acc);color:#1a1400;text-decoration:none}
+.btn.alt{background:var(--card);color:var(--ink);border:2px solid #2b4163}
+.btn.wa{background:#25d366;color:#04230f}
+.btn:active{transform:scale(.98)}
+.row{display:grid;gap:12px}
+.out{padding-top:36px;padding-bottom:20px;display:none}
+.out.on{display:block}
+.stage{background:radial-gradient(circle at 50% 0,#22385a,#0b1424);border-radius:28px;padding:24px 20px 20px;text-align:center}
+canvas{width:min(100%,340px);height:auto;display:block;margin:0 auto;filter:drop-shadow(0 16px 24px rgba(0,0,0,.5))}
+.cap{color:var(--mute);margin:16px 0 0;font-size:16px}
+.out .row{margin-top:18px}
+.note{display:none;margin:0;padding:12px 16px;border-radius:14px;background:#10331f;border:2px solid #25d366;color:#c9f7da;font-size:16px;line-height:1.35;text-align:center}
+.note.on{display:block}
+.note kbd{font:inherit;font-weight:800;background:#25d366;color:#04230f;border-radius:6px;padding:1px 7px}
+.nav{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lang{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:calc(16px + env(safe-area-inset-right,0px));z-index:6;background:var(--card);color:var(--ink);border:2px solid #2b4163;font-weight:700;font-size:14px;padding:6px 14px;border-radius:999px;text-decoration:none}
+.lang:active{transform:scale(.96)}
+.elx{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:5;background:var(--hot);color:#fff;font-weight:800;font-size:17px;padding:14px 20px;border-radius:999px;text-decoration:none;box-shadow:0 8px 22px rgba(0,0,0,.45)}
+.elx:active{transform:scale(.96)}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<a class="lang" href="https://easylandx.github.io/mac/badge.html" hreflang="en" lang="en">English</a>
+<main>
+<section class="hero wrap">
+  <div class="lanyard" aria-hidden="true"></div>
+  <h1>BadgeApp</h1>
+  <p class="sub">Hazte un selfie o sube una foto. Consigue una credencial de evento con una empresa y un logo aleatorios, entre 35 roles distintos.</p>
+  <div class="dots" id="dots" aria-hidden="true"></div>
+  <input type="text" id="nm" placeholder="Tu nombre (opcional)" autocomplete="name" maxlength="28">
+  <div class="row">
+    <label class="btn" for="f1" id="camBtn" tabindex="0">Hazte un selfie</label>
+    <label class="btn alt" for="f2" tabindex="0">Subir una foto</label>
+    <button class="btn alt" id="tp" type="button">Foto aleatoria</button>
+  </div>
+  <input type="file" id="f1" accept="image/*" capture="user" hidden>
+  <input type="file" id="f2" accept="image/*" hidden>
+</section>
+
+<section class="out wrap" id="out">
+  <div class="stage">
+    <canvas id="cv" width="600" height="940" aria-label="Tu credencial de identificación generada"></canvas>
+    <p class="cap" id="cap"></p>
+  </div>
+  <div class="row">
+    <div class="nav"><button class="btn" id="prev" aria-label="Credencial anterior">&#8249; Anterior</button><button class="btn" id="next" aria-label="Credencial siguiente">Siguiente &#8250;</button></div>
+    <button class="btn alt" id="save">Guardar credencial</button>
+    <button class="btn wa" id="wa">Enviar por WhatsApp</button>
+    <p class="note" id="note" role="status"></p>
+    <button class="btn alt" id="restart" type="button">Reiniciar</button>
+  </div>
+</section>
+</main>
+
+<a class="elx" href="https://easylandx.github.io" target="_blank" rel="noopener">EasyLandX</a>
+
+<script>
+const W=600,H=940,cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+let photoImg=null,last=-1,cur=null,CB=null;
+const FN=['Alex','Sam','Luna','Marco','Nina','Leo','Zoe','Hugo','Mia','Theo','Iris','Dani','Eva','Nico','Lola'];
+const LN=['Rivera','Stone','Vega','Moreau','Kimura','Duarte','Novak','Bell','Ortega','Fox','Silva','Hart','Lund','Reyes','Cole'];
+const CO=['Nimbus Labs','Brightwave','Foxglove Co.','Orbital','Pixelhaus','Mango Systems','Kite & Co.','Lumen Works','Harbor Digital','Quill Studio','Zephyr Group','Tandem','Moonpath','Bluefin','Copperleaf','Sprout Works','Vantage Point','Echo Park Media','Northstar','Juniper Labs','Ember Collective','Wildflower AI'];
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const rr=(c,x,y,w,h,r)=>{c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()};
+const fnt=(sz,wt=800,mono)=>`${wt} ${sz}px ${mono?'"DM Mono",ui-monospace,monospace':'"Bricolage Grotesque",system-ui,sans-serif'}`;
+const T=(s,x,y,sz,col,wt=700,al='center',mono)=>{ctx.font=fnt(sz,wt,mono);ctx.fillStyle=col;ctx.textAlign=al;ctx.textBaseline='alphabetic';ctx.fillText(s,x,y)};
+const FT=(s,x,y,max,sz,col,wt=800,al='center')=>{ctx.font=fnt(sz,wt);while(ctx.measureText(s).width>max&&sz>20){sz-=2;ctx.font=fnt(sz,wt)}T(s,x,y,sz,col,wt,al)};
+const EM=(e,x,y,sz)=>{ctx.font=`${sz}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillStyle='#000';ctx.fillText(e,x,y)};
+const circ=(x,y,r,c)=>{ctx.fillStyle=c;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill()};
+const RS=s=>()=>{s=(s*9301+49297)%233280;return s/233280};
+const ON=h=>{const n=parseInt(h.slice(1),16);return(((n>>16)*299+((n>>8)&255)*587+(n&255)*114)/1000>150)?'#111111':'#ffffff'};
+const PH=(x,y,w,h,r)=>{ctx.save();if(r==='o'){ctx.beginPath();ctx.arc(x+w/2,y+h/2,w/2,0,7)}else rr(ctx,x,y,w,h,r);ctx.clip();const s=Math.max(w/photoImg.width,h/photoImg.height),dw=photoImg.width*s,dh=photoImg.height*s;ctx.drawImage(photoImg,x+(w-dw)/2,y+(h-dh)/2,dw,dh);ctx.restore()};
+const BAR=(x,y,w,h,col,seed)=>{let s=seed,cx=x;ctx.fillStyle=col;while(cx<x+w-8){s=(s*9301+49297)%233280;const bw=3+Math.floor(s/233280*7);ctx.fillRect(cx,y,bw,h);cx+=bw+3+(s%4)}};
+
+/* role title: one line if it fits, else two balanced lines */
+function ROLE(s,cx,cy,col,max){
+ let sz=66;ctx.font=fnt(sz);while(sz>40&&ctx.measureText(s).width>max){sz-=2;ctx.font=fnt(sz)}
+ if(ctx.measureText(s).width<=max){T(s,cx,cy+sz*.35,sz,col,800);return}
+ const w=s.split(' ');let a='',b='',bd=1e9;ctx.font=fnt(50);
+ for(let i=1;i<w.length;i++){const x=w.slice(0,i).join(' '),y=w.slice(i).join(' '),dd=Math.abs(ctx.measureText(x).width-ctx.measureText(y).width);if(dd<bd){bd=dd;a=x;b=y}}
+ sz=56;ctx.font=fnt(sz);while(sz>28&&Math.max(ctx.measureText(a).width,ctx.measureText(b).width)>max){sz-=2;ctx.font=fnt(sz)}
+ T(a,cx,cy-sz*.2,sz,col,800);T(b,cx,cy-sz*.2+sz*1.02,sz,col,800)
+}
+/* company logo: shape chosen from the company name */
+function LOGO(cx,cy,s,k,c1,c2,ch){
+ ctx.save();ctx.translate(cx,cy);ctx.fillStyle=c1;ctx.beginPath();
+ if(k==0)ctx.arc(0,0,s/2,0,7);
+ else if(k==1){ctx.rotate(Math.PI/4);rr(ctx,-s*.36,-s*.36,s*.72,s*.72,6)}
+ else if(k==2){for(let i=0;i<6;i++){const a=Math.PI/3*i-Math.PI/6;ctx.lineTo(Math.cos(a)*s/2,Math.sin(a)*s/2)}ctx.closePath()}
+ else if(k==3)rr(ctx,-s/2,-s/2,s,s,s*.28);
+ else{ctx.moveTo(0,-s/2);ctx.lineTo(s/2,s*.4);ctx.lineTo(-s/2,s*.4);ctx.closePath()}
+ ctx.fill();ctx.restore();T(ch,cx,cy+s*.19,s*(k==4?.4:.5),c2,800)
+}
+function HDR(d,x,y,al,c1,c2,col,pill){
+ ctx.font=fnt(34);const w=ctx.measureText(d.c).width,tot=70+w,sx=al=='c'?x-tot/2:x;
+ if(pill){ctx.fillStyle='rgba(0,0,0,.5)';rr(ctx,sx-16,y-38,tot+32,76,38);ctx.fill()}
+ LOGO(sx+28,y,56,d.k,c1,c2,d.c[0]);T(d.c,sx+70,y+12,34,col,800,'left')
+}
+function PAT(p,col){
+ if(p==='none')return;ctx.save();ctx.globalAlpha=.1;ctx.fillStyle=col;ctx.strokeStyle=col;
+ if(p==='dots'){for(let x=25;x<W;x+=50)for(let y=25;y<H;y+=50){ctx.beginPath();ctx.arc(x,y,5,0,7);ctx.fill()}}
+ else if(p==='stripes'){ctx.lineWidth=14;for(let i=-H;i<W;i+=56){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+H,H);ctx.stroke()}}
+ else if(p==='grid'){ctx.lineWidth=2;for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}}
+ else if(p==='rings'){ctx.lineWidth=8;for(let r=60;r<1200;r+=70){ctx.beginPath();ctx.arc(W,0,r,0,7);ctx.stroke()}}
+ else if(p==='waves'){ctx.lineWidth=6;for(let j=0;j<20;j++){ctx.beginPath();for(let x=0;x<=W;x+=20)ctx.lineTo(x,j*50+Math.sin(x/45+j)*14);ctx.stroke()}}
+ ctx.restore()
+}
+
+/* five layouts, each shared by several roles with different colors and patterns */
+const LAY=[
+(d,m)=>{const{bg,ac,ink,on}=m;ctx.fillStyle=ac;ctx.fillRect(0,0,W,210);HDR(d,300,116,'c',on,ac,on);circ(300,350,156,ac);circ(300,350,146,bg);PH(160,210,280,280,'o');circ(450,478,48,'#ffffff');EM(d.e,450,496,56);FT(d.n,300,578,520,52,ink);ctx.fillStyle=ac;rr(ctx,40,606,520,150,30);ctx.fill();ROLE(d.r,300,681,on,480);FT(d.t,300,796,520,26,ink,500);BAR(100,820,400,50,ink,d.s);T(d.i,300,912,24,ink,500,'center',1)},
+(d,m)=>{const{bg,ac,ink,on}=m;HDR(d,50,96,'l',ac,on,ink);ctx.fillStyle=ac;rr(ctx,50,150,500,400,30);ctx.fill();PH(60,160,480,380,22);circ(490,170,56,ac);circ(490,170,48,'#ffffff');EM(d.e,490,190,56);FT(d.n,50,616,500,52,ink,800,'left');ctx.fillStyle=ac;rr(ctx,50,646,500,140,24);ctx.fill();ROLE(d.r,300,716,on,460);FT(d.t,50,832,500,26,ink,500,'left');BAR(50,852,300,42,ink,d.s);T(d.i,50,924,22,ink,500,'left',1)},
+(d,m)=>{const{bg,ac,ink,on}=m;ctx.fillStyle=ac;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(W,0);ctx.lineTo(W,250);ctx.lineTo(0,390);ctx.closePath();ctx.fill();HDR(d,300,110,'c',on,ac,on);circ(300,420,162,ac);circ(300,420,150,'#ffffff');PH(165,285,270,270,'o');EM(d.e,486,300,96);FT(d.n,300,640,520,52,ink);ROLE(d.r,300,722,ink,500);ctx.fillStyle=ac;ctx.fillRect(180,780,240,10);FT(d.t,300,830,520,26,ink,500);BAR(120,848,360,40,ink,d.s);T(d.i,300,924,22,ink,500,'center',1)},
+(d,m)=>{const{bg,ac,ink,on}=m;HDR(d,300,92,'c',ac,on,ink);EM(d.e,300,262,150);ctx.fillStyle=ac;rr(ctx,146,296,308,308,40);ctx.fill();PH(154,304,292,292,32);FT(d.n,300,668,520,52,ink);ctx.fillStyle=ac;ctx.fillRect(0,694,W,136);ROLE(d.r,300,762,on,520);FT(d.t,300,872,520,26,ink,500);T(d.i,300,920,22,ink,500,'center',1)},
+(d,m)=>{const{bg,ac,ink,on}=m;ctx.fillStyle=ac;ctx.fillRect(0,0,W,150);HDR(d,300,92,'c',on,ac,on);ctx.fillStyle=ac;rr(ctx,162,168,276,262,36);ctx.fill();PH(170,176,260,246,28);circ(510,430,58,ac);EM(d.e,510,452,64);FT(d.n,50,470,400,54,ink,800,'left');ctx.fillStyle=ac;rr(ctx,40,510,520,140,30);ctx.fill();ROLE(d.r,300,580,on,480);FT(d.t,300,712,520,26,ink,500);BAR(100,740,400,70,ink,d.s);T(d.i,300,846,24,ink,500,'center',1);ctx.fillStyle=ac;ctx.fillRect(0,890,W,50)}
+];
+
+/* role, emoji, tagline, layout, background, accent, pattern */
+const DEF=[
+['Responsable de Conexiones','🤝','Presenta a todos con todos',0,'#f4f7ff','#2f5bff','dots'],
+['Catalizador Cultural','⚡','Convierte buenas ideas en buenos hábitos',1,'#1a1033','#ff9f1c','rings'],
+['Gestor de Buen Rollo','✨','Solo buenas vibras, siempre',2,'#ffe3f1','#ff3d9a','waves'],
+['Arquitecto de Soluciones','📐','Convierte el caos en diagramas',3,'#0d2b45','#3ddbd9','grid'],
+['Guía de Bienvenida','🧸','Pregúntame lo que quieras, dos veces',0,'#fff3d6','#ff7a59','dots'],
+['Facilitador de Sesión','🎙️','Mantiene a toda la sala hablando',1,'#202124','#8ab4ff','stripes'],
+['Capitán de Mesa','🍽️','Tu asiento está guardado, lo prometo',4,'#12352b','#f2b84b','none'],
+['Anfitrión de Preguntas (AMA)','❓','Ninguna pregunta es pequeña',2,'#e9fff6','#00a676','dots'],
+['Guardián de la Zona de Silencio','🤫','Aquí el silencio es oro',3,'#e7ebf3','#5b6b8c','none'],
+['Guía Zen','🧘','Respira lento, gana a lo grande',0,'#e3f6ff','#39a9db','waves'],
+['Rescate Técnico','🛟','¿Has probado a apagarlo y encenderlo?',1,'#fff1e6','#ff5a1f','stripes'],
+['Médico Digital','🩺','Cura tu portátil, sin cita previa',4,'#071f2a','#2ee6a6','grid'],
+['Conserje VIP','🛎️','Tu deseo es mi reserva',3,'#14110f','#d4af37','rings'],
+['Susurrador de Gatos','🐱','Fluido en ronroneo',2,'#f3e8ff','#8b5cf6','dots'],
+['Enlace de Mascotas','🐶','Todo buen chico merece su credencial',0,'#fff0e0','#c46a2b','dots'],
+['Experto en Café','☕','Funciona con espresso y opiniones',1,'#3b2314','#e0a76a','rings'],
+['Cerebro Maestro','🧠','Tiene un plan para el plan',4,'#1c0f3d','#ff4fa3','grid'],
+['Cazador de Bugs','🐞','Aplasta bugs, perdona mariposas',2,'#effbe8','#d6303a','dots'],
+['Domador del Caos','🌪️','Pastorea gatos y calendarios',3,'#2b2f36','#ffd23f','stripes'],
+['Pase de Acceso Total','🎟️','Se salta todas las colas, con educación',4,'#0b0b12','#ff2d95','rings'],
+['Se Requiere Acompañante','🚧','Por favor, no pierdas de vista a tu acompañante',1,'#ffd400','#111111','stripes'],
+['Prensa y Medios','📸','Sí, puedo citarte',0,'#eeeeee','#d6303a','none'],
+['Ponente Principal','🎤','Prueba de micro, uno, dos, guau',4,'#2a0a4a','#ffb300','rings'],
+['Equipo de Operaciones','🦺','Luces, cables, snacks y vuelta a empezar',3,'#102a1c','#ff7a1a','stripes'],
+['Chispa de Ideas','💡','Enciende cada lluvia de ideas',2,'#fff8d6','#f59e0b','rings'],
+['Campeón Rompehielos','🧊','Derrite los silencios incómodos',0,'#e6f7ff','#0ea5e9','dots'],
+['Navegante de Contactos','🧭','Siempre sabe a quién debes conocer',1,'#0f2238','#22d3ee','grid'],
+['Inyector de Energía','🔋','Cargado al máximo, cargando a los demás',4,'#1a0b2e','#a3e635','stripes'],
+['Iniciador de Casualidades','🍀','Hace que ocurran felices casualidades',3,'#e8f9ec','#16a34a','waves'],
+['Maestro de Ceremonias','🎩','Dirige el show, casi puntual',4,'#1b1b1b','#e11d48','rings'],
+['Héroe de la Hidratación','💧','Primero agua, luego todo lo demás',2,'#e0f2fe','#2563eb','waves'],
+['Gurú de Snacks','🍿','Sabe dónde están los mejores snacks',1,'#fff4e0','#ea580c','dots'],
+['Mago de la Logística','🪄','Hace que quepa el horario imposible',3,'#16113a','#c084fc','grid'],
+['Guía de Multitudes','🚦','Mantiene el flujo en movimiento',0,'#f1f5f9','#0891b2','stripes'],
+['Responsable de Felicidad','😄','Sonrisas entregadas puntualmente',4,'#fff0f3','#f43f5e','dots']
+];
+const MODELS=DEF.map(([r,e,t,L,bg,ac,p])=>({n:r,r,e,t,L,bg,ac,p,c:[ac,bg]}));
+
+const dots=document.getElementById('dots');
+MODELS.forEach(m=>{const i=document.createElement('i');i.style.background=`linear-gradient(180deg,${m.c[0]} 55%,${m.c[1]} 55%)`;dots.appendChild(i)});
+
+function mkData(){
+ const typed=document.getElementById('nm').value.trim();
+ return {n:typed||pick(FN)+' '+pick(LN),s:Math.floor(Math.random()*90000)+10000,co:pick(CO)};
+}
+function render(newModel=true){
+ if(!photoImg)return;
+ if(newModel||cur===null){let k;do{k=Math.floor(Math.random()*MODELS.length)}while(k===last&&MODELS.length>1);last=k;cur=mkData()}
+ const m=MODELS[last],co=cur.co;
+ const d={n:cur.n,s:cur.s,c:co,k:[...co].reduce((a,c)=>a+c.charCodeAt(0),0)%5,r:m.r,e:m.e,t:m.t,
+  i:'ID-'+String(cur.s).padStart(5,'0')+'-'+String.fromCharCode(65+cur.s%26)+String.fromCharCode(65+(cur.s>>3)%26)};
+ const ink=ON(m.bg),on=ON(m.ac);
+ ctx.clearRect(0,0,W,H);ctx.save();rr(ctx,0,0,W,H,44);ctx.clip();
+ ctx.fillStyle=m.bg;ctx.fillRect(0,0,W,H);PAT(m.p,ink);LAY[m.L](d,{bg:m.bg,ac:m.ac,ink,on});ctx.restore();
+ ctx.save();ctx.globalCompositeOperation='destination-out';rr(ctx,W/2-52,26,104,22,11);ctx.fill();ctx.restore();
+ document.getElementById('cap').textContent='Credencial '+(last+1)+' de '+MODELS.length+': '+m.n;
+ cv.dataset.id=d.i;CB=null;cv.toBlob(b=>{CB=b},'image/png');
+}
+function click(){try{const a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.type='square';o.frequency.value=1200;g.gain.setValueAtTime(.12,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.09);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.1)}catch(e){}}
+async function setPhoto(img){photoImg=img;try{await document.fonts.load('800 40px "Bricolage Grotesque"');await document.fonts.load('500 20px "DM Mono"')}catch(e){}
+ click();render(true);const o=document.getElementById('out');o.classList.add('on');setTimeout(()=>o.scrollIntoView({behavior:'smooth',block:'start'}),60)}
+function load(file){
+ if(!file)return;const img=new Image(),url=URL.createObjectURL(file);
+ img.onload=()=>setPhoto(img);
+ img.src=url;
+}
+['f1','f2'].forEach(id=>document.getElementById(id).addEventListener('change',e=>{load(e.target.files[0]);e.target.value=''}));
+document.querySelectorAll('label.btn').forEach(l=>l.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();l.click()}}));
+document.getElementById('tp').onclick=()=>{
+ const b=document.getElementById('tp'),lab=b.textContent;b.disabled=true;b.textContent='Cargando...';
+ const img=new Image();img.crossOrigin='anonymous';
+ img.onload=()=>{b.disabled=false;b.textContent=lab;setPhoto(img)};
+ img.onerror=()=>{b.disabled=false;b.textContent='No se pudo cargar, inténtalo de nuevo';setTimeout(()=>{b.textContent=lab},2500)};
+ img.src='https://picsum.photos/900/1200?random='+Date.now();
+};
+document.getElementById('restart').onclick=()=>{
+ photoImg=null;last=-1;cur=null;CB=null;
+ document.getElementById('nm').value='';
+ document.getElementById('note').classList.remove('on');
+ document.getElementById('out').classList.remove('on');
+ ctx.clearRect(0,0,W,H);
+ window.scrollTo({top:0,behavior:'smooth'});
+};
+['gesturestart','gesturechange','gestureend'].forEach(g=>document.addEventListener(g,e=>e.preventDefault()));
+const go=d=>{last=(last+d+MODELS.length)%MODELS.length;cur=mkData();render(false)};
+document.getElementById('prev').onclick=()=>go(-1);
+document.getElementById('next').onclick=()=>go(1);
+const blob=()=>new Promise(r=>cv.toBlob(r,'image/png'));
+async function save(){const b=await blob(),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='credencial-'+(cv.dataset.id||'id')+'.png';document.body.appendChild(a);a.click();a.remove()}
+document.getElementById('save').onclick=save;
+const MOB=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform));
+const MSG='Mi credencial de BadgeApp\nHecha con https://easylandx.github.io/mac/badges.html';
+const WAURL='https://wa.me/?text='+encodeURIComponent(MSG);
+const WEBURL='https://web.whatsapp.com/send?text='+encodeURIComponent(MSG);
+function note(h){const n=document.getElementById('note');n.innerHTML=h;n.classList.add('on')}
+document.getElementById('wa').onclick=async()=>{
+ if(MOB){
+  const b=CB||await blob(),f=new File([b],'badge.png',{type:'image/png'});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],text:MSG});return}catch(e){if(e.name==='AbortError')return}}
+  await save();window.open(WAURL,'_blank');return;
+ }
+ /* desktop/web: start clipboard copy and open WhatsApp in the same click, so nothing gets blocked */
+ let cp=Promise.reject();
+ try{cp=navigator.clipboard.write([new ClipboardItem({'image/png':CB||blob()})])}catch(e){}
+ const w=window.open(WEBURL,'_blank');
+ if(!w)location.href=WEBURL;
+ let ok=true;try{await cp}catch(e){ok=false}
+ if(!ok)await save();
+ note(ok?'¡Credencial copiada! En WhatsApp de escritorio, elige un contacto y pulsa <kbd>Ctrl</kbd> + <kbd>V</kbd> para pegar la credencial y enviarla.':'Credencial guardada en tus descargas. En WhatsApp, elige un contacto y adjunta la imagen guardada (o arrástrala al chat).');
+};
+</script>
+</body>
+</html>
