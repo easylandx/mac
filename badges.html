@@ -45,6 +45,22 @@ canvas{width:min(100%,340px);height:auto;display:block;margin:0 auto;filter:drop
 .lang:active{transform:scale(.96)}
 .elx{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:5;background:var(--hot);color:#fff;font-weight:800;font-size:17px;padding:14px 20px;border-radius:999px;text-decoration:none;box-shadow:0 8px 22px rgba(0,0,0,.45)}
 .elx:active{transform:scale(.96)}
+.hl,.hr{display:contents}
+@media (orientation:landscape){
+ .wrap{max-width:980px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+ .hero{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center;padding-top:28px;padding-bottom:28px}
+ .hl,.hr{display:flex;flex-direction:column;gap:16px}
+ .lanyard{margin:0 auto -6px;height:56px}
+ h1{font-size:clamp(44px,9vw,84px)}
+ .sub{font-size:17px}
+ .out{padding-top:20px;padding-bottom:20px}
+ .out.on{display:grid;grid-template-columns:auto 1fr;gap:20px 32px;align-items:center;min-height:100dvh}
+ .stage{padding:16px 16px 12px}
+ canvas{width:auto;max-width:100%;aspect-ratio:600/940;height:max(280px,min(calc(100dvh - 120px),640px))}
+ .cap{margin-top:10px;font-size:14px}
+ .out .row{margin-top:0}
+ .btn{padding:14px;font-size:18px}
+}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
@@ -52,15 +68,19 @@ canvas{width:min(100%,340px);height:auto;display:block;margin:0 auto;filter:drop
 <a class="lang" href="https://easylandx.github.io/mac/badge.html" hreflang="en" lang="en">English</a>
 <main>
 <section class="hero wrap">
+  <div class="hl">
   <div class="lanyard" aria-hidden="true"></div>
   <h1>BadgeApp</h1>
   <p class="sub">Hazte un selfie o sube una foto. Consigue una credencial de evento con una empresa y un logo aleatorios, entre 35 roles distintos.</p>
   <div class="dots" id="dots" aria-hidden="true"></div>
+  </div>
+  <div class="hr">
   <input type="text" id="nm" placeholder="Tu nombre (opcional)" autocomplete="name" maxlength="28">
   <div class="row">
     <label class="btn" for="f1" id="camBtn" tabindex="0">Hazte un selfie</label>
     <label class="btn alt" for="f2" tabindex="0">Subir una foto</label>
     <button class="btn alt" id="tp" type="button">Foto aleatoria</button>
+  </div>
   </div>
   <input type="file" id="f1" accept="image/*" capture="user" hidden>
   <input type="file" id="f2" accept="image/*" hidden>
