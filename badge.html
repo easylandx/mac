@@ -37,6 +37,9 @@ input[type=text]:focus-visible,button:focus-visible,a:focus-visible,label:focus-
 canvas{width:min(100%,340px);height:auto;display:block;margin:0 auto;filter:drop-shadow(0 16px 24px rgba(0,0,0,.5))}
 .cap{color:var(--mute);margin:16px 0 0;font-size:16px}
 .out .row{margin-top:18px}
+.note{display:none;margin:0;padding:12px 16px;border-radius:14px;background:#10331f;border:2px solid #25d366;color:#c9f7da;font-size:16px;line-height:1.35;text-align:center}
+.note.on{display:block}
+.note kbd{font:inherit;font-weight:800;background:#25d366;color:#04230f;border-radius:6px;padding:1px 7px}
 .nav{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .elx{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:5;background:var(--hot);color:#fff;font-weight:800;font-size:17px;padding:14px 20px;border-radius:999px;text-decoration:none;box-shadow:0 8px 22px rgba(0,0,0,.45)}
 .elx:active{transform:scale(.96)}
@@ -48,7 +51,7 @@ canvas{width:min(100%,340px);height:auto;display:block;margin:0 auto;filter:drop
 <section class="hero wrap">
   <div class="lanyard" aria-hidden="true"></div>
   <h1>BadgeApp</h1>
-  <p class="sub">Take a selfie or upload a photo. Get an event badge with a random company and logo, from 24 different roles.</p>
+  <p class="sub">Take a selfie or upload a photo. Get an event badge with a random company and logo, from 35 different roles.</p>
   <div class="dots" id="dots" aria-hidden="true"></div>
   <input type="text" id="nm" placeholder="Your name (optional)" autocomplete="name" maxlength="28">
   <div class="row">
@@ -68,6 +71,7 @@ canvas{width:min(100%,340px);height:auto;display:block;margin:0 auto;filter:drop
     <div class="nav"><button class="btn" id="prev" aria-label="Previous badge">&#8249; Previous</button><button class="btn" id="next" aria-label="Next badge">Next &#8250;</button></div>
     <button class="btn alt" id="save">Save badge</button>
     <button class="btn wa" id="wa">Send via WhatsApp</button>
+    <p class="note" id="note" role="status"></p>
     <label class="btn alt" for="f1">Retake selfie</label>
   </div>
 </section>
@@ -77,7 +81,7 @@ canvas{width:min(100%,340px);height:auto;display:block;margin:0 auto;filter:drop
 
 <script>
 const W=600,H=940,cv=document.getElementById('cv'),ctx=cv.getContext('2d');
-let photoImg=null,last=-1,cur=null;
+let photoImg=null,last=-1,cur=null,CB=null;
 const FN=['Alex','Sam','Luna','Marco','Nina','Leo','Zoe','Hugo','Mia','Theo','Iris','Dani','Eva','Nico','Lola'];
 const LN=['Rivera','Stone','Vega','Moreau','Kimura','Duarte','Novak','Bell','Ortega','Fox','Silva','Hart','Lund','Reyes','Cole'];
 const CO=['Nimbus Labs','Brightwave','Foxglove Co.','Orbital','Pixelhaus','Mango Systems','Kite & Co.','Lumen Works','Harbor Digital','Quill Studio','Zephyr Group','Tandem','Moonpath','Bluefin','Copperleaf','Sprout Works','Vantage Point','Echo Park Media','Northstar','Juniper Labs','Ember Collective','Wildflower AI'];
@@ -133,7 +137,7 @@ const LAY=[
 (d,m)=>{const{bg,ac,ink,on}=m;HDR(d,50,96,'l',ac,on,ink);ctx.fillStyle=ac;rr(ctx,50,150,500,400,30);ctx.fill();PH(60,160,480,380,22);circ(490,170,56,ac);circ(490,170,48,'#ffffff');EM(d.e,490,190,56);FT(d.n,50,616,500,52,ink,800,'left');ctx.fillStyle=ac;rr(ctx,50,646,500,140,24);ctx.fill();ROLE(d.r,300,716,on,460);FT(d.t,50,832,500,26,ink,500,'left');BAR(50,852,300,42,ink,d.s);T(d.i,50,924,22,ink,500,'left',1)},
 (d,m)=>{const{bg,ac,ink,on}=m;ctx.fillStyle=ac;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(W,0);ctx.lineTo(W,250);ctx.lineTo(0,390);ctx.closePath();ctx.fill();HDR(d,300,110,'c',on,ac,on);circ(300,420,162,ac);circ(300,420,150,'#ffffff');PH(165,285,270,270,'o');EM(d.e,486,300,96);FT(d.n,300,640,520,52,ink);ROLE(d.r,300,722,ink,500);ctx.fillStyle=ac;ctx.fillRect(180,780,240,10);FT(d.t,300,830,520,26,ink,500);BAR(120,848,360,40,ink,d.s);T(d.i,300,924,22,ink,500,'center',1)},
 (d,m)=>{const{bg,ac,ink,on}=m;HDR(d,300,92,'c',ac,on,ink);EM(d.e,300,262,150);ctx.fillStyle=ac;rr(ctx,146,296,308,308,40);ctx.fill();PH(154,304,292,292,32);FT(d.n,300,668,520,52,ink);ctx.fillStyle=ac;ctx.fillRect(0,694,W,136);ROLE(d.r,300,762,on,520);FT(d.t,300,872,520,26,ink,500);T(d.i,300,920,22,ink,500,'center',1)},
-(d,m)=>{const{bg,ac,ink,on}=m;PH(0,0,W,480,0);const g=ctx.createLinearGradient(0,260,0,480);g.addColorStop(0,bg+'00');g.addColorStop(1,bg);ctx.fillStyle=g;ctx.fillRect(0,260,W,221);HDR(d,50,108,'l',ac,on,'#ffffff',1);circ(510,430,58,ac);EM(d.e,510,452,64);FT(d.n,50,470,400,54,ink,800,'left');ctx.fillStyle=ac;rr(ctx,40,510,520,140,30);ctx.fill();ROLE(d.r,300,580,on,480);FT(d.t,300,712,520,26,ink,500);BAR(100,740,400,70,ink,d.s);T(d.i,300,846,24,ink,500,'center',1);ctx.fillStyle=ac;ctx.fillRect(0,890,W,50)}
+(d,m)=>{const{bg,ac,ink,on}=m;ctx.fillStyle=ac;ctx.fillRect(0,0,W,150);HDR(d,300,92,'c',on,ac,on);ctx.fillStyle=ac;rr(ctx,162,168,276,262,36);ctx.fill();PH(170,176,260,246,28);circ(510,430,58,ac);EM(d.e,510,452,64);FT(d.n,50,470,400,54,ink,800,'left');ctx.fillStyle=ac;rr(ctx,40,510,520,140,30);ctx.fill();ROLE(d.r,300,580,on,480);FT(d.t,300,712,520,26,ink,500);BAR(100,740,400,70,ink,d.s);T(d.i,300,846,24,ink,500,'center',1);ctx.fillStyle=ac;ctx.fillRect(0,890,W,50)}
 ];
 
 /* role, emoji, tagline, layout, background, accent, pattern */
@@ -161,7 +165,18 @@ const DEF=[
 ['Escort Required','🚧','Please keep your escort in sight',1,'#ffd400','#111111','stripes'],
 ['Media & Press Clearance','📸','Yes, I can quote you',0,'#eeeeee','#d6303a','none'],
 ['Mainstage Presenter','🎤','Mic check, one two, wow',4,'#2a0a4a','#ffb300','rings'],
-['Venue Operations Crew','🦺','Lights, cables, snacks, repeat',3,'#102a1c','#ff7a1a','stripes']
+['Venue Operations Crew','🦺','Lights, cables, snacks, repeat',3,'#102a1c','#ff7a1a','stripes'],
+['Idea Spark','💡','Lights up every brainstorm',2,'#fff8d6','#f59e0b','rings'],
+['Icebreaker Champion','🧊','Melts awkward silences fast',0,'#e6f7ff','#0ea5e9','dots'],
+['Network Navigator','🧭','Always knows who you should meet',1,'#0f2238','#22d3ee','grid'],
+['Energy Injector','🔋','Fully charged, charging others',4,'#1a0b2e','#a3e635','stripes'],
+['Serendipity Starter','🍀','Makes happy accidents happen',3,'#e8f9ec','#16a34a','waves'],
+['Master of Ceremonies','🎩','Runs the show, mostly on time',4,'#1b1b1b','#e11d48','rings'],
+['Hydration Hero','💧','Water first, then everything else',2,'#e0f2fe','#2563eb','waves'],
+['Snack Guru','🍿','Knows where the good snacks are',1,'#fff4e0','#ea580c','dots'],
+['Logistics Wizard','🪄','Makes the impossible schedule fit',3,'#16113a','#c084fc','grid'],
+['Crowd Navigator','🚦','Keeps the flow moving smoothly',0,'#f1f5f9','#0891b2','stripes'],
+['Chief Happiness Officer','😄','Smiles delivered on schedule',4,'#fff0f3','#f43f5e','dots']
 ];
 const MODELS=DEF.map(([r,e,t,L,bg,ac,p])=>({n:r,r,e,t,L,bg,ac,p,c:[ac,bg]}));
 
@@ -183,7 +198,7 @@ function render(newModel=true){
  ctx.fillStyle=m.bg;ctx.fillRect(0,0,W,H);PAT(m.p,ink);LAY[m.L](d,{bg:m.bg,ac:m.ac,ink,on});ctx.restore();
  ctx.save();ctx.globalCompositeOperation='destination-out';rr(ctx,W/2-52,26,104,22,11);ctx.fill();ctx.restore();
  document.getElementById('cap').textContent='Badge '+(last+1)+' of '+MODELS.length+': '+m.n;
- cv.dataset.id=d.i;
+ cv.dataset.id=d.i;CB=null;cv.toBlob(b=>{CB=b},'image/png');
 }
 function click(){try{const a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.type='square';o.frequency.value=1200;g.gain.setValueAtTime(.12,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+.09);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.1)}catch(e){}}
 function load(file){
@@ -201,10 +216,25 @@ document.getElementById('next').onclick=()=>go(1);
 const blob=()=>new Promise(r=>cv.toBlob(r,'image/png'));
 async function save(){const b=await blob(),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='badge-'+(cv.dataset.id||'id')+'.png';document.body.appendChild(a);a.click();a.remove()}
 document.getElementById('save').onclick=save;
+const MOB=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform));
+const MSG='My BadgeApp ID badge\nMade with https://easylandx.github.io/mac/badge.html';
+const WAURL='https://wa.me/?text='+encodeURIComponent(MSG);
+const WEBURL='https://web.whatsapp.com/send?text='+encodeURIComponent(MSG);
+function note(h){const n=document.getElementById('note');n.innerHTML=h;n.classList.add('on')}
 document.getElementById('wa').onclick=async()=>{
- const b=await blob(),f=new File([b],'badge.png',{type:'image/png'});
- if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],text:'My BadgeApp ID badge\nMade with https://easylandx.github.io/mac/badge.html'});return}catch(e){if(e.name==='AbortError')return}}
- await save();window.open('https://wa.me/?text='+encodeURIComponent('My BadgeApp ID badge\nMade with https://easylandx.github.io/mac/badge.html'),'_blank');
+ if(MOB){
+  const b=CB||await blob(),f=new File([b],'badge.png',{type:'image/png'});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],text:MSG});return}catch(e){if(e.name==='AbortError')return}}
+  await save();window.open(WAURL,'_blank');return;
+ }
+ /* desktop/web: start clipboard copy and open WhatsApp in the same click, so nothing gets blocked */
+ let cp=Promise.reject();
+ try{cp=navigator.clipboard.write([new ClipboardItem({'image/png':CB||blob()})])}catch(e){}
+ const w=window.open(WEBURL,'_blank');
+ if(!w)location.href=WEBURL;
+ let ok=true;try{await cp}catch(e){ok=false}
+ if(!ok)await save();
+ note(ok?'Badge copied! In WhatsApp, choose a contact, then press <kbd>Ctrl</kbd> + <kbd>V</kbd> to paste the badge and send.':'Badge saved to your downloads. In WhatsApp, choose a contact and attach the saved image (or drag it into the chat).');
 };
 </script>
 </body>
