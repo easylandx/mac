@@ -15,9 +15,9 @@
 :root{--bg:#f1f4f9;--card:#fff;--ink:#0f172a;--mute:#64748b;--line:#dbe2ec;--pri:#1d4ed8;--pri2:#1e40af;--navy:#0b1b3a;color-scheme:light;box-sizing:border-box}
 *,*::before,*::after{box-sizing:inherit}
 html,body,button,label,a,input,select,canvas{touch-action:manipulation;-webkit-touch-callout:none}
-html{scroll-behavior:smooth;background:var(--bg)}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"Manrope",system-ui,-apple-system,sans-serif;-webkit-tap-highlight-color:transparent;padding-bottom:90px;padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-.top{position:sticky;top:0;z-index:10;background:var(--navy);color:#fff;padding:calc(12px + env(safe-area-inset-top,0px)) 20px 12px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 14px rgba(11,27,58,.25)}
+html{scroll-behavior:smooth;background:var(--bg);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Manrope",system-ui,-apple-system,sans-serif;-webkit-tap-highlight-color:transparent;padding-bottom:90px}
+.top{position:sticky;top:0;z-index:10;background:var(--navy);color:#fff;padding:calc(12px + env(safe-area-inset-top,0px)) calc(20px + env(safe-area-inset-right,0px)) 12px calc(20px + env(safe-area-inset-left,0px));display:flex;align-items:center;gap:12px;box-shadow:0 2px 14px rgba(11,27,58,.25)}
 .glyph{width:26px;height:36px;border-radius:7px;background:linear-gradient(160deg,#3b82f6,#1d4ed8);position:relative;flex:none}
 .glyph::before{content:"";position:absolute;left:50%;top:5px;width:10px;height:3px;border-radius:2px;background:#fff;transform:translateX(-50%)}
 .glyph::after{content:"";position:absolute;left:50%;top:14px;width:11px;height:11px;border-radius:50%;background:#fff;transform:translateX(-50%);box-shadow:0 12px 0 -2px rgba(255,255,255,.7)}
@@ -26,7 +26,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Manrope",system
 .lang{margin-left:auto;background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.35);font-weight:700;font-size:14px;padding:6px 14px;border-radius:999px;text-decoration:none}
 .lang:hover{background:rgba(255,255,255,.22)}
 .lang:active{transform:scale(.96)}
-.wrap{width:100%;max-width:680px;margin:0 auto;padding:0 18px}
+.wrap{width:100%;max-width:680px;margin:0 auto;padding:0 calc(18px + env(safe-area-inset-right,0px)) 0 calc(18px + env(safe-area-inset-left,0px))}
 .intro{padding:26px 0 6px}
 .intro h1{margin:0 0 8px;font-size:clamp(28px,7vw,38px);line-height:1.1;letter-spacing:-.03em;font-weight:800}
 .intro p{margin:0;color:var(--mute);font-size:16px;line-height:1.5}
@@ -85,11 +85,22 @@ canvas#cv{width:min(100%,340px);height:auto;display:block;margin:0 auto;filter:d
 .note kbd{font:inherit;font-weight:800;background:#16a34a;color:#fff;border-radius:6px;padding:1px 7px}
 .elx{position:fixed;right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:9;background:var(--navy);color:#fff;font-weight:800;font-size:14px;padding:11px 16px;border-radius:999px;text-decoration:none;box-shadow:0 8px 20px rgba(11,27,58,.35)}
 .elx:active{transform:scale(.96)}
-@media (min-width:860px) and (orientation:landscape){
+@media (min-width:640px) and (orientation:landscape){
+ .wrap{max-width:900px}
  .wrap.wide{max-width:1020px}
- .out.on{display:grid;grid-template-columns:380px 1fr;gap:20px;align-items:start}
+ .out.on{display:grid;grid-template-columns:minmax(220px,380px) 1fr;gap:20px;align-items:start}
  .stage{position:sticky;top:84px}
  .out .card:first-child{margin-top:0}
+ canvas#cv{width:auto;max-width:100%;aspect-ratio:600/940;height:min(calc(100vh - 190px),533px);height:min(calc(100dvh - 190px),533px);min-height:240px}
+}
+@media (orientation:landscape) and (max-height:520px){
+ .top{padding-top:calc(6px + env(safe-area-inset-top,0px));padding-bottom:6px}
+ .glyph{transform:scale(.8)}
+ .stage{top:62px;padding:14px 10px 10px;border-radius:16px}
+ .cap{margin-top:8px}
+ .intro{padding-top:16px}
+ body{padding-bottom:70px}
+ canvas#cv{height:min(calc(100vh - 140px),533px);height:min(calc(100dvh - 140px),533px);min-height:200px}
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
