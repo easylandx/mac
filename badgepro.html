@@ -32,6 +32,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Manrope",system
 .intro p{margin:0;color:var(--mute);font-size:16px;line-height:1.5}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;margin-top:16px;box-shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px rgba(15,23,42,.04)}
 .step{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;margin:0 0 14px}
+.step em{font-style:normal;font-weight:600;font-size:14px;color:var(--mute)}
 .step i{font-style:normal;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;font-size:13px}
 .fld{display:grid;gap:6px;margin-bottom:14px}
 .fld span{font-size:13px;font-weight:700;color:#334155}
@@ -104,7 +105,7 @@ canvas#cv{width:min(100%,340px);height:auto;display:block;margin:0 auto;filter:d
   </div>
 
   <div class="card">
-    <p class="step"><i>1</i>Photo</p>
+    <p class="step"><i>1</i>Photo <em>(optional)</em></p>
     <div class="two">
       <label class="btn" for="f1" tabindex="0">Take a selfie</label>
       <label class="btn sec" for="f2" tabindex="0">Upload a photo</label>
@@ -114,11 +115,11 @@ canvas#cv{width:min(100%,340px);height:auto;display:block;margin:0 auto;filter:d
 
   <div class="card">
     <p class="step"><i>2</i>Details</p>
-    <label class="fld"><span>Full name</span><input type="text" id="nm" placeholder="Alex Morgan" autocomplete="name" maxlength="32"></label>
-    <label class="fld"><span>Job position</span><input type="text" id="jb" placeholder="Senior Account Manager" autocomplete="organization-title" maxlength="40"></label>
+    <label class="fld"><span>Full name <em>(optional)</em></span><input type="text" id="nm" placeholder="Alex Morgan" autocomplete="name" maxlength="32"></label>
+    <label class="fld"><span>Job position <em>(optional)</em></span><input type="text" id="jb" placeholder="Senior Account Manager" autocomplete="organization-title" maxlength="40"></label>
     <label class="fld"><span>Company name <em>(optional)</em></span><input type="text" id="co" placeholder="Northwind Group" autocomplete="organization" maxlength="28"></label>
     <label class="fld"><span>ID number <em>(optional)</em></span><input type="text" id="idn" placeholder="EMP-00482" autocomplete="off" maxlength="18"></label>
-    <label class="btn sec" for="f3" tabindex="0">Upload company logo</label>
+    <label class="btn sec" for="f3" tabindex="0">Upload company logo <span style="opacity:.6;font-weight:600">(optional)</span></label>
     <p class="ok" id="lgOk"><img class="lg" id="lgImg" alt=""><span>Logo added</span><button type="button" id="lgRm">Remove</button></p>
   </div>
 
@@ -392,9 +393,6 @@ function hideErr(){$('err').classList.remove('on')}
 
 async function loadFonts(){try{await Promise.all([document.fonts.load('800 40px "Manrope"'),document.fonts.load('600 40px "Manrope"'),document.fonts.load('700 40px "Manrope"'),document.fonts.load('500 20px "IBM Plex Mono"')])}catch(e){}}
 async function create(){
- if(!photoImg){showErr('Please take a selfie or upload a photo.');return}
- if(!$('nm').value.trim()){showErr("Please enter the person's name.");$('nm').focus();return}
- if(!$('jb').value.trim()){showErr('Please enter the job position.');$('jb').focus();return}
  hideErr();await loadFonts();
  render();$('out').classList.add('on');$('form').style.display='none';window.scrollTo({top:0})
 }
