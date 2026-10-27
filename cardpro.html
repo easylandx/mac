@@ -207,7 +207,7 @@ let ctx,photoImg=null,logoImg=null,cur=0,ov={ac:null,bg:null},fontSel=null,finis
 let lang=(navigator.language||'en').toLowerCase().startsWith('es')?'es':'en';
 
 const L={
-en:{sub:'Business cards',h1a:'Make an impression.',h1b:'Before you say a word.',lead:'Add your details, pick one of 20 handcrafted templates, flip it, and download print-ready files. Photo, logo and QR contact code included.',front:'Front',backL:'Back',hint:'Tap the card to flip it',sample:'Sample data shown. Start typing to make it yours.',
+en:{sub:'Business cards',h1a:'Make an impression.',h1b:'Before you say a word.',lead:'Add your details, pick one of 21 handcrafted templates, flip it, and download print-ready files. Photo, logo and QR contact code included.',front:'Front',backL:'Back',hint:'Tap the card to flip it',sample:'Sample data shown. Start typing to make it yours.',
 s1:'Photo & logo',opt:'(optional)',selfie:'Take a selfie',upload:'Upload photo',logo:'Upload company logo',phReady:'Photo ready',lgReady:'Logo added',rm:'Remove',
 s2:'Your details',fName:'Full name',fJob:'Job title',fCo:'Company',fTag:'Tagline',fPh:'Phone',fEm:'Email',fWeb:'Website',fAd:'Address or city',
 s3:'Template',s4:'Style',colors:'Colors',accent:'Accent',bgc:'Background',resetC:'Reset colors',typeface:'Typeface',tf0:'Template',tf1:'Serif',tf2:'Sans',tf3:'Grotesk',finish:'Finish',fm:'Matte',fg:'Gloss',fl:'Linen',corners:'Corners',cr:'Rounded',cs:'Square',backS:'Back side',qr:'Add QR code that saves my contact',
@@ -215,7 +215,7 @@ s5:'Export',saveF:'Save front',saveB:'Save back',sheet:'Print sheets (A4, 10 per
 errName:'Please enter at least your name first.',scan:'SCAN TO SAVE CONTACT',sT:'Creative Director',sG:'Design that moves people',
 sheetOk:'Two A4 sheets saved (front and back) at 300 dpi. Print at 100% scale, then cut along the marks.',
 waCopied:'Card copied! In WhatsApp desktop, choose a contact, then press <kbd>Ctrl</kbd> + <kbd>V</kbd> to paste and send.',waSaved:'Card saved to your downloads. In WhatsApp, choose a contact and attach the saved image.',tpl:'Template'},
-es:{sub:'Tarjetas de visita',h1a:'Deja huella.',h1b:'Antes de decir nada.',lead:'Añade tus datos, elige entre 20 plantillas, dale la vuelta y descarga archivos listos para imprimir. Con foto, logo y código QR de contacto.',front:'Anverso',backL:'Reverso',hint:'Toca la tarjeta para girarla',sample:'Datos de ejemplo. Empieza a escribir para personalizarla.',
+es:{sub:'Tarjetas de visita',h1a:'Deja huella.',h1b:'Antes de decir nada.',lead:'Añade tus datos, elige entre 21 plantillas, dale la vuelta y descarga archivos listos para imprimir. Con foto, logo y código QR de contacto.',front:'Anverso',backL:'Reverso',hint:'Toca la tarjeta para girarla',sample:'Datos de ejemplo. Empieza a escribir para personalizarla.',
 s1:'Foto y logo',opt:'(opcional)',selfie:'Hacerme un selfie',upload:'Subir foto',logo:'Subir logo de empresa',phReady:'Foto lista',lgReady:'Logo añadido',rm:'Quitar',
 s2:'Tus datos',fName:'Nombre completo',fJob:'Cargo',fCo:'Empresa',fTag:'Eslogan',fPh:'Teléfono',fEm:'Correo',fWeb:'Web',fAd:'Dirección o ciudad',
 s3:'Plantilla',s4:'Estilo',colors:'Colores',accent:'Acento',bgc:'Fondo',resetC:'Restablecer colores',typeface:'Tipografía',tf0:'De la plantilla',tf1:'Serif',tf2:'Sans',tf3:'Grotesk',finish:'Acabado',fm:'Mate',fg:'Brillo',fl:'Lino',corners:'Esquinas',cr:'Redondeadas',cs:'Rectas',backS:'Reverso',qr:'Añadir QR que guarda mi contacto',
@@ -350,7 +350,21 @@ const LAY=[
  if(photoImg)PHOTO(930,170,76,ac);else MARK(logoImg?915:930,logoImg?150:170,logoImg?240:130,ac,on,d);
  TF((d.c||'').toUpperCase(),70,104,520,22,ac,700,'left','s',4);
  TF(d.n,70,254,640,66,ink,700,'left',f);TF(d.t,70,302,640,28,hexA(ink,.8),500,'left','s');TF(d.g,70,348,600,22,hexA(ink,.55),500,'left','d');
- CT(I(d),70,436,ink,ac,46,24,520)}
+ CT(I(d),70,436,ink,ac,46,24,520)},
+/* 10 Eco: pure white, only photo + logo, everything on one side (used for the back too) */
+(d,m)=>{const ink='#111111',soft='rgba(17,17,17,.62)',f=m.f;
+ ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);
+ const oy=photoImg?0:-90;
+ if(photoImg)PHOTO(146,134,76,'#ffffff');
+ if(logoImg)MARK(915,118,130,ink,'#ffffff',d);
+ TF(d.n,70,290+oy,680,56,ink,700,'left',f);
+ TF(d.t,70,332+oy,680,26,ink,500,'left','s');
+ TF((d.c||'').toUpperCase(),70,372+oy,680,20,ink,700,'left','s',3);
+ TF(d.g,70,410+oy,680,22,soft,500,'left','d');
+ I(d).forEach((it,i)=>TF(it[1],70,468+i*34,(useQR&&QRM)?680:900,22,ink,500,'left','s'));
+ if(useQR&&QRM){const M=QRM,n=M.length,sz=190,qx=800,qy=290,cell=sz/n;ctx.fillStyle='#111111';
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(M[r][c])ctx.fillRect(qx+c*cell,qy+r*cell,cell+.6,cell+.6);
+  T(tr('scan'),qx+sz/2,qy+sz+34,13,soft,600,'center','m',1.5)}}
 ];
 
 /* ---------- backs ---------- */
@@ -388,14 +402,15 @@ const TPL=[
 ['Aurora',4,'#0b1020','#7c5cff','g'],['Ledger',5,'#f4f4f1','#c2410c','g'],['Portrait',6,'#ffffff','#e11d48','d'],['Halftone',7,'#fff7ed','#ea580c','s'],
 ['Ribbon',8,'#f8fafc','#0f766e','g'],['Orbit',9,'#071a2b','#22d3ee','s'],['Nordic',0,'#f1f5f9','#334155','g'],['Gilded',1,'#0d0d0d','#c9a24a','d'],
 ['Coral',2,'#fff1ee','#e8553d','s'],['Obsidian',3,'#f5f5f5','#0a0a0a','d'],['Nebula',4,'#1a0b2e','#f472b6','d'],['Blueprint',5,'#0a2a4a','#7dd3fc','g'],
-['Studio',6,'#18181b','#facc15','g'],['Sage',7,'#f0f5ee','#4d7c0f','d'],['Marine',8,'#0b1b3a','#38bdf8','s'],['Eclipse',9,'#fafafa','#6d28d9','d']];
+['Studio',6,'#18181b','#facc15','g'],['Sage',7,'#f0f5ee','#4d7c0f','d'],['Marine',8,'#0b1b3a','#38bdf8','s'],['Eclipse',9,'#fafafa','#6d28d9','d'],
+['Eco',10,'#ffffff','#111111','s']];
 const PAL=[['#ffffff','#0b3d91'],['#0e1116','#ff5a36'],['#f7f3ec','#8a6d3b'],['#111111','#d4af37'],['#0b1b3a','#38bdf8'],['#f0fdf4','#047857'],['#fff1f2','#be123c'],['#1a0b2e','#f472b6']];
 
 function drawCard(c,sc,s,t,bg,ac,d,o,ox=0,oy=0){
  const prev=ctx;ctx=c;c.save();c.setTransform(sc,0,0,sc,ox,oy);c.clearRect(0,0,W,H);
- c.save();rr(c,0,0,W,H,o.rad);c.clip();c.fillStyle=bg;c.fillRect(0,0,W,H);
- const m={bg,ac,ink:ON(bg),on:ON(ac),f:o.font||t[4]};
- if(s==0)LAY[t[1]](d,m);else BACK(d,m,t);
+ c.save();rr(c,0,0,W,H,o.rad);c.clip();c.fillStyle=(t[1]===10?'#ffffff':bg);c.fillRect(0,0,W,H);
+ const m={bg,ac,ink:ON(bg),on:ON(ac),f:o.font||t[4]};if(t[1]===10)m.bg='#ffffff';
+ if(s==0||t[1]===10)LAY[t[1]](d,m);else BACK(d,m,t);
  FIN(c,o.fin,m);c.restore();c.restore();ctx=prev}
 
 /* ---------- data ---------- */
