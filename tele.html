@@ -47,6 +47,11 @@ input[type=range]{accent-color:#ffb703;width:160px}
 </div>
 
 <div class="row">
+  <input type="text" id="q" maxlength="80" autocomplete="off">
+  <button id="bGo" data-i="go"></button>
+</div>
+
+<div class="row">
   <input type="text" id="loc" maxlength="60">
   <label><span data-i="size"></span> <input type="range" id="sz" min="20" max="95" value="55"></label>
 </div>
@@ -61,20 +66,20 @@ const CDN='https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.16754
 const CATS=['Category:Featured_pictures_of_landscapes','Category:Featured_pictures_of_mountains','Category:Featured_pictures_of_beaches','Category:Featured_pictures_of_lakes','Category:Featured_pictures_of_deserts','Category:Featured_pictures_of_waterfalls','Category:Featured_pictures_of_coasts','Category:Featured_pictures_of_landscapes'];
 const API='https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=categorymembers&gcmtype=file&gcmlimit=50&gcmsort=timestamp&gcmdir=newer&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=1600';
 const I={
-en:{sub:'Snap a selfie or a full body photo and beam yourself to a random place on Earth.',hint:'Add a photo to teleport yourself here',selfie:'📷 Take selfie',up:'🖼️ Upload photo',new:'🌍 New place',save:'⬇️ Save',land:'EasyLandX',size:'Size',loc:'Location title',credit:'Drag yourself to reposition. Landscapes come from Wikimedia Commons. Works with selfies and full body photos.',lang:'Español',finding:'Locating a faraway place...',offline:'Could not reach Wikimedia Commons. Check your connection and tap New place.',reading:'Reading your photo...',cutting:'Cutting you out...',noperson:'I could not find a person in that photo. Try another one.',err:'Something went wrong loading the cutout model. Check your connection and try again.',beam:'Teleporting...',saved:'Image saved. Attach it to the WhatsApp chat that just opened.',fallback:'Somewhere beautiful'},
-es:{sub:'Hazte un selfie o una foto de cuerpo entero y teletranspórtate a un lugar al azar del planeta.',hint:'Añade una foto para teletransportarte aquí',selfie:'📷 Hacer selfie',up:'🖼️ Subir foto',new:'🌍 Nuevo lugar',save:'⬇️ Guardar',land:'EasyLandX',size:'Tamaño',loc:'Título del lugar',credit:'Arrástrate para cambiar de posición. Los paisajes vienen de Wikimedia Commons. Funciona con selfies y fotos de cuerpo entero.',lang:'English',finding:'Buscando un lugar lejano...',offline:'No se pudo conectar con Wikimedia Commons. Revisa tu conexión y pulsa Nuevo lugar.',reading:'Leyendo tu foto...',cutting:'Recortándote...',noperson:'No encontré a ninguna persona en esa foto. Prueba con otra.',err:'Algo falló al cargar el modelo de recorte. Revisa tu conexión e inténtalo de nuevo.',beam:'Teletransportando...',saved:'Imagen guardada. Adjúntala en el chat de WhatsApp que se acaba de abrir.',fallback:'Un lugar precioso'}
+en:{sub:'Snap a selfie or a full body photo and beam yourself to a random place on Earth.',hint:'Add a photo to teleport yourself here',selfie:'📷 Take selfie',up:'🖼️ Upload photo',new:'🎲 Random',q:'Type a place or landmark (e.g. Eiffel Tower)',go:'Go',nores:'No photo found for that place. Try another name.',searching:'Searching Wikimedia Commons...',save:'⬇️ Save',land:'EasyLandX',size:'Size',loc:'Location title',credit:'Drag yourself to reposition. Landscapes come from Wikimedia Commons. Works with selfies and full body photos.',lang:'Español',finding:'Locating a faraway place...',offline:'Could not reach Wikimedia Commons. Check your connection and tap Random.',reading:'Reading your photo...',cutting:'Cutting you out...',noperson:'I could not find a person in that photo. Try another one.',err:'Something went wrong loading the cutout model. Check your connection and try again.',beam:'Teleporting...',saved:'Image saved. Attach it to the WhatsApp chat that just opened.',fallback:'Somewhere beautiful'},
+es:{sub:'Hazte un selfie o una foto de cuerpo entero y teletranspórtate a un lugar al azar del planeta.',hint:'Añade una foto para teletransportarte aquí',selfie:'📷 Hacer selfie',up:'🖼️ Subir foto',new:'🎲 Aleatorio',q:'Escribe un lugar o monumento (p. ej. Torre Eiffel)',go:'Ir',nores:'No encontré fotos de ese lugar. Prueba con otro nombre.',searching:'Buscando en Wikimedia Commons...',save:'⬇️ Guardar',land:'EasyLandX',size:'Tamaño',loc:'Título del lugar',credit:'Arrástrate para cambiar de posición. Los paisajes vienen de Wikimedia Commons. Funciona con selfies y fotos de cuerpo entero.',lang:'English',finding:'Buscando un lugar lejano...',offline:'No se pudo conectar con Wikimedia Commons. Revisa tu conexión y pulsa Aleatorio.',reading:'Leyendo tu foto...',cutting:'Recortándote...',noperson:'No encontré a ninguna persona en esa foto. Prueba con otra.',err:'Algo falló al cargar el modelo de recorte. Revisa tu conexión e inténtalo de nuevo.',beam:'Teletransportando...',saved:'Imagen guardada. Adjúntala en el chat de WhatsApp que se acaba de abrir.',fallback:'Un lugar precioso'}
 };
 let lang='en';const T=k=>I[lang][k];
 function applyLang(){
   document.documentElement.lang=lang;
   document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i));
-  $('loc').placeholder=T('loc');$('loc').setAttribute('aria-label',T('loc'));$('bLang').textContent=T('lang');
+  $('loc').placeholder=T('loc');$('q').placeholder=T('q');$('q').setAttribute('aria-label',T('q'));$('loc').setAttribute('aria-label',T('loc'));$('bLang').textContent=T('lang');
 }
 let bg=null,bgSm=null,person=null,loc='',busy=false,st={x:.5,y:1,s:.55};
 
 const status=t=>$('st').textContent=t||'';
 const loadImg=src=>new Promise((ok,no)=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>ok(i);i.onerror=no;i.src=src});
-function setBusy(b){busy=b;['bNew'].forEach(i=>$(i).disabled=b);$('bSave').disabled=b||!person;$('bWa').disabled=b||!person||!bg}
+function setBusy(b){busy=b;['bNew','bGo'].forEach(i=>$(i).disabled=b);$('bSave').disabled=b||!person;$('bWa').disabled=b||!person||!bg}
 
 function cleanTitle(t){
   return t.replace(/^File:/,'').replace(/\.[a-z]+$/i,'').replace(/_/g,' ').replace(/^[\d\s._-]+/,'')
@@ -82,6 +87,30 @@ function cleanTitle(t){
    .replace(/[-,\s]+$/,'').replace(/\s+/g,' ').trim().slice(0,60)||T('fallback');
 }
 
+function setBg(img,title){
+  bg=img;loc=title;$('loc').value=loc;
+  bgSm=document.createElement('canvas');bgSm.width=32;bgSm.height=24;
+  const r=Math.max(32/img.width,24/img.height),bw=img.width*r,bh=img.height*r;
+  bgSm.getContext('2d',{willReadFrequently:true}).drawImage(img,(32-bw)/2,(24-bh)/2,bw,bh);
+}
+async function searchPlace(q){
+  status(T('searching'));
+  try{
+    const u='https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=40&gsrsearch='+encodeURIComponent(q+' filetype:bitmap')+'&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=1600';
+    const j=await (await fetch(u)).json();
+    const ps=Object.values((j.query&&j.query.pages)||{}).filter(p=>{const i=p.imageinfo&&p.imageinfo[0];return i&&i.mime==='image/jpeg'&&i.thumburl&&i.width>=1000&&i.width>i.height*1.15}).sort((a,b)=>a.index-b.index).slice(0,10);
+    for(let n=0;n<ps.length&&n<5;n++){
+      const p=ps.splice(Math.floor(Math.random()*ps.length),1)[0];
+      try{
+        const img=await loadImg(p.imageinfo[0].thumburl);
+        const t=q===q.toLowerCase()?q.replace(/\b\w/g,c=>c.toUpperCase()):q;
+        setBg(img,t);status('');return true;
+      }catch(e){}
+    }
+    status(T('nores'));
+  }catch(e){status(T('offline'))}
+  return false;
+}
 async function loadLandscape(){
   status(T('finding'));
   for(let n=0;n<8;n++){
@@ -94,11 +123,7 @@ async function loadLandscape(){
       if(!ps.length)continue;
       const p=ps[Math.floor(Math.random()*ps.length)];
       const img=await loadImg(p.imageinfo[0].thumburl);
-      bg=img;loc=cleanTitle(p.title);$('loc').value=loc;
-      // small cover-cropped copy for light matching
-      bgSm=document.createElement('canvas');bgSm.width=32;bgSm.height=24;
-      const r=Math.max(32/img.width,24/img.height),bw=img.width*r,bh=img.height*r;
-      bgSm.getContext('2d',{willReadFrequently:true}).drawImage(img,(32-bw)/2,(24-bh)/2,bw,bh);
+      setBg(img,cleanTitle(p.title));
       status('');return true;
     }catch(e){}
   }
@@ -241,9 +266,17 @@ $('loc').addEventListener('input',e=>{loc=e.target.value;render()});
 $('fSelfie').addEventListener('change',e=>{handlePhoto(e.target.files[0]);e.target.value=''});
 $('fUp').addEventListener('change',e=>{handlePhoto(e.target.files[0]);e.target.value=''});
 $('bLang').addEventListener('click',()=>{lang=lang==='en'?'es':'en';applyLang()});
+async function goSearch(){
+  const q=$('q').value.trim();if(!q||busy)return;
+  setBusy(true);
+  if(await searchPlace(q)){if(person)await beam();else render()}
+  setBusy(false);
+}
+$('bGo').addEventListener('click',goSearch);
+$('q').addEventListener('keydown',e=>{if(e.key==='Enter')goSearch()});
 $('bNew').addEventListener('click',async()=>{
   if(busy)return;setBusy(true);
-  if(await loadLandscape()){if(person)await beam();else render()}
+  if(await loadLandscape()){$('q').value='';if(person)await beam();else render()}
   setBusy(false);
 });
 
