@@ -4,52 +4,54 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TelePort</title>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Pacifico&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.1675465747/selfie_segmentation.js" crossorigin="anonymous"></script>
 <style>
 *{box-sizing:border-box;margin:0}
-body{font-family:'Fredoka',system-ui,sans-serif;background:radial-gradient(circle at 50% 0,#2a1b6e,#0b0a24 60%);color:#eef;min-height:100vh;padding:28px 22px 40px;display:flex;flex-direction:column;align-items:center}
-h1{font-size:clamp(34px,8vw,56px);background:linear-gradient(90deg,#27f0ff,#b46bff,#ff5fd2);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:1px}
-.sub{opacity:.75;margin:4px 0 20px;text-align:center;max-width:520px}
-.stage{position:relative;width:100%;max-width:880px;border-radius:18px;overflow:hidden;box-shadow:0 0 0 2px #27f0ff55,0 18px 60px #000a,0 0 50px #8a4dff55;background:#000}
+body{font-family:'Outfit',system-ui,sans-serif;background:radial-gradient(circle at 50% 0,#1f5a56,#0e2a2b 62%);color:#fff4df;min-height:100vh;padding:28px 22px 40px;display:flex;flex-direction:column;align-items:center}
+h1{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:clamp(36px,8vw,60px);background:linear-gradient(90deg,#ffb703,#ff6b4a);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-1px}
+.sub{opacity:.8;margin:4px 0 20px;text-align:center;max-width:520px}
+.stage{position:relative;width:100%;max-width:880px;border-radius:18px;overflow:hidden;box-shadow:0 0 0 2px #ffb70077,0 18px 60px #000a,0 0 50px #ff6b4a44;background:#000}
 canvas{display:block;width:100%;height:auto;touch-action:none;cursor:grab}
 .hint{position:absolute;inset:auto 0 14px 0;text-align:center;pointer-events:none}
 .hint span{background:#000a;padding:8px 16px;border-radius:30px;font-size:15px}
 .bar{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:18px;width:100%;max-width:880px}
-button,label.btn{font:inherit;font-weight:700;border:0;border-radius:40px;padding:12px 20px;color:#fff;cursor:pointer;background:linear-gradient(135deg,#6a3df0,#c04bd8);box-shadow:0 4px 18px #0006}
+button,.btn{font:inherit;font-weight:700;border:0;border-radius:40px;padding:12px 20px;color:#2a1204;cursor:pointer;background:linear-gradient(135deg,#ff6b4a,#ffb703);box-shadow:0 4px 18px #0006;text-decoration:none;display:inline-block}
 button:disabled{opacity:.45;cursor:wait}
-.alt{background:#1d1a4d;box-shadow:inset 0 0 0 2px #27f0ff88}
+.alt{background:#143c3d;color:#fff4df;box-shadow:inset 0 0 0 2px #ffb70099}
 .wa{background:#25d366;color:#04230f}
 .row{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:16px;width:100%;max-width:880px}
-input[type=text]{font:inherit;background:#15123a;color:#fff;border:2px solid #4b3fa8;border-radius:12px;padding:10px 14px;flex:1;min-width:200px;max-width:420px}
-input[type=range]{accent-color:#27f0ff;width:160px}
-#st{margin-top:14px;min-height:22px;color:#27f0ff;text-align:center}
-.credit{margin-top:10px;font-size:12px;opacity:.5;text-align:center}
+input[type=text]{font:inherit;background:#123334;color:#fff4df;border:2px solid #2f6e68;border-radius:12px;padding:10px 14px;flex:1;min-width:200px;max-width:420px}
+input[type=range]{accent-color:#ffb703;width:160px}
+#st{margin-top:14px;min-height:22px;color:#ffb703;text-align:center}
+.credit{margin-top:10px;font-size:12px;opacity:.55;text-align:center}
 </style>
 </head>
 <body>
 <h1>TelePort</h1>
-<p class="sub">Snap a selfie or a full body photo and beam yourself to a random place on Earth.</p>
+<p class="sub" data-i="sub"></p>
 
 <div class="stage">
   <canvas id="cv"></canvas>
-  <div class="hint" id="hint"><span>Add a photo to teleport yourself here</span></div>
+  <div class="hint" id="hint"><span data-i="hint"></span></div>
 </div>
 
 <div class="bar">
-  <label class="btn">📷 Take selfie<input id="fSelfie" type="file" accept="image/*" capture="user" hidden></label>
-  <label class="btn alt">🖼️ Upload photo<input id="fUp" type="file" accept="image/*" hidden></label>
-  <button class="alt" id="bNew">🌍 New place</button>
-  <button class="alt" id="bSave" disabled>⬇️ Save</button>
+  <label class="btn"><span data-i="selfie"></span><input id="fSelfie" type="file" accept="image/*" capture="user" hidden></label>
+  <label class="btn alt"><span data-i="up"></span><input id="fUp" type="file" accept="image/*" hidden></label>
+  <button class="alt" id="bNew" data-i="new"></button>
+  <button class="alt" id="bSave" data-i="save" disabled></button>
   <button class="wa" id="bWa" disabled>WhatsApp</button>
+  <a class="btn alt" href="https://easylandx.github.io" target="_blank" rel="noopener" data-i="land"></a>
+  <button class="alt" id="bLang">Español</button>
 </div>
 
 <div class="row">
-  <input type="text" id="loc" placeholder="Location title" maxlength="60" aria-label="Location">
-  <label>Size <input type="range" id="sz" min="20" max="95" value="55"></label>
+  <input type="text" id="loc" maxlength="60">
+  <label><span data-i="size"></span> <input type="range" id="sz" min="20" max="95" value="55"></label>
 </div>
 <div id="st"></div>
-<p class="credit">Drag yourself to reposition. Landscapes come from Wikimedia Commons. Works with selfies and full body photos.</p>
+<p class="credit" data-i="credit"></p>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -58,6 +60,16 @@ const LINK='https://easylandx.github.io/mac/tele.html';
 const CDN='https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.1675465747/';
 const CATS=['Category:Featured_pictures_of_landscapes','Category:Featured_pictures_of_mountains','Category:Featured_pictures_of_beaches','Category:Featured_pictures_of_lakes','Category:Featured_pictures_of_deserts','Category:Featured_pictures_of_waterfalls','Category:Featured_pictures_of_coasts','Category:Featured_pictures_of_landscapes'];
 const API='https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=categorymembers&gcmtype=file&gcmlimit=50&gcmsort=timestamp&gcmdir=newer&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=1600';
+const I={
+en:{sub:'Snap a selfie or a full body photo and beam yourself to a random place on Earth.',hint:'Add a photo to teleport yourself here',selfie:'📷 Take selfie',up:'🖼️ Upload photo',new:'🌍 New place',save:'⬇️ Save',land:'EasyLandX',size:'Size',loc:'Location title',credit:'Drag yourself to reposition. Landscapes come from Wikimedia Commons. Works with selfies and full body photos.',lang:'Español',finding:'Locating a faraway place...',offline:'Could not reach Wikimedia Commons. Check your connection and tap New place.',reading:'Reading your photo...',cutting:'Cutting you out...',noperson:'I could not find a person in that photo. Try another one.',err:'Something went wrong loading the cutout model. Check your connection and try again.',beam:'Teleporting...',saved:'Image saved. Attach it to the WhatsApp chat that just opened.',fallback:'Somewhere beautiful'},
+es:{sub:'Hazte un selfie o una foto de cuerpo entero y teletranspórtate a un lugar al azar del planeta.',hint:'Añade una foto para teletransportarte aquí',selfie:'📷 Hacer selfie',up:'🖼️ Subir foto',new:'🌍 Nuevo lugar',save:'⬇️ Guardar',land:'EasyLandX',size:'Tamaño',loc:'Título del lugar',credit:'Arrástrate para cambiar de posición. Los paisajes vienen de Wikimedia Commons. Funciona con selfies y fotos de cuerpo entero.',lang:'English',finding:'Buscando un lugar lejano...',offline:'No se pudo conectar con Wikimedia Commons. Revisa tu conexión y pulsa Nuevo lugar.',reading:'Leyendo tu foto...',cutting:'Recortándote...',noperson:'No encontré a ninguna persona en esa foto. Prueba con otra.',err:'Algo falló al cargar el modelo de recorte. Revisa tu conexión e inténtalo de nuevo.',beam:'Teletransportando...',saved:'Imagen guardada. Adjúntala en el chat de WhatsApp que se acaba de abrir.',fallback:'Un lugar precioso'}
+};
+let lang='en';const T=k=>I[lang][k];
+function applyLang(){
+  document.documentElement.lang=lang;
+  document.querySelectorAll('[data-i]').forEach(e=>e.textContent=T(e.dataset.i));
+  $('loc').placeholder=T('loc');$('loc').setAttribute('aria-label',T('loc'));$('bLang').textContent=T('lang');
+}
 let bg=null,bgSm=null,person=null,loc='',busy=false,st={x:.5,y:1,s:.55};
 
 const status=t=>$('st').textContent=t||'';
@@ -67,11 +79,11 @@ function setBusy(b){busy=b;['bNew'].forEach(i=>$(i).disabled=b);$('bSave').disab
 function cleanTitle(t){
   return t.replace(/^File:/,'').replace(/\.[a-z]+$/i,'').replace(/_/g,' ').replace(/^[\d\s._-]+/,'')
    .replace(/\(.*?\)/g,'').replace(/\b(19|20)\d{2}\b.*$/,'').replace(/\b(panorama|hdr|dsc|img)\w*\b.*$/i,'')
-   .replace(/[-,\s]+$/,'').replace(/\s+/g,' ').trim().slice(0,60)||'Somewhere beautiful';
+   .replace(/[-,\s]+$/,'').replace(/\s+/g,' ').trim().slice(0,60)||T('fallback');
 }
 
 async function loadLandscape(){
-  status('Locating a faraway place...');
+  status(T('finding'));
   for(let n=0;n<8;n++){
     try{
       const cat=CATS[Math.floor(Math.random()*CATS.length)];
@@ -90,7 +102,7 @@ async function loadLandscape(){
       status('');return true;
     }catch(e){}
   }
-  status('Could not reach Wikimedia Commons. Check your connection and tap New place.');
+  status(T('offline'));
   return false;
 }
 
@@ -142,22 +154,22 @@ async function handlePhoto(file){
   if(!file||busy)return;
   setBusy(true);
   try{
-    status('Reading your photo...');
+    status(T('reading'));
     const url=URL.createObjectURL(file);
     const img=await loadImg(url);
     const k=Math.min(1,1024/Math.max(img.width,img.height));
     const src=document.createElement('canvas');src.width=Math.round(img.width*k);src.height=Math.round(img.height*k);
     src.getContext('2d').drawImage(img,0,0,src.width,src.height);URL.revokeObjectURL(url);
-    status('Cutting you out...');
+    status(T('cutting'));
     const mask=await segment(src);
     const cut=buildCut(src,mask);
-    if(!cut){status('I could not find a person in that photo. Try another one.');setBusy(false);return}
+    if(!cut){status(T('noperson'));setBusy(false);return}
     person=cut;
     if(!bg)await loadLandscape();
     place();
     $('hint').style.display='none';
     await beam();
-  }catch(e){console.error(e);status('Something went wrong loading the cutout model. Check your connection and try again.')}
+  }catch(e){console.error(e);status(T('err'))}
   setBusy(false);
 }
 
@@ -200,21 +212,13 @@ function render(prog=1){
       cx.globalAlpha=.18*(1-prog);cx.fillStyle='#27f0ff';cx.fillRect(px-20,py,pw+40,ph);cx.restore();
     }
   }
-  // title banner
-  const g=cx.createLinearGradient(0,0,0,230);g.addColorStop(0,'rgba(0,0,0,.6)');g.addColorStop(1,'rgba(0,0,0,0)');
-  cx.fillStyle=g;cx.fillRect(0,0,W,230);
-  const txt='Greetings from '+(loc||'Somewhere');
-  let fs=74;cx.font=`${fs}px Pacifico, cursive`;
-  while(cx.measureText(txt).width>W-100&&fs>30){fs-=3;cx.font=`${fs}px Pacifico, cursive`}
-  cx.textBaseline='top';cx.lineJoin='round';cx.lineWidth=9;cx.strokeStyle='rgba(20,10,60,.85)';
-  cx.strokeText(txt,50,48);cx.fillStyle='#fff';cx.fillText(txt,50,48);
-  cx.font='700 28px Fredoka, sans-serif';cx.textAlign='right';cx.fillStyle='rgba(255,255,255,.85)';
+  cx.textBaseline='top';cx.font='700 28px Outfit, sans-serif';cx.textAlign='right';cx.fillStyle='rgba(255,255,255,.85)';
   cx.shadowColor='#000';cx.shadowBlur=8;cx.fillText('✦ TelePort',W-36,H-52);cx.shadowBlur=0;cx.textAlign='left';
 }
 
 function beam(){
   return new Promise(res=>{
-    const t0=performance.now(),D=1100;status('Teleporting...');
+    const t0=performance.now(),D=1100;status(T('beam'));
     (function f(now){
       const p=Math.min(1,(now-t0)/D);render(1-Math.pow(1-p,2));
       if(p<1)requestAnimationFrame(f);else{status('');res()}
@@ -236,6 +240,7 @@ $('loc').addEventListener('input',e=>{loc=e.target.value;render()});
 
 $('fSelfie').addEventListener('change',e=>{handlePhoto(e.target.files[0]);e.target.value=''});
 $('fUp').addEventListener('change',e=>{handlePhoto(e.target.files[0]);e.target.value=''});
+$('bLang').addEventListener('click',()=>{lang=lang==='en'?'es':'en';applyLang()});
 $('bNew').addEventListener('click',async()=>{
   if(busy)return;setBusy(true);
   if(await loadLandscape()){if(person)await beam();else render()}
@@ -247,17 +252,18 @@ $('bSave').addEventListener('click',()=>cv.toBlob(download,'image/jpeg',.92));
 $('bWa').addEventListener('click',()=>{
   cv.toBlob(async b=>{
     const f=new File([b],'teleport.jpg',{type:'image/jpeg'});
-    const txt=`Greetings from ${loc||'Somewhere'}! ${LINK}`;
+    const txt=`📍 ${loc||T('fallback')}\n${LINK}`;
     if(navigator.canShare&&navigator.canShare({files:[f]})){
       try{await navigator.share({files:[f],text:txt});return}catch(e){if(e.name==='AbortError')return}
     }
-    download(b);status('Image saved. Attach it to the WhatsApp chat that just opened.');
+    download(b);status(T('saved'));
     window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
   },'image/jpeg',.92);
 });
 
 (async()=>{
-  try{await document.fonts.load('40px Pacifico')}catch(e){}
+  try{await document.fonts.load('700 28px Outfit')}catch(e){}
+  applyLang();
   render();setBusy(true);
   if(await loadLandscape())render();
   setBusy(false);
