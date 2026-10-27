@@ -426,7 +426,7 @@ footer{color:var(--muted);font-size:13px;margin-top:26px;text-align:center}
   }
   function waText(){
     var to = $('to').value.trim(), from = $('from').value.trim(), body = $('text').value.trim();
-    return (to ? t('dear')(to)+'\n' : '') + body + (from ? '\n— '+from : '') + '\n\n'+t('sent')+'\nhttps://easylandx.github.io/mac/postpro.html';
+    return (state.word ? '📮 '+state.word+'\n\n' : '') + (to ? t('dear')(to)+'\n' : '') + body + (from ? '\n— '+from : '') + '\n\n'+t('sent')+'\nhttps://easylandx.github.io/mac/postpro.html';
   }
   function saveBlob(b, name){
     var a = document.createElement('a');
