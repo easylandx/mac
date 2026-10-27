@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ali Baba & The Forty Thieves - The Treasure Cave</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@500;700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Tone.js for Sound Effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            300: '#FDE047',
+                            400: '#FACC15',
+                            500: '#EAB308',
+                            600: '#CA8A04',
+                            700: '#A16207',
+                        },
+                        night: {
+                            900: '#070A13',
+                            800: '#0D1322',
+                            700: '#172036',
+                            600: '#232E4A',
+                        },
+                        ruby: {
+                            600: '#9F1239',
+                            700: '#881337',
+                        }
+                    },
+                    fontFamily: {
+                        title: ['"Cinzel Decorative"', 'serif'],
+                        heading: ['"Cinzel"', 'serif'],
+                        body: ['"Inter"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #070A13;
+            color: #E2E8F0;
+            overflow-x: hidden;
+        }
+
+        /* Cave Doors Styling */
+        .door-left, .door-right {
+            transition: transform 2.2s cubic-bezier(0.77, 0, 0.175, 1);
+            background: linear-gradient(135deg, #1f1a14 0%, #0d0a07 100%);
+        }
+
+        .cave-open .door-left {
+            transform: translateX(-100%);
+        }
+
+        .cave-open .door-right {
+            transform: translateX(100%);
+        }
+
+        .cave-open .gate-ui {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+        }
+
+        /* Glowing Effects */
+        .gold-glow {
+            text-shadow: 0 0 15px rgba(234, 179, 8, 0.6), 0 0 30px rgba(234, 179, 8, 0.3);
+        }
+
+        .gold-box-glow {
+            box-shadow: 0 0 25px rgba(234, 179, 8, 0.25), inset 0 0 15px rgba(234, 179, 8, 0.1);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #070A13;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #CA8A04;
+            border-radius: 4px;
+        }
+
+        /* Stars Background Animation */
+        .stars {
+            background: radial-gradient(2px 2px at 20px 30px, #ffd700, rgba(0,0,0,0)),
+                        radial-gradient(2px 2px at 40px 70px, #ffffff, rgba(0,0,0,0)),
+                        radial-gradient(1px 1px at 90px 40px, #ffd700, rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 200px 200px;
+            animation: twinkle 4s infinite ease-in-out alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.3; }
+            100% { opacity: 0.8; }
+        }
+
+        /* Magic Sparkle Canvas Overlay */
+        #magicCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 40;
+        }
+    </style>
+</head>
+<body class="min-h-screen relative flex flex-col justify-between">
+
+    <!-- Canvas overlay for magical particles -->
+    <canvas id="magicCanvas"></canvas>
+
+    <!-- PASSWORD GATE / CAVE DOORS OVERLAY -->
+    <div id="gateOverlay" class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden">
+        <!-- Left Door -->
+        <div class="door-left absolute top-0 left-0 w-1/2 h-full border-r-4 border-gold-600/40 flex items-center justify-end pr-4 md:pr-12 shadow-2xl">
+            <div class="w-24 h-24 md:w-32 md:h-32 border-4 border-gold-500/30 rounded-full flex items-center justify-center bg-night-900/60 backdrop-blur-sm">
+                <i class="fa-solid fa-gem text-4xl md:text-5xl text-gold-500 animate-pulse"></i>
+            </div>
+        </div>
+        <!-- Right Door -->
+        <div class="door-right absolute top-0 right-0 w-1/2 h-full border-l-4 border-gold-600/40 flex items-center justify-start pl-4 md:pl-12 shadow-2xl">
+            <div class="w-24 h-24 md:w-32 md:h-32 border-4 border-gold-500/30 rounded-full flex items-center justify-center bg-night-900/60 backdrop-blur-sm">
+                <i class="fa-solid fa-coins text-4xl md:text-5xl text-gold-500 animate-pulse"></i>
+            </div>
+        </div>
+
+        <!-- UI Center Box -->
+        <div class="gate-ui relative z-10 max-w-md w-11/12 p-8 rounded-2xl bg-night-900/90 border border-gold-500/50 backdrop-blur-md text-center gold-box-glow transition-all duration-500">
+            <div class="mb-4 inline-block p-4 rounded-full bg-gold-500/10 border border-gold-500/30 text-gold-400">
+                <i class="fa-solid fa-key text-3xl"></i>
+            </div>
+            <h1 class="font-title text-2xl md:text-3xl text-gold-400 mb-2 tracking-wider">The Secret Cave</h1>
+            <p class="font-body text-sm text-gray-300 mb-6">Speak the legendary magic phrase to part the stone doors and claim the treasure within.</p>
+            
+            <form id="gateForm" onsubmit="handlePasswordSubmit(event)" class="space-y-4">
+                <div class="relative">
+                    <input type="password" id="passwordInput" placeholder="Enter magical words..." 
+                        class="w-full px-4 py-3 bg-night-800 border-2 border-gold-600/50 rounded-xl text-center text-gold-300 font-heading tracking-widest focus:outline-none focus:border-gold-400 transition-colors duration-200"
+                        autocomplete="off" required>
+                    <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-3.5 text-gray-400 hover:text-gold-400">
+                        <i id="eyeIcon" class="fa-regular fa-eye"></i>
+                    </button>
+                </div>
+                
+                <p id="errorMessage" class="text-ruby-600 text-xs font-semibold h-4 transition-opacity duration-200 opacity-0"></p>
+
+                <button type="submit" 
+                    class="w-full py-3 bg-gradient-to-r from-gold-600 via-gold-500 to-gold-600 hover:from-gold-500 hover:to-gold-400 text-night-900 font-heading font-bold rounded-xl shadow-lg transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
+                    OPEN SESAME
+                </button>
+            </form>
+
+            <div class="mt-4 text-xs text-gray-400">
+                <span>Hint: </span><span class="italic text-gold-400/80">opensesame</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN WEBSITE CONTENT (Hidden behind gate) -->
+    <div id="mainContent" class="opacity-0 transition-opacity duration-1000">
+        
+        <!-- Navigation Bar -->
+        <nav class="sticky top-0 z-30 bg-night-900/80 backdrop-blur-md border-b border-gold-600/30">
+            <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-scroll text-gold-500 text-2xl"></i>
+                    <span class="font-title text-gold-400 text-lg md:text-xl font-bold tracking-wider">Ali Baba</span>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <!-- Audio Magic Toggle -->
+                    <button id="soundToggleBtn" onclick="toggleAudioTheme()" class="px-3 py-1.5 rounded-lg bg-night-800 border border-gold-600/40 text-xs font-semibold text-gold-400 flex items-center gap-2 hover:bg-gold-500/20 transition-all">
+                        <i id="soundIcon" class="fa-solid fa-volume-xmark"></i>
+                        <span id="soundText" class="hidden sm:inline">Magic Audio: OFF</span>
+                    </button>
+                    <!-- Relock Gate -->
+                    <button onclick="relockGate()" class="px-3 py-1.5 rounded-lg bg-ruby-700/80 hover:bg-ruby-600 border border-ruby-600 text-xs font-semibold text-white transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-lock"></i>
+                        <span class="hidden sm:inline">Close Cave</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Header -->
+        <header class="relative py-20 md:py-32 overflow-hidden border-b border-gold-600/20">
+            <div class="stars absolute inset-0"></div>
+            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-night-900/60 to-night-900"></div>
+
+            <div class="relative max-w-4xl mx-auto text-center px-4">
+                <div class="inline-block px-4 py-1 rounded-full bg-gold-500/10 border border-gold-500/30 text-gold-400 text-xs tracking-widest uppercase mb-4 font-heading">
+                    Arabian Nights Classic
+                </div>
+                <h1 class="font-title text-4xl md:text-6xl text-gold-400 font-bold mb-6 gold-glow leading-tight">
+                    Ali Baba & The Forty Thieves
+                </h1>
+                <p class="font-body text-gray-300 text-base md:text-lg max-w-2xl mx-auto mb-8 leading-relaxed">
+                    A timeless tale of secret riches, treacherous bandits, and the unmatched cleverness of a courageous heroine.
+                </p>
+                
+                <button onclick="triggerMagicSpell()" class="px-6 py-3 rounded-full bg-gold-500/20 hover:bg-gold-500/30 border-2 border-gold-400 text-gold-300 font-heading text-sm tracking-wider flex items-center gap-3 mx-auto shadow-lg hover:shadow-gold-500/20 transition-all transform hover:scale-105">
+                    <i class="fa-solid fa-wand-magic-sparkles text-gold-400"></i>
+                    Recite "Open Sesame"
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Container -->
+        <main class="max-w-6xl mx-auto px-4 py-12 space-y-20">
+
+            <!-- Summary Section -->
+            <section class="grid md:grid-cols-2 gap-8 items-center bg-night-800/40 p-6 md:p-10 rounded-2xl border border-gold-600/20">
+                <div class="space-y-4">
+                    <h2 class="font-heading text-2xl md:text-3xl text-gold-400 font-bold flex items-center gap-3">
+                        <i class="fa-solid fa-book-open text-gold-500 text-xl"></i> The Classic Tale
+                    </h2>
+                    <p class="text-gray-300 text-sm md:text-base leading-relaxed">
+                        Ali Baba, a humble woodcutter in Persia, unexpectedly discovers a secret cave guarded by a ruthless band of forty thieves. By overhearing their mystical incantation—<strong class="text-gold-400 font-semibold">"Open Sesame"</strong>—he unlocks immensurable wealth hidden inside the mountain.
+                    </p>
+                    <p class="text-gray-300 text-sm md:text-base leading-relaxed">
+                        However, when his greedy brother Cassim discovers the secret, tragedy strikes. What follows is a high-stakes duel of wits between the vengeful Thief Captain and <strong class="text-gold-400 font-semibold">Morgiana</strong>, Ali Baba's clever slave girl, whose brilliance saves the family from certain destruction.
+                    </p>
+                </div>
+                <div class="relative flex justify-center">
+                    <div class="w-full max-w-md h-72 rounded-xl bg-gradient-to-tr from-gold-900/30 via-night-800 to-gold-600/10 border border-gold-500/30 p-6 flex flex-col justify-between shadow-2xl relative overflow-hidden">
+                        <div class="absolute -right-10 -bottom-10 opacity-10 text-gold-500">
+                            <i class="fa-solid fa-box-archive text-9xl"></i>
+                        </div>
+                        <div class="flex items-center justify-between border-b border-gold-500/20 pb-3">
+                            <span class="font-heading text-gold-400 text-sm tracking-widest">Cave Statistics</span>
+                            <i class="fa-solid fa-gem text-gold-400"></i>
+                        </div>
+                        <div class="space-y-3 font-body text-xs md:text-sm">
+                            <div class="flex justify-between text-gray-300">
+                                <span>Bandit Count:</span>
+                                <span class="font-bold text-gold-300">40 Thieves</span>
+                            </div>
+                            <div class="flex justify-between text-gray-300">
+                                <span>Magic Keyword:</span>
+                                <span class="font-bold text-gold-300">Open Sesame</span>
+                            </div>
+                            <div class="flex justify-between text-gray-300">
+                                <span>Closing Keyword:</span>
+                                <span class="font-bold text-gold-300">Close Sesame</span>
+                            </div>
+                            <div class="flex justify-between text-gray-300">
+                                <span>Heroine:</span>
+                                <span class="font-bold text-gold-300">Morgiana</span>
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t border-gold-500/20 text-center">
+                            <span class="text-xs text-gold-400/80 italic">"Wealth favors the clever, not just the brave."</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Key Characters Section -->
+            <section class="space-y-8">
+                <div class="text-center">
+                    <h2 class="font-heading text-3xl text-gold-400 font-bold tracking-wide">Key Characters</h2>
+                    <p class="text-gray-400 text-sm mt-1">Click a character card to reveal their role in the legend.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Ali Baba -->
+                    <div onclick="flipCharacter(this)" class="group cursor-pointer bg-night-800/80 rounded-xl p-6 border border-gold-600/30 hover:border-gold-400 transition-all duration-300 hover:-translate-y-1 shadow-lg">
+                        <div class="w-14 h-14 rounded-full bg-gold-500/10 border border-gold-500/40 flex items-center justify-center text-gold-400 mb-4 group-hover:bg-gold-500 group-hover:text-night-900 transition-colors">
+                            <i class="fa-solid fa-user text-2xl"></i>
+                        </div>
+                        <h3 class="font-heading text-xl text-gold-300 font-semibold mb-1">Ali Baba</h3>
+                        <span class="text-xs text-gold-500 font-semibold uppercase tracking-wider block mb-3">The Woodcutter</span>
+                        <p class="text-gray-300 text-sm line-clamp-3 group-[.flipped]:line-clamp-none">
+                            A poor, honest man who discovers the bandits' secret cave. His humility and good fortune launch him into incredible danger and unexpected riches.
+                        </p>
+                    </div>
+
+                    <!-- Morgiana -->
+                    <div onclick="flipCharacter(this)" class="group cursor-pointer bg-night-800/80 rounded-xl p-6 border border-gold-600/30 hover:border-gold-400 transition-all duration-300 hover:-translate-y-1 shadow-lg">
+                        <div class="w-14 h-14 rounded-full bg-gold-500/10 border border-gold-500/40 flex items-center justify-center text-gold-400 mb-4 group-hover:bg-gold-500 group-hover:text-night-900 transition-colors">
+                            <i class="fa-solid fa-crown text-2xl"></i>
+                        </div>
+                        <h3 class="font-heading text-xl text-gold-300 font-semibold mb-1">Morgiana</h3>
+                        <span class="text-xs text-gold-500 font-semibold uppercase tracking-wider block mb-3">The Mastermind</span>
+                        <p class="text-gray-300 text-sm line-clamp-3 group-[.flipped]:line-clamp-none">
+                            Cassim’s quick-witted slave girl who becomes Ali Baba's protector. Through her cunning tactics, oil jars, and dagger dance, she foils every bandit plot.
+                        </p>
+                    </div>
+
+                    <!-- Cassim -->
+                    <div onclick="flipCharacter(this)" class="group cursor-pointer bg-night-800/80 rounded-xl p-6 border border-gold-600/30 hover:border-gold-400 transition-all duration-300 hover:-translate-y-1 shadow-lg">
+                        <div class="w-14 h-14 rounded-full bg-gold-500/10 border border-gold-500/40 flex items-center justify-center text-gold-400 mb-4 group-hover:bg-gold-500 group-hover:text-night-900 transition-colors">
+                            <i class="fa-solid fa-sack-dollar text-2xl"></i>
+                        </div>
+                        <h3 class="font-heading text-xl text-gold-300 font-semibold mb-1">Cassim</h3>
+                        <span class="text-xs text-gold-500 font-semibold uppercase tracking-wider block mb-3">Greedy Brother</span>
+                        <p class="text-gray-300 text-sm line-clamp-3 group-[.flipped]:line-clamp-none">
+                            Ali Baba's wealthy but greedy brother. Driven by avarice, he enters the cave but forgets the magic phrase to escape, meeting a tragic fate inside.
+                        </p>
+                    </div>
+
+                    <!-- Thief Captain -->
+                    <div onclick="flipCharacter(this)" class="group cursor-pointer bg-night-800/80 rounded-xl p-6 border border-gold-600/30 hover:border-gold-400 transition-all duration-300 hover:-translate-y-1 shadow-lg">
+                        <div class="w-14 h-14 rounded-full bg-gold-500/10 border border-gold-500/40 flex items-center justify-center text-gold-400 mb-4 group-hover:bg-gold-500 group-hover:text-night-900 transition-colors">
+                            <i class="fa-solid fa-skull text-2xl"></i>
+                        </div>
+                        <h3 class="font-heading text-xl text-gold-300 font-semibold mb-1">Thief Captain</h3>
+                        <span class="text-xs text-gold-500 font-semibold uppercase tracking-wider block mb-3">Vengeful Leader</span>
+                        <p class="text-gray-300 text-sm line-clamp-3 group-[.flipped]:line-clamp-none">
+                            The ruthless leader of the 40 thieves. Relentless in his quest for revenge, he hatches elaborate schemes—including disguise in oil jars—to destroy Ali Baba.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Key Elements & Themes -->
+            <section class="space-y-8">
+                <div class="text-center">
+                    <h2 class="font-heading text-3xl text-gold-400 font-bold tracking-wide">Iconic Elements</h2>
+                    <p class="text-gray-400 text-sm mt-1">Core symbols that define the legend</p>
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="bg-night-800/50 border border-gold-600/20 p-6 rounded-xl text-center space-y-3">
+                        <div class="w-12 h-12 mx-auto rounded-full bg-gold-500/10 flex items-center justify-center text-gold-400 text-xl">
+                            <i class="fa-solid fa-key"></i>
+                        </div>
+                        <h3 class="font-heading text-lg text-gold-300 font-bold">"Open Sesame"</h3>
+                        <p class="text-gray-300 text-sm">The world-famous incantation that commands the solid rock face to open, symbolizing secret knowledge and fortune.</p>
+                    </div>
+
+                    <div class="bg-night-800/50 border border-gold-600/20 p-6 rounded-xl text-center space-y-3">
+                        <div class="w-12 h-12 mx-auto rounded-full bg-gold-500/10 flex items-center justify-center text-gold-400 text-xl">
+                            <i class="fa-solid fa-flask"></i>
+                        </div>
+                        <h3 class="font-heading text-lg text-gold-300 font-bold">The 38 Oil Jars</h3>
+                        <p class="text-gray-300 text-sm">A cunning Trojan horse plot where thieves hide inside oil containers, foiled by Morgiana’s swift boiling oil defense.</p>
+                    </div>
+
+                    <div class="bg-night-800/50 border border-gold-600/20 p-6 rounded-xl text-center space-y-3">
+                        <div class="w-12 h-12 mx-auto rounded-full bg-gold-500/10 flex items-center justify-center text-gold-400 text-xl">
+                            <i class="fa-solid fa-[#ffd700] fa-coins"></i>
+                        </div>
+                        <h3 class="font-heading text-lg text-gold-300 font-bold">The Hidden Hoard</h3>
+                        <p class="text-gray-300 text-sm">Mountains of gold pieces, silk tapestries, and glittering jewels accumulated over decades of highway robbery.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Story Timeline -->
+            <section class="space-y-8">
+                <div class="text-center">
+                    <h2 class="font-heading text-3xl text-gold-400 font-bold tracking-wide">Interactive Story Timeline</h2>
+                    <p class="text-gray-400 text-sm mt-1">Follow the chronological journey from discovery to victory</p>
+                </div>
+
+                <div class="relative border-l-2 border-gold-600/40 ml-4 md:ml-32 space-y-8 py-4">
+                    <!-- Step 1 -->
+                    <div class="relative pl-6 md:pl-8 group">
+                        <div class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-gold-500 border-4 border-night-900 group-hover:scale-125 transition-transform"></div>
+                        <span class="font-heading text-xs text-gold-400 font-bold uppercase tracking-widest block mb-1">Act I</span>
+                        <h3 class="font-heading text-lg text-gold-300 font-bold">Discovery in the Forest</h3>
+                        <p class="text-gray-300 text-sm mt-1 max-w-2xl">
+                            While gathering firewood, Ali Baba hides from approaching riders and overhears the magic words opening the secret cavern.
+                        </p>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="relative pl-6 md:pl-8 group">
+                        <div class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-gold-500 border-4 border-night-900 group-hover:scale-125 transition-transform"></div>
+                        <span class="font-heading text-xs text-gold-400 font-bold uppercase tracking-widest block mb-1">Act II</span>
+                        <h3 class="font-heading text-lg text-gold-300 font-bold">Cassim's Fatal Mistake</h3>
+                        <p class="text-gray-300 text-sm mt-1 max-w-2xl">
+                            Cassim forces the secret from Ali Baba. He enters the cave, fills his bags with gold, but forgets the password ("Open Barley? Open Wheat?") and is trapped inside.
+                        </p>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="relative pl-6 md:pl-8 group">
+                        <div class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-gold-500 border-4 border-night-900 group-hover:scale-125 transition-transform"></div>
+                        <span class="font-heading text-xs text-gold-400 font-bold uppercase tracking-widest block mb-1">Act III</span>
+                        <h3 class="font-heading text-lg text-gold-300 font-bold">The Oil Jar Plot</h3>
+                        <p class="text-gray-300 text-sm mt-1 max-w-2xl">
+                            The Thieves track Ali Baba down. The Captain brings 38 oil jars to Ali Baba's yard—37 housing hidden bandits. Morgiana discovers the plot and neutralizes them.
+                        </p>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="relative pl-6 md:pl-8 group">
+                        <div class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-gold-500 border-4 border-night-900 group-hover:scale-125 transition-transform"></div>
+                        <span class="font-heading text-xs text-gold-400 font-bold uppercase tracking-widest block mb-1">Act IV</span>
+                        <h3 class="font-heading text-lg text-gold-300 font-bold">The Dagger Dance</h3>
+                        <p class="text-gray-300 text-sm mt-1 max-w-2xl">
+                            The Captain returns disguised as a merchant. Performing an intricate sword dance for the guests, Morgiana strikes down the Captain, securing freedom and peace forever.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="border-t border-gold-600/30 bg-night-900 py-8 text-center text-xs text-gray-400 space-y-2">
+            <p class="font-heading text-gold-400">Ali Baba & The Forty Thieves • Arabian Nights Heritage</p>
+            <p class="text-gray-500">Unlocked via Secret Keyword: <span class="text-gold-500/80">opensesame</span></p>
+        </footer>
+    </div>
+
+    <!-- SCRIPT LOGIC -->
+    <script>
+        // Password Verification Standardizer
+        const TARGET_PASSWORD = "opensesame";
+        let isAudioOn = false;
+        let synth = null;
+
+        // Toggle Password Field Visibility
+        function togglePasswordVisibility() {
+            const input = document.getElementById('passwordInput');
+            const icon = document.getElementById('eyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-slash-eye', 'fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Handle Password Form Submission
+        function handlePasswordSubmit(event) {
+            event.preventDefault();
+            const input = document.getElementById('passwordInput').value;
+            const errorMsg = document.getElementById('errorMessage');
+
+            // Clean string: lowercase, strip non-alphanumeric
+            const cleanedInput = input.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+            if (cleanedInput === TARGET_PASSWORD) {
+                errorMsg.classList.add('opacity-0');
+                unlockCave();
+            } else {
+                errorMsg.innerText = "The rock remains silent. Incorrect magic phrase!";
+                errorMsg.classList.remove('opacity-0');
+                
+                // Shake Animation
+                const box = document.querySelector('.gate-ui');
+                box.classList.add('translate-x-2');
+                setTimeout(() => box.classList.remove('translate-x-2'), 100);
+                setTimeout(() => box.classList.add('-translate-x-2'), 200);
+                setTimeout(() => box.classList.remove('-translate-x-2'), 300);
+            }
+        }
+
+        // Unlock Cave Animation & Sound
+        function unlockCave() {
+            playDoorOpenSound();
+            createSparkleBurst();
+
+            const gateOverlay = document.getElementById('gateOverlay');
+            const mainContent = document.getElementById('mainContent');
+
+            gateOverlay.classList.add('cave-open');
+
+            setTimeout(() => {
+                gateOverlay.classList.add('hidden');
+                mainContent.classList.remove('opacity-0');
+            }, 1800);
+        }
+
+        // Relock Gate Functionality
+        function relockGate() {
+            const gateOverlay = document.getElementById('gateOverlay');
+            const mainContent = document.getElementById('mainContent');
+            const passwordInput = document.getElementById('passwordInput');
+
+            passwordInput.value = '';
+            mainContent.classList.add('opacity-0');
+            gateOverlay.classList.remove('hidden');
+            
+            // Short timeout to enable CSS transition
+            setTimeout(() => {
+                gateOverlay.classList.remove('cave-open');
+            }, 50);
+        }
+
+        // Card Flip Handler
+        function flipCharacter(element) {
+            element.classList.toggle('flipped');
+            if (element.classList.contains('flipped')) {
+                element.classList.add('border-gold-400', 'bg-night-700/80');
+            } else {
+                element.classList.remove('border-gold-400', 'bg-night-700/80');
+            }
+            playSparkleSound();
+        }
+
+        // Sound Logic using Tone.js
+        function toggleAudioTheme() {
+            isAudioOn = !isAudioOn;
+            const soundIcon = document.getElementById('soundIcon');
+            const soundText = document.getElementById('soundText');
+
+            if (isAudioOn) {
+                Tone.start();
+                soundIcon.className = "fa-solid fa-volume-high text-gold-400";
+                soundText.innerText = "Magic Audio: ON";
+                playSparkleSound();
+            } else {
+                soundIcon.className = "fa-solid fa-volume-xmark";
+                soundText.innerText = "Magic Audio: OFF";
+            }
+        }
+
+        function playDoorOpenSound() {
+            if (!isAudioOn) return;
+            try {
+                const synth = new Tone.Synth({
+                    oscillator: { type: 'sine' },
+                    envelope: { attack: 0.5, decay: 1, sustain: 0.5, release: 2 }
+                }).toDestination();
+                synth.triggerAttackRelease("C3", "2s");
+            } catch (e) { console.log(e); }
+        }
+
+        function playSparkleSound() {
+            if (!isAudioOn) return;
+            try {
+                const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                synth.triggerAttackRelease(["E5", "G#5", "B5", "E6"], "8n");
+            } catch (e) { console.log(e); }
+        }
+
+        function triggerMagicSpell() {
+            createSparkleBurst();
+            playSparkleSound();
+        }
+
+        // Particle Sparkle Canvas Animation
+        const canvas = document.getElementById('magicCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x || Math.random() * canvas.width;
+                this.y = y || Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1;
+                this.speedX = (Math.random() - 0.5) * 2;
+                this.speedY = (Math.random() - 0.5) * 2;
+                this.life = 1;
+                this.decay = Math.random() * 0.02 + 0.005;
+                this.color = `hsl(${Math.random() * 40 + 40}, 100%, 70%)`;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life -= this.decay;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function createSparkleBurst() {
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            for (let i = 0; i < 60; i++) {
+                particles.push(new Particle(centerX, centerY));
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+    </script>
+</body>
+</html>

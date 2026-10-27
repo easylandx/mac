@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ali Baba and the Forty Thieves</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ivory:#FCF6E8; --champagne:#F4E4BE; --sand:#EAD3A0; --gold:#C4932A; --gold-deep:#9A6F14;
+  --ink:#3A2A12; --teal:#2B8F8A; --lapis:#3E6FA8; --rose:#D9788A;
+  --pad:clamp(22px,7vw,64px);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px);color-scheme:light}
+body{margin:0;min-height:100%;background:var(--ivory);color:var(--ink);font-family:Lora,Georgia,serif;line-height:1.75;font-size:1.08rem}
+h1,h2,h3{font-family:Marcellus,Georgia,serif;font-weight:400;line-height:1.15;margin:0}
+p{margin:0 0 1.1em}
+
+/* ---------- gate ---------- */
+#gate{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
+  padding:calc(24px + env(safe-area-inset-top,0px)) var(--pad) calc(24px + env(safe-area-inset-bottom,0px));
+  background:radial-gradient(circle at 50% 30%,#FFF9EA,var(--champagne) 70%);overflow:hidden}
+.door{position:absolute;top:0;bottom:0;width:50%;background:
+  repeating-linear-gradient(90deg,transparent 0 38px,rgba(196,147,42,.14) 38px 40px),
+  linear-gradient(180deg,#F8E9C4,#EBD29B);
+  transition:transform 1.4s cubic-bezier(.7,0,.2,1);z-index:0}
+.door.l{left:0;border-right:2px solid var(--gold)}
+.door.r{right:0;border-left:2px solid var(--gold)}
+#gate.open .l{transform:translateX(-101%)}
+#gate.open .r{transform:translateX(101%)}
+#gate.open .panel{opacity:0;transform:scale(.96);pointer-events:none}
+#gate.gone{display:none}
+.panel{position:relative;z-index:1;width:min(100%,440px);text-align:center;background:rgba(255,251,240,.94);
+  border:1.5px solid var(--gold);border-radius:22px;padding:36px clamp(20px,6vw,36px);
+  box-shadow:0 18px 50px rgba(154,111,20,.22);transition:opacity .5s,transform .5s}
+.panel h1{font-size:clamp(1.8rem,6vw,2.3rem);margin-bottom:.5rem}
+.panel p{font-size:.98rem;margin-bottom:1.4rem;color:#5b4524}
+.lamp{width:64px;height:auto;margin:0 auto 14px;display:block}
+form{display:flex;flex-direction:column;gap:12px}
+input{font:inherit;padding:14px 16px;border-radius:12px;border:1.5px solid var(--sand);background:#fff;color:var(--ink);text-align:center;letter-spacing:.04em}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+button{font:inherit;font-family:Marcellus,Georgia,serif;font-size:1.1rem;padding:14px 18px;border-radius:12px;border:0;cursor:pointer;
+  background:linear-gradient(180deg,#E0AE45,var(--gold));color:#2e2008}
+button:hover{filter:brightness(1.06)}
+#msg{min-height:1.4em;margin:12px 0 0;font-size:.95rem;color:#B04058}
+.shake{animation:shake .45s}
+@keyframes shake{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+
+/* ---------- site ---------- */
+#site[hidden]{display:none}
+.hero{padding:clamp(56px,12vw,120px) var(--pad) clamp(48px,8vw,90px);text-align:center;
+  background:linear-gradient(180deg,var(--champagne),var(--ivory))}
+.hero h1{font-size:clamp(2.3rem,8vw,4.6rem);max-width:15ch;margin:0 auto .4em}
+.hero p{max-width:34em;margin:0 auto;font-style:italic;color:#5b4524}
+.wrap{max-width:720px;margin:0 auto;padding:0 var(--pad)}
+section.ch{padding:clamp(34px,6vw,60px) 0;border-top:1px solid var(--sand)}
+section.ch h2{font-size:clamp(1.5rem,4.5vw,2rem);margin-bottom:.6em;color:var(--gold-deep)}
+.spell{margin:1.6em 0;padding:22px var(--pad);text-align:center;font-family:Marcellus,Georgia,serif;font-size:clamp(1.5rem,5vw,2.1rem);
+  background:linear-gradient(90deg,rgba(43,143,138,.14),rgba(217,120,138,.14));border-radius:18px;color:var(--ink)}
+.moral{background:var(--champagne);border-radius:20px;padding:28px clamp(20px,5vw,36px);margin:20px 0 0}
+.moral h3{font-size:1.35rem;margin-bottom:.4em;color:var(--lapis)}
+footer{padding:36px var(--pad);text-align:center;font-size:.95rem;color:#6b5330}
+footer button{font-size:.95rem;padding:10px 18px;background:var(--sand)}
+@media (prefers-reduced-motion:reduce){.door,.panel{transition:none}.shake{animation:none}}
+</style>
+</head>
+<body>
+
+<div id="gate" role="dialog" aria-labelledby="gt">
+  <div class="door l"></div><div class="door r"></div>
+  <div class="panel">
+    <svg class="lamp" viewBox="0 0 80 50" aria-hidden="true"><path d="M6 24c10 0 14 18 34 18s24-10 30-24c-3 12-8 14-12 14H22c-6 0-10-4-16-8z" fill="#C4932A"/><path d="M54 18c6-10 14-12 20-8-6 0-10 4-12 10z" fill="#9A6F14"/><ellipse cx="38" cy="24" rx="13" ry="6" fill="#E0AE45"/></svg>
+    <h1 id="gt">The cave is sealed</h1>
+    <p>Speak the secret words to hear the tale of Ali Baba.</p>
+    <form id="f" autocomplete="off">
+      <input id="pw" type="password" placeholder="Magic word" aria-label="Magic word" autofocus>
+      <button type="submit">Open the door</button>
+    </form>
+    <div id="msg" role="alert" aria-live="polite"></div>
+  </div>
+</div>
+
+<main id="site" hidden></main>
+
+<template id="content">
+  <header class="hero">
+    <h1>Ali Baba and the Forty Thieves</h1>
+    <p>A tale from the Arabian Nights, about a poor woodcutter, a cave of gold, and a servant clever enough to save a family.</p>
+  </header>
+
+  <div class="wrap">
+    <section class="ch">
+      <h2>The woodcutter and the cave</h2>
+      <p>Ali Baba was a poor woodcutter who lived in Persia with his wife. One day, cutting wood in the forest, he heard horses and hid in a tree. Forty thieves rode up to a rock face. Their captain called out a command, and the rock slid open.</p>
+      <div class="spell">“Open, Sesame!”</div>
+      <p>The thieves carried their loot inside, then came out, and the captain spoke again to close the rock. When they had gone, Ali Baba tried the words himself. The rock opened, and he found a cave piled with gold, silks, and jewels.</p>
+    </section>
+
+    <section class="ch">
+      <h2>A brother’s greed</h2>
+      <p>Ali Baba took only a few sacks of gold and told no one but his family. His wealthy brother Cassim forced the secret out of him and went to the cave alone, greedy for more. Inside, he was so dazzled that he forgot the words and could not get out. When the thieves returned, they found him and took his life.</p>
+      <p>Ali Baba recovered the body and, with the help of the clever servant Morgiana, arranged a quiet burial so that nobody would ask questions.</p>
+    </section>
+
+    <section class="ch">
+      <h2>Morgiana outwits the thieves</h2>
+      <p>The thieves realised someone else knew their secret. The captain traced the family and came to the house disguised as an oil merchant, with a train of mules carrying large jars. Thirty-seven jars each held a hidden thief. Two held oil.</p>
+      <p>Morgiana, sent to find oil for a lamp, heard a whisper from inside a jar and understood at once. She poured boiling oil into every jar that hid a man. When the captain crept out at night and found his men dead, he fled.</p>
+    </section>
+
+    <section class="ch">
+      <h2>The last visit</h2>
+      <p>The captain returned later, disguised as a trader who wanted to be Ali Baba’s friend. Morgiana saw the dagger under his coat. During dinner she danced for the guests, and as part of the dance she stepped close and ended the danger for good.</p>
+      <p>Ali Baba, grateful, freed Morgiana and married her to his son. The family kept the cave’s secret, took only what they needed, and lived in peace.</p>
+    </section>
+
+    <section class="ch">
+      <div class="moral">
+        <h3>What the story teaches</h3>
+        <p>Greed leaves a person trapped even when the door is open, while quick thinking and loyalty protect the people we love. Morgiana is the true hero of the tale.</p>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <button type="button" id="lock">Seal the cave again</button>
+  </footer>
+</template>
+
+<script>
+(function(){
+  var HASH="d9fb92e3bbe65be1f1aad4a82eef4567f7a1ebe2cd110c8049b9698be7a70c88";
+  var gate=document.getElementById("gate"), site=document.getElementById("site"),
+      form=document.getElementById("f"), pw=document.getElementById("pw"), msg=document.getElementById("msg");
+
+  function sha(s){
+    var b=new TextEncoder().encode(s);
+    return crypto.subtle.digest("SHA-256",b).then(function(buf){
+      return Array.from(new Uint8Array(buf)).map(function(x){return x.toString(16).padStart(2,"0")}).join("");
+    });
+  }
+  function show(animate){
+    site.appendChild(document.getElementById("content").content.cloneNode(true));
+    site.hidden=false;
+    document.getElementById("lock").addEventListener("click",lock);
+    if(animate){ gate.classList.add("open"); setTimeout(function(){gate.classList.add("gone")},1500); }
+    else gate.classList.add("gone");
+    window.scrollTo(0,0);
+  }
+  function lock(){
+    try{sessionStorage.removeItem("ab")}catch(e){}
+    location.reload();
+  }
+  form.addEventListener("submit",function(e){
+    e.preventDefault();
+    sha(pw.value.trim().toLowerCase()).then(function(h){
+      if(h===HASH){
+        try{sessionStorage.setItem("ab","1")}catch(e){}
+        msg.textContent=""; show(true);
+      }else{
+        msg.textContent="The rock stays shut. Try again.";
+        form.classList.remove("shake"); void form.offsetWidth; form.classList.add("shake");
+        pw.select();
+      }
+    });
+  });
+  try{ if(sessionStorage.getItem("ab")==="1") show(false); }catch(e){}
+})();
+</script>
+</body>
+</html>
