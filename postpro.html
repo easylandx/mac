@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PostPro</title>
+<style>
+:root{
+  --bg:#f4efe6; --ink:#1d1a16; --muted:#6f675c; --card:#fffdf8; --line:#d9cfbe; --accent:#c4452d;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#17140f; --ink:#f3ecdf; --muted:#a39a8b; --card:#201c16; --line:#3a3328; --accent:#e8664d; }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:Georgia,'Times New Roman',serif;
+  min-height:100vh;
+  padding:clamp(28px,5vw,56px) clamp(20px,5vw,48px);
+}
+.wrap{max-width:980px;margin:0 auto}
+h1{font-size:clamp(34px,6vw,56px);margin:0 0 6px;letter-spacing:-.02em;line-height:1.05}
+h1 span{color:var(--accent);font-style:italic}
+.sub{color:var(--muted);margin:0 0 28px;font-size:17px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+.top h1{min-width:0}
+#lang{flex:none;padding:9px 16px;font-size:15px;letter-spacing:.04em;white-space:nowrap}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:22px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+input,textarea{
+  font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);
+  border-radius:10px;padding:12px 14px;min-width:0;
+}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+#word{flex:1 1 220px;font-size:20px}
+button{
+  font:inherit;font-weight:bold;cursor:pointer;border-radius:10px;padding:12px 20px;
+  border:1px solid var(--ink);background:var(--ink);color:var(--bg);
+}
+button.wa{background:#1fa855;border-color:#1fa855;color:#fff}
+button.alt{background:transparent;color:var(--ink)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.fields textarea{grid-column:1/-1;min-height:84px;resize:vertical}
+@media(max-width:560px){.fields{grid-template-columns:1fr}}
+label.small{display:block;font-size:13px;color:var(--muted);margin:14px 0 6px}
+details{margin-top:14px;color:var(--muted);font-size:14px}
+details summary{cursor:pointer}
+details input{width:100%;margin-top:8px;font-family:monospace;font-size:14px}
+.tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.tabs button{padding:8px 16px}
+.tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.stage{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:clamp(14px,3vw,28px)}
+canvas{width:100%;height:auto;display:block;border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.22)}
+.msg{color:var(--muted);margin:12px 0 0;min-height:1.4em;font-size:15px}
+.msg.err{color:var(--accent)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center}
+.hint{color:var(--muted);font-size:14px;font-style:italic}
+footer{color:var(--muted);font-size:13px;margin-top:26px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>Post<span>Pro</span></h1>
+    <button id="lang" class="alt" type="button" aria-label="Cambiar a español">ESPAÑOL</button>
+  </div>
+  <p class="sub" data-i18n="sub"></p>
+
+  <div class="panel">
+    <div class="row">
+      <input id="word" type="text" data-ph="ph_word" autocomplete="off" maxlength="40">
+      <button id="go" data-i18n="go"></button>
+    </div>
+    <div class="fields">
+      <input id="to" type="text" data-ph="ph_to" maxlength="40">
+      <input id="from" type="text" data-ph="ph_from" maxlength="40">
+      <textarea id="text" maxlength="260" data-ph="ph_text"></textarea>
+    </div>
+    <div style="margin-top:12px;color:var(--muted);font-size:13px" data-i18n="note"></div>
+  </div>
+
+  <div class="stage">
+    <div class="tabs">
+      <button id="tabFront" class="on" data-i18n="front"></button>
+      <button id="tabBack" data-i18n="back"></button>
+    </div>
+    <canvas id="cv" width="1500" height="1000"></canvas>
+    <p class="msg" id="msg"></p>
+    <div class="actions">
+      <button class="alt" id="another" disabled data-i18n="another"></button>
+      <button id="dl" disabled data-i18n="dl"></button>
+      <button class="wa" id="wa" disabled data-i18n="wa"></button>
+      <span class="hint" data-i18n="hint"></span>
+    </div>
+  </div>
+
+  <footer data-i18n="footer"></footer>
+</div>
+
+<script>
+(function(){
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  var W = cv.width, H = cv.height;
+  var $ = function(id){return document.getElementById(id)};
+  var state = { word:'', photos:[], idx:-1, img:null, photo:null, side:'front' };
+  var RANDOM_WORDS = ['Eiffel Tower','Colosseum','Taj Mahal','Statue of Liberty','Big Ben','Sagrada Familia','Machu Picchu','Great Wall of China','Pyramids of Giza','Sydney Opera House','Golden Gate Bridge','Brooklyn Bridge','Tower Bridge','Burj Khalifa','Christ the Redeemer','Petra Jordan','Angkor Wat','Acropolis Athens','Parthenon','Leaning Tower of Pisa','Neuschwanstein Castle','Mont Saint-Michel','Stonehenge','Alhambra Granada','Plaza Mayor Madrid','Park Guell','Prado Museum','Seville Cathedral','Mezquita Cordoba','Santorini','Venice canals','Amalfi Coast','Florence Duomo','Trevi Fountain','St Peters Basilica','Versailles','Louvre','Notre-Dame Paris','Arc de Triomphe','Brandenburg Gate','Prague Charles Bridge','Vienna Schonbrunn','Budapest Parliament','Hagia Sophia','Blue Mosque Istanbul','Cappadocia','Kremlin Moscow','Saint Basil\'s Cathedral','Dubrovnik','Lisbon tram','Belem Tower','Porto Ribeira','Edinburgh Castle','Tower of London','Buckingham Palace','Cliffs of Moher','Matterhorn','Mount Fuji','Fushimi Inari','Kinkaku-ji','Tokyo skyline','Shibuya Crossing','Hong Kong skyline','Marina Bay Sands','Petronas Towers','Forbidden City','Potala Palace','Ha Long Bay','Bagan temples','Bali rice terraces','Maldives','Uluru','Great Barrier Reef','Milford Sound','Times Square','Manhattan skyline','Empire State Building','Grand Canyon','Yosemite','Niagara Falls','Hollywood Sign','Las Vegas Strip','Chichen Itza','Rio de Janeiro','Iguazu Falls','Torres del Paine','Galapagos','Cape Town Table Mountain','Victoria Falls','Serengeti','Marrakech','Sahara dunes','Mount Kilimanjaro','Northern Lights','Iceland waterfall','Norwegian fjord','Lake Como','Swiss Alps','Dolomites','Provence lavender','Tuscany hills','Ibiza','Cabo de Gata','Sunset','Ocean','Lighthouse','Waterfall','Tulip fields'];
+
+  var LANG = 'en';
+  var I18N = {
+    en: {
+      sub:'Type a word (or leave it empty for a random one). Get a postcard with a photo of it from Wikimedia Commons.',
+      ph_word:'Type a word, or leave empty for a surprise', go:'Create postcard',
+      ph_to:'To (name)', ph_from:'From (your name)', ph_text:'Your message',
+      defText:'Thinking of you',
+      note:'Open this file in a normal browser tab (Chrome, Safari, Firefox).',
+      front:'Front', back:'Back', another:'Another photo', dl:'Download PNG', wa:'Send on WhatsApp',
+      hint:'Press Ctrl+V in the chat to paste the photo',
+      footer:'Photos from Wikimedia Commons, credited on every postcard.',
+      idle:'Enter a word, or just press Create postcard for a random one.',
+      searching:function(w){return 'Searching Wikimedia Commons for "'+w+'"…';},
+      done:function(b){return 'Done. Photo by '+b+'.';},
+      photoBy:function(b){return 'Photo by '+b+'.';},
+      loadingAnother:'Loading another photo…', errAnother:'Could not load another photo.',
+      noPhotos:function(w){return 'No photos found for "'+w+'". Try another word.';},
+      errImg:'Found photos but could not load them. Try again or another word.',
+      errNet:function(m){return 'Could not reach Wikimedia Commons ('+m+'). Open the file in a normal browser tab and try again.';},
+      errExport:'This photo cannot be exported. Click Another photo and download again.',
+      prep:'Preparing your postcard…', shareChoose:'Choose WhatsApp in the share sheet to send it.',
+      cancelled:'Sharing cancelled.',
+      waSaved:'Could not copy the photo, so it was downloaded. In WhatsApp Web, attach it with the paperclip.',
+      waCopied:'Photo copied. In WhatsApp Web press Ctrl+V in the chat to paste it.',
+      waOpened:'WhatsApp opened with your message.',
+      waFail:'Could not prepare the postcard for WhatsApp. Try Download PNG first.',
+      cTo:'To: ', cFrom:'From: ', dear:function(n){return 'Dear '+n+',';}, hello:'Hello,',
+      photo:'Photo: ', canvasIdle:'Your postcard appears here', sent:'💌 Sent with PostPro',
+      locale:'en-GB', btn:'ESPAÑOL', btnLabel:'Cambiar a español'
+    },
+    es: {
+      sub:'Escribe una palabra (o déjala vacía para una al azar). Obtén una postal con una foto de Wikimedia Commons.',
+      ph_word:'Escribe una palabra, o déjala vacía para una sorpresa', go:'Crear postal',
+      ph_to:'Para (nombre)', ph_from:'De (tu nombre)', ph_text:'Tu mensaje',
+      defText:'Pensando en ti',
+      note:'Abre este archivo en una pestaña normal del navegador (Chrome, Safari, Firefox).',
+      front:'Anverso', back:'Reverso', another:'Otra foto', dl:'Descargar PNG', wa:'Enviar por WhatsApp',
+      hint:'Pulsa Ctrl+V en el chat para pegar la foto',
+      footer:'Fotos de Wikimedia Commons, con crédito en cada postal.',
+      idle:'Escribe una palabra, o pulsa Crear postal para una al azar.',
+      searching:function(w){return 'Buscando "'+w+'" en Wikimedia Commons…';},
+      done:function(b){return 'Listo. Foto de '+b+'.';},
+      photoBy:function(b){return 'Foto de '+b+'.';},
+      loadingAnother:'Cargando otra foto…', errAnother:'No se pudo cargar otra foto.',
+      noPhotos:function(w){return 'No se encontraron fotos de "'+w+'". Prueba con otra palabra.';},
+      errImg:'Se encontraron fotos pero no se pudieron cargar. Inténtalo de nuevo o con otra palabra.',
+      errNet:function(m){return 'No se pudo conectar con Wikimedia Commons ('+m+'). Abre el archivo en una pestaña normal del navegador e inténtalo de nuevo.';},
+      errExport:'Esta foto no se puede exportar. Pulsa Otra foto y vuelve a descargar.',
+      prep:'Preparando tu postal…', shareChoose:'Elige WhatsApp en el menú de compartir para enviarla.',
+      cancelled:'Envío cancelado.',
+      waSaved:'No se pudo copiar la foto, así que se descargó. En WhatsApp Web, adjúntala con el clip.',
+      waCopied:'Foto copiada. En WhatsApp Web pulsa Ctrl+V en el chat para pegarla.',
+      waOpened:'WhatsApp se abrió con tu mensaje.',
+      waFail:'No se pudo preparar la postal para WhatsApp. Prueba primero con Descargar PNG.',
+      cTo:'Para: ', cFrom:'De: ', dear:function(n){return 'Querido/a '+n+',';}, hello:'Hola,',
+      photo:'Foto: ', canvasIdle:'Tu postal aparece aquí', sent:'💌 Enviado con PostPro',
+      locale:'es-ES', btn:'ENGLISH', btnLabel:'Switch to English'
+    }
+  };
+  function t(k){ return I18N[LANG][k]; }
+  function applyLang(prev){
+    document.documentElement.lang = LANG;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'), function(el){ el.textContent = t(el.getAttribute('data-i18n')); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-ph]'), function(el){ el.placeholder = t(el.getAttribute('data-ph')); });
+    var lb = document.getElementById('lang'); lb.textContent = t('btn'); lb.setAttribute('aria-label', t('btnLabel'));
+    var ta = document.getElementById('text');
+    if(!prev || ta.value.trim() === '' || ta.value === I18N[prev].defText) ta.value = t('defText');
+  }
+
+  function say(msg, err){ var m=$('msg'); m.textContent=msg; m.className='msg'+(err?' err':''); }
+
+  function getJSON(url){
+    var tries = [url, 'https://corsproxy.io/?'+encodeURIComponent(url), 'https://api.allorigins.win/raw?url='+encodeURIComponent(url)];
+    var i = 0, last = 'network';
+    function next(){
+      if(i >= tries.length) return Promise.reject(new Error(last));
+      return fetch(tries[i++]).then(function(r){
+        if(!r.ok) throw new Error('http '+r.status);
+        return r.json();
+      }).catch(function(e){ last = e.message || 'network'; return next(); });
+    }
+    return next();
+  }
+
+  function search(word){
+    var u = 'https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch='+encodeURIComponent('filetype:bitmap '+word)+
+      '&gsrnamespace=6&gsrlimit=50&prop=imageinfo&iiprop=url|mime|size|extmetadata&iiurlwidth=1500&format=json&origin=*';
+    return getJSON(u).then(function(d){
+      var pages = (d && d.query && d.query.pages) ? Object.keys(d.query.pages).map(function(k){return d.query.pages[k];}) : [];
+      var out = [];
+      pages.forEach(function(pg){
+        var ii = pg.imageinfo && pg.imageinfo[0];
+        if(!ii || ii.mime !== 'image/jpeg' || !ii.width || ii.width < ii.height) return;
+        var by = '';
+        try { by = ii.extmetadata.Artist.value.replace(/<[^>]*>/g,'').trim(); } catch(e){}
+        if(!by || by.length > 40) by = 'Wikimedia Commons';
+        out.push({src: ii.thumburl || ii.url, by: by, site: 'Wikimedia Commons'});
+      });
+      return out;
+    });
+  }
+
+  function loadImg(url){
+    function go(cors){
+      return new Promise(function(res, rej){
+        var im = new Image();
+        if(cors) im.crossOrigin = 'anonymous';
+        im.onload = function(){ state.tainted = !cors; res(im); };
+        im.onerror = function(){ rej(new Error('img')); };
+        im.src = url;
+      });
+    }
+    return go(true).catch(function(){ return go(false); });
+  }
+
+  function pickPhoto(){
+    if(!state.photos.length) return Promise.reject(new Error('none'));
+    var n = state.photos.length, tries = 0;
+    function attempt(){
+      if(tries++ >= Math.min(n,5)) return Promise.reject(new Error('img'));
+      var j;
+      do { j = Math.floor(Math.random()*n); } while(n>1 && (j===state.idx || state.photos[j].src===state.lastSrc));
+      state.idx = j;
+      var p = state.photos[j];
+      var src = p.src;
+      return loadImg(src).then(function(im){ state.img = im; state.photo = p; state.lastSrc = p.src; })
+        .catch(function(){ return attempt(); });
+    }
+    return attempt();
+  }
+
+  function cover(im, x, y, w, h){
+    var r = Math.max(w/im.width, h/im.height);
+    var sw = w/r, sh = h/r;
+    ctx.drawImage(im, (im.width-sw)/2, (im.height-sh)/2, sw, sh, x, y, w, h);
+  }
+
+  function wrap(text, maxW, font){
+    ctx.font = font;
+    var out = [], paras = text.split('\n');
+    paras.forEach(function(p){
+      var words = p.split(/\s+/), line = '';
+      words.forEach(function(w){
+        var t = line ? line+' '+w : w;
+        if(ctx.measureText(t).width > maxW && line){ out.push(line); line = w; }
+        else line = t;
+      });
+      out.push(line);
+    });
+    return out;
+  }
+
+  function credit(){
+    var p = state.photo;
+    return p ? t('photo')+p.by+' / '+p.site : '';
+  }
+
+  function drawFront(){
+    ctx.fillStyle = '#fffdf8'; ctx.fillRect(0,0,W,H);
+    var b = 36;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(b,b,W-2*b,H-2*b); ctx.clip();
+    cover(state.img, b, b, W-2*b, H-2*b);
+    var g = ctx.createLinearGradient(0,H*0.45,0,H-b);
+    g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.62)');
+    ctx.fillStyle = g; ctx.fillRect(b,b,W-2*b,H-2*b);
+    ctx.restore();
+
+    var to = $('to').value.trim(), from = $('from').value.trim();
+    var lines = [];
+    if(to) lines.push(t('cTo')+to);
+    if(from) lines.push(t('cFrom')+from);
+    if(!lines.length) return;
+    var maxW = W-2*b-120, size = 44;
+    function fit(){
+      ctx.font = 'bold '+size+'px Georgia, serif';
+      return lines.every(function(l){ return ctx.measureText(l).width <= maxW; });
+    }
+    while(!fit() && size > 20) size -= 2;
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 12;
+    var lh = size*1.3;
+    var y = H-b-50-(lines.length-1)*lh;
+    lines.forEach(function(l,i){ ctx.fillText(l, b+50, y+i*lh); });
+    ctx.shadowBlur = 0;
+  }
+
+  function drawBack(){
+    ctx.fillStyle = '#f7f1e3'; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle = '#d6c9ae'; ctx.lineWidth = 3;
+    ctx.strokeRect(36,36,W-72,H-72);
+    var mid = W*0.56;
+    ctx.beginPath(); ctx.moveTo(mid,110); ctx.lineTo(mid,H-110); ctx.stroke();
+
+    ctx.fillStyle = '#2a251d'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    ctx.font = 'italic 40px Georgia, serif';
+    var to = $('to').value.trim();
+    ctx.fillText(to ? t('dear')(to) : t('hello'), 100, 170);
+    var lines = wrap($('text').value.trim() || ' ', mid-200, '38px Georgia, serif');
+    ctx.font = '38px Georgia, serif';
+    var y = 245;
+    lines.slice(0,10).forEach(function(l){ ctx.fillText(l, 100, y); y += 58; });
+    var from = $('from').value.trim();
+    ctx.font = 'italic 40px Georgia, serif';
+    ctx.fillText(from ? '— '+from : '', 100, H-150);
+
+    // stamp
+    var sx = W-290, sy = 100, sw = 180, sh = 230;
+    ctx.fillStyle = '#fffdf8'; ctx.fillRect(sx,sy,sw,sh);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(sx+14,sy+14,sw-28,sh-28); ctx.clip();
+    cover(state.img, sx+14, sy+14, sw-28, sh-28);
+    ctx.restore();
+    ctx.fillStyle = '#f7f1e3';
+    for(var i=0;i<=sw;i+=18){ ctx.beginPath(); ctx.arc(sx+i,sy,6,0,7); ctx.fill(); ctx.beginPath(); ctx.arc(sx+i,sy+sh,6,0,7); ctx.fill(); }
+    for(var j=0;j<=sh;j+=18){ ctx.beginPath(); ctx.arc(sx,sy+j,6,0,7); ctx.fill(); ctx.beginPath(); ctx.arc(sx+sw,sy+j,6,0,7); ctx.fill(); }
+
+    // postmark
+    ctx.save();
+    ctx.translate(sx-70, sy+150); ctx.rotate(-0.18);
+    ctx.strokeStyle = 'rgba(160,50,35,.6)'; ctx.fillStyle = 'rgba(160,50,35,.7)'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(0,0,80,0,7); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,0,66,0,7); ctx.stroke();
+    ctx.textAlign = 'center'; ctx.font = 'bold 22px Georgia, serif';
+    var pw = state.word.toUpperCase(); if(pw.length>12) pw = pw.slice(0,12);
+    ctx.fillText(pw, 0, -4);
+    ctx.font = '18px Georgia, serif';
+    ctx.fillText(new Date().toLocaleDateString(t('locale')), 0, 24);
+    ctx.restore();
+
+    // address lines
+    ctx.strokeStyle = '#b9ab8d'; ctx.lineWidth = 2;
+    for(var a=0;a<4;a++){
+      var ay = 480 + a*90;
+      ctx.beginPath(); ctx.moveTo(mid+60, ay); ctx.lineTo(W-100, ay); ctx.stroke();
+    }
+    ctx.fillStyle = '#2a251d'; ctx.font = '34px Georgia, serif'; ctx.textAlign='left';
+    if(to) ctx.fillText(to, mid+66, 470);
+
+    ctx.font = '22px Georgia, serif'; ctx.fillStyle = '#7b705d';
+    ctx.fillText(credit(), mid+60, H-70);
+  }
+
+  function render(){
+    if(!state.img) return;
+    ctx.textAlign = 'left';
+    if(state.side === 'front') drawFront(); else drawBack();
+  }
+
+  function setSide(s){
+    state.side = s;
+    $('tabFront').className = s==='front' ? 'on' : '';
+    $('tabBack').className = s==='back' ? 'on' : '';
+    render();
+  }
+
+  function create(){
+    var w = $('word').value.trim();
+    if(!w || (state.lastRandom && w === state.lastRandom)){
+      var pool = RANDOM_WORDS.filter(function(x){ return x !== state.lastRandom; });
+      w = pool[Math.floor(Math.random()*pool.length)];
+      state.lastRandom = w;
+      $('word').value = w;
+    }
+    state.word = w;
+    $('go').disabled = true; $('another').disabled = true; $('dl').disabled = true; $('wa').disabled = true;
+    say(t('searching')(w));
+    search(w).then(function(results){
+      state.photos = results.filter(function(r){ return r && r.src; });
+      if(!state.photos.length){ throw new Error('none'); }
+      state.idx = -1;
+      return pickPhoto();
+    }).then(function(){
+      setSide('front');
+      say(t('done')(state.photo.by));
+      $('another').disabled = false; $('dl').disabled = false; $('wa').disabled = false;
+    }).catch(function(e){
+      var m = e.message;
+      if(m === 'none') say(t('noPhotos')(w), true);
+      else if(m === 'img') say(t('errImg'), true);
+      else say(t('errNet')(m), true);
+    }).then(function(){ $('go').disabled = false; });
+  }
+
+  $('go').addEventListener('click', create);
+  $('word').addEventListener('keydown', function(e){ if(e.key==='Enter') create(); });
+  $('another').addEventListener('click', function(){
+    $('another').disabled = true; say(t('loadingAnother'));
+    pickPhoto().then(function(){ render(); say(t('photoBy')(state.photo.by)); })
+      .catch(function(){ say(t('errAnother'), true); })
+      .then(function(){ $('another').disabled = false; });
+  });
+  $('tabFront').addEventListener('click', function(){ setSide('front'); });
+  $('tabBack').addEventListener('click', function(){ setSide('back'); });
+  ['to','from','text'].forEach(function(id){ $(id).addEventListener('input', render); });
+  $('dl').addEventListener('click', function(){
+    try {
+      var a = document.createElement('a');
+      a.download = 'postcard-'+state.word.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+state.side+'.png';
+      a.href = cv.toDataURL('image/png');
+      a.click();
+    } catch(e){ say(t('errExport'), true); }
+  });
+
+
+  // ---- WhatsApp ----
+  function isMobile(){
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/i.test(navigator.platform));
+  }
+  function snap(side){
+    var prev = state.side;
+    state.side = side; render();
+    return new Promise(function(res){
+      try { cv.toBlob(function(b){ state.side = prev; render(); res(b); }, 'image/png'); }
+      catch(e){ state.side = prev; render(); res(null); }
+    });
+  }
+  function waText(){
+    var to = $('to').value.trim(), from = $('from').value.trim(), body = $('text').value.trim();
+    return (to ? t('dear')(to)+'\n' : '') + body + (from ? '\n— '+from : '') + '\n\n'+t('sent')+'\nhttps://easylandx.github.io/mac/postpro.html';
+  }
+  function saveBlob(b, name){
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(b); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+  }
+  $('wa').addEventListener('click', function(){
+    var enc = encodeURIComponent(waText());
+    var url = 'https://web.whatsapp.com/send?text='+enc;
+    var slug = state.word.toLowerCase().replace(/[^a-z0-9]+/g,'-') || 'postcard';
+    $('wa').disabled = true; say(t('prep'));
+
+    // Render the front of the postcard; start copying it to the clipboard right away (inside the click)
+    var blobP = snap('front').then(function(b){ if(!b) throw new Error('blob'); return b; });
+    var copyP;
+    try { copyP = navigator.clipboard.write([new ClipboardItem({'image/png': blobP})]); }
+    catch(e){ copyP = Promise.reject(e); }
+
+    // Open WhatsApp Web straight away, no questions asked
+    var win = null;
+    try { win = window.open('', '_blank'); } catch(e){}
+
+    copyP.then(function(){ return true; }, function(){
+      // clipboard unavailable: download the image instead
+      return blobP.then(function(b){ saveBlob(b, 'postcard-'+slug+'-front.png'); return false; }).catch(function(){ return false; });
+    }).then(function(copied){
+      if(win) win.location.href = url; else window.open(url, '_blank');
+      say(copied ? t('waCopied') : t('waSaved'));
+    }).catch(function(){
+      if(win && !win.closed) win.close();
+      say(t('waFail'), true);
+    }).then(function(){ $('wa').disabled = false; render(); });
+  });
+
+  // blank placeholder
+  function drawIdle(){
+    ctx.fillStyle = '#e9e1d0'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#9b8f78'; ctx.font = 'italic 56px Georgia, serif'; ctx.textAlign = 'center';
+    ctx.fillText(t('canvasIdle'), W/2, H/2);
+  }
+
+  // ---- Language toggle ----
+  $('lang').addEventListener('click', function(){
+    var prev = LANG;
+    LANG = LANG === 'en' ? 'es' : 'en';
+    applyLang(prev);
+    if(state.img){ render(); say(t('done')(state.photo.by)); }
+    else { drawIdle(); say(t('idle')); }
+  });
+  applyLang(null);
+  say(t('idle'));
+  drawIdle();
+})();
+</script>
+</body>
+</html>
