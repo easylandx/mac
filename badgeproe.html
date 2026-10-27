@@ -24,6 +24,9 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Manrope",system
 .brand{font-weight:800;font-size:20px;letter-spacing:-.01em}
 .pro{font-size:11px;font-weight:800;letter-spacing:.1em;background:#fff;color:var(--navy);border-radius:6px;padding:3px 7px}
 .lang{margin-left:auto;background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.35);font-weight:700;font-size:14px;padding:6px 14px;border-radius:999px;text-decoration:none}
+.cardlink{background:#fff;color:var(--navy);border:1.5px solid #fff;font-weight:800;font-size:14px;padding:6px 14px;border-radius:999px;text-decoration:none;white-space:nowrap}
+.cardlink:hover{background:#e0e7ff}
+.cardlink:active{transform:scale(.96)}
 .lang:hover{background:rgba(255,255,255,.22)}
 .lang:active{transform:scale(.96)}
 .wrap{width:100%;max-width:680px;margin:0 auto;padding:0 calc(18px + env(safe-area-inset-right,0px)) 0 calc(18px + env(safe-area-inset-left,0px))}
@@ -106,7 +109,7 @@ canvas#cv{width:min(100%,340px);height:auto;display:block;margin:0 auto;filter:d
 </style>
 </head>
 <body>
-<header class="top"><div class="glyph" aria-hidden="true"></div><div class="brand">BadgePro</div><a class="lang" href="https://easylandx.github.io/mac/badgepro.html" hreflang="en" lang="en">English</a></header>
+<header class="top"><div class="glyph" aria-hidden="true"></div><div class="brand">BadgePro</div><a class="cardlink" href="https://easylandx.github.io/mac/cardpro.html">CardPro</a><a class="lang" href="https://easylandx.github.io/mac/badgepro.html" hreflang="en" lang="en">English</a></header>
 
 <main>
 <section class="wrap" id="form">
@@ -247,7 +250,7 @@ function PAT(p,col){
  ctx.restore()
 }
 
-/* eight professional layouts shared across the 26 templates */
+/* nine layouts shared across the 27 templates */
 const LAY=[
 /* 0 Classic: colour header band, round portrait */
 (d,m)=>{const{bg,ac,ink,on}=m;
@@ -312,36 +315,43 @@ const LAY=[
  circ(300,340,164,bg);PH(150,190,300,300,'o');
  FT(d.n,300,690,520,54,ink);ROLE(d.r,300,758,ink,500,'center',36);
  FOOT(d,120,812,360,ink,'c',46)}
+,
+/* 8 Eco: pure white, photo and logo only */
+(d,m)=>{
+ ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);
+ PH(80,110,440,520,0);
+ if(logoImg||d.c)MARK(300,790,logoImg?220:150,d.k,'#111111','#ffffff',(d.c||'?')[0].toUpperCase())}
 ];
 
-/* industry, layout, background, accent, pattern (template names are just letters) */
+/* industry, layout, background, accent, pattern (name, layout, background, accent, pattern) */
 const TPL=[
-['a',4,'#0b1220','#3b82f6','grid'],
-['b',0,'#f4f9fc','#0e7490','none'],
-['c',1,'#fbf8f1','#1e3a8a','none'],
-['d',3,'#0f1b2d','#c9a227','none'],
-['e',2,'#151210','#b8923a','rings'],
-['f',5,'#fff7f5','#e11d48','none'],
-['g',5,'#1c1c1c','#f59e0b','stripes'],
-['h',1,'#f6f7f9','#0f766e','none'],
-['i',3,'#f3f1ee','#7f1d1d','none'],
-['j',2,'#fdf4ff','#a21caf','dots'],
-['k',4,'#111827','#f97316','stripes'],
-['l',5,'#eef1f4','#334155','grid'],
-['m',0,'#fffaf0','#b45309','none'],
-['n',4,'#08130d','#22c55e','waves'],
-['o',2,'#fff5f7','#9d174d','none'],
-['p',4,'#0a0a0a','#dc2626','stripes'],
-['q',0,'#ffffff','#2563eb','none'],
-['r',6,'#fdfcf9','#1f2937','none'],
-['s',7,'#f0f9ff','#0369a1','none'],
-['t',6,'#0f172a','#e2e8f0','grid'],
-['u',7,'#f0fdf4','#047857','none'],
-['v',0,'#faf5ff','#6d28d9','none'],
-['w',1,'#0c0a09','#fb7185','dots'],
-['x',3,'#f8fafc','#0f172a','none'],
-['y',5,'#f0fdfa','#115e59','none'],
-['z',4,'#18181b','#a78bfa','waves']
+['Plano',4,'#0b1220','#3b82f6','grid'],
+['Laguna',0,'#f4f9fc','#0e7490','none'],
+['Herencia',1,'#fbf8f1','#1e3a8a','none'],
+['Oro',3,'#0f1b2d','#c9a227','none'],
+['Órbita',2,'#151210','#b8923a','rings'],
+['Rubor Coral',5,'#fff7f5','#e11d48','none'],
+['Precaución',5,'#1c1c1c','#f59e0b','stripes'],
+['Pino',1,'#f6f7f9','#0f766e','none'],
+['Borgoña',3,'#f3f1ee','#7f1d1d','none'],
+['Orquídea',2,'#fdf4ff','#a21caf','dots'],
+['Brasa',4,'#111827','#f97316','stripes'],
+['Pizarra',5,'#eef1f4','#334155','grid'],
+['Miel',0,'#fffaf0','#b45309','none'],
+['Esmeralda',4,'#08130d','#22c55e','waves'],
+['Frutos Rojos',2,'#fff5f7','#9d174d','none'],
+['Carmesí',4,'#0a0a0a','#dc2626','stripes'],
+['Clásica',0,'#ffffff','#2563eb','none'],
+['Papel',6,'#fdfcf9','#1f2937','none'],
+['Cielo',7,'#f0f9ff','#0369a1','none'],
+['Acero',6,'#0f172a','#e2e8f0','grid'],
+['Pradera',7,'#f0fdf4','#047857','none'],
+['Lavanda',0,'#faf5ff','#6d28d9','none'],
+['Rosa Neón',1,'#0c0a09','#fb7185','dots'],
+['Monocromo',3,'#f8fafc','#0f172a','none'],
+['Espuma de Mar',5,'#f0fdfa','#115e59','none'],
+['Ultravioleta',4,'#18181b','#a78bfa','waves'],
+['Eco',8,'#ffffff','#111111','none']
 ];
 const PAL=[['#ffffff','#2563eb'],['#0f172a','#38bdf8'],['#f8fafc','#0f766e'],['#111827','#f59e0b'],['#fdf2f8','#be185d'],['#0b1f17','#34d399'],['#fff7ed','#c2410c'],['#1e1b4b','#a78bfa']];
 
