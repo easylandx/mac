@@ -128,7 +128,8 @@ footer{color:var(--muted);font-size:13px;margin-top:26px;text-align:center}
       errImg:'Found photos but could not load them. Try again or another word.',
       errNet:function(m){return 'Could not reach Wikimedia Commons ('+m+'). Open the file in a normal browser tab and try again.';},
       errExport:'This photo cannot be exported. Click Another photo and download again.',
-      prep:'Preparing your postcard…', shareChoose:'Choose WhatsApp in the share sheet to send it.',
+      prep:'Preparing your postcard…', shareChoose:'Pick WhatsApp, then a contact. The photo and message are already attached.',
+      waMobileSaved:'Photo saved to your device. In WhatsApp, attach it with the paperclip.',
       cancelled:'Sharing cancelled.',
       waSaved:'Could not copy the photo, so it was downloaded. In WhatsApp Web, attach it with the paperclip.',
       waCopied:'Photo copied. In WhatsApp Web press Ctrl+V in the chat to paste it.',
@@ -156,7 +157,8 @@ footer{color:var(--muted);font-size:13px;margin-top:26px;text-align:center}
       errImg:'Se encontraron fotos pero no se pudieron cargar. Inténtalo de nuevo o con otra palabra.',
       errNet:function(m){return 'No se pudo conectar con Wikimedia Commons ('+m+'). Abre el archivo en una pestaña normal del navegador e inténtalo de nuevo.';},
       errExport:'Esta foto no se puede exportar. Pulsa Otra foto y vuelve a descargar.',
-      prep:'Preparando tu postal…', shareChoose:'Elige WhatsApp en el menú de compartir para enviarla.',
+      prep:'Preparando tu postal…', shareChoose:'Elige WhatsApp y luego un contacto. La foto y el mensaje ya van adjuntos.',
+      waMobileSaved:'Foto guardada en tu dispositivo. En WhatsApp, adjúntala con el clip.',
       cancelled:'Envío cancelado.',
       waSaved:'No se pudo copiar la foto, así que se descargó. En WhatsApp Web, adjúntala con el clip.',
       waCopied:'Foto copiada. En WhatsApp Web pulsa Ctrl+V en el chat para pegarla.',
@@ -436,6 +438,28 @@ footer{color:var(--muted);font-size:13px;margin-top:26px;text-align:center}
     setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
   }
   $('wa').addEventListener('click', function(){
+    if(isMobile()){
+      var mslug = state.word.toLowerCase().replace(/[^a-z0-9]+/g,'-') || 'postcard';
+      var mtext = waText();
+      $('wa').disabled = true; say(t('prep'));
+      snap('front').then(function(b){
+        if(!b) throw new Error('blob');
+        var f = new File([b], 'postcard-'+mslug+'-front.png', {type:'image/png'});
+        var data = {files:[f], text:mtext};
+        if(navigator.canShare && navigator.canShare(data)){
+          // Opens the phone's share sheet with photo + message attached: tap WhatsApp, then pick a contact
+          return navigator.share(data).then(function(){ say(t('shareChoose')); });
+        }
+        // Fallback: save the photo and open the WhatsApp app with the message and its contact picker
+        saveBlob(b, f.name);
+        say(t('waMobileSaved'));
+        window.location.href = 'https://wa.me/?text='+encodeURIComponent(mtext);
+      }).catch(function(e){
+        if(e && e.name === 'AbortError') say(t('cancelled'));
+        else say(t('waFail'), true);
+      }).then(function(){ $('wa').disabled = false; render(); });
+      return;
+    }
     var enc = encodeURIComponent(waText());
     var url = 'https://web.whatsapp.com/send?text='+enc;
     var slug = state.word.toLowerCase().replace(/[^a-z0-9]+/g,'-') || 'postcard';
@@ -478,6 +502,7 @@ footer{color:var(--muted);font-size:13px;margin-top:26px;text-align:center}
     if(state.img){ render(); say(t('done')(state.photo.by)); }
     else { drawIdle(); say(t('idle')); }
   });
+  if(isMobile()){ var h = document.querySelector('.hint'); if(h) h.style.display = 'none'; }
   applyLang(null);
   say(t('idle'));
   drawIdle();
