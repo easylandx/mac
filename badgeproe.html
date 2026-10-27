@@ -316,11 +316,15 @@ const LAY=[
  FT(d.n,300,690,520,54,ink);ROLE(d.r,300,758,ink,500,'center',36);
  FOOT(d,120,812,360,ink,'c',46)}
 ,
-/* 8 Eco: pure white, photo and logo only */
+/* 8 Eco: pure white: photo, name, job, company, ID and logo */
 (d,m)=>{
  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);
- PH(80,110,440,520,0);
- if(logoImg||d.c)MARK(300,790,logoImg?220:150,d.k,'#111111','#ffffff',(d.c||'?')[0].toUpperCase())}
+ PH(100,80,400,420,0);
+ FT(d.n,300,578,520,52,'#111111');
+ ROLE(d.r,300,642,'#111111',500,'center',36);
+ if(d.c)FT(d.c,300,716,500,30,'#111111',700);
+ FOOT(d,120,722,360,'#111111','c',46);
+ if(logoImg||d.c)MARK(300,858,logoImg?130:84,d.k,'#111111','#ffffff',(d.c||'?')[0].toUpperCase())}
 ];
 
 /* industry, layout, background, accent, pattern (name, layout, background, accent, pattern) */
