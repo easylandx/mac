@@ -66,10 +66,13 @@ section.ch h2{font-size:clamp(1.5rem,4.5vw,2rem);margin-bottom:.6em;color:var(--
 .moral h3{font-size:1.35rem;margin-bottom:.4em;color:var(--lapis)}
 footer{padding:36px var(--pad);text-align:center;font-size:.95rem;color:#6b5330}
 footer button{font-size:.95rem;padding:10px 18px;background:var(--sand)}
+#lang{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));z-index:30;font-size:.95rem;padding:9px 16px;background:var(--ivory);border:1.5px solid var(--gold);color:var(--ink);box-shadow:0 4px 14px rgba(154,111,20,.2)}
 @media (prefers-reduced-motion:reduce){.door,.panel{transition:none}.shake{animation:none}}
 </style>
 </head>
 <body>
+
+<button type="button" id="lang">Español</button>
 
 <div id="gate" role="dialog" aria-labelledby="gt">
   <div class="door l"></div><div class="door r"></div>
@@ -150,7 +153,7 @@ footer button{font-size:.95rem;padding:10px 18px;background:var(--sand)}
     document.getElementById("lock").addEventListener("click",lock);
     if(animate){ gate.classList.add("open"); setTimeout(function(){gate.classList.add("gone")},1500); }
     else gate.classList.add("gone");
-    window.scrollTo(0,0);
+    apply(); window.scrollTo(0,0);
   }
   function lock(){
     try{sessionStorage.removeItem("ab")}catch(e){}
@@ -163,13 +166,64 @@ footer button{font-size:.95rem;padding:10px 18px;background:var(--sand)}
         try{sessionStorage.setItem("ab","1")}catch(e){}
         msg.textContent=""; show(true);
       }else{
-        msg.textContent="The rock stays shut. Try again.";
+        msg.dataset.k="1"; msg.textContent=tr("The rock stays shut. Try again.");
         form.classList.remove("shake"); void form.offsetWidth; form.classList.add("shake");
         pw.select();
       }
     });
   });
+  var ES={
+    "The cave is sealed":"La cueva está sellada",
+    "Speak the secret words to hear the tale of Ali Baba.":"Pronuncia las palabras secretas para escuchar la historia de Alí Babá.",
+    "Open the door":"Abrir la puerta",
+    "Ali Baba and the Forty Thieves":"Alí Babá y los cuarenta ladrones",
+    "A tale from the Arabian Nights, about a poor woodcutter, a cave of gold, and a servant clever enough to save a family.":"Un cuento de Las mil y una noches sobre un pobre leñador, una cueva llena de oro y una criada lo bastante astuta para salvar a una familia.",
+    "The woodcutter and the cave":"El leñador y la cueva",
+    "Ali Baba was a poor woodcutter who lived in Persia with his wife. One day, cutting wood in the forest, he heard horses and hid in a tree. Forty thieves rode up to a rock face. Their captain called out a command, and the rock slid open.":"Alí Babá era un pobre leñador que vivía en Persia con su esposa. Un día, mientras cortaba leña en el bosque, oyó caballos y se escondió en un árbol. Cuarenta ladrones llegaron hasta una pared de roca. Su capitán pronunció una orden y la roca se abrió.",
+    "“Open, Sesame!”":"“¡Ábrete, Sésamo!”",
+    "The thieves carried their loot inside, then came out, and the captain spoke again to close the rock. When they had gone, Ali Baba tried the words himself. The rock opened, and he found a cave piled with gold, silks, and jewels.":"Los ladrones llevaron su botín adentro y luego salieron, y el capitán habló otra vez para cerrar la roca. Cuando se marcharon, Alí Babá probó las palabras. La roca se abrió y encontró una cueva repleta de oro, sedas y joyas.",
+    "A brother’s greed":"La codicia de un hermano",
+    "Ali Baba took only a few sacks of gold and told no one but his family. His wealthy brother Cassim forced the secret out of him and went to the cave alone, greedy for more. Inside, he was so dazzled that he forgot the words and could not get out. When the thieves returned, they found him and took his life.":"Alí Babá tomó solo unos pocos sacos de oro y no se lo contó a nadie más que a su familia. Su rico hermano Cassim le sacó el secreto a la fuerza y fue solo a la cueva, ávido de más. Dentro quedó tan deslumbrado que olvidó las palabras y no pudo salir. Cuando los ladrones regresaron, lo encontraron y le quitaron la vida.",
+    "Ali Baba recovered the body and, with the help of the clever servant Morgiana, arranged a quiet burial so that nobody would ask questions.":"Alí Babá recuperó el cuerpo y, con la ayuda de la astuta criada Morgana, organizó un entierro discreto para que nadie hiciera preguntas.",
+    "Morgiana outwits the thieves":"Morgana burla a los ladrones",
+    "The thieves realised someone else knew their secret. The captain traced the family and came to the house disguised as an oil merchant, with a train of mules carrying large jars. Thirty-seven jars each held a hidden thief. Two held oil.":"Los ladrones se dieron cuenta de que alguien más conocía su secreto. El capitán siguió la pista hasta la casa de la familia y llegó disfrazado de comerciante de aceite, con una fila de mulas cargadas de grandes tinajas. Treinta y siete tinajas escondían cada una a un ladrón. Dos tenían aceite.",
+    "Morgiana, sent to find oil for a lamp, heard a whisper from inside a jar and understood at once. She poured boiling oil into every jar that hid a man. When the captain crept out at night and found his men dead, he fled.":"Morgana, enviada a buscar aceite para una lámpara, oyó un susurro dentro de una tinaja y lo entendió al instante. Vertió aceite hirviendo en cada tinaja que ocultaba a un hombre. Cuando el capitán salió sigilosamente por la noche y encontró muertos a sus hombres, huyó.",
+    "The last visit":"La última visita",
+    "The captain returned later, disguised as a trader who wanted to be Ali Baba’s friend. Morgiana saw the dagger under his coat. During dinner she danced for the guests, and as part of the dance she stepped close and ended the danger for good.":"El capitán regresó tiempo después, disfrazado de mercader que quería ser amigo de Alí Babá. Morgana vio la daga bajo su abrigo. Durante la cena bailó para los invitados y, como parte del baile, se acercó y puso fin al peligro para siempre.",
+    "Ali Baba, grateful, freed Morgiana and married her to his son. The family kept the cave’s secret, took only what they needed, and lived in peace.":"Alí Babá, agradecido, liberó a Morgana y la casó con su hijo. La familia guardó el secreto de la cueva, tomó solo lo necesario y vivió en paz.",
+    "What the story teaches":"Lo que enseña la historia",
+    "Greed leaves a person trapped even when the door is open, while quick thinking and loyalty protect the people we love. Morgiana is the true hero of the tale.":"La codicia deja atrapada a una persona aunque la puerta esté abierta, mientras que el ingenio y la lealtad protegen a quienes amamos. Morgana es la verdadera heroína del cuento.",
+    "Seal the cave again":"Sellar la cueva otra vez",
+    "The rock stays shut. Try again.":"La roca sigue cerrada. Inténtalo de nuevo.",
+    "Magic word":"Palabra mágica"
+  };
+  var lang="en", tbtn=document.getElementById("lang");
+  try{ lang=sessionStorage.getItem("lang")||"en"; }catch(e){}
+  function tr(s){ return lang==="es"&&ES[s]?ES[s]:s; }
+  function apply(){
+    document.documentElement.lang=lang;
+    [gate,site].forEach(function(root){
+      var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT), n;
+      while((n=w.nextNode())){
+        var raw=n._en||n.nodeValue.trim();
+        if(!raw||!(raw in ES)) continue;
+        n._en=raw; n.nodeValue=tr(raw);
+      }
+    });
+    pw.placeholder=tr("Magic word");
+    pw.setAttribute("aria-label",tr("Magic word"));
+    if(msg.dataset.k) msg.textContent=tr("The rock stays shut. Try again.");
+    document.title=tr("Ali Baba and the Forty Thieves");
+    tbtn.textContent=lang==="es"?"English":"Español";
+    tbtn.setAttribute("aria-label",lang==="es"?"Switch to English":"Traducir al español");
+  }
+  tbtn.addEventListener("click",function(){
+    lang=lang==="es"?"en":"es";
+    try{ sessionStorage.setItem("lang",lang); }catch(e){}
+    apply();
+  });
   try{ if(sessionStorage.getItem("ab")==="1") show(false); }catch(e){}
+  apply();
 })();
 </script>
 </body>
