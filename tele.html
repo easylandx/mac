@@ -20,6 +20,7 @@ button,.btn{font:inherit;font-weight:700;border:0;border-radius:40px;padding:12p
 button:disabled{opacity:.45;cursor:wait}
 .alt{background:#143c3d;color:#fff4df;box-shadow:inset 0 0 0 2px #ffb70099}
 .wa{background:#25d366;color:#04230f}
+.pastehint{align-self:center;font-size:13px;opacity:.8;max-width:260px;line-height:1.25}
 .row{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:16px;width:100%;max-width:880px}
 input[type=text]{font:inherit;background:#123334;color:#fff4df;border:2px solid #2f6e68;border-radius:12px;padding:10px 14px;flex:1;min-width:200px;max-width:420px}
 input[type=range]{accent-color:#ffb703;width:160px}
@@ -42,6 +43,7 @@ input[type=range]{accent-color:#ffb703;width:160px}
   <button class="alt" id="bNew" data-i="new"></button>
   <button class="alt" id="bSave" data-i="save" disabled></button>
   <button class="wa" id="bWa" disabled>WhatsApp</button>
+  <small class="pastehint" id="pasteHint" data-i="paste"></small>
   <a class="btn alt" href="https://easylandx.github.io" target="_blank" rel="noopener" data-i="land"></a>
   <button class="alt" id="bLang">Español</button>
 </div>
@@ -66,9 +68,10 @@ const CDN='https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.16754
 const CATS=['Category:Featured_pictures_of_landscapes','Category:Featured_pictures_of_mountains','Category:Featured_pictures_of_beaches','Category:Featured_pictures_of_lakes','Category:Featured_pictures_of_deserts','Category:Featured_pictures_of_waterfalls','Category:Featured_pictures_of_coasts','Category:Featured_pictures_of_landscapes'];
 const API='https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=categorymembers&gcmtype=file&gcmlimit=50&gcmsort=timestamp&gcmdir=newer&prop=imageinfo&iiprop=url|size|mime&iiurlwidth=1600';
 const I={
-en:{sub:'Snap a selfie or a full body photo and beam yourself to a random place on Earth.',hint:'Add a photo to teleport yourself here',selfie:'📷 Take selfie',up:'🖼️ Upload photo',new:'🎲 Random',q:'Type a place or landmark (e.g. Eiffel Tower)',go:'Go',nores:'No photo found for that place. Try another name.',searching:'Searching Wikimedia Commons...',save:'⬇️ Save',land:'EasyLandX',size:'Size',loc:'Location title',credit:'Drag yourself to reposition. Landscapes come from Wikimedia Commons. Works with selfies and full body photos.',lang:'Español',finding:'Locating a faraway place...',offline:'Could not reach Wikimedia Commons. Check your connection and tap Random.',reading:'Reading your photo...',cutting:'Cutting you out...',noperson:'I could not find a person in that photo. Try another one.',err:'Something went wrong loading the cutout model. Check your connection and try again.',beam:'Teleporting...',saved:'Image saved. Attach it to the WhatsApp chat that just opened.',fallback:'Somewhere beautiful'},
-es:{sub:'Hazte un selfie o una foto de cuerpo entero y teletranspórtate a un lugar al azar del planeta.',hint:'Añade una foto para teletransportarte aquí',selfie:'📷 Hacer selfie',up:'🖼️ Subir foto',new:'🎲 Aleatorio',q:'Escribe un lugar o monumento (p. ej. Torre Eiffel)',go:'Ir',nores:'No encontré fotos de ese lugar. Prueba con otro nombre.',searching:'Buscando en Wikimedia Commons...',save:'⬇️ Guardar',land:'EasyLandX',size:'Tamaño',loc:'Título del lugar',credit:'Arrástrate para cambiar de posición. Los paisajes vienen de Wikimedia Commons. Funciona con selfies y fotos de cuerpo entero.',lang:'English',finding:'Buscando un lugar lejano...',offline:'No se pudo conectar con Wikimedia Commons. Revisa tu conexión y pulsa Aleatorio.',reading:'Leyendo tu foto...',cutting:'Recortándote...',noperson:'No encontré a ninguna persona en esa foto. Prueba con otra.',err:'Algo falló al cargar el modelo de recorte. Revisa tu conexión e inténtalo de nuevo.',beam:'Teletransportando...',saved:'Imagen guardada. Adjúntala en el chat de WhatsApp que se acaba de abrir.',fallback:'Un lugar precioso'}
+en:{sub:'Snap a selfie or a full body photo and beam yourself to a random place on Earth.',hint:'Add a photo to teleport yourself here',selfie:'📷 Take selfie',up:'🖼️ Upload photo',new:'🎲 Random',q:'Type a place or landmark (e.g. Eiffel Tower)',go:'Go',nores:'No photo found for that place. Try another name.',searching:'Searching Wikimedia Commons...',save:'⬇️ Save',land:'EasyLandX',size:'Size',loc:'Location title',credit:'Drag yourself to reposition. Landscapes come from Wikimedia Commons. Works with selfies and full body photos.',lang:'Español',finding:'Locating a faraway place...',offline:'Could not reach Wikimedia Commons. Check your connection and tap Random.',reading:'Reading your photo...',cutting:'Cutting you out...',noperson:'I could not find a person in that photo. Try another one.',err:'Something went wrong loading the cutout model. Check your connection and try again.',beam:'Teleporting...',saved:'Image saved. Attach it to the WhatsApp chat that just opened.',fallback:'Somewhere beautiful',send:'Send yours with TelePort:',paste:'On WhatsApp desktop Press Ctrl+V in the chat to paste the photo',copied:'Photo copied. Press Ctrl+V in the WhatsApp chat to paste it.'},
+es:{sub:'Hazte un selfie o una foto de cuerpo entero y teletranspórtate a un lugar al azar del planeta.',hint:'Añade una foto para teletransportarte aquí',selfie:'📷 Hacer selfie',up:'🖼️ Subir foto',new:'🎲 Aleatorio',q:'Escribe un lugar o monumento (p. ej. Torre Eiffel)',go:'Ir',nores:'No encontré fotos de ese lugar. Prueba con otro nombre.',searching:'Buscando en Wikimedia Commons...',save:'⬇️ Guardar',land:'EasyLandX',size:'Tamaño',loc:'Título del lugar',credit:'Arrástrate para cambiar de posición. Los paisajes vienen de Wikimedia Commons. Funciona con selfies y fotos de cuerpo entero.',lang:'English',finding:'Buscando un lugar lejano...',offline:'No se pudo conectar con Wikimedia Commons. Revisa tu conexión y pulsa Aleatorio.',reading:'Leyendo tu foto...',cutting:'Recortándote...',noperson:'No encontré a ninguna persona en esa foto. Prueba con otra.',err:'Algo falló al cargar el modelo de recorte. Revisa tu conexión e inténtalo de nuevo.',beam:'Teletransportando...',saved:'Imagen guardada. Adjúntala en el chat de WhatsApp que se acaba de abrir.',fallback:'Un lugar precioso',send:'Envía la tuya con TelePort:',paste:'En WhatsApp de escritorio pulsa Ctrl+V en el chat para pegar la foto',copied:'Foto copiada. Pulsa Ctrl+V en el chat de WhatsApp para pegarla.'}
 };
+const isDesk=!/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)&&!matchMedia('(pointer:coarse)').matches;
 let lang='en';const T=k=>I[lang][k];
 function applyLang(){
   document.documentElement.lang=lang;
@@ -79,7 +82,7 @@ let bg=null,bgSm=null,person=null,loc='',busy=false,st={x:.5,y:1,s:.55};
 
 const status=t=>$('st').textContent=t||'';
 const loadImg=src=>new Promise((ok,no)=>{const i=new Image();i.crossOrigin='anonymous';i.onload=()=>ok(i);i.onerror=no;i.src=src});
-function setBusy(b){busy=b;['bNew','bGo'].forEach(i=>$(i).disabled=b);$('bSave').disabled=b||!person;$('bWa').disabled=b||!person||!bg}
+function setBusy(b){busy=b;['bNew','bGo'].forEach(i=>$(i).disabled=b);$('bSave').disabled=b||!person;$('bWa').disabled=b||!bg}
 
 function cleanTitle(t){
   return t.replace(/^File:/,'').replace(/\.[a-z]+$/i,'').replace(/_/g,' ').replace(/^[\d\s._-]+/,'')
@@ -158,17 +161,23 @@ function buildCut(src,mask){
     if(v>.5){const px=p%w,py=(p/w)|0;if(px<x0)x0=px;if(px>x1)x1=px;if(py<y0)y0=py;if(py>y1)y1=py}
   }
   if(x1<=x0||y1<=y0)return null;
+  // selfie bust cut off by the photo edge: the mask is weak/semi-transparent there,
+  // so copy solid alpha from just above and extend it down to the very bottom
+  if(y1>h*.9){
+    const r0=Math.max(0,Math.floor(y1-h*.03));
+    for(let px=x0;px<=x1;px++){
+      const a=d[(r0*w+px)*4+3];
+      if(a>128){for(let py=r0;py<h;py++)d[(py*w+px)*4+3]=255;}
+    }
+    y1=h-1;
+  }
   x.putImageData(id,0,0);
   const pad=4;x0=Math.max(0,x0-pad);y0=Math.max(0,y0-pad);x1=Math.min(w-1,x1+pad);y1=Math.min(h-1,y1+pad);
   const cw=x1-x0+1,ch=y1-y0+1,k=Math.min(1,1000/ch);
   const o=document.createElement('canvas');o.width=Math.round(cw*k);o.height=Math.round(ch*k);
   const ox=o.getContext('2d');ox.drawImage(c,x0,y0,cw,ch,0,0,o.width,o.height);
   const touches=y1>h*.96,full=!touches||ch/cw>2.2;
-  if(!full){ // fade the bottom of a selfie bust so it blends into the scene
-    const g=ox.createLinearGradient(0,o.height*.78,0,o.height);
-    g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,1)');
-    ox.globalCompositeOperation='destination-out';ox.fillStyle=g;ox.fillRect(0,o.height*.78,o.width,o.height);
-  }
+  // selfie bust: no fade, the solid bottom edge sits flush with the bottom of the scene
   // average luminance of the person
   const sd=ox.getImageData(0,0,o.width,o.height).data;let s=0,n=0;
   for(let i=0;i<sd.length;i+=64){if(sd[i+3]>200){s+=.3*sd[i]+.59*sd[i+1]+.11*sd[i+2];n++}}
@@ -209,12 +218,6 @@ function render(prog=1){
   cx.globalAlpha=1;cx.drawImage(bg,(W-bw)/2,(H-bh)/2,bw,bh);
   if(person){
     const ph=Math.round(H*st.s),pw=Math.round(ph*person.c.width/person.c.height),px=st.x*W-pw/2,py=st.y*H-ph;
-    // ground shadow
-    if(person.full&&prog>.6){
-      cx.save();cx.translate(st.x*W,st.y*H);cx.scale(1,.16);
-      const g=cx.createRadialGradient(0,0,0,0,0,pw*.6);g.addColorStop(0,'rgba(0,0,0,.5)');g.addColorStop(1,'rgba(0,0,0,0)');
-      cx.fillStyle=g;cx.beginPath();cx.arc(0,0,pw*.6,0,7);cx.fill();cx.restore();
-    }
     // match scene light: tint + brightness toward local background
     const t=document.createElement('canvas');t.width=pw;t.height=ph;const tx=t.getContext('2d');
     tx.drawImage(person.c,0,0,pw,ph);
@@ -283,9 +286,23 @@ $('bNew').addEventListener('click',async()=>{
 function download(b){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='teleport.jpg';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 $('bSave').addEventListener('click',()=>cv.toBlob(download,'image/jpeg',.92));
 $('bWa').addEventListener('click',()=>{
+  const txt=`📍 ${loc||T('fallback')}\n${T('send')} ${LINK}`;
+  if(isDesk){
+    // desktop: copy the photo to the clipboard and open WhatsApp Web straight away
+    const png=new Promise(r=>cv.toBlob(r,'image/png'));
+    let copied=false;
+    try{
+      if(navigator.clipboard&&window.ClipboardItem){
+        navigator.clipboard.write([new ClipboardItem({'image/png':png})]).then(()=>status(T('copied'))).catch(async()=>{download(await png);status(T('saved'))});
+        copied=true;
+      }
+    }catch(e){}
+    if(!copied)png.then(b=>{download(b);status(T('saved'))});
+    window.open('https://web.whatsapp.com/send?text='+encodeURIComponent(txt),'_blank');
+    return;
+  }
   cv.toBlob(async b=>{
     const f=new File([b],'teleport.jpg',{type:'image/jpeg'});
-    const txt=`📍 ${loc||T('fallback')}\n${LINK}`;
     if(navigator.canShare&&navigator.canShare({files:[f]})){
       try{await navigator.share({files:[f],text:txt});return}catch(e){if(e.name==='AbortError')return}
     }
