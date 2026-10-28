@@ -34,7 +34,11 @@ header.top .hright{justify-self:end;display:flex;gap:8px;align-items:center;flex
 @keyframes blink{50%{opacity:0}}
 .sound{background:none;border:1px solid var(--line);color:var(--dim);padding:6px 12px;border-radius:999px;font:inherit;font-size:12px;cursor:pointer}
 .sound:hover{color:var(--ink);border-color:var(--dim)}
-.soundfix{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:60;background:var(--amber);color:#0b2a40;border:0;border-radius:999px;padding:12px 22px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 6px 24px rgba(11,42,64,.25)}
+.soundfix{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--amber);color:#0b2a40;border:2px solid var(--amber-d);border-radius:999px;padding:24px 44px;font:inherit;font-weight:700;font-size:30px;line-height:1.2;text-align:center;max-width:94vw;cursor:pointer;box-shadow:0 12px 48px rgba(11,42,64,.3);animation:sfBob 1.6s ease-in-out infinite,sfPulse 1.6s ease-out infinite;-webkit-tap-highlight-color:transparent}
+.soundfix small{display:block;margin-top:4px;font-size:20px;font-weight:600;letter-spacing:.04em;color:#1d5a80}
+.soundfix:active{background:#a8dcf5}
+@keyframes sfBob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-10px)}}
+@keyframes sfPulse{0%{box-shadow:0 0 0 0 rgba(79,168,216,.75),0 12px 48px rgba(11,42,64,.3)}70%{box-shadow:0 0 0 34px rgba(79,168,216,0),0 12px 48px rgba(11,42,64,.3)}100%{box-shadow:0 0 0 0 rgba(79,168,216,0),0 12px 48px rgba(11,42,64,.3)}}
 .soundfix.hide{display:none}
 
 .screen{display:none;flex:1;animation:rise .5s ease both}
@@ -231,7 +235,7 @@ dialog .row{margin-top:18px}
 </div>
 
 <div class="toast" id="toast" role="status"></div>
-<button class="soundfix hide" id="soundFix" type="button" data-es="🔊 Toca para activar el sonido">🔊 Toca para activar el sonido</button>
+<button class="soundfix hide" id="soundFix" type="button"><span data-es="🔊 Toca para activar el sonido">🔊 Toca para activar el sonido</span><small data-es="para la voz del chat">para la voz del chat</small></button>
 
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
@@ -287,6 +291,8 @@ dialog .row{margin-top:18px}
     "Pulsa en cualquier sitio para activar el sonido": "Click anywhere to turn the sound on",
     "No se pudo activar el micrófono · revisa el permiso del navegador": "Couldn’t turn on the microphone · check the browser permission",
     "🔊 Toca para activar el sonido": "🔊 Tap to turn the sound on",
+    "para la voz del chat": "for chat voice",
+    "Voz activada": "Voice on",
     "La otra persona no envía audio (sin micrófono)": "The other person isn’t sending audio (no microphone)",
     "TU SALA PRIVADA": "YOUR PRIVATE ROOM",
     "Comparte este enlace: quien lo abra entra en tu sala de vídeo.": "Share this link: whoever opens it joins your video room.",
@@ -429,6 +435,7 @@ dialog .row{margin-top:18px}
   });
 
   /* Desbloqueo de audio: móviles bloquean el sonido hasta que hay un toque del usuario */
+  const IS_TOUCH = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
   function unlockAudio(){
     try{
       ac = ac || new (window.AudioContext||window.webkitAudioContext)();
@@ -441,7 +448,7 @@ dialog .row{margin-top:18px}
       try{ speechSynthesis.getVoices(); speechSynthesis.resume(); }catch(e){}
       if(!S.ttsOk && !S.ttsProbe){
         S.ttsProbe = true; setTimeout(() => { S.ttsProbe = false; }, 800);
-        try{ const u = new SpeechSynthesisUtterance(' '); u.volume = 0; u.onstart = u.onend = () => { S.ttsOk = true; }; u.onerror = () => {}; keepU(u); speechSynthesis.speak(u); }catch(e){}
+        try{ const u = new SpeechSynthesisUtterance(' '); u.volume = 0; u.onstart = u.onend = () => { if(!IS_TOUCH) S.ttsOk = true; }; u.onerror = () => {}; keepU(u); speechSynthesis.speak(u); }catch(e){}
       }
       flushTts();
     }
@@ -651,7 +658,7 @@ dialog .row{margin-top:18px}
       S.audT = setInterval(() => {
         if(!RT.started){ clearInterval(S.audT); $('#soundFix').classList.add('hide'); return; }
         if(a.srcObject !== st) a.srcObject = st;
-        $('#soundFix').classList.toggle('hide', !(a.paused && v.paused || (a.paused && v.muted) || (S.ttsPending && S.ttsPending.length)));
+        $('#soundFix').classList.toggle('hide', !(a.paused && v.paused || (a.paused && v.muted) || (S.ttsPending && S.ttsPending.length) || (IS_TOUCH && !S.ttsOk && 'speechSynthesis' in window)));
         if(a.paused) a.play().catch(()=>{});
       }, 1000);
       if(!st.getAudioTracks().length) toast('La otra persona no envía audio (sin micrófono)');
@@ -722,7 +729,25 @@ dialog .row{margin-top:18px}
   $('#soundFix').addEventListener('click', () => {
     const a = $('#remoteAud'), v = $('#remoteVid');
     a.muted = false; a.volume = 1; a.play().catch(() => { v.muted = false; v.volume = 1; v.play().catch(()=>{}); });
+    unlockAudio();
+    /* Dentro del toque: una locución breve y audible desbloquea la voz del chat en iOS */
+    if('speechSynthesis' in window){
+      try{
+        speechSynthesis.cancel(); speechSynthesis.resume();
+        const lang = LANG === 'en' ? 'en-US' : 'es-ES';
+        const u = new SpeechSynthesisUtterance(T('Voz activada'));
+        u.lang = lang; u.volume = 1; u.rate = 1;
+        const vo = speechSynthesis.getVoices().find(x => x.lang && x.lang.toLowerCase().replace('_','-').startsWith(lang.slice(0,2)));
+        if(vo) u.voice = vo;
+        let rel = false; const release = () => { if(rel) return; rel = true; duck(false); };
+        u.onstart = () => { S.ttsOk = true; };
+        u.onend = u.onerror = release; setTimeout(release, 3000);
+        keepU(u); duck(true); speechSynthesis.speak(u);
+      }catch(e){}
+    }
+    S.ttsOk = true;
     $('#soundFix').classList.add('hide');
+    flushTts();
   });
   $('#roomLink').addEventListener('focus', e => e.target.select());
   $('#copyLink').addEventListener('click', async () => {
@@ -835,7 +860,15 @@ dialog .row{margin-top:18px}
     $('#msgs').innerHTML = '';
   }
   function keepU(u){ (window._utts = window._utts || []).push(u); if(window._utts.length > 20) window._utts.shift(); }  /* evita que iOS/Chrome descarten la locución */
-  function speak(text){
+  /* iOS apaga o atenúa la voz del sistema mientras el micrófono está capturando.
+     Solución: silenciar el micrófono SOLO mientras suena la voz del chat y devolverlo después. */
+  let duckN = 0;
+  function duck(on){
+    if(!IS_TOUCH || !S.stream) return;
+    if(on){ duckN++; S.stream.getAudioTracks().forEach(t => { t.enabled = false; }); }
+    else { duckN = Math.max(0, duckN - 1); if(!duckN) S.stream.getAudioTracks().forEach(t => { t.enabled = S.micOn; }); }
+  }
+  function speak(text, inGesture){
     if(!S.soundOn || !('speechSynthesis' in window)) return;
     try{
       const u = new SpeechSynthesisUtterance(text);
@@ -843,24 +876,33 @@ dialog .row{margin-top:18px}
       u.lang = lang; u.rate = 1; u.pitch = 1.05; u.volume = 1;
       const v = speechSynthesis.getVoices().find(x => x.lang && x.lang.toLowerCase().replace('_','-').startsWith(lang.slice(0,2)));
       if(v) u.voice = v;
-      let started = false;
+      let started = false, rel = false;
+      const release = () => { if(rel) return; rel = true; duck(false); };
       u.onstart = () => { started = true; S.ttsOk = true; };
+      u.onend = u.onerror = release;
       keepU(u);
-      speechSynthesis.resume();   /* Chrome en Android a veces deja la voz en pausa */
-      speechSynthesis.speak(u);
-      /* iOS bloquea la voz hasta un toque del usuario: si no arranca, guardamos el texto y pedimos un toque */
-      setTimeout(() => {
-        if(!started && !speechSynthesis.speaking){
-          (S.ttsPending = S.ttsPending || []).push(text);
-          $('#soundFix').classList.remove('hide');
-        }
-      }, 1500);
+      duck(true);
+      setTimeout(release, 3500 + text.length * 110);   /* red de seguridad: el micrófono siempre vuelve */
+      const run = () => {
+        speechSynthesis.resume();   /* Chrome en Android a veces deja la voz en pausa */
+        speechSynthesis.speak(u);
+        /* iOS bloquea la voz hasta un toque del usuario: si no arranca, guardamos el texto y pedimos un toque */
+        setTimeout(() => {
+          if(!started && !speechSynthesis.speaking){
+            release();
+            (S.ttsPending = S.ttsPending || []).push(text);
+            $('#soundFix').classList.remove('hide');
+          }
+        }, 1800);
+      };
+      /* fuera de un toque damos un instante a iOS para liberar el micrófono; dentro de un toque, al momento */
+      if(IS_TOUCH && !inGesture && S.stream) setTimeout(run, 220); else run();
     }catch(e){}
   }
   function flushTts(){
     if(!S.ttsPending || !S.ttsPending.length) return;
     const q = S.ttsPending.splice(0); $('#soundFix').classList.add('hide');
-    q.forEach(speak);
+    q.forEach(t => speak(t, true));
   }
   function chatRecv(text, tts){ text = String(text).slice(0,300); chatPush('them', text); tone(660,.12,'triangle',.04); if(tts) speak(text); }
   function chatSend(text){
