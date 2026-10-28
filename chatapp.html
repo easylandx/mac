@@ -295,7 +295,7 @@ dialog .row{margin-top:18px}
     "Enviar por WhatsApp": "Send via WhatsApp",
     "Te han invitado a una sala privada · pulsa «Conectar ahora» para entrar.": "You’ve been invited to a private room · press “Connect now” to join.",
     "Esperando a que la otra persona abra la sala…": "Waiting for the other person to open the room…",
-    "Únete a mi charla en ChatApp: ": "Join my chat on ChatApp: ",
+    "Únete a la charla en ChatApp: ": "Join the chat on ChatApp: ",
     "Escribe un mensaje…": "Type a message…",
     "Enviar": "Send",
     "Rompe el hielo con un saludo.": "Break the ice with a hello.",
@@ -700,10 +700,10 @@ dialog .row{margin-top:18px}
     RT.q.on('call', c => { c.answer(S.out || buildOut()); gotCall(c); });
     while(RT.searching && !RT.conn){ if(await dial(ROOM_PFX + id)) return; await wait(1500); }
   }
-  function roomUrl(id){ return location.href.split('#')[0] + '#room=' + id; }
+  function roomUrl(id){ return 'https://easylandx.github.io/mac/chatapp.html#room=' + id; }
   function updateWa(){
     if(!RT.roomId) return;
-    const txt = encodeURIComponent(T('Únete a mi charla en ChatApp: ') + roomUrl(RT.roomId));
+    const txt = encodeURIComponent(T('Únete a la charla en ChatApp: ') + roomUrl(RT.roomId));
     // Directo, sin la página intermedia de wa.me: app en móvil, WhatsApp Web en ordenador
     $('#waBtn').href = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
       ? 'whatsapp://send?text=' + txt
