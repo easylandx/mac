@@ -930,7 +930,9 @@ dialog .row{margin-top:18px}
   const resetDisarm = () => { const b = $('#resetBtn'); clearTimeout(resetT); b.removeAttribute('data-armed'); b.setAttribute('aria-pressed','false'); setT(b, 'Reiniciar'); };
   $('#resetBtn').addEventListener('click', e => {
     const b = e.currentTarget;
-    if(b.hasAttribute('data-armed')){ resetDisarm(); if(S.waiting) cancelWaiting(); else endCall('early'); return; }
+    if(b.hasAttribute('data-armed')){ resetDisarm(); if(S.waiting) cancelWaiting(); else endCall('early');
+      /* damos un instante para avisar a la otra persona y recargamos la página limpia */
+      setTimeout(() => { location.href = 'https://easylandx.github.io/mac/chatapp.html'; }, 300); return; }
     b.setAttribute('data-armed','1'); b.setAttribute('aria-pressed','true'); setT(b, '¿Seguro?');
     resetT = setTimeout(resetDisarm, 3000);
   });
