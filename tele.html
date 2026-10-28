@@ -107,7 +107,7 @@ async function searchPlace(q){
       try{
         const img=await loadImg(p.imageinfo[0].thumburl);
         const t=q===q.toLowerCase()?q.replace(/\b\w/g,c=>c.toUpperCase()):q;
-        setBg(img,t);status('');return true;
+        const ct=cleanTitle(p.title);setBg(img,ct===T('fallback')?t:ct);status('');return true;
       }catch(e){}
     }
     status(T('nores'));
