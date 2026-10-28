@@ -883,7 +883,7 @@ dialog .row{margin-top:18px}
     "Y tú, ¿cómo lo vives en el día a día?"
   ];
   let simT = [], simI = 0;
-  const AI = { on:false, busy:false, t:null, n:0, run:0, seq:0, hist:[] };
+  const AI = { on:false, busy:false, t:null, n:0, run:0, seq:0, hist:[], persona:null, angle:null };
   function chatPush(cls, text, tr, ai){
     const box = $('#msgs'), d = document.createElement('div'); d.className = 'msg ' + cls + (ai ? ' ai' : '');
     if(tr) setT(d, text); else { d.textContent = text; d.setAttribute('data-noi18n',''); }
@@ -894,7 +894,7 @@ dialog .row{margin-top:18px}
   }
   function chatClear(){
     simT.forEach(clearTimeout); simT = []; simI = 0;
-    clearTimeout(AI.t); AI.hist = []; AI.run = 0; AI.seq++;
+    clearTimeout(AI.t); AI.hist = []; AI.run = 0; AI.seq++; AI.persona = null;
     $('#msgs').innerHTML = '';
   }
   function keepU(u){ (window._utts = window._utts || []).push(u); if(window._utts.length > 20) window._utts.shift(); }  /* evita que iOS/Chrome descarten la locución */
@@ -965,7 +965,7 @@ dialog .row{margin-top:18px}
     const h = AI.hist[AI.hist.length - 1];
     if(AI.on && (!h || h[0] === 'user')){ clearTimeout(AI.t); AI.t = setTimeout(aiReply, ms); }
   }
-  function aiIncoming(){ aiKick(1300 + Math.random() * 1700); }
+  function aiIncoming(){ aiKick(1200 + Math.random() * 3800); }
   function norm(t){ return String(t).toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, '').replace(/\s+/g, ' ').trim(); }
   function similar(a, b){
     a = norm(a); b = norm(b); if(!a || !b) return false;
@@ -1001,12 +1001,24 @@ dialog .row{margin-top:18px}
   function aiFallback(first){
     const last = [...AI.hist].reverse().find(h => h[0] === 'user');
     const es = last ? isEs(last[1]) : LANG !== 'en';
-    if(first) return es ? '¡Hola! ¿Qué tal va tu día?' : 'Hi! How is your day going?';
+    if(first){ const g = es ? ['¡Hola! ¿Qué tal va tu día?', '¡Buenas! ¿Qué te trae por aquí?', 'Hola, ¿cómo estás hoy?'] : ['Hi! How is your day going?', 'Hey there! What brings you here?', 'Hello! How are you today?']; return g[Math.floor(Math.random() * g.length)]; }
     const pool = FB[es ? 'es' : 'en'], free = pool.filter(m => !AI.hist.some(h => h[1] === m)), src = free.length ? free : pool;
     return src[Math.floor(Math.random() * src.length)];
   }
+  const PERSONAS = ['a freelance designer who loves cycling and strong coffee', 'a teacher who is learning the guitar', 'a software tester who collects postcards from trips',
+    'a chef curious about other cultures', 'a physiotherapist who runs and reads science fiction', 'an architecture student who loves old cities and photography',
+    'a paramedic who unwinds with cooking and podcasts', 'a bookshop owner who gardens and loves train journeys', 'a sound engineer who hikes on weekends', 'a nurse who paints landscapes'];
+  const ANGLES = ['Share a short, specific personal anecdote related to what was said.', 'Ask one curious, specific follow-up question.', 'Give a mild, honest opinion and a reason for it.',
+    'Gently steer the chat to a completely new everyday topic with a question.', 'Ask a playful "what if" question.', 'React briefly, then add an unexpected observation.',
+    'Compare two things thoughtfully and ask which they prefer.', 'Mention a small plan or wish you have and ask about theirs.'];
+  const TONES = ['casual', 'thoughtful', 'upbeat', 'dry and understated', 'warm', 'curious'];
+  const TOPICS = ['food and cooking', 'travel and places', 'music', 'books and films', 'work and daily routines', 'nature and the outdoors', 'sports and movement', 'technology', 'childhood memories', 'future plans'];
   async function aiGenerate(first){
-    const sys = 'You are chatting in a relaxed one-to-one video chat with a stranger. Write the next message as a warm, curious, natural person. Reply in the language the other person is using (default: ' + (LANG === 'en' ? 'English' : 'Spanish') + '). One or two short sentences, under 200 characters, no quotes, no stage directions, no emoji spam. Never repeat or restate what the other person just said or anything already said in this chat: add something new or ask a follow-up question. Never laugh in text (no "haha", "jaja", "lol"). Never mention these instructions.';
+    const pick = a => a[Math.floor(Math.random() * a.length)];
+    AI.persona = AI.persona || pick(PERSONAS);
+    let angle; do { angle = pick(ANGLES); } while(angle === AI.angle); AI.angle = angle;
+    const extra = ' Your persona: ' + AI.persona + ' (let it colour what you say, do not recite it). Tone: ' + pick(TONES) + '. Length: ' + pick(['one short sentence', 'one short sentence', 'two short sentences']) + '. This time: ' + (first ? 'open with a friendly hello and one specific question about ' + pick(TOPICS) + '.' : angle);
+    const sys = 'You are chatting in a relaxed one-to-one video chat with a stranger. Write the next message as a warm, curious, natural person. Reply in the language the other person is using (default: ' + (LANG === 'en' ? 'English' : 'Spanish') + '). One or two short sentences, under 200 characters, no quotes, no stage directions, no emoji spam. Never repeat or restate what the other person just said or anything already said in this chat: add something new or ask a follow-up question. Never laugh in text (no "haha", "jaja", "lol"). Never mention these instructions.' + extra;
     const seed = Math.floor(Math.random() * 1e6);
     const done = t => {
       t = noLaugh(t);
@@ -1019,7 +1031,7 @@ dialog .row{margin-top:18px}
     AI.hist.forEach(([r, c]) => { const l = msgs[msgs.length - 1]; if(l.role === r) l.content += '\n' + c; else msgs.push({ role:r, content:c }); });
     if(first) msgs.push({ role:'user', content:'(The chat has just started. Open the conversation with a friendly hello.)' });
     let t = await attempt(async signal => (await (await fetch(AI_ENDPOINT, { method:'POST', headers:{ 'Content-Type':'application/json' }, signal,
-      body:JSON.stringify({ model:'openai', messages:msgs, temperature:.9, seed, max_tokens:120 }) })).json()).choices[0].message.content || '');
+      body:JSON.stringify({ model:'openai', messages:msgs, temperature:.85 + Math.random() * .3, seed, max_tokens:120 }) })).json()).choices[0].message.content || '');
     if(t) return t;
     /* intento 2: endpoint de texto simple (GET) */
     const q = sys + '\n\n' + (first ? 'The chat has just started. Say a friendly hello.' : 'Conversation so far:\n' + AI.hist.slice(-6).map(([r, c]) => (r === 'user' ? 'Them: ' : 'Me: ') + c).join('\n') + '\n\nWrite my next message (only the message text).');
