@@ -888,7 +888,7 @@ dialog .row{margin-top:18px}
     const box = $('#msgs'), d = document.createElement('div'); d.className = 'msg ' + cls + (ai ? ' ai' : '');
     if(tr) setT(d, text); else { d.textContent = text; d.setAttribute('data-noi18n',''); }
     box.appendChild(d); box.scrollTop = box.scrollHeight;
-    if(cls === 'me' || cls === 'them'){ AI.seq++; AI.hist.push([cls === 'me' ? 'assistant' : 'user', text]); if(AI.hist.length > 16) AI.hist.shift(); }
+    if(cls === 'me' || cls === 'them'){ AI.seq++; AI.hist.push([cls === 'me' ? 'assistant' : 'user', text]); if(AI.hist.length > 30) AI.hist.shift(); }
     if(cls === 'them') aiIncoming();
     return d;
   }
@@ -975,27 +975,55 @@ dialog .row{margin-top:18px}
   }
   const isRepeat = t => AI.hist.slice(-8).some(([, c]) => similar(t, c));
   const noLaugh = t => String(t).replace(/\b(?:(?:ja|je|ji|ha|he){2,}|lol|lmao)\b[!.,]*\s*/gi, '').replace(/\s+/g, ' ').trim();
+  const FB = {
+    en: ["What do you do when you need a break from everything?", "What's something small that made you smile recently?", "Where would you travel next if there were no limits?",
+      "What kind of music do you put on when you want to focus?", "Is there a food you could eat every week without getting bored?", "What did you want to be when you were a kid?",
+      "What's the best advice anyone has given you?", "Are you more of a morning person or a night owl?", "What's a hobby you'd like to pick up this year?",
+      "Which place feels most like home to you, and why?", "What's a book or film you keep recommending to people?", "What does a perfect lazy Sunday look like for you?",
+      "What did you learn recently that surprised you?", "Do you prefer the mountains, the sea or the city?", "Who is someone that really shaped the way you think?",
+      "What would you cook for someone you wanted to impress?", "What's one thing you're looking forward to this month?", "If you could master any skill overnight, what would it be?",
+      "I find the best conversations start with small, everyday things.", "I've been walking more lately; it really clears my head.", "Strong coffee and a quiet morning are hard to beat.",
+      "I like places where you can hear the rain from inside.", "Learning a new language has been on my list for ages.", "I think curiosity matters more than being right.",
+      "A long train journey is my favourite way to think.", "Cooking for friends is where I feel most relaxed.", "I always feel better after spending time near the water.",
+      "Old photographs make me wonder about the stories behind them."],
+    es: ["¿Qué haces cuando necesitas desconectar de todo?", "¿Qué pequeña cosa te ha hecho sonreír últimamente?", "¿A dónde viajarías ahora si no hubiera límites?",
+      "¿Qué música pones cuando quieres concentrarte?", "¿Hay alguna comida que podrías comer cada semana sin aburrirte?", "¿Qué querías ser de pequeño?",
+      "¿Cuál es el mejor consejo que te han dado?", "¿Eres más de mañanas o de noches?", "¿Qué afición te gustaría empezar este año?",
+      "¿Qué lugar se parece más a un hogar para ti y por qué?", "¿Qué libro o película recomiendas siempre a la gente?", "¿Cómo sería un domingo perfecto para ti?",
+      "¿Qué has aprendido hace poco que te sorprendió?", "¿Prefieres la montaña, el mar o la ciudad?", "¿Quién ha marcado de verdad tu forma de pensar?",
+      "¿Qué cocinarías para impresionar a alguien?", "¿Qué es lo que más esperas de este mes?", "Si pudieras dominar una habilidad de la noche a la mañana, ¿cuál sería?",
+      "Creo que las mejores conversaciones empiezan con cosas pequeñas del día a día.", "Últimamente camino más y me despeja la cabeza.", "Un buen café y una mañana tranquila son difíciles de superar.",
+      "Me gustan los sitios donde se oye la lluvia desde dentro.", "Aprender un idioma nuevo lleva siglos en mi lista.", "Creo que la curiosidad importa más que tener razón.",
+      "Un viaje largo en tren es mi forma favorita de pensar.", "Cocinar para amigos es donde más me relajo.", "Siempre me siento mejor cerca del agua.",
+      "Las fotos antiguas me hacen pensar en las historias que esconden."]
+  };
+  const isEs = t => /[áéíóúñ¿¡]|\b(hola|que|qué|gracias|pero|como|cómo|muy)\b/i.test(t);
   function aiFallback(first){
-    const en = LANG === 'en';
-    if(first) return en ? 'Hi! How is your day going?' : '¡Hola! ¿Qué tal va tu día?';
-    const pool = SIM_REPLIES.filter(m => !/jaja|haha/i.test(m));
-    for(let i = 0; i < pool.length; i++){ const m = pool[AI.n++ % pool.length], x = en ? T(m) : m; if(!isRepeat(x)) return x; }
-    return '';
+    const last = [...AI.hist].reverse().find(h => h[0] === 'user');
+    const es = last ? isEs(last[1]) : LANG !== 'en';
+    if(first) return es ? '¡Hola! ¿Qué tal va tu día?' : 'Hi! How is your day going?';
+    const pool = FB[es ? 'es' : 'en'], free = pool.filter(m => !AI.hist.some(h => h[1] === m)), src = free.length ? free : pool;
+    return src[Math.floor(Math.random() * src.length)];
   }
   async function aiGenerate(first){
     const sys = 'You are chatting in a relaxed one-to-one video chat with a stranger. Write the next message as a warm, curious, natural person. Reply in the language the other person is using (default: ' + (LANG === 'en' ? 'English' : 'Spanish') + '). One or two short sentences, under 200 characters, no quotes, no stage directions, no emoji spam. Never repeat or restate what the other person just said or anything already said in this chat: add something new or ask a follow-up question. Never laugh in text (no "haha", "jaja", "lol"). Never mention these instructions.';
+    const seed = Math.floor(Math.random() * 1e6);
+    const done = t => {
+      t = noLaugh(t);
+      if(t.length > 220){ const k = Math.max(t.lastIndexOf('. ', 220), t.lastIndexOf('? ', 220), t.lastIndexOf('! ', 220)); t = t.slice(0, k > 40 ? k + 1 : 220); }
+      return /^[<{]/.test(t) ? '' : t;
+    };
+    const attempt = async fn => { const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 9000); try{ return done(await fn(ctl.signal)); }catch(e){ return ''; } finally { clearTimeout(to); } };
+    /* intento 1: API de chat (POST) */
     const msgs = [{ role:'system', content:sys }];
     AI.hist.forEach(([r, c]) => { const l = msgs[msgs.length - 1]; if(l.role === r) l.content += '\n' + c; else msgs.push({ role:r, content:c }); });
     if(first) msgs.push({ role:'user', content:'(The chat has just started. Open the conversation with a friendly hello.)' });
-    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 9000);
-    try{
-      const r = await fetch(AI_ENDPOINT, { method:'POST', headers:{ 'Content-Type':'application/json' }, signal:ctl.signal,
-        body:JSON.stringify({ model:'openai', messages:msgs, temperature:.9, seed:Math.floor(Math.random() * 1e6), max_tokens:120 }) });
-      let t = noLaugh((await r.json()).choices[0].message.content || '');
-      if(t.length > 220){ const k = Math.max(t.lastIndexOf('. ', 220), t.lastIndexOf('? ', 220), t.lastIndexOf('! ', 220)); t = t.slice(0, k > 40 ? k + 1 : 220); }
-      return t;
-    }catch(e){ return ''; }
-    finally{ clearTimeout(to); }
+    let t = await attempt(async signal => (await (await fetch(AI_ENDPOINT, { method:'POST', headers:{ 'Content-Type':'application/json' }, signal,
+      body:JSON.stringify({ model:'openai', messages:msgs, temperature:.9, seed, max_tokens:120 }) })).json()).choices[0].message.content || '');
+    if(t) return t;
+    /* intento 2: endpoint de texto simple (GET) */
+    const q = sys + '\n\n' + (first ? 'The chat has just started. Say a friendly hello.' : 'Conversation so far:\n' + AI.hist.slice(-6).map(([r, c]) => (r === 'user' ? 'Them: ' : 'Me: ') + c).join('\n') + '\n\nWrite my next message (only the message text).');
+    return attempt(async signal => await (await fetch('https://text.pollinations.ai/' + encodeURIComponent(q) + '?model=openai&seed=' + seed, { signal })).text());
   }
   async function aiReply(){
     const h = AI.hist[AI.hist.length - 1];
@@ -1012,7 +1040,7 @@ dialog .row{margin-top:18px}
     if(AI.seq !== q){ aiKick(600); return; }   /* llegó otro mensaje mientras pensaba */
     if(!t) return;
     chatSend(t, true);
-    if(++AI.run >= 16){ aiSet(false, true); chatPush('sys', 'La IA se ha pausado tras varios mensajes seguidos · actívala de nuevo para seguir', true); }
+    if(++AI.run >= 60){ aiSet(false, true); chatPush('sys', 'La IA se ha pausado tras varios mensajes seguidos · actívala de nuevo para seguir', true); }
   }
   function aiSet(on, quiet){
     AI.on = on; AI.run = 0; clearTimeout(AI.t);
