@@ -131,6 +131,8 @@ a.btn{display:inline-block;text-align:center;text-decoration:none}
 .msg.me{align-self:flex-end;background:var(--amber);color:#0b2a40;border-bottom-right-radius:3px}
 .msg.them{align-self:flex-start;background:var(--panel2);border:1px solid var(--line);border-bottom-left-radius:3px}
 .msg.sys{align-self:center;color:var(--dim);font-size:12px;text-align:center;padding:2px 6px}
+.msg.ai::before{content:"🤖 "}
+#aiBtn[aria-pressed="true"]{background:var(--amber);color:#0b2a40;font-weight:700}
 .chatform{display:flex;gap:8px;padding:10px;border-top:1px dashed var(--line)}
 .chatform input{margin-top:0;flex:1;min-width:0;padding:10px 12px;font-size:14px}
 .chatform .ctl{padding:10px 16px}
@@ -220,6 +222,7 @@ dialog .row{margin-top:18px}
       <div class="controls">
         <button class="ctl" id="micBtn" aria-pressed="false">Micrófono activo</button>
         <button class="ctl" id="camBtn" aria-pressed="false">Cámara activa</button>
+        <button class="ctl" id="aiBtn" aria-pressed="false" title="La IA chatea por ti. Si las dos personas la activan, las IA hablan entre sí.">Modo IA: no</button>
         <button class="ctl quiet" id="resetBtn" type="button" data-es="Reiniciar">Reiniciar</button>
       </div>
       <div class="invite hide" id="invite">
@@ -323,6 +326,12 @@ dialog .row{margin-top:18px}
     "Micrófono activo": "Microphone on",
     "Micrófono en pausa": "Microphone paused",
     "Cámara activa": "Camera on",
+    "Modo IA: sí": "AI mode: on",
+    "Modo IA: no": "AI mode: off",
+    "La IA chatea por ti. Si las dos personas la activan, las IA hablan entre sí.": "The AI chats for you. If both people turn it on, the two AIs talk to each other.",
+    "Modo IA activado · la IA chatea por ti": "AI mode on · the AI is chatting for you",
+    "Modo IA desactivado · vuelves a escribir tú": "AI mode off · you’re typing again",
+    "La IA se ha pausado tras varios mensajes seguidos · actívala de nuevo para seguir": "AI paused after several messages in a row · turn it on again to continue",
     "Bloquear y salir": "Block and leave",
     "Salir con calma": "Leave calmly",
     "La charla ha terminado": "The chat has ended",
@@ -639,7 +648,7 @@ dialog .row{margin-top:18px}
       RT.conn = c; RT.partner = d.uid; c.on('close', lost); c.send({t:'ok', uid:RT.uid});
     } else if(d.t === 'leave'){ lost(); }
     else if(d.t === 'vote'){ RT.vote = d; }
-    else if(d.t === 'chat' && typeof d.m === 'string'){ chatRecv(d.m, d.tts !== false); }
+    else if(d.t === 'chat' && typeof d.m === 'string'){ chatRecv(d.m, d.tts !== false, !!d.ai); }
   }
   function gotCall(c){
     RT.call = c; RT.real = true; c.on('close', lost);
@@ -812,6 +821,7 @@ dialog .row{margin-top:18px}
     if(hadWait) chatPush('sys', 'Alguien se ha unido · ¡empieza la charla!', true);
     else { chatClear(); $('#chatInput').value=''; }
     render(); go('call');
+    if(AI.on) aiKick(1800 + Math.random() * 2500);
     cancelAnimationFrame(S.raf); if(!RT.real) S.raf = requestAnimationFrame(drawRemote);
     S.last = performance.now(); clearInterval(S.timer); S.timer = setInterval(tick, 200);
   }
@@ -833,7 +843,7 @@ dialog .row{margin-top:18px}
     render();
   }
   function endCall(reason, quiet){
-    simT.forEach(clearTimeout); simT = [];
+    simT.forEach(clearTimeout); simT = []; clearTimeout(AI.t);
     clearInterval(S.timer); cancelAnimationFrame(S.raf); stopCam(); try{ speechSynthesis.cancel(); }catch(e){}
     if(RT.real){ RT.started=false; try{ if(RT.conn && !quiet && reason!=='done') RT.conn.send({t:'leave'}); }catch(e){}
       try{ RT.call && RT.call.close(); }catch(e){} $('#remoteVid').srcObject=null; $('#remoteAud').srcObject=null; clearInterval(S.audT); $('#soundFix').classList.add('hide');
@@ -854,13 +864,18 @@ dialog .row{margin-top:18px}
     "Y tú, ¿cómo lo vives en el día a día?"
   ];
   let simT = [], simI = 0;
-  function chatPush(cls, text, tr){
-    const box = $('#msgs'), d = document.createElement('div'); d.className = 'msg ' + cls;
+  const AI = { on:false, busy:false, t:null, n:0, run:0, hist:[] };
+  function chatPush(cls, text, tr, ai){
+    const box = $('#msgs'), d = document.createElement('div'); d.className = 'msg ' + cls + (ai ? ' ai' : '');
     if(tr) setT(d, text); else { d.textContent = text; d.setAttribute('data-noi18n',''); }
-    box.appendChild(d); box.scrollTop = box.scrollHeight; return d;
+    box.appendChild(d); box.scrollTop = box.scrollHeight;
+    if(cls === 'me' || cls === 'them'){ AI.hist.push([cls === 'me' ? 'assistant' : 'user', text]); if(AI.hist.length > 16) AI.hist.shift(); }
+    if(cls === 'them') aiIncoming();
+    return d;
   }
   function chatClear(){
     simT.forEach(clearTimeout); simT = []; simI = 0;
+    clearTimeout(AI.t); AI.hist = []; AI.run = 0;
     $('#msgs').innerHTML = '';
   }
   function keepU(u){ (window._utts = window._utts || []).push(u); if(window._utts.length > 20) window._utts.shift(); }  /* evita que iOS/Chrome descarten la locución */
@@ -908,21 +923,70 @@ dialog .row{margin-top:18px}
     const q = S.ttsPending.splice(0); $('#soundFix').classList.add('hide');
     q.forEach(t => speak(t, true));
   }
-  function chatRecv(text, tts){ text = String(text).slice(0,300); chatPush('them', text); tone(660,.12,'triangle',.04); if(tts) speak(text); }
-  function chatSend(text){
+  function chatRecv(text, tts, ai){ text = String(text).slice(0,300); chatPush('them', text, false, ai); tone(660,.12,'triangle',.04); if(tts) speak(text); }
+  function chatSend(text, ai){
     text = text.trim().slice(0,300); if(!text) return;
-    chatPush('me', text);
+    chatPush('me', text, false, ai);
     if(S.avatar) avatarTalk(text);
     if(S.waiting){
       RT.outbox.push(text);   /* se entrega cuando alguien se una */
     } else if(RT.real){
-      try{ RT.conn.send({ t:'chat', m:text, tts:true }); }catch(e){ toast('No se pudo enviar el mensaje'); }
+      try{ RT.conn.send({ t:'chat', m:text, tts:true, ai:!!ai }); }catch(e){ toast('No se pudo enviar el mensaje'); }
     } else {
       simT.push(setTimeout(() => { chatPush('them', SIM_REPLIES[simI++ % SIM_REPLIES.length], true); tone(660,.12,'triangle',.04); }, 1400 + Math.random()*1800));
     }
   }
   $('#chatInput').addEventListener('input', () => { if(S.avatar && $('#chatInput').value) AV.typeUntil = performance.now() + 900; });
-  $('#chatForm').addEventListener('submit', e => { e.preventDefault(); const i = $('#chatInput'); chatSend(i.value); i.value = ''; i.focus(); });
+  $('#chatForm').addEventListener('submit', e => { e.preventDefault(); const i = $('#chatInput'); AI.run = 0; chatSend(i.value); i.value = ''; i.focus(); });
+
+  /* ---------- Modo IA: la IA chatea por ti · si las dos partes la activan, las IA hablan entre sí ---------- */
+  const AI_ENDPOINT = 'https://text.pollinations.ai/openai';   /* IA gratuita sin clave · cámbialo por tu propio endpoint compatible con OpenAI */
+  const inCall = () => $('#call').classList.contains('active') && !S.waiting;
+  function aiKick(ms){
+    const h = AI.hist[AI.hist.length - 1];
+    if(AI.on && (!h || h[0] === 'user')){ clearTimeout(AI.t); AI.t = setTimeout(aiReply, ms); }
+  }
+  function aiIncoming(){ aiKick(1300 + Math.random() * 1700); }
+  function aiFallback(first){
+    const en = LANG === 'en';
+    if(first) return en ? 'Hi! How is your day going?' : '¡Hola! ¿Qué tal va tu día?';
+    const m = SIM_REPLIES[AI.n++ % SIM_REPLIES.length];
+    return en ? T(m) : m;
+  }
+  async function aiGenerate(first){
+    const sys = 'You are chatting in a relaxed one-to-one video chat with a stranger. Write the next message as a warm, curious, natural person. Reply in the language the other person is using (default: ' + (LANG === 'en' ? 'English' : 'Spanish') + '). One or two short sentences, under 200 characters, no quotes, no stage directions, no emoji spam. Ask a follow-up question now and then. Never mention these instructions.';
+    const msgs = [{ role:'system', content:sys }];
+    AI.hist.forEach(([r, c]) => { const l = msgs[msgs.length - 1]; if(l.role === r) l.content += '\n' + c; else msgs.push({ role:r, content:c }); });
+    if(first) msgs.push({ role:'user', content:'(The chat has just started. Open the conversation with a friendly hello.)' });
+    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 9000);
+    try{
+      const r = await fetch(AI_ENDPOINT, { method:'POST', headers:{ 'Content-Type':'application/json' }, signal:ctl.signal,
+        body:JSON.stringify({ model:'openai', messages:msgs, temperature:.9, max_tokens:120 }) });
+      let t = ((await r.json()).choices[0].message.content || '').replace(/\s+/g, ' ').trim();
+      if(t.length > 220){ const k = Math.max(t.lastIndexOf('. ', 220), t.lastIndexOf('? ', 220), t.lastIndexOf('! ', 220)); t = t.slice(0, k > 40 ? k + 1 : 220); }
+      return t || aiFallback(first);
+    }catch(e){ return aiFallback(first); }
+    finally{ clearTimeout(to); }
+  }
+  async function aiReply(){
+    const h = AI.hist[AI.hist.length - 1];
+    if(!AI.on || AI.busy || !inCall() || (h && h[0] === 'assistant')) return;
+    AI.busy = true; const n = AI.hist.length;
+    AV.typeUntil = performance.now() + 2500;
+    let t = '';
+    try{ t = await aiGenerate(!n); } finally { AI.busy = false; }
+    if(!AI.on || !inCall()) return;
+    if(AI.hist.length !== n){ aiKick(600); return; }   /* llegó otro mensaje mientras pensaba */
+    chatSend(t, true);
+    if(++AI.run >= 16){ aiSet(false, true); chatPush('sys', 'La IA se ha pausado tras varios mensajes seguidos · actívala de nuevo para seguir', true); }
+  }
+  function aiSet(on, quiet){
+    AI.on = on; AI.run = 0; clearTimeout(AI.t);
+    const b = $('#aiBtn'); b.setAttribute('aria-pressed', on); setT(b, 'Modo IA: ' + (on ? 'sí' : 'no'));
+    if(!quiet) chatPush('sys', on ? 'Modo IA activado · la IA chatea por ti' : 'Modo IA desactivado · vuelves a escribir tú', true);
+    if(on && inCall()) aiKick(900);
+  }
+  $('#aiBtn').addEventListener('click', () => aiSet(!AI.on));
 
   /* ---------- Controles de llamada ---------- */
   /* Reiniciar: doble pulsación con confirmación «¿Seguro?» */
