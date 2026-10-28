@@ -174,7 +174,6 @@ dialog .row{margin-top:18px}
       <button class="btn primary" id="connectBtn">Conectar ahora</button>
     </div>
     <p class="hint hide" id="inviteNote" style="margin-top:14px">Te han invitado a una sala privada · pulsa «Conectar ahora» para entrar.</p>
-    <div class="status"><span class="dot"></span><span id="liveCount">Emparejamiento en directo · sin registro</span></div>
   </main>
 
   <!-- 2. CALL (también sirve de sala de espera) -->
@@ -216,9 +215,6 @@ dialog .row{margin-top:18px}
       <div class="controls">
         <button class="ctl" id="micBtn" aria-pressed="false">Micrófono activo</button>
         <button class="ctl" id="camBtn" aria-pressed="false">Cámara activa</button>
-        <button class="ctl" id="silenceBtn">Silencio cómodo</button>
-        <button class="ctl quiet" id="reportBtn">Bloquear y salir</button>
-        <button class="ctl" id="leaveBtn">Salir con calma</button>
       </div>
       <div class="invite hide" id="invite">
         <small>TU SALA PRIVADA</small>
@@ -232,41 +228,8 @@ dialog .row{margin-top:18px}
     </div>
   </main>
 
-  <!-- 4. WAVE -->
-  <main class="screen" id="wave">
-    <div class="card">
-      <h2 id="waveTitle">La charla ha terminado</h2>
-      <p class="sub" id="waveSub">¿Cómo ha ido? Si las dos personas marcáis «Gran charla», se intercambian las notas. Todo es anónimo hasta ese momento.</p>
-
-      <div id="waveForm">
-        <label class="f" for="noteInput">TU NOTA O ENLACE (OPCIONAL)</label>
-        <input type="text" id="noteInput" maxlength="140" placeholder="Un enlace, un usuario o dos líneas amables">
-        <p class="hint">Solo se muestra si ambas personas dais el visto bueno.</p>
-        <div class="row">
-          <button class="btn primary" id="yesBtn" style="animation:none;font-size:16px;padding:16px">Gran charla</button>
-          <button class="btn" id="noBtn">Seguir mi camino</button>
-        </div>
-      </div>
-
-      <div class="result hide" id="waveWait"><span class="dot" style="display:inline-block;margin-right:8px"></span>Esperando la respuesta de la otra persona…</div>
-      <div class="result hide" id="waveDone"></div>
-
-      <div class="row hide" id="againRow">
-        <button class="btn primary" id="againBtn" style="animation:none;font-size:16px;padding:16px">Otra charla</button>
-        <button class="btn" id="homeBtn">Volver al inicio</button>
-      </div>
-    </div>
-  </main>
 </div>
 
-<dialog id="reportDlg">
-  <h3>Gracias por cuidar el espacio</h3>
-  <p>Cerramos la llamada al instante y no volverás a coincidir con esta persona en esta sesión.</p>
-  <div class="row">
-    <button class="btn primary" id="reportOk" style="animation:none;font-size:15px;padding:14px">Bloquear y salir</button>
-    <button class="btn" id="reportBack">Volver a la charla</button>
-  </div>
-</dialog>
 <div class="toast" id="toast" role="status"></div>
 <button class="soundfix hide" id="soundFix" type="button" data-es="🔊 Toca para activar el sonido">🔊 Toca para activar el sonido</button>
 
@@ -848,11 +811,7 @@ dialog .row{margin-top:18px}
       if(reason==='report'){ if(RT.partner) RT.blocked.add(RT.partner); setTimeout(closeNet,400); } }
     $('#silence').classList.remove('on');
     if(reason==='report'){ go('landing'); toast('Llamada cerrada · no volverás a coincidir con esa persona'); return; }
-    setT($('#waveTitle'), 'La charla ha terminado');
-    setT($('#waveSub'), '¿Cómo ha ido? Si las dos personas marcáis «Gran charla», se intercambian las notas. Todo es anónimo hasta ese momento.');
-    $('#waveForm').classList.remove('hide'); $('#waveWait').classList.add('hide'); $('#waveDone').classList.add('hide'); $('#againRow').classList.add('hide');
-    $('#noteInput').value=''; DONE=null;
-    go('wave');
+    DONE=null; closeNet(); go('landing');
   }
 
   /* ---------- Chat de texto ---------- */
@@ -927,48 +886,8 @@ dialog .row{margin-top:18px}
     $('#pip').classList.toggle('nocam', !S.camOn || !(S.stream && S.stream.getVideoTracks().length));
     setT($('#pipOff'), S.camOn ? 'Sin cámara · sigues con el chat de texto' : 'Cámara en pausa');
   });
-  $('#silenceBtn').addEventListener('click', () => { S.silenceLeft=30; $('#silenceTxt').textContent = T('Respirar también es conversar · ') + '30 s'; $('#silence').classList.add('on'); });
-  $('#silence').addEventListener('click', () => { S.silenceLeft=0; $('#silence').classList.remove('on'); });
-  $('#leaveBtn').addEventListener('click', () => { if(S.waiting) cancelWaiting(); else endCall('early'); });
-  $('#reportBtn').addEventListener('click', () => $('#reportDlg').showModal());
-  $('#reportBack').addEventListener('click', () => $('#reportDlg').close());
-  $('#reportOk').addEventListener('click', () => { $('#reportDlg').close(); endCall('report'); });
 
-  /* ---------- Digital Wave ---------- */
-  const PARTNER_NOTES = [
-    "Me quedé pensando en lo que contaste. Gracias por la charla. ✦",
-    "Ha sido un rato muy agradable. Te dejo mi usuario: @charla.pausada",
-    "Qué bien se ha pasado el tiempo. Escríbeme aquí: hola@ejemplo.com"
-  ];
   const wait = ms => new Promise(r=>setTimeout(r,ms));
-  $('#yesBtn').addEventListener('click', async () => {
-    const mine = $('#noteInput').value.trim();
-    $('#waveForm').classList.add('hide'); $('#waveWait').classList.remove('hide');
-    let mutual, pn;
-    if(RT.real){
-      try{ RT.conn.send({t:'vote',yes:true,note:mine}); }catch(e){}
-      for(let t=0; t<125 && !RT.vote && RT.conn && RT.conn.open; t++) await wait(200);
-      mutual = !!(RT.vote && RT.vote.yes); pn = (RT.vote && RT.vote.note) || '';
-    } else {
-      await wait(1800 + Math.random()*1200);
-      mutual = Math.random() < .75; pn = PARTNER_NOTES[Math.floor(Math.random()*PARTNER_NOTES.length)];
-    }
-    $('#waveWait').classList.add('hide');
-    const box = $('#waveDone'); box.classList.remove('hide');
-    DONE = mutual ? { kind:'mutual', mine:!!mine, pn, sim:!RT.real } : { kind:'none' };
-    if(mutual) chimeMatch();
-    renderDone();
-    $('#againRow').classList.remove('hide');
-  });
-  $('#noBtn').addEventListener('click', () => {
-    try{ RT.real && RT.conn.send({t:'vote',yes:false}); }catch(e){}
-    $('#waveForm').classList.add('hide');
-    const box=$('#waveDone'); box.classList.remove('hide');
-    DONE = { kind:'no' }; renderDone();
-    $('#againRow').classList.remove('hide');
-  });
-  $('#againBtn').addEventListener('click', () => $('#connectBtn').click());
-  $('#homeBtn').addEventListener('click', () => { closeNet(); go('landing'); });
   window.addEventListener('beforeunload', closeNet);
 
   /* Inglés por defecto */
