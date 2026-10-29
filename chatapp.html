@@ -818,7 +818,7 @@ dialog .row{margin-top:18px}
     if(hadWait) chatPush('sys', 'Alguien se ha unido · ¡empieza la charla!', true);
     else { chatClear(); $('#chatInput').value=''; }
     render(); go('call');
-    if(AI.on) aiKick(SP.on ? 3000 + Math.random() * 800 : 1800 + Math.random() * 2500);
+    if(AI.on) aiKick(3000 + Math.random() * 800);
     cancelAnimationFrame(S.raf); if(!RT.real) S.raf = requestAnimationFrame(drawRemote);
     S.last = performance.now(); clearInterval(S.timer); S.timer = setInterval(tick, 200);
   }
@@ -913,7 +913,7 @@ dialog .row{margin-top:18px}
     const q = S.ttsPending.splice(0); $('#soundFix').classList.add('hide');
     q.forEach(t => speak(t, true));
   }
-  function chatRecv(text, tts, ai){ text = String(text).slice(0,300); chatPush('them', text, false, ai); tone(660,.12,'triangle',.04); if(tts) speak(text); }
+  function chatRecv(text, tts, ai){ text = String(text).slice(0,300); if(tts && S.soundOn) S.speakUntil = performance.now() + Math.min(20000, 600 + text.length * 62); chatPush('them', text, false, ai); tone(660,.12,'triangle',.04); if(tts) speak(text); }
   function chatSend(text, ai){
     text = text.trim().slice(0,300); if(!text) return;
     chatPush('me', text, false, ai);
@@ -938,8 +938,9 @@ dialog .row{margin-top:18px}
     if(AI.on && (!h || h[0] === 'user')){ clearTimeout(AI.t); AI.t = setTimeout(aiReply, ms); }
   }
   function aiIncoming(){
-    if(!SP.on){ aiKick(1200 + Math.random() * 3800); return; }
-    aiKick(Math.max(0, RV.talkUntil - performance.now()) + 4200 + Math.random() * 500);   /* espera a que termine de hablar + ~4,5 s */
+    /* mismo ritmo en todos los modos: ~4,5 s tras el mensaje, y nunca pisa la voz de la otra parte */
+    const talking = Math.max(RV.talkUntil, S.speakUntil || 0) - performance.now();
+    aiKick(Math.max(4200 + Math.random() * 500, talking + 1200));
   }
   function norm(t){ return String(t).toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, '').replace(/\s+/g, ' ').trim(); }
   function similar(a, b){
@@ -1058,8 +1059,8 @@ dialog .row{margin-top:18px}
   function simSay(text){
     text = String(text).slice(0, 300);
     SP.hist.push(['assistant', text]); if(SP.hist.length > 30) SP.hist.shift(); SP.run++;
-    chatPush('them', text, false, true); tone(660,.12,'triangle',.04); speak(text);
     RV.typeUntil = 0; RV.talkUntil = performance.now() + Math.min(20000, 600 + text.length * 62);   /* el avatar mueve la boca al hablar */
+    chatPush('them', text, false, true); tone(660,.12,'triangle',.04); speak(text);
     simNudge();
   }
   async function simReply(nudge){
