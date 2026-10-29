@@ -37,10 +37,10 @@ header.top .hright{justify-self:end;display:flex;gap:8px;align-items:center;flex
 @keyframes blink{50%{opacity:0}}
 .sound{background:none;border:1px solid var(--line);color:var(--dim);padding:6px 12px;border-radius:999px;font:inherit;font-size:12px;cursor:pointer}
 .sound:hover{color:var(--ink);border-color:var(--dim)}
-.soundfix{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--amber);color:#0b2a40;border:2px solid var(--amber-d);border-radius:999px;padding:24px 44px;font:inherit;font-weight:700;font-size:30px;line-height:1.2;text-align:center;max-width:94vw;cursor:pointer;box-shadow:0 12px 48px rgba(11,42,64,.3);animation:sfBob 1.6s ease-in-out infinite,sfPulse 1.6s ease-out infinite;-webkit-tap-highlight-color:transparent}
-.soundfix small{display:block;margin-top:4px;font-size:20px;font-weight:600;letter-spacing:.04em;color:#1d5a80}
+.soundfix{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:60;background:var(--amber);color:#0b2a40;border:2px solid var(--amber-d);border-radius:999px;padding:12px 26px;font:inherit;font-weight:700;font-size:18px;line-height:1.2;text-align:center;max-width:94vw;cursor:pointer;box-shadow:0 12px 48px rgba(11,42,64,.3);animation:sfBob 1.6s ease-in-out infinite,sfPulse 1.6s ease-out infinite;-webkit-tap-highlight-color:transparent}
+.soundfix small{display:block;margin-top:2px;font-size:13px;font-weight:600;letter-spacing:.04em;color:#1d5a80}
 .soundfix:active{background:#a8dcf5}
-@keyframes sfBob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-10px)}}
+@keyframes sfBob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
 @keyframes sfPulse{0%{box-shadow:0 0 0 0 rgba(79,168,216,.75),0 12px 48px rgba(11,42,64,.3)}70%{box-shadow:0 0 0 34px rgba(79,168,216,0),0 12px 48px rgba(11,42,64,.3)}100%{box-shadow:0 0 0 0 rgba(79,168,216,0),0 12px 48px rgba(11,42,64,.3)}}
 .soundfix.hide{display:none}
 
@@ -79,16 +79,18 @@ h1 em{font-style:italic;color:var(--accent-ink)}
 .radar i{position:absolute;left:50%;top:50%;width:50%;height:2px;background:linear-gradient(90deg,var(--amber),transparent);transform-origin:left center;animation:sweep 2s linear infinite}
 @keyframes sweep{to{transform:rotate(360deg)}}
 .match-msg{font-family:var(--serif);font-size:24px;min-height:36px}
+.match-msg:empty{display:none}
 .radar.mini{width:96px;height:96px;margin-bottom:16px}
 .waitov{position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:16px;background:rgba(234,246,255,.9);backdrop-filter:blur(3px)}
 .waitov.on{display:grid}
 .waitov .match-msg{font-size:clamp(18px,3vw,24px)}
 .waiting .controls #silenceBtn,.waiting .controls #reportBtn,.waiting .callbar .demo{display:none}
-.waiting .time{color:var(--dim);text-shadow:none}
+.waiting .time,.time.wt{color:var(--dim);text-shadow:none}
 
 /* call */
 .callbar{display:flex;align-items:center;gap:16px;margin-bottom:12px}
-.time{font-size:clamp(34px,6vw,52px);font-weight:700;letter-spacing:.04em;color:var(--accent-ink);text-shadow:none;font-variant-numeric:tabular-nums;transition:color .4s}
+.brand{display:flex;align-items:baseline;gap:14px;min-width:0}
+.time{font-size:20px;line-height:1;font-weight:700;letter-spacing:.04em;color:var(--accent-ink);text-shadow:none;font-variant-numeric:tabular-nums;transition:color .4s}
 .callbar .meta{color:var(--dim);font-size:12px;line-height:1.3}
 .callbar .demo{margin-left:auto}
 .stage{position:relative;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#cfe8f8;--sh:min(72vh,calc((100vw - 2*clamp(22px,6vw,72px))*4/3));height:var(--sh);width:calc(var(--sh)*3/4);max-width:100%;margin:0 auto}
@@ -163,25 +165,17 @@ dialog .row{margin-top:18px}
 .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,40px);opacity:0;background:var(--panel2);border:1px solid var(--amber-d);padding:10px 18px;border-radius:999px;font-size:13px;z-index:60;transition:.3s}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 @media (max-width:640px){.rules{grid-template-columns:1fr}.pip{width:34%}.ctl.quiet{margin-left:0}
-  header.top{grid-template-columns:1fr auto}.lang{grid-column:1/-1;grid-row:2;justify-self:center}}
-.sfb{background:var(--amber);color:#0b2a40;border:1px solid var(--amber-d);border-radius:14px;padding:14px 16px;margin-bottom:18px;font-size:14px}
-.sfb p{font-weight:700}
-.sfb small{display:block;margin-top:6px;font-size:12px;color:#1d5a80}
-.sfb .row{margin-top:10px;gap:8px}
-.sfb .btn{padding:10px 14px;font-size:14px;min-width:120px;background:#fff}
+  header.top{grid-template-columns:auto 1fr}.brand{grid-column:1/-1}.lang{grid-row:2;grid-column:1;justify-self:start}header.top .hright{grid-row:2;grid-column:2}}
 </style>
 </head>
 <body>
 <div class="shell">
-  <div class="sfb hide" id="sfBanner">
-    <p>Para que funcionen la cámara y el micrófono, ábrelo en Safari.</p>
-    <div class="row"><button class="btn" id="sfOpen" type="button">Abrir en Safari</button><button class="btn" id="sfCopy" type="button">Copiar enlace</button></div>
-    <small id="sfUa" class="hide" data-noi18n></small>
-    <small>O toca el icono de brújula o «···» y elige «Abrir en Safari».</small>
-  </div>
   <header class="top">
-    <div class="logo">Chat<b>App</b><span class="cursor" aria-hidden="true"></span></div>
-    <button class="lang" id="langBtn" data-noi18n lang="en" type="button">Translate to English</button>
+    <div class="brand">
+      <div class="logo">Chat<b>App</b><span class="cursor" aria-hidden="true"></span></div>
+      <div class="time hide" id="time" role="timer" aria-live="off">00:00</div>
+    </div>
+    <button class="lang" id="langBtn" data-noi18n lang="en" type="button">English</button>
     <div class="hright">
       <a class="elx" href="https://easylandx.github.io" target="_blank" rel="noopener" data-noi18n>EasyLandX</a>
       <button class="sound" id="soundBtn" aria-pressed="true">Sonido: sí</button>
@@ -200,10 +194,6 @@ dialog .row{margin-top:18px}
   <!-- 2. CALL (también sirve de sala de espera) -->
   <main class="screen" id="call">
     <div id="callWrap">
-      <div class="callbar">
-        <div class="time" id="time" role="timer" aria-live="off">00:00</div>
-      </div>
-
       <div class="callgrid">
       <div class="stagecol">
       <div class="stage">
@@ -216,8 +206,8 @@ dialog .row{margin-top:18px}
         <div class="waitov" id="waitOv">
           <div>
             <div class="radar mini" aria-hidden="true"><i></i></div>
-            <div class="match-msg" id="matchMsg" aria-live="polite">Buscando a alguien…</div>
-            <div style="margin-top:12px"><button class="link hide" id="simBtn">Aún no hay nadie · probar con una persona simulada</button></div>
+            <div class="match-msg" id="matchMsg" aria-live="polite"></div>
+            <div style="margin-top:12px"><button class="link hide" id="simBtn" data-noi18n>Chat AI</button></div>
           </div>
         </div>
         <div class="pip" id="pip"><video id="local" autoplay playsinline muted></video><div class="off" id="pipOff">Cámara apagada</div></div>
@@ -261,7 +251,7 @@ dialog .row{margin-top:18px}
 (() => {
   const $ = s => document.querySelector(s);
   const screens = [...document.querySelectorAll('.screen')];
-  const go = id => { screens.forEach(s => s.classList.toggle('active', s.id === id)); window.scrollTo(0,0); };
+  const go = id => { screens.forEach(s => s.classList.toggle('active', s.id === id)); $('#time').classList.toggle('hide', id !== 'call'); window.scrollTo(0,0); };
 
   /* ---------- i18n (ES <-> EN) ---------- */
   let LANG = 'es', DONE = null;
@@ -340,9 +330,6 @@ dialog .row{margin-top:18px}
     "Micrófono activo": "Microphone on",
     "Micrófono en pausa": "Microphone paused",
     "Cámara activa": "Camera on",
-    "Para que funcionen la cámara y el micrófono, ábrelo en Safari.": "For the camera and microphone to work, open this in Safari.",
-    "Abrir en Safari": "Open in Safari",
-    "O toca el icono de brújula o «···» y elige «Abrir en Safari».": "Or tap the compass or “···” icon and choose “Open in Safari”.",
     "Modo IA: sí": "AI mode: on",
     "Modo IA: no": "AI mode: off",
     "La IA chatea por ti. Si las dos personas la activan, las IA hablan entre sí.": "The AI chats for you. If both people turn it on, the two AIs talk to each other.",
@@ -426,7 +413,7 @@ dialog .row{margin-top:18px}
     document.querySelectorAll('[data-es]').forEach(el => { el.textContent = T(el.dataset.es); });
     renderDone(); updateWa();
     const b = $('#langBtn');
-    b.textContent = LANG === 'en' ? 'Ver en espa\u00f1ol' : 'Translate to English';
+    b.textContent = LANG === 'en' ? 'Espa\u00f1ol' : 'English';
     b.lang = LANG === 'en' ? 'es' : 'en';
   }
   $('#langBtn').addEventListener('click', () => { LANG = LANG === 'en' ? 'es' : 'en'; applyLang(); });
@@ -507,13 +494,13 @@ dialog .row{margin-top:18px}
   /* Avatar animado: sustituye a la cámara. Mueve la boca al escribir y al enviar un mensaje */
   const AV = { typeUntil:0, talkUntil:0 };
   function avatarTalk(text){ AV.talkUntil = performance.now() + Math.min(20000, 600 + String(text).length * 62); }
-  function dummyTrack(){
-    const c = document.createElement('canvas'); c.width = 480; c.height = 640;
-    const x = c.getContext('2d'); const W = 480, H = 640;
+  /* Avatar animado compartido: cámara local (sin cámara) y la persona «Chat AI» */
+  function avatarPainter(st){
+    const W = 480, H = 640;
     let blinkAt = performance.now() + 2200, blinkUntil = 0, mouth = 0;
-    const paint = () => {
+    return x => {
       const now = performance.now(), t = now/1000;
-      const talking = now < AV.talkUntil, typing = now < AV.typeUntil;
+      const talking = now < st.talkUntil, typing = now < st.typeUntil;
       const bg = x.createRadialGradient(W/2, H*.45, 20, W/2, H*.5, W*.6);
       bg.addColorStop(0, '#d6efff'); bg.addColorStop(1, '#d9eefb');
       x.fillStyle = bg; x.fillRect(0, 0, W, H);
@@ -587,6 +574,11 @@ dialog .row{margin-top:18px}
         }
       }
     };
+  }
+  function dummyTrack(){
+    const c = document.createElement('canvas'); c.width = 480; c.height = 640;
+    const x = c.getContext('2d');
+    const ap = avatarPainter(AV), paint = () => ap(x);
     paint(); S.dummyT = setInterval(paint, 66);
     return c.captureStream(15).getVideoTracks()[0];
   }
@@ -615,33 +607,16 @@ dialog .row{margin-top:18px}
     try{ S.silentOsc && S.silentOsc.stop(); }catch(e){} S.silentOsc = null;
   }
 
-  /* ---------- Vídeo remoto simulado (canvas) ---------- */
-  function drawRemote(ts){
-    const c=$('#remote'), x=c.getContext('2d'), w=c.width, h=c.height, t=ts/1000;
-    const g=x.createLinearGradient(0,0,0,h); g.addColorStop(0,'#d6efff'); g.addColorStop(1,'#b8dff7');
-    x.fillStyle=g; x.fillRect(0,0,w,h);
-    // luz cálida
-    const r=x.createRadialGradient(w*.5+Math.sin(t*.4)*40,h*.4,10,w*.5,h*.45,w*.5);
-    r.addColorStop(0,'rgba(137,207,240,.28)'); r.addColorStop(1,'rgba(137,207,240,0)');
-    x.fillStyle=r; x.fillRect(0,0,w,h);
-    // silueta que respira
-    const bob=Math.sin(t*1.3)*5, sway=Math.sin(t*.7)*8;
-    x.fillStyle='#6bb7e0';
-    x.beginPath(); x.ellipse(w/2+sway,h*.40+bob,80,98,0,0,Math.PI*2); x.fill();
-    x.beginPath(); x.ellipse(w/2+sway*.6,h*1.02+bob,215,400,0,Math.PI,0); x.fill();
-    x.strokeStyle='rgba(137,207,240,.5)'; x.lineWidth=2;
-    x.beginPath(); x.ellipse(w/2+sway,h*.40+bob,80,98,0,0,Math.PI*2); x.stroke();
-    // sonrisa suave
-    x.beginPath(); x.arc(w/2+sway,h*.40+26+bob,26,.2*Math.PI,.8*Math.PI); x.stroke();
-    // ruido analógico
-    for(let i=0;i<260;i++){ x.fillStyle=`rgba(255,255,255,${Math.random()*.08})`; x.fillRect(Math.random()*w,Math.random()*h,2,1); }
-    // banda de barrido
-    const by=(t*90)%(h+80)-40; x.fillStyle='rgba(255,255,255,.25)'; x.fillRect(0,by,w,36);
-    S.raf=requestAnimationFrame(drawRemote);
+  /* ---------- Vídeo remoto simulado (canvas): el avatar estándar de la videollamada ---------- */
+  let remoteAv = null;
+  function drawRemote(){
+    const c = $('#remote'), x = c.getContext('2d');
+    remoteAv = remoteAv || avatarPainter(RV);
+    x.save(); x.scale(c.width/480, c.height/640); remoteAv(x); x.restore();
+    S.raf = requestAnimationFrame(drawRemote);
   }
 
   /* ---------- Flujo: Landing -> Matching ---------- */
-  const matchMsgs = ["Buscando a alguien…"];
   /* ---------- Conexión real (WebRTC con PeerJS) ---------- */
   let JOIN = (location.hash.match(/room=([A-Za-z0-9]+)/) || [])[1] || null;
   const ROOM_PFX = 'chatapp-v1-room-';
@@ -792,7 +767,7 @@ dialog .row{margin-top:18px}
   function setWaiting(on){
     S.waiting = on;
     $('#waitOv').classList.toggle('on', on);
-    $('#callWrap').classList.toggle('waiting', on);
+    $('#callWrap').classList.toggle('waiting', on); $('#time').classList.toggle('wt', on);
   }
   function cancelWaiting(){
     clearTimeout(S.matchT); clearInterval(S.msgT); simT.forEach(clearTimeout); simT = [];
@@ -814,20 +789,22 @@ dialog .row{margin-top:18px}
     chatClear(); $('#chatInput').value='';
     setWaiting(true); render(); go('call');
     RT.searching = true;
-    S.matchT = setTimeout(() => $('#simBtn').classList.remove('hide'), 30000);
+    $('#simBtn').classList.remove('hide');
+    const mm = $('#matchMsg'); mm.textContent = ''; delete mm.dataset.es;
     if(JOIN){ setT($('#matchMsg'), 'Esperando a que la otra persona abra la sala…'); joinRoom(JOIN); return; }
-    let i = 0; setT($('#matchMsg'), matchMsgs[0]);
-    S.msgT = setInterval(() => { i = Math.min(i+1, matchMsgs.length-1); setT($('#matchMsg'), matchMsgs[i]); }, 1100);
     openRoom();
     findPartner();
   });
   $('#simBtn').addEventListener('click', () => {
     clearTimeout(S.matchT); clearInterval(S.msgT); closeNet();
     $('#remoteVid').classList.add('hide'); $('#remote').classList.remove('hide');
-    chimeMatch(); startCall();
-    /* los mensajes escritos mientras esperabas reciben respuesta simulada */
-    RT.outbox = [];
-    simT.push(setTimeout(() => { chatPush('them', SIM_REPLIES[simI++ % SIM_REPLIES.length], true); tone(660,.12,'triangle',.04); }, 1200));
+    chimeMatch();
+    /* «Chat AI»: la otra persona es una IA con avatar animado; recibe lo que ya escribiste mientras esperabas */
+    simStop(); SP.on = true;
+    SP.hist = AI.hist.map(([r, c]) => [r === 'assistant' ? 'user' : 'assistant', c]);
+    const mine = AI.persona; do { SP.persona = PERSONAS[Math.floor(Math.random() * PERSONAS.length)]; } while(SP.persona === mine);
+    startCall();
+    simKick(1800 + Math.random() * 1200);
   });
 
   /* ---------- Llamada ---------- */
@@ -840,7 +817,7 @@ dialog .row{margin-top:18px}
     if(hadWait) chatPush('sys', 'Alguien se ha unido · ¡empieza la charla!', true);
     else { chatClear(); $('#chatInput').value=''; }
     render(); go('call');
-    if(AI.on) aiKick(1800 + Math.random() * 2500);
+    if(AI.on) aiKick(SP.on ? 2500 + Math.random() * 1500 : 1800 + Math.random() * 2500);
     cancelAnimationFrame(S.raf); if(!RT.real) S.raf = requestAnimationFrame(drawRemote);
     S.last = performance.now(); clearInterval(S.timer); S.timer = setInterval(tick, 200);
   }
@@ -862,7 +839,7 @@ dialog .row{margin-top:18px}
     render();
   }
   function endCall(reason, quiet){
-    simT.forEach(clearTimeout); simT = []; clearTimeout(AI.t);
+    simT.forEach(clearTimeout); simT = []; clearTimeout(AI.t); simStop();
     clearInterval(S.timer); cancelAnimationFrame(S.raf); stopCam(); try{ speechSynthesis.cancel(); }catch(e){}
     if(RT.real){ RT.started=false; try{ if(RT.conn && !quiet && reason!=='done') RT.conn.send({t:'leave'}); }catch(e){}
       try{ RT.call && RT.call.close(); }catch(e){} $('#remoteVid').srcObject=null; $('#remoteAud').srcObject=null; clearInterval(S.audT); $('#soundFix').classList.add('hide');
@@ -873,16 +850,9 @@ dialog .row{margin-top:18px}
   }
 
   /* ---------- Chat de texto ---------- */
-  const SIM_REPLIES = [
-    "¡Hola! Qué gusto charlar contigo.",
-    "Qué buena pregunta, déjame pensarlo un momento…",
-    "Jaja, me pasa algo parecido.",
-    "Cuéntame más, me interesa.",
-    "Eso me ha recordado a una época bonita de mi vida.",
-    "Totalmente de acuerdo, nunca lo había pensado así.",
-    "Y tú, ¿cómo lo vives en el día a día?"
-  ];
   let simT = [], simI = 0;
+  const RV = { talkUntil:0, typeUntil:0 };   /* estado del avatar remoto «Chat AI» */
+  const SP = { on:false, busy:false, t:null, hist:[], persona:null, angle:null, run:0 };
   const AI = { on:false, busy:false, t:null, n:0, run:0, seq:0, hist:[], persona:null, angle:null };
   function chatPush(cls, text, tr, ai){
     const box = $('#msgs'), d = document.createElement('div'); d.className = 'msg ' + cls + (ai ? ' ai' : '');
@@ -893,7 +863,7 @@ dialog .row{margin-top:18px}
     return d;
   }
   function chatClear(){
-    simT.forEach(clearTimeout); simT = []; simI = 0;
+    simT.forEach(clearTimeout); simT = []; simI = 0; simStop();
     clearTimeout(AI.t); AI.hist = []; AI.run = 0; AI.seq++; AI.persona = null;
     $('#msgs').innerHTML = '';
   }
@@ -910,7 +880,7 @@ dialog .row{margin-top:18px}
     if(!S.soundOn || !('speechSynthesis' in window)) return;
     try{
       const u = new SpeechSynthesisUtterance(text);
-      const lang = /[áéíóúñ¿¡ü]/i.test(text) ? 'es-ES' : (LANG === 'en' ? 'en-US' : 'es-ES');
+      const lang = LANG === 'es' ? 'es-ES' : (/[áéíóúñ¿¡ü]/i.test(text) ? 'es-ES' : 'en-US');
       u.lang = lang; u.rate = 1; u.pitch = 1.05; u.volume = 1;
       const v = speechSynthesis.getVoices().find(x => x.lang && x.lang.toLowerCase().replace('_','-').startsWith(lang.slice(0,2)));
       if(v) u.voice = v;
@@ -951,8 +921,9 @@ dialog .row{margin-top:18px}
       RT.outbox.push(text);   /* se entrega cuando alguien se una */
     } else if(RT.real){
       try{ RT.conn.send({ t:'chat', m:text, tts:true, ai:!!ai }); }catch(e){ toast('No se pudo enviar el mensaje'); }
-    } else {
-      simT.push(setTimeout(() => { chatPush('them', SIM_REPLIES[simI++ % SIM_REPLIES.length], true); tone(660,.12,'triangle',.04); }, 1400 + Math.random()*1800));
+    } else if(SP.on){
+      SP.hist.push(['user', text]); if(SP.hist.length > 30) SP.hist.shift(); SP.run = 0;
+      simKick(2800 + text.length * 24 + Math.random() * 2500);
     }
   }
   $('#chatInput').addEventListener('input', () => { if(S.avatar && $('#chatInput').value) AV.typeUntil = performance.now() + 900; });
@@ -965,7 +936,11 @@ dialog .row{margin-top:18px}
     const h = AI.hist[AI.hist.length - 1];
     if(AI.on && (!h || h[0] === 'user')){ clearTimeout(AI.t); AI.t = setTimeout(aiReply, ms); }
   }
-  function aiIncoming(){ aiKick(1200 + Math.random() * 3800); }
+  function aiIncoming(){
+    if(!SP.on){ aiKick(1200 + Math.random() * 3800); return; }
+    const h = AI.hist[AI.hist.length - 1], len = h ? h[1].length : 40;
+    aiKick(Math.max(0, RV.talkUntil - performance.now()) + 3000 + len * 20 + Math.random() * 2500);
+  }
   function norm(t){ return String(t).toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, '').replace(/\s+/g, ' ').trim(); }
   function similar(a, b){
     a = norm(a); b = norm(b); if(!a || !b) return false;
@@ -973,7 +948,7 @@ dialog .row{margin-top:18px}
     const A = new Set(a.split(' ')), B = new Set(b.split(' ')); let k = 0; A.forEach(w => { if(B.has(w)) k++; });
     return k / (A.size + B.size - k) >= .6;
   }
-  const isRepeat = t => AI.hist.slice(-8).some(([, c]) => similar(t, c));
+  const isRepeat = (t, hist = AI.hist) => hist.slice(-8).some(([, c]) => similar(t, c));
   const noLaugh = t => String(t).replace(/\b(?:(?:ja|je|ji|ha|he){2,}|lol|lmao)\b[!.,]*\s*/gi, '').replace(/\s+/g, ' ').trim();
   const FB = {
     en: ["What do you do when you need a break from everything?", "What's something small that made you smile recently?", "Where would you travel next if there were no limits?",
@@ -998,11 +973,11 @@ dialog .row{margin-top:18px}
       "Las fotos antiguas me hacen pensar en las historias que esconden."]
   };
   const isEs = t => /[áéíóúñ¿¡]|\b(hola|que|qué|gracias|pero|como|cómo|muy)\b/i.test(t);
-  function aiFallback(first){
-    const last = [...AI.hist].reverse().find(h => h[0] === 'user');
-    const es = last ? isEs(last[1]) : LANG !== 'en';
+  function aiFallback(first, hist = AI.hist){
+    const last = [...hist].reverse().find(h => h[0] === 'user');
+    const es = LANG !== 'en';
     if(first){ const g = es ? ['¡Hola! ¿Qué tal va tu día?', '¡Buenas! ¿Qué te trae por aquí?', 'Hola, ¿cómo estás hoy?'] : ['Hi! How is your day going?', 'Hey there! What brings you here?', 'Hello! How are you today?']; return g[Math.floor(Math.random() * g.length)]; }
-    const pool = FB[es ? 'es' : 'en'], free = pool.filter(m => !AI.hist.some(h => h[1] === m)), src = free.length ? free : pool;
+    const pool = FB[es ? 'es' : 'en'], free = pool.filter(m => !hist.some(h => h[1] === m)), src = free.length ? free : pool;
     return src[Math.floor(Math.random() * src.length)];
   }
   const PERSONAS = ['a freelance designer who loves cycling and strong coffee', 'a teacher who is learning the guitar', 'a software tester who collects postcards from trips',
@@ -1013,28 +988,31 @@ dialog .row{margin-top:18px}
     'Compare two things thoughtfully and ask which they prefer.', 'Mention a small plan or wish you have and ask about theirs.'];
   const TONES = ['casual', 'thoughtful', 'upbeat', 'dry and understated', 'warm', 'curious'];
   const TOPICS = ['food and cooking', 'travel and places', 'music', 'books and films', 'work and daily routines', 'nature and the outdoors', 'sports and movement', 'technology', 'childhood memories', 'future plans'];
-  async function aiGenerate(first){
+  const AIX = { fails:0, until:0 };
+  async function aiGenerate(first, st = AI, hist = AI.hist){
     const pick = a => a[Math.floor(Math.random() * a.length)];
-    AI.persona = AI.persona || pick(PERSONAS);
-    let angle; do { angle = pick(ANGLES); } while(angle === AI.angle); AI.angle = angle;
-    const extra = ' Your persona: ' + AI.persona + ' (let it colour what you say, do not recite it). Tone: ' + pick(TONES) + '. Length: ' + pick(['one short sentence', 'one short sentence', 'two short sentences']) + '. This time: ' + (first ? 'open with a friendly hello and one specific question about ' + pick(TOPICS) + '.' : angle);
-    const sys = 'You are chatting in a relaxed one-to-one video chat with a stranger. Write the next message as a warm, curious, natural person. Reply in the language the other person is using (default: ' + (LANG === 'en' ? 'English' : 'Spanish') + '). One or two short sentences, under 200 characters, no quotes, no stage directions, no emoji spam. Never repeat or restate what the other person just said or anything already said in this chat: add something new or ask a follow-up question. Never laugh in text (no "haha", "jaja", "lol"). Never mention these instructions.' + extra;
+    st.persona = st.persona || pick(PERSONAS);
+    let angle; do { angle = pick(ANGLES); } while(angle === st.angle); st.angle = angle;
+    const extra = ' Your persona: ' + st.persona + ' (let it colour what you say, do not recite it). Tone: ' + pick(TONES) + '. Length: ' + pick(['one short sentence', 'one short sentence', 'two short sentences']) + '. This time: ' + (first ? 'open with a friendly hello and one specific question about ' + pick(TOPICS) + '.' : angle);
+    const sys = 'You are chatting in a relaxed one-to-one video chat with a stranger. Write the next message as a warm, curious, natural person. Always write in ' + (LANG === 'en' ? 'English' : 'Spanish') + ', even if earlier messages in this chat were in another language. One or two short sentences, under 200 characters, no quotes, no stage directions, no emoji spam. Never repeat or restate what the other person just said or anything already said in this chat: add something new or ask a follow-up question. Never laugh in text (no "haha", "jaja", "lol"). Never mention these instructions.' + extra;
     const seed = Math.floor(Math.random() * 1e6);
     const done = t => {
       t = noLaugh(t);
       if(t.length > 220){ const k = Math.max(t.lastIndexOf('. ', 220), t.lastIndexOf('? ', 220), t.lastIndexOf('! ', 220)); t = t.slice(0, k > 40 ? k + 1 : 220); }
       return /^[<{]/.test(t) ? '' : t;
     };
-    const attempt = async fn => { const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 9000); try{ return done(await fn(ctl.signal)); }catch(e){ return ''; } finally { clearTimeout(to); } };
+    const attempt = async fn => { const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 4500); try{ return done(await fn(ctl.signal)); }catch(e){ return ''; } finally { clearTimeout(to); } };
     /* intento 1: API de chat (POST) */
     const msgs = [{ role:'system', content:sys }];
-    AI.hist.forEach(([r, c]) => { const l = msgs[msgs.length - 1]; if(l.role === r) l.content += '\n' + c; else msgs.push({ role:r, content:c }); });
+    hist.forEach(([r, c]) => { const l = msgs[msgs.length - 1]; if(l.role === r) l.content += '\n' + c; else msgs.push({ role:r, content:c }); });
     if(first) msgs.push({ role:'user', content:'(The chat has just started. Open the conversation with a friendly hello.)' });
+    if(Date.now() < AIX.until) return '';   /* servicio caído hace poco: respuesta local al instante */
     let t = await attempt(async signal => (await (await fetch(AI_ENDPOINT, { method:'POST', headers:{ 'Content-Type':'application/json' }, signal,
-      body:JSON.stringify({ model:'openai', messages:msgs, temperature:.85 + Math.random() * .3, seed, max_tokens:120 }) })).json()).choices[0].message.content || '');
-    if(t) return t;
+      body:JSON.stringify({ model:'openai', messages:msgs, temperature:.85 + Math.random() * .3, seed, max_tokens:70 }) })).json()).choices[0].message.content || '');
+    if(t){ AIX.fails = 0; return t; }
+    if(++AIX.fails >= 2){ AIX.until = Date.now() + 90000; AIX.fails = 0; }
     /* intento 2: endpoint de texto simple (GET) */
-    const q = sys + '\n\n' + (first ? 'The chat has just started. Say a friendly hello.' : 'Conversation so far:\n' + AI.hist.slice(-6).map(([r, c]) => (r === 'user' ? 'Them: ' : 'Me: ') + c).join('\n') + '\n\nWrite my next message (only the message text).');
+    const q = sys + '\n\n' + (first ? 'The chat has just started. Say a friendly hello.' : 'Conversation so far:\n' + hist.slice(-6).map(([r, c]) => (r === 'user' ? 'Them: ' : 'Me: ') + c).join('\n') + '\n\nWrite my next message (only the message text).');
     return attempt(async signal => await (await fetch('https://text.pollinations.ai/' + encodeURIComponent(q) + '?model=openai&seed=' + seed, { signal })).text());
   }
   async function aiReply(){
@@ -1045,7 +1023,7 @@ dialog .row{margin-top:18px}
     let t = '';
     try{
       t = await aiGenerate(first);
-      if(!t || isRepeat(t)) t = await aiGenerate(first);
+      if(t && isRepeat(t)) t = await aiGenerate(first);
       if(!t || isRepeat(t)) t = aiFallback(first);
     } finally { AI.busy = false; }
     if(!AI.on || !inCall()) return;
@@ -1058,9 +1036,48 @@ dialog .row{margin-top:18px}
     AI.on = on; AI.run = 0; clearTimeout(AI.t);
     const b = $('#aiBtn'); b.setAttribute('aria-pressed', on); setT(b, 'Modo IA: ' + (on ? 'sí' : 'no'));
     if(!quiet) chatPush('sys', on ? 'Modo IA activado · la IA chatea por ti' : 'Modo IA desactivado · vuelves a escribir tú', true);
-    if(on && inCall()) aiKick(900);
+    if(on && inCall()) aiKick(1200);
   }
   $('#aiBtn').addEventListener('click', () => aiSet(!AI.on));
+
+  /* ---------- Chat AI: la persona simulada es una IA que conversa sola, igual que el Modo IA ---------- */
+  function simStop(){
+    clearTimeout(SP.t);
+    Object.assign(SP, { on:false, busy:false, hist:[], persona:null, angle:null, run:0 });
+    RV.talkUntil = RV.typeUntil = 0;
+  }
+  function simKick(ms){
+    if(!SP.on) return;
+    const h = SP.hist[SP.hist.length - 1];
+    if(!h || h[0] === 'user'){ clearTimeout(SP.t); SP.t = setTimeout(() => simReply(false), ms); }
+  }
+  function simNudge(){   /* si te quedas callado, la IA retoma la charla (máx. 2 veces seguidas) */
+    clearTimeout(SP.t);
+    if(SP.on && SP.run < 2) SP.t = setTimeout(() => simReply(true), 24000 + Math.random() * 16000);
+  }
+  function simSay(text){
+    text = String(text).slice(0, 300);
+    SP.hist.push(['assistant', text]); if(SP.hist.length > 30) SP.hist.shift(); SP.run++;
+    chatPush('them', text, false, true); tone(660,.12,'triangle',.04); speak(text);
+    RV.typeUntil = 0; RV.talkUntil = performance.now() + Math.min(20000, 600 + text.length * 62);   /* el avatar mueve la boca al hablar */
+    simNudge();
+  }
+  async function simReply(nudge){
+    const h = SP.hist[SP.hist.length - 1];
+    if(!SP.on || SP.busy || !inCall() || (h && h[0] === 'assistant' && !nudge)) return;
+    SP.busy = true; const q = AI.seq, first = !SP.hist.length;
+    SP.minAt = performance.now() + 1500 + Math.random() * 1500;   /* tiempo mínimo de «escribir» */
+    RV.typeUntil = performance.now() + 9000;   /* puntos de «escribiendo…» mientras piensa */
+    let t = '';
+    try{
+      t = await aiGenerate(first, SP, SP.hist);
+      if(t && isRepeat(t, SP.hist)) t = await aiGenerate(first, SP, SP.hist);
+      if(!t || isRepeat(t, SP.hist)) t = aiFallback(first, SP.hist);
+    } finally { SP.busy = false; RV.typeUntil = 0; }
+    if(!SP.on || !inCall()) return;
+    if(AI.seq !== q){ simKick(600); return; }   /* llegó otro mensaje mientras pensaba */
+    if(t){ const wait = Math.max(0, SP.minAt - performance.now()); if(wait) await new Promise(r => setTimeout(r, wait)); if(SP.on && inCall() && AI.seq === q) simSay(t); else if(SP.on) simKick(600); }
+  }
 
   /* ---------- Controles de llamada ---------- */
   /* Reiniciar: doble pulsación con confirmación «¿Seguro?» */
@@ -1096,17 +1113,6 @@ dialog .row{margin-top:18px}
   const wait = ms => new Promise(r=>setTimeout(r,ms));
   window.addEventListener('beforeunload', closeNet);
 
-  /* Navegador interno en iPhone (WhatsApp, etc.): avisar y ofrecer abrir en Safari */
-  (function(){
-    const ua = navigator.userAgent;
-    const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
-    const showSf = () => $('#sfBanner').classList.remove('hide');
-    window._showSf = () => { if(ios && !navigator.standalone) showSf(); };
-    if(ios && !navigator.standalone && (!/Safari\//.test(ua) || !navigator.mediaDevices || /WhatsApp|FBAN|FBAV|Instagram|Line\/|MicroMessenger|Snapchat|Telegram/i.test(ua))) showSf();
-    if(/[?&]ua\b/.test(location.search)){ showSf(); const u = $('#sfUa'); u.textContent = ua; u.classList.remove('hide'); }
-    $('#sfOpen').addEventListener('click', () => { location.href = 'x-safari-' + location.href; });
-    $('#sfCopy').addEventListener('click', async () => { try{ await navigator.clipboard.writeText(location.href); }catch(e){} toast('Enlace copiado'); });
-  })();
 
   /* Inglés por defecto */
   LANG = 'en'; applyLang();
