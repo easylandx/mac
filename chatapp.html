@@ -207,7 +207,7 @@ dialog .row{margin-top:18px}
           <div>
             <div class="radar mini" aria-hidden="true"><i></i></div>
             <div class="match-msg" id="matchMsg" aria-live="polite"></div>
-            <div style="margin-top:12px"><button class="link hide" id="simBtn" data-noi18n>Chat AI</button></div>
+            <div style="margin-top:12px"><button class="link hide" id="simBtn" data-es="Chat con IA">Chat con IA</button></div>
           </div>
         </div>
         <div class="pip" id="pip"><video id="local" autoplay playsinline muted></video><div class="off" id="pipOff">Cámara apagada</div></div>
@@ -302,6 +302,7 @@ dialog .row{margin-top:18px}
     "🔊 Toca para activar el sonido": "🔊 Tap to turn the sound on",
     "para la voz del chat": "for chat voice",
     "Reiniciar": "Reset",
+    "Chat con IA": "Chat with AI",
     "¿Seguro?": "Sure?",
     "Voz activada": "Voice on",
     "La otra persona no envía audio (sin micrófono)": "The other person isn’t sending audio (no microphone)",
@@ -804,7 +805,7 @@ dialog .row{margin-top:18px}
     SP.hist = AI.hist.map(([r, c]) => [r === 'assistant' ? 'user' : 'assistant', c]);
     const mine = AI.persona; do { SP.persona = PERSONAS[Math.floor(Math.random() * PERSONAS.length)]; } while(SP.persona === mine);
     startCall();
-    simKick(1800 + Math.random() * 1200);
+    simKick(2000 + Math.random() * 600);
   });
 
   /* ---------- Llamada ---------- */
@@ -817,7 +818,7 @@ dialog .row{margin-top:18px}
     if(hadWait) chatPush('sys', 'Alguien se ha unido · ¡empieza la charla!', true);
     else { chatClear(); $('#chatInput').value=''; }
     render(); go('call');
-    if(AI.on) aiKick(SP.on ? 2500 + Math.random() * 1500 : 1800 + Math.random() * 2500);
+    if(AI.on) aiKick(SP.on ? 3000 + Math.random() * 800 : 1800 + Math.random() * 2500);
     cancelAnimationFrame(S.raf); if(!RT.real) S.raf = requestAnimationFrame(drawRemote);
     S.last = performance.now(); clearInterval(S.timer); S.timer = setInterval(tick, 200);
   }
@@ -923,7 +924,7 @@ dialog .row{margin-top:18px}
       try{ RT.conn.send({ t:'chat', m:text, tts:true, ai:!!ai }); }catch(e){ toast('No se pudo enviar el mensaje'); }
     } else if(SP.on){
       SP.hist.push(['user', text]); if(SP.hist.length > 30) SP.hist.shift(); SP.run = 0;
-      simKick(2800 + text.length * 24 + Math.random() * 2500);
+      simKick(2900 + Math.random() * 500);
     }
   }
   $('#chatInput').addEventListener('input', () => { if(S.avatar && $('#chatInput').value) AV.typeUntil = performance.now() + 900; });
@@ -938,8 +939,7 @@ dialog .row{margin-top:18px}
   }
   function aiIncoming(){
     if(!SP.on){ aiKick(1200 + Math.random() * 3800); return; }
-    const h = AI.hist[AI.hist.length - 1], len = h ? h[1].length : 40;
-    aiKick(Math.max(0, RV.talkUntil - performance.now()) + 3000 + len * 20 + Math.random() * 2500);
+    aiKick(Math.max(0, RV.talkUntil - performance.now()) + 4200 + Math.random() * 500);   /* espera a que termine de hablar + ~4,5 s */
   }
   function norm(t){ return String(t).toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, '').replace(/\s+/g, ' ').trim(); }
   function similar(a, b){
@@ -1036,7 +1036,7 @@ dialog .row{margin-top:18px}
     AI.on = on; AI.run = 0; clearTimeout(AI.t);
     const b = $('#aiBtn'); b.setAttribute('aria-pressed', on); setT(b, 'Modo IA: ' + (on ? 'sí' : 'no'));
     if(!quiet) chatPush('sys', on ? 'Modo IA activado · la IA chatea por ti' : 'Modo IA desactivado · vuelves a escribir tú', true);
-    if(on && inCall()) aiKick(1200);
+    if(on && inCall()) aiKick(2000);
   }
   $('#aiBtn').addEventListener('click', () => aiSet(!AI.on));
 
@@ -1066,7 +1066,7 @@ dialog .row{margin-top:18px}
     const h = SP.hist[SP.hist.length - 1];
     if(!SP.on || SP.busy || !inCall() || (h && h[0] === 'assistant' && !nudge)) return;
     SP.busy = true; const q = AI.seq, first = !SP.hist.length;
-    SP.minAt = performance.now() + 1500 + Math.random() * 1500;   /* tiempo mínimo de «escribir» */
+    SP.minAt = performance.now() + 1100 + Math.random() * 400;   /* tiempo mínimo de «escribir» */
     RV.typeUntil = performance.now() + 9000;   /* puntos de «escribiendo…» mientras piensa */
     let t = '';
     try{
