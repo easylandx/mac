@@ -73,6 +73,10 @@ html,body{background:#d2b843}
 .bar button.on{background:rgba(74,58,18,.16)}
 .sug button{border-color:rgba(74,58,18,.45);background:rgba(74,58,18,.08)}
 }
+#lp{display:none;position:absolute;left:50%;bottom:calc(74px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:8;gap:10px;padding:10px;border-radius:16px;background:#3b2f27;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+#lp.show{display:flex}
+#lp button{border:0;border-radius:12px;padding:10px 18px;background:#f3e38a;color:#3b2f27;font:15px 'Special Elite',monospace;display:flex;flex-direction:column;align-items:center;gap:2px}
+#lp b{font-size:20px}#lp small{font-size:11px}
 </style>
 </head>
 <body>
@@ -96,7 +100,8 @@ html,body{background:#d2b843}
     <button id="bcl"><i>📕</i>Close</button>
    </div>
   </div>
-  <div class="cover" id="cover"><div class="band" id="band"></div><small>tap to open</small><b>NOTES</b></div>
+  <div id="lp"><button data-l="en-US"><b>EN</b><small>English</small></button><button data-l="es-ES"><b>ES</b><small>Español</small></button></div>
+  <div class="cover" id="cover"><div class="band" id="band"></div><b>NOTES</b></div>
  </div>
 </div>
 <div id="toast"></div>
@@ -111,7 +116,9 @@ let pages=[{t:'',s:[]}],idx=0;try{const d=JSON.parse(localStorage.getItem('moles
 /* cover and elastic band */
 function openBook(){if(book.classList.contains('open'))return;snd.thud();cover.classList.add('pull');setTimeout(()=>{book.classList.add('open');cover.classList.remove('pull');fit()},380)}
 function closeBook(){snd.thud();book.classList.remove('open');cover.classList.add('snap');setTimeout(()=>cover.classList.remove('snap'),700)}
-cover.onclick=openBook;$('#bcl').onclick=closeBook;
+cover.onclick=openBook;let c0=null;
+cover.addEventListener('touchstart',e=>{c0=e.touches.length==1?{x:e.touches[0].clientX,y:e.touches[0].clientY}:null},{passive:true});
+cover.addEventListener('touchend',e=>{if(!c0)return;const t=e.changedTouches[0],dx=t.clientX-c0.x,dy=t.clientY-c0.y;c0=null;if(dy<-60&&Math.abs(dx)<Math.abs(dy)*.6)openBook()},{passive:true});$('#bcl').onclick=closeBook;
 
 /* sizing, ink */
 const dpr=()=>Math.min(devicePixelRatio||1,2);
@@ -139,11 +146,14 @@ function hand(t){q+=(ta.value&&!/\s$/.test(ta.value)?' ':'')+t+' ';if(!typing)st
 function step(){typing=true;if(!q){typing=false;save();suggest();return}ta.value+=q[0];q=q.slice(1);fit();pad.scrollTop=Math.max(pad.scrollTop,ta.value.split('\n').length*32-pad.clientHeight+120);setTimeout(step,24+Math.random()*40)}
 $('#bmic').onclick=()=>{if(!SR)return toast('Voice dictation is not supported by this browser. Use your iPhone keyboard microphone instead.');
  if(hearing){rec.stop();return}
- rec=new SR();rec.lang=navigator.language||'en-US';rec.continuous=true;rec.interimResults=false;
+ lp.classList.toggle('show')};
+const lp=$('#lp');lp.onclick=e=>{const b=e.target.closest('button');if(b)startVoice(b.dataset.l)};
+document.addEventListener('click',e=>{if(!e.target.closest('#lp,#bmic'))lp.classList.remove('show')});
+function startVoice(l){lp.classList.remove('show');rec=new SR();rec.lang=l;rec.continuous=true;rec.interimResults=false;
  rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)hand(e.results[i][0].transcript.trim())};
  rec.onerror=()=>toast('Microphone not available here. Try opening the page in its own tab.');
  rec.onend=()=>{hearing=false;$('#bmic').classList.remove('on','rec')};
- try{rec.start();hearing=true;$('#bmic').classList.add('on','rec');toast('Listening…')}catch(e){}};
+ try{rec.start();hearing=true;$('#bmic').classList.add('on','rec');toast(l=='es-ES'?'Escuchando… (ES)':'Listening… (EN)')}catch(e){}};
 
 /* predictive sentence completion (on-device, learns from your own writing) */
 const seed="i need to remember to call the doctor tomorrow morning and buy some milk from the store today i want to finish the project and send it to the team thank you for your help and have a great day let me know if you have any questions about the meeting i am going to the market to buy fresh bread and vegetables for dinner the idea is to make something simple that people really love to use it was a quiet evening and the rain kept falling on the window we should plan the trip for next weekend with all our friends";
