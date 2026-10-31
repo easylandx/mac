@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Notebook</title>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Special+Elite&display=swap" rel="stylesheet">
 <style>
@@ -10,12 +10,12 @@
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--d1:#241b16;--d2:#050302;--btn:#cdbf9f;--bar:#0b0806}}
 :root[data-theme="dark"]{--d1:#241b16;--d2:#050302;--btn:#cdbf9f;--bar:#0b0806}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;margin:0}
-body{overflow:hidden;background:radial-gradient(ellipse at 50% 30%,var(--d1),var(--d2));font-family:'Special Elite',monospace;color:var(--btn)}
-.scene{height:100%;display:flex;align-items:center;justify-content:center;perspective:1700px;padding:14px}
-.book{position:relative;width:min(100%,520px);height:min(100%,840px);transform-style:preserve-3d}
+html,body{width:100%;height:100%;min-height:100%;margin:0} @supports (height: 100dvh){html,body{height:100dvh;min-height:100dvh}}
+body{overflow:hidden;overscroll-behavior:none;background:radial-gradient(ellipse at 50% 30%,var(--d1),var(--d2));font-family:'Special Elite',monospace;color:var(--btn)}
+.scene{height:100%;min-height:0;display:flex;align-items:center;justify-content:center;perspective:1700px;padding:calc(14px + env(safe-area-inset-top,0px)) 14px calc(14px + env(safe-area-inset-bottom,0px));}
+.book{position:relative;width:min(100%,520px);height:min(100%,840px);max-height:100%;min-height:0;transform-style:preserve-3d}
 .inside{position:absolute;inset:0;display:flex;flex-direction:column;border-radius:6px 16px 16px 6px;background:var(--bar);box-shadow:0 18px 40px rgba(0,0,0,.6);overflow:hidden}
-.pad{flex:1;overflow-y:auto;overscroll-behavior:contain;background:#f1e27c;margin:8px 8px 0 10px;border-radius:3px 8px 0 0;-webkit-overflow-scrolling:touch}
+.pad{flex:1 1 0%;min-height:0;overflow-y:auto;overscroll-behavior:contain;background:#f1e27c;margin:8px 8px 0 10px;border-radius:3px 8px 0 0;-webkit-overflow-scrolling:touch;touch-action:pan-y}
 .paper{position:relative;background:#f7e98e linear-gradient(transparent 0 27px,rgba(52,88,160,.38) 27px 28px,transparent 28px 32px) 0 64px/100% 32px repeat-y;box-shadow:inset 0 0 60px rgba(176,140,30,.28)}
 .paper::before{content:"";position:absolute;left:44px;top:0;bottom:0;width:2px;background:rgba(200,60,60,.45);box-shadow:3px 0 0 rgba(200,60,60,.18);z-index:1;pointer-events:none}
 .top{height:64px;background:linear-gradient(#e6d36a,#f4e486);border-bottom:2px solid rgba(200,60,60,.5);display:flex;align-items:flex-end;padding:0 18px 8px 58px;font-size:12px;color:rgba(70,50,10,.6);letter-spacing:.14em;text-transform:uppercase;position:relative;z-index:2}
@@ -26,7 +26,7 @@ textarea::placeholder{color:rgba(29,42,92,.4)}
 .sketching textarea{pointer-events:none}
 .sug{min-height:34px;padding:6px 12px 0;background:var(--bar);font-family:'Caveat',cursive;font-size:20px}
 .sug button{max-width:100%;border:1px dashed rgba(232,220,192,.5);background:rgba(232,220,192,.1);color:var(--btn);border-radius:16px;padding:1px 12px;font:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bar{display:flex;justify-content:space-around;padding:6px 6px 10px;background:var(--bar)}
+.bar{display:flex;flex:0 0 auto;justify-content:space-around;padding:6px 6px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bar)}
 .bar button{background:none;border:0;color:var(--btn);font:10px 'Special Elite',monospace;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 6px;border-radius:10px}
 .bar button i{font-style:normal;font-size:20px}
 .bar button.on{background:rgba(232,220,192,.18)}
@@ -43,7 +43,7 @@ box-shadow:0 20px 44px rgba(0,0,0,.65),inset 0 0 0 1px rgba(255,255,255,.05),ins
 .cover.snap .band{animation:snap .6s}
 @keyframes snap{0%{transform:translateX(-26px)}40%{transform:translateX(7px)}70%{transform:translateX(-3px)}100%{transform:none}}
 .book.open .cover{transform:rotateY(-172deg);opacity:0;pointer-events:none}
-#zen{position:fixed;inset:0;z-index:50;display:none;width:100%;height:100%;touch-action:none}
+#zen{position:fixed;inset:0;z-index:50;display:none;width:100%;height:100%;height:100dvh;touch-action:none}
 #zx{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:16px;z-index:60;display:none;background:rgba(60,45,20,.5);color:#f3e8cc;border:0;border-radius:18px;padding:6px 14px;font:13px 'Special Elite',monospace}
 #toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:#000c;color:#fff;padding:8px 16px;border-radius:18px;font-size:13px;z-index:99;opacity:0;transition:opacity .3s;pointer-events:none;max-width:88%;text-align:center}
 </style>
@@ -95,13 +95,17 @@ function seg(a,b){ctx.beginPath();ctx.lineWidth=b[3];ctx.moveTo(a[0],a[1]);ctx.l
 function redraw(){setup();ctx.clearRect(0,0,9999,9999);strokes.forEach(s=>s.forEach((p,i)=>i&&seg(s[i-1],p)))}
 function fit(){ta.style.height='auto';const h=Math.max(ta.scrollHeight,pad.clientHeight-64,1400);ta.style.height=h+'px';
  const w=paper.clientWidth,d=dpr();if(w&&(cw!=w||chh!=h)){cw=w;chh=h;cv.width=w*d;cv.height=h*d;cv.style.height=h+'px';redraw()}}
-addEventListener('resize',fit);
+let fitQueued=false;
+function queueFit(){if(fitQueued)return;fitQueued=true;requestAnimationFrame(()=>{fitQueued=false;fit()})}
+addEventListener('resize',queueFit,{passive:true});
+addEventListener('orientationchange',()=>setTimeout(queueFit,180),{passive:true});
+if(window.visualViewport)visualViewport.addEventListener('resize',queueFit,{passive:true});
 
 /* sketching with live animated ink */
 const pt=e=>{const r=cv.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top,performance.now(),2.6]};
 cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);const p=pt(e);cur=[p];strokes.push(cur);setup();seg(p,[p[0]+.1,p[1],0,3])};
 cv.onpointermove=e=>{if(!cur)return;const p=pt(e),a=cur[cur.length-1],sp=Math.hypot(p[0]-a[0],p[1]-a[1])/Math.max(1,p[2]-a[2]);p[3]=Math.max(1.3,Math.min(3.4,a[3]*.7+(3.6-sp*2.4)*.3));seg(a,p);cur.push(p)};
-cv.onpointerup=cv.onpointercancel=()=>{cur=null;save()};
+cv.onpointerup=cv.onpointercancel=cv.onlostpointercapture=()=>{if(cur){cur=null;save()}};
 $('#bmode').onclick=()=>{mode=mode=='write'?'sketch':'write';paper.parentNode.classList.toggle('sketching',mode=='sketch');$('#bmode').innerHTML=mode=='write'?'<i>✎</i>Write':'<i>✏️</i>Sketch';$('#bmode').classList.toggle('on',mode=='sketch');toast(mode=='sketch'?'Sketch mode: draw on the page':'Write mode: type and scroll')};
 $('#brep').onclick=()=>{if(!strokes.length)return toast('Draw something first');setup();ctx.clearRect(0,0,9999,9999);const L=[];let T=0;
  strokes.forEach(s=>{const t0=s[0][2];s.forEach((p,i)=>{if(i)L.push([T+p[2]-t0,s[i-1],p])});T+=s[s.length-1][2]-t0+180});
@@ -111,7 +115,7 @@ $('#brep').onclick=()=>{if(!strokes.length)return toast('Draw something first');
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,hearing=false,q='',typing=false;
 function hand(t){q+=(ta.value&&!/\s$/.test(ta.value)?' ':'')+t+' ';if(!typing)step()}
 function step(){typing=true;if(!q){typing=false;save();suggest();return}ta.value+=q[0];q=q.slice(1);fit();pad.scrollTop=Math.max(pad.scrollTop,ta.value.split('\n').length*32-pad.clientHeight+120);setTimeout(step,24+Math.random()*40)}
-$('#bmic').onclick=()=>{if(!SR)return toast('Voice memos need Chrome or Safari with speech recognition');
+$('#bmic').onclick=()=>{if(!SR)return toast('Voice dictation is not supported by this browser. Use your iPhone keyboard microphone instead.');
  if(hearing){rec.stop();return}
  rec=new SR();rec.lang=navigator.language||'en-US';rec.continuous=true;rec.interimResults=false;
  rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)hand(e.results[i][0].transcript.trim())};
@@ -190,7 +194,7 @@ function orient(){if(mq.matches&&!zOff&&book.classList.contains('open'))zen(true
 mq.addEventListener('change',orient);
 document.addEventListener('pointerdown',tiltOn,{once:true});
 
-fit();setTimeout(fit,300);
+fit();setTimeout(fit,300);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(queueFit);
 </script>
 </body>
 </html>
