@@ -141,19 +141,24 @@ cv.onpointerup=cv.onpointercancel=cv.onlostpointercapture=()=>{if(cur){cur=null;
 $('#bmode').onclick=()=>{mode=mode=='write'?'sketch':'write';paper.parentNode.classList.toggle('sketching',mode=='sketch');$('#bmode').innerHTML=mode=='write'?'<i>✎</i>Write':'<i>✏️</i>Sketch';$('#bmode').classList.toggle('on',mode=='sketch');toast(mode=='sketch'?'Sketch mode: draw on the page':'Write mode: type and scroll')};
 
 /* voice memos written out in handwriting */
-const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,hearing=false,q='',typing=false;
-function hand(t){q+=(ta.value&&!/\s$/.test(ta.value)?' ':'')+t+' ';if(!typing)step()}
-function step(){typing=true;if(!q){typing=false;save();suggest();return}ta.value+=q[0];q=q.slice(1);fit();pad.scrollTop=Math.max(pad.scrollTop,ta.value.split('\n').length*32-pad.clientHeight+120);setTimeout(step,24+Math.random()*40)}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,hearing=false,want=false,vlang='en-US',vbase='';
+const vui=on=>{hearing=on;$('#bmic').classList.toggle('on',on);$('#bmic').classList.toggle('rec',on)};
 $('#bmic').onclick=()=>{if(!SR)return toast('Voice dictation is not supported by this browser. Use your iPhone keyboard microphone instead.');
- if(hearing){rec.stop();return}
+ if(want||hearing){want=false;try{rec.stop()}catch(e){}return}
  lp.classList.toggle('show')};
 const lp=$('#lp');lp.onclick=e=>{const b=e.target.closest('button');if(b)startVoice(b.dataset.l)};
 document.addEventListener('click',e=>{if(!e.target.closest('#lp,#bmic'))lp.classList.remove('show')});
-function startVoice(l){lp.classList.remove('show');rec=new SR();rec.lang=l;rec.continuous=true;rec.interimResults=false;
- rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)hand(e.results[i][0].transcript.trim())};
- rec.onerror=()=>toast('Microphone not available here. Try opening the page in its own tab.');
- rec.onend=()=>{hearing=false;$('#bmic').classList.remove('on','rec')};
- try{rec.start();hearing=true;$('#bmic').classList.add('on','rec');toast(l=='es-ES'?'Escuchando… (ES)':'Listening… (EN)')}catch(e){}};
+function startVoice(l){lp.classList.remove('show');vlang=l;want=true;hideSug();beginVoice();toast(l=='es-ES'?'Escuchando… (ES)':'Listening… (EN)')}
+function beginVoice(){
+ rec=new SR();rec.lang=vlang;rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=1;
+ vbase=ta.value;const sep=vbase&&!/\s$/.test(vbase)?' ':'',cap=!vbase.trim()||/[.!?\n]\s*$/.test(vbase);
+ rec.onresult=e=>{const ps=[];for(let i=0;i<e.results.length;i++)ps.push(e.results[i][0].transcript.trim());
+  let t=ps.join(' ').replace(/\s+/g,' ').trim();if(t&&cap)t=t[0].toUpperCase()+t.slice(1);
+  ta.value=vbase+(t?sep+t:'');fit();if(pad.scrollHeight-pad.scrollTop-pad.clientHeight<160)pad.scrollTop=pad.scrollHeight};
+ rec.onerror=e=>{if(e.error=='no-speech'||e.error=='aborted')return;want=false;toast(e.error=='not-allowed'||e.error=='service-not-allowed'?'Microphone blocked. Allow it in your browser settings.':'Microphone not available here. Try opening the page in its own tab.')};
+ rec.onend=()=>{save();if(want&&!busyStart){busyStart=true;setTimeout(()=>{busyStart=false;if(want)try{beginVoice()}catch(e){want=false;vui(false)}},150)}else{vui(false);suggest()}};
+ try{rec.start();vui(true)}catch(e){want=false;vui(false)}}
+let busyStart=false;
 
 /* predictive sentence completion (on-device, learns from your own writing) */
 const seed="i need to remember to call the doctor tomorrow morning and buy some milk from the store today i want to finish the project and send it to the team thank you for your help and have a great day let me know if you have any questions about the meeting i am going to the market to buy fresh bread and vegetables for dinner the idea is to make something simple that people really love to use it was a quiet evening and the rain kept falling on the window we should plan the trip for next weekend with all our friends";
