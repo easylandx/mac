@@ -10,31 +10,22 @@
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--d1:#241b16;--d2:#050302;--btn:#cdbf9f;--bar:#0b0806}}
 :root[data-theme="dark"]{--d1:#241b16;--d2:#050302;--btn:#cdbf9f;--bar:#0b0806}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden} @supports (height:100dvh){html,body{height:100dvh;min-height:100dvh}}
-body{overflow:hidden;overscroll-behavior:none;background:radial-gradient(ellipse at 50% 30%,var(--d1),var(--d2));font-family:'Special Elite',monospace;color:var(--btn)}
-.scene{position:fixed;inset:0;height:100%;min-height:0;display:flex;align-items:stretch;justify-content:center;perspective:1700px;padding:calc(8px + env(safe-area-inset-top,0px)) calc(10px + env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) calc(10px + env(safe-area-inset-left,0px));overflow:hidden}
+html,body{width:100%;height:auto;min-height:100%;margin:0;overflow-x:hidden;overflow-y:auto}
+body{overscroll-behavior-y:auto;background:#f7e98e;font-family:'Special Elite',monospace;color:var(--btn)}
+/* The app stays pinned while a short document scroll lets iPhone Safari collapse its browser chrome. */
+.app-shell{position:relative;min-height:calc(100svh + 160px);background:#f7e98e}
+.scene{position:sticky;top:0;height:100svh;min-height:0;display:flex;align-items:stretch;justify-content:center;perspective:1700px;padding:0;overflow:hidden}
 @supports (height:100dvh){.scene{height:100dvh}}
-.book{position:relative;width:min(100%,520px);height:100%;max-height:840px;min-height:0;transform-style:preserve-3d}
-/* iPhone landscape: use the wide viewport and compact the controls */
-@media (orientation:landscape) and (max-height:600px){
- .scene{padding:calc(4px + env(safe-area-inset-top,0px)) calc(8px + env(safe-area-inset-right,0px)) calc(4px + env(safe-area-inset-bottom,0px)) calc(8px + env(safe-area-inset-left,0px))}
- .book{width:100%;height:100%;max-height:none}
- .inside{border-radius:5px 12px 12px 5px}
- .pad{margin:5px 5px 0 6px}
- .top{height:42px;padding:0 14px 5px 52px;font-size:10px}
- .bar{padding:2px 8px calc(3px + env(safe-area-inset-bottom,0px))}
- .bar button{gap:1px;padding:2px 8px;font-size:9px}
- .bar button i{font-size:17px}
- .sug{min-height:27px;padding:2px 10px 0;font-size:17px}
- .cover{border-radius:5px 12px 12px 5px}
- .cover::before{width:20px}
-}
+.scroll-tail{height:160px;background:#f7e98e;pointer-events:none}
+.book{position:relative;width:min(100%,520px);height:100%;max-height:none;min-height:0;transform-style:preserve-3d}
+/* Portrait-only notebook proportions: keep the book tall and narrow. */
+.book{width:min(100%,520px);height:100%;max-height:none;min-height:0}
 
-.inside{position:absolute;inset:0;display:grid;grid-template-rows:minmax(0,1fr) auto auto;min-height:0;border-radius:6px 16px 16px 6px;background:var(--bar);box-shadow:0 18px 40px rgba(0,0,0,.6);overflow:hidden}
-.pad{display:block;min-height:0;min-width:0;overflow-y:auto;overscroll-behavior:contain;background:#f7e98e;margin:8px 8px 0 10px;border-radius:3px 8px 0 0;-webkit-overflow-scrolling:touch;touch-action:pan-y}
-.paper{position:relative;isolation:isolate;display:block;width:100%;min-height:100%;height:max-content;background-color:#f7e98e;background-image:linear-gradient(transparent 0 27px,rgba(52,88,160,.38) 27px 28px,transparent 28px 32px);background-position:0 64px;background-size:100% 32px;background-repeat:repeat-y;box-shadow:inset 0 0 60px rgba(176,140,30,.28)}
+.inside{position:absolute;inset:0;display:grid;grid-template-rows:minmax(0,1fr) auto auto;min-height:0;border-radius:0;background:var(--bar);box-shadow:0 18px 40px rgba(0,0,0,.6);overflow:hidden}
+.pad{display:block;min-height:0;min-width:0;overflow-y:auto;overscroll-behavior:auto;background:#f7e98e;margin:0;border-radius:0;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.paper{position:relative;isolation:isolate;display:block;width:100%;min-height:100%;height:max-content;background-color:#f7e98e;background-image:linear-gradient(transparent 0 27px,rgba(52,88,160,.38) 27px 28px,transparent 28px 32px);background-position:0 calc(64px + env(safe-area-inset-top,0px));background-size:100% 32px;background-repeat:repeat-y;box-shadow:inset 0 0 60px rgba(176,140,30,.28)}
 .paper::before{content:"";position:absolute;left:44px;top:0;bottom:0;width:2px;background:rgba(200,60,60,.45);box-shadow:3px 0 0 rgba(200,60,60,.18);z-index:1;pointer-events:none}
-.top{height:64px;background:linear-gradient(#e6d36a,#f4e486);border-bottom:2px solid rgba(200,60,60,.5);display:flex;align-items:flex-end;padding:0 18px 8px 58px;font-size:12px;color:rgba(70,50,10,.6);letter-spacing:.14em;text-transform:uppercase;position:relative;z-index:2}
+.top{height:calc(64px + env(safe-area-inset-top,0px));background:linear-gradient(#e6d36a,#f4e486);border-bottom:2px solid rgba(200,60,60,.5);display:flex;align-items:flex-end;padding:0 18px 8px 58px;font-size:12px;color:rgba(70,50,10,.6);letter-spacing:.14em;text-transform:uppercase;position:relative;z-index:2}
 textarea{display:block;width:100%;border:0;outline:0;background:transparent;resize:none;overflow:hidden;font:500 26px/32px 'Caveat',cursive;color:#1d2a5c;padding:0 18px 0 58px;min-height:1400px;caret-color:#b3261e}
 textarea::placeholder{color:rgba(29,42,92,.4)}
 #sk{position:absolute;left:0;top:64px;display:block;width:100%;height:1400px;background:transparent;z-index:3;pointer-events:none}
@@ -48,21 +39,27 @@ textarea::placeholder{color:rgba(29,42,92,.4)}
 .bar button.on{background:rgba(232,220,192,.18)}
 .bar button.rec i{animation:pulse 1s infinite}
 @keyframes pulse{50%{opacity:.25}}
-.cover{position:absolute;inset:0;border-radius:6px 16px 16px 6px;transform-origin:left center;transition:transform 1.2s cubic-bezier(.6,.05,.3,1),opacity .3s ease 1s;backface-visibility:hidden;cursor:pointer;
+.cover{position:absolute;inset:0;border-radius:8px 18px 18px 8px;transform-origin:left center;transition:transform 1.2s cubic-bezier(.6,.05,.3,1),opacity .3s ease 1s;backface-visibility:hidden;cursor:pointer;
 background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.3'/%3E%3C/svg%3E"),linear-gradient(135deg,#222225,#0a0a0b 55%,#18181a);
 box-shadow:0 20px 44px rgba(0,0,0,.65),inset 0 0 0 1px rgba(255,255,255,.05),inset 14px 0 14px -10px rgba(255,255,255,.14),inset -4px 0 8px rgba(0,0,0,.6)}
 .cover::before{content:"";position:absolute;left:0;top:0;bottom:0;width:26px;border-radius:6px 0 0 6px;background:linear-gradient(90deg,rgba(0,0,0,.65),rgba(255,255,255,.07) 40%,rgba(0,0,0,.45))}
 .cover b{position:absolute;left:0;right:0;bottom:11%;text-align:center;font-weight:400;font-size:13px;letter-spacing:.35em;color:rgba(255,255,255,.28);text-shadow:0 -1px 0 rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.08)}
 .cover small{position:absolute;left:0;right:70px;top:46%;text-align:center;font-size:12px;color:rgba(255,255,255,.3);animation:pulse 2.4s infinite}
-.band{position:absolute;right:44px;top:-1px;bottom:-1px;width:16px;background:repeating-linear-gradient(0deg,#0d0d0e 0 3px,#1b1b1d 3px 4px);box-shadow:-2px 0 4px rgba(0,0,0,.7),2px 0 4px rgba(0,0,0,.5);transition:transform .35s}
+.band{position:absolute;right:12%;top:-1px;bottom:-1px;width:14px;background:repeating-linear-gradient(0deg,#0d0d0e 0 3px,#1b1b1d 3px 4px);box-shadow:-2px 0 4px rgba(0,0,0,.7),2px 0 4px rgba(0,0,0,.5);transition:transform .35s}
 .cover.pull .band{transform:translateX(-26px) scaleX(1.25)}
 .cover.snap .band{animation:snap .6s}
 @keyframes snap{0%{transform:translateX(-26px)}40%{transform:translateX(7px)}70%{transform:translateX(-3px)}100%{transform:none}}
 .book.open .cover{transform:rotateY(-172deg);opacity:0;pointer-events:none}
+.book.turn-next .inside{animation:pageNext .48s ease both}
+.book.turn-prev .inside{animation:pagePrev .48s ease both}
+@keyframes pageNext{0%{transform:translateX(0) rotateY(0);filter:brightness(1)}45%{transform:translateX(-18%) rotateY(-9deg);filter:brightness(.78)}100%{transform:translateX(0) rotateY(0);filter:brightness(1)}}
+@keyframes pagePrev{0%{transform:translateX(0) rotateY(0)}45%{transform:translateX(18%) rotateY(9deg);filter:brightness(.78)}100%{transform:translateX(0) rotateY(0);filter:brightness(1)}}
+
 #toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:#000c;color:#fff;padding:8px 16px;border-radius:18px;font-size:13px;z-index:99;opacity:0;transition:opacity .3s;pointer-events:none;max-width:88%;text-align:center}
 </style>
 </head>
 <body>
+<div class="app-shell">
 <div class="scene">
  <div class="book" id="book">
   <div class="inside">
@@ -77,34 +74,44 @@ box-shadow:0 20px 44px rgba(0,0,0,.65),inset 0 0 0 1px rgba(255,255,255,.05),ins
    <div class="bar">
     <button id="bmode"><i>✎</i>Write</button>
     <button id="bmic"><i>🎙</i>Voice</button>
-    <button id="brep"><i>▶</i>Replay</button>
-    <button id="bsh"><i>📤</i>WhatsApp</button>
+     <button id="bsh"><i>📤</i>WhatsApp</button>
+   <button id="berase"><i>🧹</i>Erase all</button>
     <button id="bcl"><i>📕</i>Close</button>
    </div>
   </div>
   <div class="cover" id="cover"><div class="band" id="band"></div><small>tap the elastic band</small><b>NOTES</b></div>
  </div>
 </div>
+<div class="scroll-tail" aria-hidden="true"></div>
+</div>
 <div id="toast"></div>
 <script>
 const $=s=>document.querySelector(s);
 const book=$('#book'),cover=$('#cover'),ta=$('#ta'),cv=$('#sk'),ctx=cv.getContext('2d'),pad=$('#pad'),paper=$('#paper'),sug=$('#sug');
 let strokes=[],mode='write',cur=null,last=null,cw=0,chh=0;
+let pages=[{t:'',s:[]}],pageIndex=0;
 function toast(m){const t=$('#toast');t.textContent=m;t.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.opacity=0,2600)}
-function save(){try{localStorage.setItem('moleskine:v1',JSON.stringify({t:ta.value,s:strokes}))}catch(e){}}
-try{const d=JSON.parse(localStorage.getItem('moleskine:v1')||'null');if(d){ta.value=d.t||'';strokes=d.s||[]}}catch(e){}
+function save(){pages[pageIndex]={t:ta.value,s:strokes};try{localStorage.setItem('moleskine:v2',JSON.stringify({pages,index:pageIndex}));localStorage.setItem('moleskine:v1',JSON.stringify({t:ta.value,s:strokes}))}catch(e){}}
+try{const v2=JSON.parse(localStorage.getItem('moleskine:v2')||'null');const old=JSON.parse(localStorage.getItem('moleskine:v1')||'null');if(v2&&Array.isArray(v2.pages)&&v2.pages.length){pages=v2.pages;pageIndex=Math.max(0,Math.min(pages.length-1,v2.index||0))}else if(old){pages=[{t:old.t||'',s:old.s||[]}]}const pg=pages[pageIndex]||{t:'',s:[]};ta.value=pg.t||'';strokes=pg.s||[]}catch(e){}
 
 /* cover and elastic band */
 function openBook(){if(book.classList.contains('open'))return;cover.classList.add('pull');setTimeout(()=>{book.classList.add('open');cover.classList.remove('pull');fit()},380)}
 function closeBook(){book.classList.remove('open');cover.classList.add('snap');setTimeout(()=>cover.classList.remove('snap'),700)}
 cover.onclick=openBook;$('#bcl').onclick=closeBook;
+function pageSound(kind){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const a=new AC(),o=a.createOscillator(),g=a.createGain();o.type='triangle';o.frequency.setValueAtTime(kind==='tear'?190:280,a.currentTime);o.frequency.exponentialRampToValueAtTime(kind==='tear'?65:120,a.currentTime+.16);g.gain.setValueAtTime(.0001,a.currentTime);g.gain.exponentialRampToValueAtTime(.055,a.currentTime+.015);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.2);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.21);o.onended=()=>a.close()}catch(e){}}
+function renderPage(){const pg=pages[pageIndex]||{t:'',s:[]};ta.value=pg.t||'';strokes=pg.s||[];cur=null;pad.scrollTop=0;setup();fit();redraw();suggest();save()}
+function turnPage(dir,kind='page'){if(dir<0&&pageIndex===0){closeBook();pageSound(kind);return}save();if(dir>0){pageIndex++;if(!pages[pageIndex])pages.push({t:'',s:[]})}else pageIndex=Math.max(0,pageIndex-1);book.classList.remove('turn-next','turn-prev');void book.offsetWidth;book.classList.add(dir>0?'turn-next':'turn-prev');pageSound(kind);renderPage();setTimeout(()=>book.classList.remove('turn-next','turn-prev'),520)}
+$('#berase').onclick=()=>{if(!confirm('Erase all writing and drawings on every page?'))return;pages=[{t:'',s:[]}];pageIndex=0;ta.value='';strokes=[];cur=null;setup();fit();redraw();save();suggest();toast('All pages erased')};
+let touchStart=null;book.addEventListener('touchstart',e=>{if(!book.classList.contains('open'))return;const t=e.changedTouches[0];touchStart={x:t.clientX,y:t.clientY,time:Date.now()}},{passive:true});
+book.addEventListener('touchend',e=>{if(!touchStart||!book.classList.contains('open')){touchStart=null;return}const t=e.changedTouches[0],dx=t.clientX-touchStart.x,dy=t.clientY-touchStart.y;touchStart=null;if(Math.max(Math.abs(dx),Math.abs(dy))<85||Math.abs(dx)===Math.abs(dy))return;if(Math.abs(dx)>Math.abs(dy)){turnPage(dx>0?1:-1,'tear')}else{turnPage(dy<0?1:-1,'page')}},{passive:true});
+
 
 /* sizing, ink */
 const dpr=()=>Math.min(devicePixelRatio||1,2);
 function setup(){const d=dpr();ctx.setTransform(d,0,0,d,0,0);ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#1d2a5c'}
 function seg(a,b){ctx.beginPath();ctx.lineWidth=b[3];ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke()}
 function redraw(){setup();ctx.clearRect(0,0,9999,9999);strokes.forEach(s=>s.forEach((p,i)=>i&&seg(s[i-1],p)))}
-function fit(){const header=paper.querySelector('.top').offsetHeight;ta.style.height='1400px';const h=Math.max(ta.scrollHeight,pad.clientHeight-header,1400);ta.style.height=h+'px';
+function fit(){const header=paper.querySelector('.top').offsetHeight;cv.style.top=header+'px';ta.style.height='1400px';const h=Math.max(ta.scrollHeight,pad.clientHeight-header,1400);ta.style.height=h+'px';
  const w=paper.clientWidth,d=dpr();if(w&&(cw!=w||chh!=h||cv.width!==Math.round(w*d)||cv.height!==Math.round(h*d))){cw=w;chh=h;cv.style.width=w+'px';cv.style.height=h+'px';cv.width=Math.round(w*d);cv.height=Math.round(h*d);redraw()}}
 let fitQueued=false;
 function queueFit(){if(fitQueued)return;fitQueued=true;requestAnimationFrame(()=>{fitQueued=false;fit()})}
@@ -118,9 +125,7 @@ cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);const p=pt(e);cur=[p];str
 cv.onpointermove=e=>{if(!cur)return;const p=pt(e),a=cur[cur.length-1],sp=Math.hypot(p[0]-a[0],p[1]-a[1])/Math.max(1,p[2]-a[2]);p[3]=Math.max(1.3,Math.min(3.4,a[3]*.7+(3.6-sp*2.4)*.3));seg(a,p);cur.push(p)};
 cv.onpointerup=cv.onpointercancel=cv.onlostpointercapture=()=>{if(cur){cur=null;save()}};
 $('#bmode').onclick=()=>{mode=mode=='write'?'sketch':'write';paper.parentNode.classList.toggle('sketching',mode=='sketch');$('#bmode').innerHTML=mode=='write'?'<i>✎</i>Write':'<i>✏️</i>Sketch';$('#bmode').classList.toggle('on',mode=='sketch');toast(mode=='sketch'?'Sketch mode: draw on the page':'Write mode: type and scroll')};
-$('#brep').onclick=()=>{if(!strokes.length)return toast('Draw something first');setup();ctx.clearRect(0,0,9999,9999);const L=[];let T=0;
- strokes.forEach(s=>{const t0=s[0][2];s.forEach((p,i)=>{if(i)L.push([T+p[2]-t0,s[i-1],p])});T+=s[s.length-1][2]-t0+180});
- let i=0;const st=performance.now();(function f(){const n=performance.now()-st;while(i<L.length&&L[i][0]<=n){seg(L[i][1],L[i][2]);i++}if(i<L.length)requestAnimationFrame(f)})()};
+
 
 /* voice memos written out in handwriting */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,hearing=false,q='',typing=false;
