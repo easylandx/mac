@@ -95,7 +95,7 @@ function apply(){
   if(p>=1&&!done)finish();
 }
 function bump(a){if(!img||done)return;active=true;p=Math.min(1,p+a);apply();if(!rafOn){rafOn=true;requestAnimationFrame(drift);}}
-function drift(){ if(done){rafOn=false;return;} p=Math.min(1,p+.0006);apply();requestAnimationFrame(drift);}
+function drift(){ if(done){rafOn=false;return;} p=Math.min(1,p+.0025);apply();requestAnimationFrame(drift);}
 function finish(){
   done=true;$('msg').textContent='Your Polaroid is ready!';$('tap').style.display='none';$('shake').style.display='none';
   const d=new Date();$('capt').textContent=d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});$('capt').style.opacity=1;
@@ -105,7 +105,7 @@ function finish(){
   setTimeout(()=>$('share').scrollIntoView({behavior:'smooth',block:'end'}),400);
   if(navigator.vibrate)navigator.vibrate(60);
 }
-$('tap').onclick=()=>bump(.07);
+$('tap').onclick=()=>bump(.3);
 // shake
 let sOn=false,lx=0,ly=0,lz=0;
 function setupShake(){
@@ -113,18 +113,24 @@ function setupShake(){
   const D=window.DeviceMotionEvent;
   if(D&&typeof D.requestPermission==='function'){
     const b=$('shake');b.style.display='block';b.textContent='Tap to enable shake';
-    b.onclick=async()=>{try{const r=await D.requestPermission();if(r==='granted'){listen();b.style.display='none';}else b.textContent='Shake blocked: use the tap button';}catch(e){b.textContent='Shake not available: use the tap button';}};
+    b.onclick=async()=>{try{const r=await D.requestPermission();if(r==='granted'){listen();b.style.display='none';$('msg').textContent='Shake your iPhone now!';}else b.textContent='Shake blocked: use the tap button';}catch(e){b.textContent='Shake not available: use the tap button';}};
   }else if(D){listen();}
 }
 function listen(){
-  if(sOn)return;sOn=true;
-  window.addEventListener('devicemotion',e=>{
-    const a=e.accelerationIncludingGravity;if(!a)return;
-    const dx=Math.abs((a.x||0)-lx),dy=Math.abs((a.y||0)-ly),dz=Math.abs((a.z||0)-lz);
-    lx=a.x||0;ly=a.y||0;lz=a.z||0;
+  if(sOn)return;sOn=true;let got=false,first=true;
+  window.addEventListener('devicemotion',ev=>{
+    got=true;
+    let s=0;
+    const g=ev.accelerationIncludingGravity;
+    if(g){const x=g.x||0,y=g.y||0,z=g.z||0;if(!first)s=Math.abs(x-lx)+Math.abs(y-ly)+Math.abs(z-lz);lx=x;ly=y;lz=z;first=false;}
+    const l=ev.acceleration;
+    if(l){const m=Math.sqrt((l.x||0)**2+(l.y||0)**2+(l.z||0)**2);if(m*1.6>s)s=m*1.6;}
+    const r=ev.rotationRate;
+    if(r){const rr=Math.abs(r.alpha||0)+Math.abs(r.beta||0)+Math.abs(r.gamma||0);if(rr/18>s)s=rr/18;}
     const t=Date.now();
-    if(dx+dy+dz>28&&t-last>120){last=t;bump(.055);}
+    if(s>9&&t-last>180){last=t;bump(.3);if(navigator.vibrate)navigator.vibrate(25);}
   });
+  setTimeout(()=>{if(!got&&!done)$('msg').textContent='No motion detected: tap the button below to develop';},2500);
 }
 // build final image
 function build(){
