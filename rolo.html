@@ -385,7 +385,7 @@ $('ps').onclick=()=>{const c=V[idx];$('dp').close();sendWA(waNum(c.wa||c.phone),
 $('rnd').onclick=()=>{if(!V.length)return toast(t('addFirst'));if(V.length<2)return;let i;do{i=Math.floor(Math.random()*V.length)}while(i===idx);go(i,i>idx?1:-1)};
 let autoT=null;
 function autoLabel(){$('auto').textContent=t(autoT?'autoOff':'autoOn');$('auto').setAttribute('aria-pressed',autoT?'true':'false')}
-$('auto').onclick=()=>{if(autoT){clearInterval(autoT);autoT=null}else{if(!V.length)return toast(t('addFirst'));autoT=setInterval(()=>{if(document.querySelector('dialog[open]')||V.length<2)return;go(idx+1,1)},1800)}autoLabel()};
+$('auto').onclick=()=>{if(autoT){clearInterval(autoT);autoT=null}else{if(!V.length)return toast(t('addFirst'));autoT=setInterval(()=>{if(document.querySelector('dialog[open]')||V.length<2)return;go(idx+1,1)},400)}autoLabel()};
 
 const dl=(name,mime,text)=>{const u=URL.createObjectURL(new Blob([text],{type:mime})),a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000)};
 const today=()=>new Date().toISOString().slice(0,10);
