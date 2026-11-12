@@ -325,6 +325,7 @@ $('call').onclick=()=>{const c=V[idx];if(!c)return toast(t('addFirst'));const ra
   location.href='tel:'+((/^\s*(\+|00)/.test(raw)||st.get('rc.cc',''))?'+':'')+n};
 $('mail').onclick=()=>{const c=V[idx];if(!c)return toast(t('addFirst'));const a=(c.email||'').split(/[,;\s]+/).filter(x=>x.includes('@'))[0];if(!a)return toast(t('noEmail'));const m='mailto:'+encodeURI(a);if(isMobile){location.href=m;return}const w=window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(a),'_blank','noopener');if(!w)location.href=m};
 $('px').onclick=()=>$('dp').close();
+const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform));
 const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform));
 function openWA(n,msg){
   const enc=encodeURIComponent(msg);
@@ -350,6 +351,17 @@ function prepShare(){
 setTimeout(prepShare,600);
 function sendWA(n,text){
   const msg=(text.trim()?text.trim()+'\n':'')+PROMO;
+  if(isIOS){
+    /* iPhone: open the chat with this exact number directly (no share sheet).
+       WhatsApp can't attach a file via link, so copy the image to the clipboard to paste. */
+    try{
+      if(navigator.clipboard&&navigator.clipboard.write&&window.ClipboardItem){
+        const pr=shareBlob?Promise.resolve(shareBlob):prepShare();
+        navigator.clipboard.write([new ClipboardItem({'image/png':pr})]).catch(()=>{});
+      }
+    }catch(e){}
+    openWA(n,msg);return;
+  }
   if(isMobile){
     const canFile=shareFile&&navigator.share&&navigator.canShare&&navigator.canShare({files:[shareFile]});
     if(canFile){navigator.share({files:[shareFile],text:msg}).catch(e=>{if(e&&e.name==='AbortError')return;openWA(n,msg)});return}
