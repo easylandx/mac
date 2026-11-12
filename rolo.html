@@ -360,7 +360,8 @@ function sendWA(n,text){
         navigator.clipboard.write([new ClipboardItem({'image/png':pr})]).catch(()=>{});
       }
     }catch(e){}
-    openWA(n,msg);return;
+    /* Universal link (https) opens the WhatsApp app directly, without Safari's "Open in WhatsApp?" prompt */
+    location.href='https://wa.me/'+n+'?text='+encodeURIComponent(msg);return;
   }
   if(isMobile){
     const canFile=shareFile&&navigator.share&&navigator.canShare&&navigator.canShare({files:[shareFile]});
